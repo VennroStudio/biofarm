@@ -1,0 +1,145 @@
+{
+  "products": [
+    {
+      "id": 1,
+      "slug": "med-tsvetochnyy",
+      "name": "Мёд цветочный",
+      "category_id": "honey",
+      "price": 850,
+      "old_price": 1000,
+      "image": "https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=400&q=80",
+      "images": [
+        "https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=800&q=80",
+        "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?w=800&q=80",
+        "https://images.unsplash.com/photo-1471943311424-646960669fbc?w=800&q=80"
+      ],
+      "badge": "Хит продаж",
+      "weight": "500 г",
+      "short_description": "Натуральный цветочный мёд с собственной пасеки",
+      "description": "Наш цветочный мёд собран с экологически чистых лугов Алтайского края. Пчёлы собирают нектар с разнотравья: клевера, донника, василька и других луговых цветов. Мёд имеет нежный золотистый цвет и тонкий цветочный аромат.",
+      "ingredients": "100% натуральный цветочный мёд",
+      "features": ["Собран на экологически чистых лугах", "Без добавления сахара", "Холодная фасовка", "Сертифицирован по ГОСТ"],
+      "wb_link": "https://www.wildberries.ru/",
+      "ozon_link": "https://www.ozon.ru/",
+      "is_active": true,
+      "created_at": "2024-01-01T00:00:00Z"
+    },
+    {
+      "id": 2,
+      "slug": "med-grechishnyy",
+      "name": "Мёд гречишный",
+      "category_id": "honey",
+      "price": 950,
+      "old_price": null,
+      "image": "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?w=400&q=80",
+      "images": [
+        "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?w=800&q=80",
+        "https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=800&q=80"
+      ],
+      "badge": null,
+      "weight": "500 г",
+      "short_description": "Тёмный гречишный мёд с насыщенным вкусом",
+      "description": "Гречишный мёд — один из самых полезных сортов. Тёмный цвет, терпкий вкус и богатый минеральный состав делают его незаменимым для укрепления иммунитета. Собран с гречишных полей нашего хозяйства.",
+      "ingredients": "100% натуральный гречишный мёд",
+      "features": ["Высокое содержание железа", "Укрепляет иммунитет", "Натуральный антиоксидант", "Идеален для выпечки"],
+      "wb_link": "https://www.wildberries.ru/",
+      "ozon_link": "https://www.ozon.ru/",
+      "is_active": true,
+      "created_at": "2024-01-02T00:00:00Z"
+    },
+    {
+      "id": 3,
+      "slug": "med-lipovyy",
+      "name": "Мёд липовый",
+      "category_id": "honey",
+      "price": 1100,
+      "old_price": null,
+      "image": "https://images.unsplash.com/photo-1471943311424-646960669fbc?w=400&q=80",
+      "images": [
+        "https://images.unsplash.com/photo-1471943311424-646960669fbc?w=800&q=80",
+        "https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=800&q=80"
+      ],
+      "badge": "Новинка",
+      "weight": "500 г",
+      "short_description": "Нежный липовый мёд с изысканным ароматом",
+      "description": "Липовый мёд славится своими целебными свойствами и неповторимым ароматом. Светлый, почти прозрачный, с характерным липовым послевкусием. Идеален при простуде и для общего укрепления организма.",
+      "ingredients": "100% натуральный липовый мёд",
+      "features": ["Помогает при простуде", "Успокаивающее действие", "Нежный аромат липы", "Быстро кристаллизуется"],
+      "wb_link": "https://www.wildberries.ru/",
+      "ozon_link": "https://www.ozon.ru/",
+      "is_active": true,
+      "created_at": "2024-01-03T00:00:00Z"
+    },
+    {
+      "id": 4,
+      "slug": "maslo-lnyanoe",
+      "name": "Масло льняное",
+      "category_id": "oils",
+      "price": 450,
+      "old_price": null,
+      "image": "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=400&q=80",
+      "images": [
+        "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=800&q=80"
+      ],
+      "badge": null,
+      "weight": "250 мл",
+      "short_description": "Холодный отжим, богато Омега-3",
+      "description": "Льняное масло холодного отжима — источник незаменимых жирных кислот Омега-3. Произведено на собственном маслозаводе методом холодного прессования без нагрева, что сохраняет все полезные свойства.",
+      "ingredients": "100% семена льна",
+      "features": ["Холодный отжим", "Богато Омега-3", "Улучшает пищеварение", "Полезно для кожи и волос"],
+      "wb_link": "https://www.wildberries.ru/",
+      "ozon_link": "https://www.ozon.ru/",
+      "is_active": true,
+      "created_at": "2024-01-04T00:00:00Z"
+    },
+    {
+      "id": 5,
+      "slug": "maslo-podsolnechnoe",
+      "name": "Масло подсолнечное",
+      "category_id": "oils",
+      "price": 350,
+      "old_price": 400,
+      "image": "https://images.unsplash.com/photo-1596207891316-83c73a9ce8ff?w=400&q=80",
+      "images": [
+        "https://images.unsplash.com/photo-1596207891316-83c73a9ce8ff?w=800&q=80"
+      ],
+      "badge": "Скидка",
+      "weight": "500 мл",
+      "short_description": "Нерафинированное масло с ароматом семечек",
+      "description": "Настоящее деревенское подсолнечное масло с насыщенным ароматом жареных семечек. Нерафинированное, первого отжима. Идеально для заправки салатов и приготовления домашних блюд.",
+      "ingredients": "100% семена подсолнечника",
+      "features": ["Нерафинированное", "Первый отжим", "Яркий аромат", "Идеально для салатов"],
+      "wb_link": "https://www.wildberries.ru/",
+      "ozon_link": "https://www.ozon.ru/",
+      "is_active": true,
+      "created_at": "2024-01-05T00:00:00Z"
+    },
+    {
+      "id": 6,
+      "slug": "maslo-olivkovoe",
+      "name": "Масло оливковое",
+      "category_id": "oils",
+      "price": 890,
+      "old_price": null,
+      "image": "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=400&q=80",
+      "images": [
+        "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=800&q=80"
+      ],
+      "badge": null,
+      "weight": "250 мл",
+      "short_description": "Extra Virgin, первый холодный отжим",
+      "description": "Оливковое масло Extra Virgin — высший сорт оливкового масла первого холодного отжима. Обладает богатым вкусом и ароматом свежих оливок. Идеально для средиземноморской кухни.",
+      "ingredients": "100% оливки сорта Extra Virgin",
+      "features": ["Extra Virgin", "Первый холодный отжим", "Низкая кислотность", "Для салатов и жарки"],
+      "wb_link": "https://www.wildberries.ru/",
+      "ozon_link": "https://www.ozon.ru/",
+      "is_active": true,
+      "created_at": "2024-01-06T00:00:00Z"
+    }
+  ],
+  "categories": [
+    { "id": "all", "label": "Все товары", "sort_order": 0 },
+    { "id": "honey", "label": "Мёд", "sort_order": 1 },
+    { "id": "oils", "label": "Масла", "sort_order": 2 }
+  ]
+}

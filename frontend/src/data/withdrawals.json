@@ -1,0 +1,22 @@
+{
+  "withdrawals": [
+    {
+      "id": "wd-1",
+      "user_id": "2",
+      "amount": 1000,
+      "status": "pending",
+      "created_at": "2025-01-10T12:00:00Z",
+      "processed_at": null,
+      "processed_by": null
+    },
+    {
+      "id": "wd-2",
+      "user_id": "2",
+      "amount": 500,
+      "status": "approved",
+      "created_at": "2024-12-20T10:00:00Z",
+      "processed_at": "2024-12-21T15:30:00Z",
+      "processed_by": "Администратор"
+    }
+  ]
+}

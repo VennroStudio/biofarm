@@ -1,0 +1,97 @@
+{
+  "orders": [
+    {
+      "id": "ORD-001",
+      "user_id": "1",
+      "items": [
+        {
+          "product_id": 1,
+          "product_name": "Мёд липовый",
+          "price": 850,
+          "quantity": 2
+        },
+        {
+          "product_id": 3,
+          "product_name": "Мёд акациевый",
+          "price": 950,
+          "quantity": 1
+        }
+      ],
+      "status": "paid",
+      "payment_status": "completed",
+      "total": 2650,
+      "bonus_used": 0,
+      "bonus_earned": 133,
+      "created_at": "2024-12-15T10:30:00Z",
+      "paid_at": "2024-12-15T10:35:00Z",
+      "shipping_address": {
+        "name": "Иван Петров",
+        "phone": "+7 (999) 123-45-67",
+        "email": "user@example.com",
+        "city": "Москва",
+        "address": "ул. Пушкина, д. 10, кв. 5",
+        "postal_code": "123456"
+      },
+      "payment_method": "card",
+      "tracking_number": "SDEK-123456789"
+    },
+    {
+      "id": "ORD-002",
+      "user_id": "1",
+      "items": [
+        {
+          "product_id": 4,
+          "product_name": "Масло льняное",
+          "price": 450,
+          "quantity": 4
+        }
+      ],
+      "status": "shipped",
+      "payment_status": "completed",
+      "total": 1700,
+      "bonus_used": 100,
+      "bonus_earned": 85,
+      "created_at": "2024-12-28T14:20:00Z",
+      "paid_at": "2024-12-28T14:25:00Z",
+      "shipping_address": {
+        "name": "Иван Петров",
+        "phone": "+7 (999) 123-45-67",
+        "email": "user@example.com",
+        "city": "Москва",
+        "address": "ул. Пушкина, д. 10, кв. 5",
+        "postal_code": "123456"
+      },
+      "payment_method": "sbp",
+      "tracking_number": "SDEK-987654321"
+    },
+    {
+      "id": "ORD-003",
+      "user_id": "2",
+      "items": [
+        {
+          "product_id": 2,
+          "product_name": "Мёд гречишный",
+          "price": 750,
+          "quantity": 3
+        }
+      ],
+      "status": "pending",
+      "payment_status": "pending",
+      "total": 2250,
+      "bonus_used": 0,
+      "bonus_earned": 0,
+      "created_at": "2025-01-10T09:00:00Z",
+      "paid_at": null,
+      "shipping_address": {
+        "name": "Анна Сидорова",
+        "phone": "+7 (999) 987-65-43",
+        "email": "partner@example.com",
+        "city": "Санкт-Петербург",
+        "address": "Невский пр., д. 100",
+        "postal_code": "190000"
+      },
+      "payment_method": "card",
+      "tracking_number": null
+    }
+  ]
+}

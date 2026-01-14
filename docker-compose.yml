@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: biofarm-frontend
+    ports:
+      - "8080:8080"
+    volumes:
+      # Монтируем весь проект включая node_modules для работы на хостинге без Docker
+      - ./frontend:/app
+      # Исключаем только некоторые файлы, которые не нужны в контейнере
+      - /app/.git
+    environment:
+      - NODE_ENV=development
+    stdin_open: true
+    tty: true
+    # Команда по умолчанию - запуск dev сервера
+    command: npm run dev -- --host 0.0.0.0
