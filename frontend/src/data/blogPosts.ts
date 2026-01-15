@@ -18,8 +18,12 @@ export interface BlogPost {
 
 let cachedPosts: BlogPost[] | null = null;
 
-export const getBlogPosts = async (): Promise<BlogPost[]> => {
-  if (cachedPosts) return cachedPosts;
+export const clearBlogPostsCache = () => {
+  cachedPosts = null;
+};
+
+export const getBlogPosts = async (forceRefresh = false): Promise<BlogPost[]> => {
+  if (cachedPosts && !forceRefresh) return cachedPosts;
   
   const data = await api.blog.getAll();
   cachedPosts = data.map((post: any) => ({

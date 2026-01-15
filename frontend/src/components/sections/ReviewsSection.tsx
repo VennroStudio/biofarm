@@ -189,7 +189,6 @@ export const ReviewsSection = () => {
                 </div>
               )}
 
-              <p className="text-sm text-muted-foreground/60">{review.date}</p>
             </motion.div>
           ))}
         </div>

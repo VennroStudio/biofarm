@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Action\V1\BlogPost\GetAllAction as BlogPostGetAllAction;
 use App\Http\Action\V1\BlogPost\GetBySlugAction as BlogPostGetBySlugAction;
+use App\Http\Action\V1\BlogPost\CreateAction as BlogPostCreateAction;
 use App\Http\Action\V1\BlogPost\UpdateAction as BlogPostUpdateAction;
 use App\Http\Action\V1\BlogPost\DeleteAction as BlogPostDeleteAction;
 use App\Http\Action\V1\Category\GetAllAction as CategoryGetAllAction;
@@ -86,6 +87,7 @@ return static function (App $app, array $dependencies): void {
     // Blog
     $app->get('/api/v1/blog', new BlogPostGetAllAction($fetchers['blogPostsGetAll']));
     $app->get('/api/v1/blog/{slug}', new BlogPostGetBySlugAction($fetchers['blogPostsGetBySlug']));
+    $app->post('/api/v1/blog', new BlogPostCreateAction($handlers['blogPostCreate'], $em));
     $app->put('/api/v1/blog/{id}', new BlogPostUpdateAction($handlers['blogPostUpdate'], $em));
     $app->delete('/api/v1/blog/{id}', new BlogPostDeleteAction($handlers['blogPostDelete'], $em));
 

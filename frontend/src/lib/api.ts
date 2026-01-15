@@ -156,6 +156,20 @@ export const api = {
       request<any[]>('/api/v1/blog'),
     getBySlug: (slug: string) =>
       request<any>(`/api/v1/blog/${slug}`),
+    create: (postData: any) =>
+      request<any>('/api/v1/blog', {
+        method: 'POST',
+        body: JSON.stringify(postData),
+      }),
+    update: (id: number, postData: any) =>
+      request<any>(`/api/v1/blog/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(postData),
+      }),
+    delete: (id: number) =>
+      request<any>(`/api/v1/blog/${id}`, {
+        method: 'DELETE',
+      }),
   },
 
   // Withdrawals

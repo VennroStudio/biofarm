@@ -113,39 +113,27 @@ const AdminBlog = () => {
           slug: slug,
         });
         
-        setPosts(prev => prev.map(p => 
-          p.id === editingPost.id 
-            ? { 
-                id: updatedPost.id,
-                slug: updatedPost.slug,
-                title: updatedPost.title,
-                excerpt: updatedPost.excerpt,
-                content: updatedPost.content,
-                image: updatedPost.image,
-                category: updatedPost.category,
-                author: { name: form.authorName, avatar: form.authorAvatar },
-                date: new Date(updatedPost.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }),
-                readTime: `${updatedPost.readTime} мин`,
-              }
-            : p
-        ));
+        // Reload posts from server
+        const allPosts = await getBlogPosts(true);
+        setPosts(allPosts);
         toast({ title: 'Статья обновлена' });
       } else {
-        // For new posts, we would need a create endpoint
-        // For now, just update local state
-        const newPost: BlogPost = {
-          id: Date.now(),
-          slug,
+        const newPost = await api.blog.create({
           title: form.title,
           excerpt: form.excerpt,
           content: form.content,
           image: form.image || 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=800&q=80',
           category: form.category,
-          author: { name: form.authorName, avatar: form.authorAvatar },
-          date: new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }),
-          readTime: `${Math.ceil(form.content.length / 1000)} мин`,
-        };
-        setPosts(prev => [newPost, ...prev]);
+          categoryId: form.category,
+          authorId: 1,
+          readTime: Math.ceil(form.content.length / 1000),
+          isPublished: true,
+          slug: slug,
+        });
+        
+        // Reload posts from server
+        const allPosts = await getBlogPosts(true);
+        setPosts(allPosts);
         toast({ title: 'Статья добавлена' });
       }
       
@@ -160,7 +148,9 @@ const AdminBlog = () => {
   const handleDelete = async (id: number) => {
     try {
       await api.blog.delete(id);
-      setPosts(prev => prev.filter(p => p.id !== id));
+      // Reload posts from server
+      const allPosts = await getBlogPosts(true);
+      setPosts(allPosts);
       toast({ title: 'Статья удалена' });
     } catch (error) {
       console.error('Failed to delete blog post:', error);
