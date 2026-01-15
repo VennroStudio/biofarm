@@ -10,6 +10,7 @@ use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use App\Modules\Entity\Product\ProductRepository;
 use App\Modules\Entity\Category\CategoryRepository;
 use App\Modules\Entity\User\UserRepository;
+use App\Modules\Entity\Admin\AdminRepository;
 use App\Modules\Entity\Order\OrderRepository;
 use App\Modules\Entity\OrderItem\OrderItemRepository;
 use App\Modules\Entity\Review\ReviewRepository;
@@ -75,6 +76,7 @@ $config = ORMSetup::createAttributeMetadataConfiguration(
         __DIR__ . '/../Modules/Entity/Product',
         __DIR__ . '/../Modules/Entity/Category',
         __DIR__ . '/../Modules/Entity/User',
+        __DIR__ . '/../Modules/Entity/Admin',
         __DIR__ . '/../Modules/Entity/Order',
         __DIR__ . '/../Modules/Entity/OrderItem',
         __DIR__ . '/../Modules/Entity/Review',
@@ -94,6 +96,7 @@ $entityManager = new EntityManager($connection, $config);
 $productRepository = new ProductRepository($entityManager);
 $categoryRepository = new CategoryRepository($entityManager);
 $userRepository = new UserRepository($entityManager);
+$adminRepository = new AdminRepository($entityManager);
 $orderRepository = new OrderRepository($entityManager);
 $orderItemRepository = new OrderItemRepository($entityManager);
 $reviewRepository = new ReviewRepository($entityManager);
@@ -146,6 +149,7 @@ $withdrawalUpdateStatusHandler = new WithdrawalUpdateStatusHandler($withdrawalRe
 return [
     'em' => $entityManager,
     'orderItemRepository' => $orderItemRepository,
+    'adminRepository' => $adminRepository,
     'fetchers' => [
         'productsGetAll' => $productsGetAllFetcher,
         'productsGetBySlug' => $productsGetBySlugFetcher,

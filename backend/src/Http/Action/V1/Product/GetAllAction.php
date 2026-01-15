@@ -21,9 +21,11 @@ final readonly class GetAllAction implements RequestHandlerInterface
     {
         $queryParams = $request->getQueryParams();
         $categoryId = $queryParams['category'] ?? null;
+        $includeInactive = isset($queryParams['includeInactive']) && $queryParams['includeInactive'] === 'true';
 
         $query = new Query(
             categoryId: $categoryId,
+            includeInactive: $includeInactive,
         );
 
         $products = $this->fetcher->fetch($query);

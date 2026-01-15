@@ -12,11 +12,12 @@ export interface Product {
   badge?: string;
   weight: string;
   description: string;
-  shortDescription: string;
+  shortDescription?: string;
   ingredients?: string;
   features?: string[];
   wbLink?: string;
   ozonLink?: string;
+  isActive?: boolean;
 }
 
 export interface Category {
@@ -33,10 +34,10 @@ export const categories: Category[] = [
 
 let cachedProducts: Product[] | null = null;
 
-export const getProducts = async (): Promise<Product[]> => {
-  if (cachedProducts) return cachedProducts;
-  const data = await api.products.getAll();
-  cachedProducts = data.map((p: any) => ({
+export const getProducts = async (includeInactive: boolean = false): Promise<Product[]> => {
+  if (cachedProducts && !includeInactive) return cachedProducts;
+  const data = await api.products.getAll(includeInactive);
+  const mapped = data.map((p: any) => ({
     id: p.id,
     slug: p.slug,
     name: p.name,
@@ -48,13 +49,17 @@ export const getProducts = async (): Promise<Product[]> => {
     badge: p.badge ?? undefined,
     weight: p.weight,
     description: p.description,
-    shortDescription: p.shortDescription,
+    shortDescription: p.shortDescription ?? undefined,
     ingredients: p.ingredients ?? undefined,
     features: p.features,
     wbLink: p.wbLink ?? undefined,
     ozonLink: p.ozonLink ?? undefined,
+    isActive: p.isActive ?? true,
   }));
-  return cachedProducts;
+  if (!includeInactive) {
+    cachedProducts = mapped;
+  }
+  return mapped;
 };
 
 export const getProductBySlug = async (slug: string): Promise<Product | undefined> => {
@@ -72,8 +77,9 @@ export const getProductBySlug = async (slug: string): Promise<Product | undefine
       badge: data.badge ?? undefined,
       weight: data.weight,
       description: data.description,
-      shortDescription: data.shortDescription,
+      shortDescription: data.shortDescription ?? undefined,
       ingredients: data.ingredients ?? undefined,
+      isActive: data.isActive ?? true,
       features: data.features,
       wbLink: data.wbLink ?? undefined,
       ozonLink: data.ozonLink ?? undefined,

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, ZoomIn, ChevronUp, ChevronDown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -14,6 +14,7 @@ interface ProductGalleryProps {
 export const ProductGallery = ({ images, productName, badge }: ProductGalleryProps) => {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const thumbnailsPerView = 4; // Количество видимых миниатюр
 
   const handlePrev = () => {
     setSelectedIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
@@ -23,38 +24,93 @@ export const ProductGallery = ({ images, productName, badge }: ProductGalleryPro
     setSelectedIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
   };
 
+  const handleThumbnailUp = () => {
+    // Переключаем на предыдущее изображение (циклически)
+    setSelectedIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+  };
+
+  const handleThumbnailDown = () => {
+    // Переключаем на следующее изображение (циклически)
+    setSelectedIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowLeft') handlePrev();
     if (e.key === 'ArrowRight') handleNext();
     if (e.key === 'Escape') setIsLightboxOpen(false);
   };
 
+
+  // Вычисляем видимые миниатюры вокруг текущего выбранного изображения
+  const getVisibleThumbnails = () => {
+    const half = Math.floor(thumbnailsPerView / 2);
+    let start = selectedIndex - half;
+    
+    // Корректируем начало, если выходим за границы
+    if (start < 0) {
+      start = 0;
+    } else if (start + thumbnailsPerView > images.length) {
+      start = Math.max(0, images.length - thumbnailsPerView);
+    }
+    
+    return {
+      start,
+      thumbnails: images.slice(start, start + thumbnailsPerView),
+    };
+  };
+
+  const { start: thumbnailStartIndex, thumbnails: visibleThumbnails } = getVisibleThumbnails();
+
   return (
     <>
       <div className="flex gap-4">
-        {/* Thumbnails - Left side */}
+        {/* Thumbnails - Left side with buttons */}
         {images.length > 1 && (
-          <div className="flex flex-col gap-3 w-20 flex-shrink-0">
-            <div className="flex flex-col gap-3 max-h-[500px] overflow-y-auto custom-scrollbar pr-1">
-              {images.map((img, index) => (
-                <button
-                  key={index}
-                  onClick={() => setSelectedIndex(index)}
-                  className={cn(
-                    'w-full aspect-square rounded-lg overflow-hidden border-2 transition-all duration-200 flex-shrink-0',
-                    selectedIndex === index 
-                      ? 'border-primary ring-2 ring-primary/20' 
-                      : 'border-transparent hover:border-muted-foreground/30'
-                  )}
-                >
-                  <img 
-                    src={img} 
-                    alt={`${productName} - фото ${index + 1}`} 
-                    className="w-full h-full object-cover"
-                  />
-                </button>
-              ))}
+          <div className="flex flex-col gap-2 w-20 flex-shrink-0 h-full">
+            {/* Up button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-full rounded-lg flex-shrink-0"
+              onClick={handleThumbnailUp}
+            >
+              <ChevronUp className="h-4 w-4" />
+            </Button>
+            
+            {/* Thumbnails container - занимает всю доступную высоту */}
+            <div className="flex-1 flex flex-col gap-2 justify-start min-h-0">
+              {visibleThumbnails.map((img, idx) => {
+                const actualIndex = thumbnailStartIndex + idx;
+                return (
+                  <button
+                    key={actualIndex}
+                    onClick={() => setSelectedIndex(actualIndex)}
+                    className={cn(
+                      'w-full flex-1 rounded-lg overflow-hidden border-2 transition-all duration-200 flex-shrink-0 min-h-0',
+                      selectedIndex === actualIndex 
+                        ? 'border-primary ring-2 ring-primary/20' 
+                        : 'border-transparent hover:border-muted-foreground/30'
+                    )}
+                  >
+                    <img 
+                      src={img} 
+                      alt={`${productName} - фото ${actualIndex + 1}`} 
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                );
+              })}
             </div>
+
+            {/* Down button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-full rounded-lg flex-shrink-0"
+              onClick={handleThumbnailDown}
+            >
+              <ChevronDown className="h-4 w-4" />
+            </Button>
           </div>
         )}
 
@@ -71,7 +127,7 @@ export const ProductGallery = ({ images, productName, badge }: ProductGalleryPro
               transition={{ duration: 0.3 }}
               src={images[selectedIndex]}
               alt={productName}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
             />
             {badge && (
               <Badge className="absolute top-4 left-4 bg-accent text-accent-foreground text-base px-4 py-2">

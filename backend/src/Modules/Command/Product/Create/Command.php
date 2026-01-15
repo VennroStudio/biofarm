@@ -24,8 +24,7 @@ final readonly class Command
         public string $weight,
         #[Assert\NotBlank]
         public string $description,
-        #[Assert\NotBlank]
-        public string $shortDescription,
+        public ?string $shortDescription = null,
         public ?int $oldPrice = null,
         /** @var string[]|null */
         public ?array $images = null,

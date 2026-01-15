@@ -85,9 +85,6 @@ const AdminLogin = () => {
                 {isLoading ? 'Вход...' : 'Войти'}
               </Button>
             </form>
-            <p className="text-xs text-muted-foreground text-center mt-4">
-              Демо: admin@biofarm.ru / любой пароль (4+ символов)
-            </p>
           </CardContent>
         </Card>
       </motion.div>

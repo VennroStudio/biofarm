@@ -60,6 +60,12 @@ final class ProductRepository
         return $this->repo->findBy(['isActive' => true], ['createdAt' => 'DESC']);
     }
 
+    /** @return Product[] */
+    public function findAll(): array
+    {
+        return $this->repo->findBy([], ['createdAt' => 'DESC']);
+    }
+
     public function add(Product $product): void
     {
         $this->em->persist($product);

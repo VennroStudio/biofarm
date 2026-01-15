@@ -35,6 +35,7 @@ final class Serializer
             'features' => $product->getFeatures(),
             'wbLink' => $product->getWbLink(),
             'ozonLink' => $product->getOzonLink(),
+            'isActive' => $product->isActive(),
         ];
     }
 

@@ -84,7 +84,10 @@ const ProductPage = () => {
     );
   }
 
-  const images = product.images || [product.image];
+  // Главное изображение всегда первое, затем дополнительные
+  const images = product.images && product.images.length > 0
+    ? [product.image, ...product.images]
+    : [product.image];
 
   return (
     <div className="min-h-screen bg-background">
@@ -127,14 +130,23 @@ const ProductPage = () => {
               transition={{ duration: 0.6 }}
             >
               <div className="sticky top-28">
-                <span className="text-accent font-medium">{product.weight}</span>
-                <h1 className="text-3xl md:text-4xl font-display font-bold text-foreground mt-2 mb-4">
+                <h1 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4">
                   {product.name}
                 </h1>
                 
-                <p className="text-muted-foreground text-lg mb-6">
-                  {product.shortDescription}
-                </p>
+                {product.shortDescription && (
+                  <p className="text-muted-foreground text-lg mb-6">
+                    {product.shortDescription}
+                  </p>
+                )}
+
+                {/* Weight and Ingredients - moved above price */}
+                <div className="mb-6 space-y-2">
+                  <span className="text-accent font-medium block">{product.weight}</span>
+                  {product.ingredients && (
+                    <p className="text-sm text-muted-foreground">Состав: {product.ingredients}</p>
+                  )}
+                </div>
 
                 {/* Price */}
                 <div className="flex items-center gap-4 mb-6">
@@ -260,16 +272,21 @@ const ProductPage = () => {
             className="mt-16"
           >
             <h2 className="text-2xl font-display font-bold text-foreground mb-6">Описание</h2>
-            <div className="prose prose-lg max-w-none text-muted-foreground mb-8">
-              <p>{product.description}</p>
-            </div>
-            
-            {product.ingredients && (
-              <div className="bg-muted/50 rounded-xl p-6">
-                <h3 className="font-semibold text-foreground mb-2">Состав</h3>
-                <p className="text-muted-foreground">{product.ingredients}</p>
-              </div>
-            )}
+            <div 
+              className="prose prose-lg max-w-none
+                prose-headings:font-display prose-headings:text-foreground prose-headings:font-bold
+                prose-h2:text-2xl prose-h2:mt-12 prose-h2:mb-6
+                prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-4
+                prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:mb-6
+                prose-strong:text-foreground prose-strong:font-semibold
+                prose-ul:text-muted-foreground prose-ul:my-6
+                prose-li:my-2
+                prose-a:text-primary prose-a:no-underline hover:prose-a:underline
+                prose-ol:text-muted-foreground prose-ol:my-6
+                prose-blockquote:text-muted-foreground prose-blockquote:border-l-primary
+                mb-8"
+              dangerouslySetInnerHTML={{ __html: product.description }}
+            />
           </motion.div>
         </div>
       </section>

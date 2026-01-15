@@ -24,10 +24,20 @@ async function request<T>(
 export const api = {
   // Products
   products: {
-    getAll: (category?: string) =>
-      request<any[]>(category ? `/api/v1/products?category=${category}` : '/api/v1/products'),
+    getAll: (includeInactive?: boolean, category?: string) => {
+      const params = new URLSearchParams();
+      if (category) params.append('category', category);
+      if (includeInactive) params.append('includeInactive', 'true');
+      const query = params.toString();
+      return request<any[]>(`/api/v1/products${query ? `?${query}` : ''}`);
+    },
     getBySlug: (slug: string) =>
       request<any>(`/api/v1/products/${slug}`),
+    create: (productData: any) =>
+      request<any>('/api/v1/products', {
+        method: 'POST',
+        body: JSON.stringify(productData),
+      }),
     update: (id: number, productData: any) =>
       request<any>(`/api/v1/products/${id}`, {
         method: 'PUT',
@@ -163,6 +173,22 @@ export const api = {
       request<any>(`/api/v1/withdrawals/${withdrawalId}/status`, {
         method: 'PUT',
         body: JSON.stringify({ status, processedBy }),
+      }),
+  },
+
+  // Admin
+  admin: {
+    login: (email: string, password: string) =>
+      request<any>('/api/v1/admin/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
+      }),
+    getCurrent: (adminId: number) =>
+      request<any>(`/api/v1/admin/me?adminId=${adminId}`),
+    changePassword: (adminId: number, currentPassword: string, newPassword: string) =>
+      request<any>('/api/v1/admin/password', {
+        method: 'PUT',
+        body: JSON.stringify({ adminId, currentPassword, newPassword }),
       }),
   },
 };

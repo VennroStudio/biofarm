@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Search, Edit, Trash2, ExternalLink } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, ExternalLink, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -45,10 +45,10 @@ const AdminProducts = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Загружаем категории и товары параллельно
+    // Загружаем категории и товары параллельно (включая неактивные для админки)
     Promise.all([
       api.categories.getAll(),
-      getProducts()
+      getProducts(true) // includeInactive = true для админки
     ])
       .then(([categoriesData, products]) => {
         setCategories(categoriesData);
@@ -102,7 +102,7 @@ const AdminProducts = () => {
       price: product.price.toString(),
       oldPrice: product.oldPrice?.toString() || '',
       weight: product.weight,
-      shortDescription: product.shortDescription,
+      shortDescription: product.shortDescription || '',
       description: product.description,
       ingredients: product.ingredients || '',
       image: product.image,
@@ -137,7 +137,7 @@ const AdminProducts = () => {
           price: Number(form.price),
           oldPrice: form.oldPrice ? Number(form.oldPrice) : undefined,
           weight: form.weight,
-          shortDescription: form.shortDescription,
+          shortDescription: form.shortDescription || undefined,
           description: form.description,
           ingredients: form.ingredients || undefined,
           image: form.image || 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=400&q=80',
@@ -145,7 +145,7 @@ const AdminProducts = () => {
           badge: form.badge || undefined,
           wbLink: form.wbLink || undefined,
           ozonLink: form.ozonLink || undefined,
-          isActive: true,
+          isActive: editingProduct?.isActive ?? true,
           slug: slug,
         });
         
@@ -167,22 +167,21 @@ const AdminProducts = () => {
                 badge: updatedProduct.badge ?? undefined,
                 wbLink: updatedProduct.wbLink ?? undefined,
                 ozonLink: updatedProduct.ozonLink ?? undefined,
+                isActive: updatedProduct.isActive ?? true,
               }
             : p
         ));
         toast({ title: 'Товар обновлён' });
       } else {
-        // For new products, we would need a create endpoint
-        // For now, just update local state
-        const newProduct: Product = {
-          id: Date.now(),
-          slug,
+        // Create new product
+        const newProduct = await api.products.create({
           name: form.name,
           category: form.category,
+          categoryId: form.category,
           price: Number(form.price),
           oldPrice: form.oldPrice ? Number(form.oldPrice) : undefined,
           weight: form.weight,
-          shortDescription: form.shortDescription,
+          shortDescription: form.shortDescription || undefined,
           description: form.description,
           ingredients: form.ingredients || undefined,
           image: form.image || 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=400&q=80',
@@ -190,8 +189,27 @@ const AdminProducts = () => {
           badge: form.badge || undefined,
           wbLink: form.wbLink || undefined,
           ozonLink: form.ozonLink || undefined,
-        };
-        setProductList(prev => [...prev, newProduct]);
+          isActive: true, // Новый товар всегда активный
+        });
+        
+        setProductList(prev => [...prev, {
+          id: newProduct.id,
+          slug: newProduct.slug,
+          name: newProduct.name,
+          category: newProduct.category,
+          price: newProduct.price,
+          oldPrice: newProduct.oldPrice ?? undefined,
+          weight: newProduct.weight,
+          shortDescription: newProduct.shortDescription ?? undefined,
+          description: newProduct.description,
+          ingredients: newProduct.ingredients ?? undefined,
+          image: newProduct.image,
+          images: newProduct.images,
+          badge: newProduct.badge ?? undefined,
+          wbLink: newProduct.wbLink ?? undefined,
+          ozonLink: newProduct.ozonLink ?? undefined,
+          isActive: newProduct.isActive ?? true,
+        }]);
         toast({ title: 'Товар добавлен' });
       }
       
@@ -211,6 +229,20 @@ const AdminProducts = () => {
     } catch (error) {
       console.error('Failed to delete product:', error);
       toast({ title: 'Ошибка удаления товара', variant: 'destructive' });
+    }
+  };
+
+  const handleToggleActive = async (product: Product) => {
+    try {
+      const updatedProduct = await api.products.update(product.id, {
+        ...product,
+        isActive: !product.isActive,
+      });
+      setProductList(prev => prev.map(p => p.id === product.id ? { ...p, isActive: updatedProduct.isActive } : p));
+      toast({ title: updatedProduct.isActive ? 'Товар активирован' : 'Товар деактивирован' });
+    } catch (error) {
+      console.error('Failed to toggle product active status:', error);
+      toast({ title: 'Ошибка обновления статуса товара', variant: 'destructive' });
     }
   };
 
@@ -270,7 +302,7 @@ const AdminProducts = () => {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>Краткое описание *</Label>
+                <Label>Краткое описание</Label>
                 <Input value={form.shortDescription} onChange={(e) => setForm({ ...form, shortDescription: e.target.value })} />
               </div>
               <div className="space-y-2">
@@ -418,6 +450,18 @@ const AdminProducts = () => {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => handleToggleActive(product)}
+                          title={product.isActive ? 'Деактивировать товар' : 'Активировать товар'}
+                        >
+                          {product.isActive ? (
+                            <Eye className="h-4 w-4 text-green-600" />
+                          ) : (
+                            <EyeOff className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </Button>
                         <Button variant="ghost" size="icon" onClick={() => handleEdit(product)}>
                           <Edit className="h-4 w-4" />
                         </Button>

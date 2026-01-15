@@ -51,8 +51,8 @@ final class Product
     #[ORM\Column(type: 'text')]
     private string $description;
 
-    #[ORM\Column(type: 'string', length: 500)]
-    private string $shortDescription;
+    #[ORM\Column(type: 'string', length: 500, nullable: true)]
+    private ?string $shortDescription = null;
 
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $ingredients = null;
@@ -83,7 +83,7 @@ final class Product
         string $image,
         string $weight,
         string $description,
-        string $shortDescription,
+        ?string $shortDescription = null,
         ?int $oldPrice = null,
         ?array $images = null,
         ?string $badge = null,
@@ -120,7 +120,7 @@ final class Product
         string $image,
         string $weight,
         string $description,
-        string $shortDescription,
+        ?string $shortDescription = null,
         ?int $oldPrice = null,
         ?array $images = null,
         ?string $badge = null,
@@ -157,7 +157,7 @@ final class Product
         string $image,
         string $weight,
         string $description,
-        string $shortDescription,
+        ?string $shortDescription = null,
         ?int $oldPrice = null,
         ?array $images = null,
         ?string $badge = null,
@@ -247,7 +247,7 @@ final class Product
         return $this->description;
     }
 
-    public function getShortDescription(): string
+    public function getShortDescription(): ?string
     {
         return $this->shortDescription;
     }

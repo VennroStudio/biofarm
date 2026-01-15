@@ -1,8 +1,9 @@
-// Admin mock data and API
+// Admin API
+import { api } from '@/lib/api';
 import settingsData from './settings.json';
 
 export interface AdminUser {
-  id: string;
+  id: number;
   email: string;
   name: string;
   role: 'admin' | 'moderator';
@@ -22,12 +23,6 @@ export interface DashboardStats {
   totalWithdrawalAmount: number;
 }
 
-// Mock admin users
-const adminUsers: AdminUser[] = [
-  { id: 'admin-1', email: 'admin@biofarm.ru', name: 'Администратор', role: 'admin' },
-  { id: 'admin-2', email: 'moderator@biofarm.ru', name: 'Модератор', role: 'moderator' },
-];
-
 // Settings storage
 const SETTINGS_STORAGE_KEY = 'biofarm_settings';
 
@@ -44,13 +39,16 @@ const ADMIN_STORAGE_KEY = 'biofarm_admin_session';
 
 export const adminApi = {
   login: async (email: string, password: string): Promise<AdminUser | null> => {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    const admin = adminUsers.find(a => a.email === email);
-    if (admin && password.length >= 4) {
-      localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(admin));
-      return admin;
+    try {
+      const admin = await api.admin.login(email, password);
+      if (admin) {
+        localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(admin));
+        return admin;
+      }
+      return null;
+    } catch (error: any) {
+      throw new Error(error.message || 'Ошибка входа');
     }
-    return null;
   },
 
   logout: async (): Promise<void> => {
@@ -60,6 +58,32 @@ export const adminApi = {
   getCurrentAdmin: (): AdminUser | null => {
     const stored = localStorage.getItem(ADMIN_STORAGE_KEY);
     return stored ? JSON.parse(stored) : null;
+  },
+
+  refreshAdmin: async (): Promise<AdminUser | null> => {
+    const currentAdmin = adminApi.getCurrentAdmin();
+    if (!currentAdmin) return null;
+    
+    try {
+      const admin = await api.admin.getCurrent(currentAdmin.id);
+      if (admin) {
+        localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(admin));
+        return admin;
+      }
+      return null;
+    } catch (error) {
+      console.error('Failed to refresh admin:', error);
+      return null;
+    }
+  },
+
+  changePassword: async (currentPassword: string, newPassword: string): Promise<void> => {
+    const currentAdmin = adminApi.getCurrentAdmin();
+    if (!currentAdmin) {
+      throw new Error('Admin not authenticated');
+    }
+    
+    await api.admin.changePassword(currentAdmin.id, currentPassword, newPassword);
   },
 
   isAuthenticated: (): boolean => {

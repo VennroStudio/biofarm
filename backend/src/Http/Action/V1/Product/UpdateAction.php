@@ -54,7 +54,7 @@ final readonly class UpdateAction implements RequestHandlerInterface
             image: $body['image'] ?? '',
             weight: $body['weight'] ?? '',
             description: $body['description'] ?? '',
-            shortDescription: $body['shortDescription'] ?? '',
+            shortDescription: $body['shortDescription'] ?? null,
             oldPrice: isset($body['oldPrice']) ? (int)$body['oldPrice'] : null,
             images: $body['images'] ?? null,
             badge: $body['badge'] ?? null,

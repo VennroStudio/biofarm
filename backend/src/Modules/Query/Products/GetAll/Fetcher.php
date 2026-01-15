@@ -16,6 +16,11 @@ final readonly class Fetcher
     /** @return Product[] */
     public function fetch(Query $query): array
     {
+        // Если includeInactive = true, возвращаем все товары (для админки)
+        if ($query->includeInactive) {
+            return $this->productRepository->findAll();
+        }
+
         if ($query->categoryId) {
             return $this->productRepository->findByCategory($query->categoryId);
         }

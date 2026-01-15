@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Save, Percent, Gift, ShoppingBag, Power } from 'lucide-react';
+import { Save, Percent, Gift, ShoppingBag, Power, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,6 +17,12 @@ const AdminSettings = () => {
     orderBonusPercent: 5,
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   useEffect(() => {
     adminApi.getReferralSettings().then(setSettings);
@@ -29,6 +35,33 @@ const AdminSettings = () => {
       toast({ title: 'Настройки сохранены' });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast({ title: 'Пароли не совпадают', variant: 'destructive' });
+      return;
+    }
+
+    if (passwordData.newPassword.length < 4) {
+      toast({ title: 'Новый пароль должен быть не менее 4 символов', variant: 'destructive' });
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      await adminApi.changePassword(passwordData.currentPassword, passwordData.newPassword);
+      toast({ title: 'Пароль успешно изменен' });
+      setPasswordData({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+      });
+    } catch (error: any) {
+      toast({ title: error.message || 'Ошибка при смене пароля', variant: 'destructive' });
+    } finally {
+      setIsChangingPassword(false);
     }
   };
 
@@ -124,6 +157,59 @@ const AdminSettings = () => {
               </p>
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Change Password */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Lock className="h-5 w-5" />
+            Смена пароля
+          </CardTitle>
+          <CardDescription>
+            Измените пароль для входа в админ-панель
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="currentPassword">Текущий пароль</Label>
+            <Input
+              id="currentPassword"
+              type="password"
+              value={passwordData.currentPassword}
+              onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+              placeholder="Введите текущий пароль"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="newPassword">Новый пароль</Label>
+            <Input
+              id="newPassword"
+              type="password"
+              value={passwordData.newPassword}
+              onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+              placeholder="Введите новый пароль (минимум 4 символа)"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword">Подтвердите новый пароль</Label>
+            <Input
+              id="confirmPassword"
+              type="password"
+              value={passwordData.confirmPassword}
+              onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+              placeholder="Повторите новый пароль"
+            />
+          </div>
+          <Button 
+            onClick={handleChangePassword} 
+            disabled={isChangingPassword || !passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword}
+            variant="outline"
+          >
+            <Lock className="h-4 w-4 mr-2" />
+            {isChangingPassword ? 'Изменение...' : 'Изменить пароль'}
+          </Button>
         </CardContent>
       </Card>
 

@@ -17,6 +17,7 @@ use App\Http\Action\V1\Order\GetByReferrerIdAction as OrderGetByReferrerIdAction
 use App\Http\Action\V1\Order\UpdateStatusAction as OrderUpdateStatusAction;
 use App\Http\Action\V1\Product\GetAllAction as ProductGetAllAction;
 use App\Http\Action\V1\Product\GetBySlugAction as ProductGetBySlugAction;
+use App\Http\Action\V1\Product\CreateAction as ProductCreateAction;
 use App\Http\Action\V1\Product\UpdateAction as ProductUpdateAction;
 use App\Http\Action\V1\Product\DeleteAction as ProductDeleteAction;
 use App\Http\Action\V1\Review\ApproveAction as ReviewApproveAction;
@@ -31,6 +32,9 @@ use App\Http\Action\V1\User\GetReferralInfoAction as UserGetReferralInfoAction;
 use App\Http\Action\V1\User\LoginAction as UserLoginAction;
 use App\Http\Action\V1\User\RegisterAction as UserRegisterAction;
 use App\Http\Action\V1\User\UpdateProfileAction as UserUpdateProfileAction;
+use App\Http\Action\V1\Admin\LoginAction as AdminLoginAction;
+use App\Http\Action\V1\Admin\GetCurrentAction as AdminGetCurrentAction;
+use App\Http\Action\V1\Admin\ChangePasswordAction as AdminChangePasswordAction;
 use App\Http\Action\V1\Withdrawal\CreateAction as WithdrawalCreateAction;
 use App\Http\Action\V1\Withdrawal\GetAllAction as WithdrawalGetAllAction;
 use App\Http\Action\V1\Withdrawal\GetByUserIdAction as WithdrawalGetByUserIdAction;
@@ -41,10 +45,12 @@ return static function (App $app, array $dependencies): void {
     $fetchers = $dependencies['fetchers'];
     $handlers = $dependencies['handlers'];
     $em = $dependencies['em'];
+    $adminRepository = $dependencies['adminRepository'];
 
     // Products
     $app->get('/api/v1/products', new ProductGetAllAction($fetchers['productsGetAll']));
     $app->get('/api/v1/products/{slug}', new ProductGetBySlugAction($fetchers['productsGetBySlug']));
+    $app->post('/api/v1/products', new ProductCreateAction($handlers['productCreate'], $em));
     $app->put('/api/v1/products/{id}', new ProductUpdateAction($handlers['productUpdate'], $em));
     $app->delete('/api/v1/products/{id}', new ProductDeleteAction($handlers['productDelete'], $em));
 
@@ -55,6 +61,11 @@ return static function (App $app, array $dependencies): void {
     $app->get('/api/v1/auth/me', new UserGetCurrentAction($fetchers['usersGetById']));
     $app->get('/api/v1/auth/referral-info', new UserGetReferralInfoAction($fetchers['usersGetReferralInfo']));
     $app->put('/api/v1/auth/profile', new UserUpdateProfileAction($handlers['userUpdate'], $em));
+
+    // Admin Auth
+    $app->post('/api/v1/admin/login', new AdminLoginAction($adminRepository));
+    $app->get('/api/v1/admin/me', new AdminGetCurrentAction($adminRepository));
+    $app->put('/api/v1/admin/password', new AdminChangePasswordAction($adminRepository, $em));
 
     // Orders
     $app->get('/api/v1/orders', new OrderGetAllAction($fetchers['ordersGetAll'], $dependencies['orderItemRepository']));
