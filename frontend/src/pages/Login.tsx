@@ -11,8 +11,10 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 const Login = () => {
+  useDocumentTitle('Вход');
   const navigate = useNavigate();
   const { login, register } = useAuthContext();
   const { toast } = useToast();

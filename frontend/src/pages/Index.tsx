@@ -9,8 +9,10 @@ import { SeoSection } from '@/components/sections/SeoSection';
 import { MarketplacesSection } from '@/components/sections/MarketplacesSection';
 import { ReviewsSection } from '@/components/sections/ReviewsSection';
 import { ContactsSection } from '@/components/sections/ContactsSection';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 const Index = () => {
+  useDocumentTitle('Качество, проверенное природой');
   return (
     <div className="min-h-screen">
       <Header />

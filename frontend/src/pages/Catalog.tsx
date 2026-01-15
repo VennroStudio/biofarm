@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -30,6 +31,7 @@ type SortOption = 'default' | 'price-asc' | 'price-desc' | 'name';
 const PRODUCTS_PER_PAGE = 12;
 
 const Catalog = () => {
+  useDocumentTitle('Каталог');
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('default');

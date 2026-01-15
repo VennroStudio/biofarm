@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ShoppingCart, Minus, Plus, Trash2, ArrowRight, ShoppingBag } from 'lucide-react';
@@ -11,6 +12,7 @@ import { useCart } from '@/hooks/useCart';
 import { useAuthContext } from '@/contexts/AuthContext';
 
 const Cart = () => {
+  useDocumentTitle('Корзина');
   const navigate = useNavigate();
   const { cart, total, updateQuantity, removeFromCart } = useCart();
   const { user } = useAuthContext();

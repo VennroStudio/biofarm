@@ -6,6 +6,7 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { getBlogPostBySlug, getBlogPosts, BlogPost } from '@/data/blogPosts';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 const BlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -37,6 +38,13 @@ const BlogPost = () => {
       })
       .finally(() => setLoading(false));
   }, [slug]);
+
+  // Set document title when post is loaded
+  useEffect(() => {
+    if (post) {
+      document.title = `${post.title} - Биофарм`;
+    }
+  }, [post]);
 
   if (loading) {
     return (

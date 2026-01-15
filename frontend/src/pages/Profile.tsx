@@ -24,8 +24,10 @@ import { useAuthContext } from '@/contexts/AuthContext';
 import { authApi, ReferralInfo } from '@/data/users';
 import { ordersApi, Order } from '@/data/orders';
 import { useToast } from '@/hooks/use-toast';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 const Profile = () => {
+  useDocumentTitle('Личный кабинет');
   const navigate = useNavigate();
   const { user, logout, updateProfile, refreshUser, isAuthenticated, isLoading } = useAuthContext();
   const { toast } = useToast();

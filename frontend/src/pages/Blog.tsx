@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { getBlogPosts, categories, BlogPost } from '@/data/blogPosts';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -35,6 +36,7 @@ const itemVariants = {
 const POSTS_PER_PAGE = 9;
 
 const Blog = () => {
+  useDocumentTitle('Блог');
   const [selectedCategory, setSelectedCategory] = useState('Все');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);

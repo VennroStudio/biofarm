@@ -32,6 +32,13 @@ const ProductPage = () => {
   const [quantity, setQuantity] = useState(1);
   const { addToCart } = useCart();
 
+  // Set document title when product is loaded
+  useEffect(() => {
+    if (product) {
+      document.title = `${product.name} - Биофарм`;
+    }
+  }, [product]);
+
   useEffect(() => {
     if (!slug) {
       setLoading(false);
