@@ -1,4 +1,4 @@
-import { Leaf, Phone, Mail, MapPin } from 'lucide-react';
+import { Building2 } from 'lucide-react';
 
 const footerLinks = {
   catalog: {
@@ -35,56 +35,87 @@ export const Footer = () => {
     <footer className="bg-primary text-primary-foreground">
       <div className="container mx-auto px-4 py-16">
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-12">
-          {/* Logo & Description */}
+          {/* Legal Information */}
           <div className="sm:col-span-2 lg:col-span-1">
-            <div className="flex items-center gap-2 mb-4">
-              <Leaf className="h-8 w-8" />
-              <span className="text-2xl font-display font-bold">BioFarm</span>
+            <div className="flex items-center gap-2 mb-6">
+              <Building2 className="h-6 w-6" />
+              <h4 className="font-bold text-lg">Реквизиты организации</h4>
             </div>
-            <p className="text-primary-foreground/70 mb-6 text-sm leading-relaxed">
-              Натуральные продукты с собственных ферм. 
-              Мы заботимся о вашем здоровье и качестве жизни.
-            </p>
-            <div className="space-y-3">
-              <a
-                href="tel:+79991234567"
-                className="flex items-center gap-3 text-primary-foreground/70 hover:text-primary-foreground transition-colors text-sm"
-              >
-                <Phone className="h-4 w-4" />
-                +7 (999) 123-45-67
-              </a>
-              <a
-                href="mailto:info@biofarm.store"
-                className="flex items-center gap-3 text-primary-foreground/70 hover:text-primary-foreground transition-colors text-sm"
-              >
-                <Mail className="h-4 w-4" />
-                info@biofarm.store
-              </a>
-              <div className="flex items-start gap-3 text-primary-foreground/70 text-sm">
-                <MapPin className="h-4 w-4 mt-0.5" />
-                <span>г. Серпухов, Московская область</span>
+            <div className="space-y-4 text-sm">
+              <div>
+                <p className="text-primary-foreground/90 font-semibold mb-2">Название организации:</p>
+                <p className="text-primary-foreground/70 leading-relaxed">
+                  ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ "ИНСТИТУТ ИЗУЧЕНИЯ БИОЛОГИЧЕСКИ АКТИВНЫХ ВЕЩЕСТВ "БИОФАРМ"
+                </p>
+              </div>
+              <div>
+                <p className="text-primary-foreground/90 font-semibold mb-2">Юридический адрес:</p>
+                <p className="text-primary-foreground/70 leading-relaxed">
+                  634045, РОССИЯ, ТОМСКАЯ ОБЛАСТЬ, Г.О. ГОРОД ТОМСК, Г ТОМСК, ТЕР. АПРЕЛЬ ПОСЕЛОК, УЛ ЛИСТОПАДНАЯ, Д. 77
+                </p>
               </div>
             </div>
           </div>
 
-          {/* Links */}
-          {Object.values(footerLinks).map((section) => (
-            <div key={section.title}>
-              <h4 className="font-bold mb-4">{section.title}</h4>
-              <ul className="space-y-3">
-                {section.links.map((link) => (
-                  <li key={link.label}>
-                    <a
-                      href={link.href}
-                      className="text-primary-foreground/70 hover:text-primary-foreground transition-colors text-sm"
-                    >
-                      {link.label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
+          {/* Реквизиты - Column 2 */}
+          <div>
+            <h4 className="font-bold mb-4">Реквизиты</h4>
+            <div className="space-y-4 text-sm">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-primary-foreground/90 font-semibold mb-1">ИНН:</p>
+                  <p className="text-primary-foreground/70">7017490966</p>
+                </div>
+                <div>
+                  <p className="text-primary-foreground/90 font-semibold mb-1">КПП:</p>
+                  <p className="text-primary-foreground/70">701701001</p>
+                </div>
+                <div className="col-span-2">
+                  <p className="text-primary-foreground/90 font-semibold mb-1">ОГРН:</p>
+                  <p className="text-primary-foreground/70">1227000001557</p>
+                </div>
+              </div>
+              <div>
+                <p className="text-primary-foreground/90 font-semibold mb-2">Расчетный счет:</p>
+                <p className="text-primary-foreground/70">40702810610001034144</p>
+              </div>
             </div>
-          ))}
+          </div>
+
+          {/* Банк - Column 3 */}
+          <div>
+            <h4 className="font-bold mb-4">Банк</h4>
+            <div className="space-y-4 text-sm">
+              <div>
+                <p className="text-primary-foreground/70 mb-3">АО «ТБанк»</p>
+                <div className="space-y-2 text-primary-foreground/70">
+                  <p><span className="font-semibold">ИНН банка:</span> 7710140679</p>
+                  <p><span className="font-semibold">БИК банка:</span> 044525974</p>
+                  <p><span className="font-semibold">Корр. счет:</span> 30101810145250000974</p>
+                  <p className="text-xs mt-2">
+                    <span className="font-semibold">Адрес банка:</span> 127287, г. Москва, ул. Хуторская 2-я, д. 38А, стр. 26
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Links - Column 4 */}
+          <div>
+            <h4 className="font-bold mb-4">{footerLinks.info.title}</h4>
+            <ul className="space-y-3">
+              {footerLinks.info.links.map((link) => (
+                <li key={link.label}>
+                  <a
+                    href={link.href}
+                    className="text-primary-foreground/70 hover:text-primary-foreground transition-colors text-sm"
+                  >
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
 
         {/* Bottom */}
@@ -94,7 +125,7 @@ export const Footer = () => {
           </p>
           <div className="flex items-center gap-4">
             <span className="text-primary-foreground/50 text-sm">
-              ИНН: 1234567890 | ОГРН: 1234567890123
+              Сделано VNS Studio
             </span>
           </div>
         </div>
