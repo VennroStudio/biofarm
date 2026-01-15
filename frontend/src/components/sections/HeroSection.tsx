@@ -13,7 +13,7 @@ export const HeroSection = () => {
           loop
           playsInline
           className="w-full h-full object-cover"
-          poster="https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1920&q=80"
+          poster=""
         >
           <source
             src="https://biofarm.store/uploads/videos/biofarm.mp4"

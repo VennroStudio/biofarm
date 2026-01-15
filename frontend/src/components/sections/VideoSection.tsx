@@ -72,7 +72,7 @@ export const VideoSection = () => {
           >
             <div className="relative aspect-video rounded-2xl overflow-hidden shadow-2xl">
               <img
-                src="https://cdn.pixabay.com/photo/2016/03/11/13/59/fir-1250330_1280.jpg"
+                src="https://biofarm.store/uploads/images/index/poster.webp"
                 alt="Производство"
                 className="w-full h-full object-cover"
               />

@@ -11,3 +11,6 @@ app-db-migrations:
 
 app-db-fixtures:
 	docker-compose exec backend php bin/load-fixtures.php
+
+build-app:
+	docker-compose exec frontend sh -c "cd /app && npm run build"
