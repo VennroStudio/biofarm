@@ -45,6 +45,11 @@ final class BlogPostRepository
         return $this->repo->findOneBy(['slug' => $slug, 'isPublished' => true]);
     }
 
+    public function findBySlugAll(string $slug): ?BlogPost
+    {
+        return $this->repo->findOneBy(['slug' => $slug]);
+    }
+
     /** @return BlogPost[] */
     public function findAllPublished(): array
     {

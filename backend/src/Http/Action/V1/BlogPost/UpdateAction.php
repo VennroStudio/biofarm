@@ -46,6 +46,14 @@ final readonly class UpdateAction implements RequestHandlerInterface
         
         $body = json_decode((string)$request->getBody(), true);
 
+        // Generate slug if not provided
+        $slug = $body['slug'] ?? null;
+        if (empty($slug)) {
+            $slug = strtolower(trim(preg_replace('/[^\w\s-]/', '', $body['title'] ?? '')));
+            $slug = preg_replace('/[-\s]+/', '-', $slug);
+            $slug = trim($slug, '-');
+        }
+
         $command = new Command(
             postId: $postId,
             title: $body['title'] ?? '',
@@ -53,9 +61,10 @@ final readonly class UpdateAction implements RequestHandlerInterface
             content: $body['content'] ?? '',
             image: $body['image'] ?? '',
             categoryId: $body['category'] ?? $body['categoryId'] ?? '',
+            authorName: $body['authorName'] ?? 'Автор',
             readTime: (int)($body['readTime'] ?? 5),
             isPublished: $body['isPublished'] ?? false,
-            slug: $body['slug'] ?? null,
+            slug: $slug,
         );
 
         try {

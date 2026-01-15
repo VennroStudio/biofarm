@@ -103,7 +103,7 @@ final class Serializer
             'content' => $post->getContent(),
             'image' => $post->getImage(),
             'category' => $post->getCategoryId(),
-            'authorId' => $post->getAuthorId(),
+            'authorName' => $post->getAuthorName(),
             'readTime' => $post->getReadTime(),
             'date' => date('Y-m-d', $post->getCreatedAt()),
         ];

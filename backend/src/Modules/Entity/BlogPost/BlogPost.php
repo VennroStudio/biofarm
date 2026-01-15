@@ -39,8 +39,8 @@ final class BlogPost
     #[ORM\Column(type: 'string', length: 50)]
     private string $categoryId;
 
-    #[ORM\Column(type: 'integer')]
-    private int $authorId;
+    #[ORM\Column(type: 'string', length: 255)]
+    private string $authorName;
 
     #[ORM\Column(type: 'integer')]
     private int $readTime; // minutes
@@ -61,7 +61,7 @@ final class BlogPost
         string $content,
         string $image,
         string $categoryId,
-        int $authorId,
+        string $authorName,
         int $readTime,
         bool $isPublished = false,
     ) {
@@ -71,7 +71,7 @@ final class BlogPost
         $this->content = $content;
         $this->image = $image;
         $this->categoryId = $categoryId;
-        $this->authorId = $authorId;
+        $this->authorName = $authorName;
         $this->readTime = $readTime;
         $this->isPublished = $isPublished;
         $this->createdAt = time();
@@ -84,7 +84,7 @@ final class BlogPost
         string $content,
         string $image,
         string $categoryId,
-        int $authorId,
+        string $authorName,
         int $readTime,
         bool $isPublished = false,
     ): self {
@@ -95,7 +95,7 @@ final class BlogPost
             content: $content,
             image: $image,
             categoryId: $categoryId,
-            authorId: $authorId,
+            authorName: $authorName,
             readTime: $readTime,
             isPublished: $isPublished,
         );
@@ -107,6 +107,7 @@ final class BlogPost
         string $content,
         string $image,
         string $categoryId,
+        string $authorName,
         int $readTime,
         bool $isPublished = false,
         ?string $slug = null,
@@ -116,6 +117,7 @@ final class BlogPost
         $this->content = $content;
         $this->image = $image;
         $this->categoryId = $categoryId;
+        $this->authorName = $authorName;
         $this->readTime = $readTime;
         $this->isPublished = $isPublished;
         if ($slug !== null) {
@@ -162,9 +164,9 @@ final class BlogPost
         return $this->categoryId;
     }
 
-    public function getAuthorId(): int
+    public function getAuthorName(): string
     {
-        return $this->authorId;
+        return $this->authorName;
     }
 
     public function getReadTime(): int

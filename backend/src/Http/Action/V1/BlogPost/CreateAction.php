@@ -24,14 +24,22 @@ final readonly class CreateAction implements RequestHandlerInterface
     {
         $body = json_decode((string)$request->getBody(), true);
 
+        // Generate slug if not provided or empty
+        $slug = $body['slug'] ?? '';
+        if (empty($slug)) {
+            $slug = strtolower(trim(preg_replace('/[^\w\s-]/', '', $body['title'] ?? '')));
+            $slug = preg_replace('/[-\s]+/', '-', $slug);
+            $slug = trim($slug, '-');
+        }
+
         $command = new Command(
-            slug: $body['slug'] ?? '',
+            slug: $slug,
             title: $body['title'] ?? '',
             excerpt: $body['excerpt'] ?? '',
             content: $body['content'] ?? '',
             image: $body['image'] ?? '',
             categoryId: $body['category'] ?? $body['categoryId'] ?? '',
-            authorId: (int)($body['authorId'] ?? 1),
+            authorName: $body['authorName'] ?? 'Автор',
             readTime: (int)($body['readTime'] ?? 5),
             isPublished: $body['isPublished'] ?? true,
         );

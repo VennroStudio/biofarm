@@ -40,7 +40,7 @@ export const getBlogPosts = async (forceRefresh = false): Promise<BlogPost[]> =>
     }),
     category: post.category,
     author: {
-      name: 'Автор',
+      name: post.authorName || 'Автор',
       avatar: '',
     },
     readTime: `${post.readTime} мин`,
@@ -66,7 +66,7 @@ export const getBlogPostBySlug = async (slug: string): Promise<BlogPost | undefi
       }),
       category: data.category,
       author: {
-        name: 'Автор',
+        name: data.authorName || 'Автор',
         avatar: '',
       },
       readTime: `${data.readTime} мин`,

@@ -16,7 +16,7 @@ final readonly class Handler
 
     public function handle(Command $command): BlogPost
     {
-        $existing = $this->blogPostRepository->findBySlug($command->slug);
+        $existing = $this->blogPostRepository->findBySlugAll($command->slug);
 
         if ($existing) {
             throw new DomainException('BlogPost with this slug already exists');
@@ -29,7 +29,7 @@ final readonly class Handler
             content: $command->content,
             image: $command->image,
             categoryId: $command->categoryId,
-            authorId: $command->authorId,
+            authorName: $command->authorName,
             readTime: $command->readTime,
             isPublished: $command->isPublished,
         );

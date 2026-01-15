@@ -96,7 +96,23 @@ const AdminBlog = () => {
   };
 
   const handleSave = async () => {
-    const slug = form.title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
+    // Generate slug from title (transliterate and clean)
+    const generateSlug = (title: string): string => {
+      const translit: { [key: string]: string } = {
+        'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo',
+        'ж': 'zh', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm',
+        'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
+        'ф': 'f', 'х': 'h', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'sch',
+        'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya'
+      };
+      
+      let slug = title.toLowerCase();
+      slug = slug.split('').map(char => translit[char] || char).join('');
+      slug = slug.replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-');
+      return slug.trim().replace(/^-+|-+$/g, '');
+    };
+    
+    const slug = generateSlug(form.title);
     
     try {
       if (editingPost) {
@@ -107,7 +123,7 @@ const AdminBlog = () => {
           image: form.image || editingPost.image,
           category: form.category,
           categoryId: form.category,
-          authorId: 1,
+          authorName: form.authorName,
           readTime: Math.ceil(form.content.length / 1000),
           isPublished: true,
           slug: slug,
@@ -125,7 +141,7 @@ const AdminBlog = () => {
           image: form.image || 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=800&q=80',
           category: form.category,
           categoryId: form.category,
-          authorId: 1,
+          authorName: form.authorName,
           readTime: Math.ceil(form.content.length / 1000),
           isPublished: true,
           slug: slug,

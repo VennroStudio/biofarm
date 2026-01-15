@@ -22,7 +22,7 @@ final readonly class Command
         #[Assert\NotBlank]
         public string $categoryId,
         #[Assert\NotBlank]
-        public int $authorId,
+        public string $authorName,
         #[Assert\NotBlank]
         #[Assert\Positive]
         public int $readTime,

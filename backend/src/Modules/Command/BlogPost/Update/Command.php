@@ -22,6 +22,8 @@ final readonly class Command
         #[Assert\NotBlank]
         public string $categoryId,
         #[Assert\NotBlank]
+        public string $authorName,
+        #[Assert\NotBlank]
         #[Assert\Positive]
         public int $readTime,
         public bool $isPublished = false,

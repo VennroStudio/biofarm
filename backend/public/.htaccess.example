@@ -1,0 +1,20 @@
+# .htaccess для Apache на reg.ru
+# Скопируйте этот файл в папку api/ на хостинге
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+    
+    # Если файл существует, используем его
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    
+    # Иначе перенаправляем на index.php
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+# Защита .env файла
+<FilesMatch "^\.env">
+    Order allow,deny
+    Deny from all
+</FilesMatch>

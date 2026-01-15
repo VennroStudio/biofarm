@@ -1,7 +1,7 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, Clock, ArrowLeft, Share2, Facebook, Twitter } from 'lucide-react';
+import { Calendar, Clock, ArrowLeft } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -124,18 +124,9 @@ const BlogPost = () => {
 
             {/* Meta */}
             <div className="flex flex-wrap items-center gap-6 mb-8 pb-8 border-b border-border">
-              <div className="flex items-center gap-3">
-                <img
-                  src={post.author.avatar}
-                  alt={post.author.name}
-                  className="w-12 h-12 rounded-full object-cover"
-                />
-                <div>
-                  <span className="block font-medium text-foreground">
-                    {post.author.name}
-                  </span>
-                  <span className="text-sm text-muted-foreground">Автор</span>
-                </div>
+              <div className="text-muted-foreground">
+                <span className="font-medium">Автор: </span>
+                <span className="text-foreground">{post.author.name}</span>
               </div>
               <div className="flex items-center gap-4 text-muted-foreground">
                 <div className="flex items-center gap-2">
@@ -155,27 +146,16 @@ const BlogPost = () => {
                 prose-headings:font-display prose-headings:text-foreground prose-headings:font-bold
                 prose-h2:text-2xl prose-h2:mt-12 prose-h2:mb-6
                 prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-4
-                prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:mb-6
+                prose-p:text-muted-foreground prose-p:leading-relaxed
                 prose-strong:text-foreground prose-strong:font-semibold
                 prose-ul:text-muted-foreground prose-ul:my-6
+                prose-ol:text-muted-foreground prose-ol:my-6
                 prose-li:my-2
-                prose-a:text-primary prose-a:no-underline hover:prose-a:underline"
-              dangerouslySetInnerHTML={{ __html: formatContent(post.content) }}
+                prose-a:text-primary prose-a:no-underline hover:prose-a:underline
+                [&_p]:mb-6 [&_p:not(:first-child)]:mt-0 [&_p:first-child]:mt-0"
+              dangerouslySetInnerHTML={{ __html: post.content }}
             />
 
-            {/* Share */}
-            <div className="flex items-center gap-4 mt-12 pt-8 border-t border-border">
-              <span className="text-foreground font-medium flex items-center gap-2">
-                <Share2 className="h-4 w-4" />
-                Поделиться:
-              </span>
-              <Button variant="outline" size="icon" className="rounded-full">
-                <Facebook className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="icon" className="rounded-full">
-                <Twitter className="h-4 w-4" />
-              </Button>
-            </div>
           </motion.article>
 
           {/* Related Posts */}
@@ -226,21 +206,5 @@ const BlogPost = () => {
     </div>
   );
 };
-
-// Simple markdown-like formatting
-function formatContent(content: string): string {
-  return content
-    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/^- (.+)$/gm, '<li>$1</li>')
-    .replace(/(<li>.+<\/li>\n?)+/g, '<ul>$&</ul>')
-    .replace(/\n\n/g, '</p><p>')
-    .replace(/^(?!<[hul])/gm, '<p>')
-    .replace(/(?<![>])$/gm, '</p>')
-    .replace(/<p><\/p>/g, '')
-    .replace(/<p>(<[hul])/g, '$1')
-    .replace(/(<\/[hul].>)<\/p>/g, '$1');
-}
 
 export default BlogPost;
