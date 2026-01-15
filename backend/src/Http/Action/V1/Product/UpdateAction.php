@@ -7,6 +7,7 @@ namespace App\Http\Action\V1\Product;
 use App\Http\Serializer;
 use App\Modules\Command\Product\Update\Command;
 use App\Modules\Command\Product\Update\Handler;
+use App\Utils\SlugGenerator;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -46,6 +47,12 @@ final readonly class UpdateAction implements RequestHandlerInterface
         
         $body = json_decode((string)$request->getBody(), true);
 
+        // Generate slug if not provided or invalid (only dashes)
+        $slug = $body['slug'] ?? null;
+        if (empty($slug) || trim($slug, '-') === '') {
+            $slug = SlugGenerator::generate($body['name'] ?? '');
+        }
+
         $command = new Command(
             id: $productId,
             name: $body['name'] ?? '',
@@ -63,7 +70,7 @@ final readonly class UpdateAction implements RequestHandlerInterface
             wbLink: $body['wbLink'] ?? null,
             ozonLink: $body['ozonLink'] ?? null,
             isActive: $body['isActive'] ?? true,
-            slug: $body['slug'] ?? null,
+            slug: $slug,
         );
 
         try {

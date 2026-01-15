@@ -6,6 +6,7 @@ namespace App\Modules\Command\BlogPost\Update;
 
 use App\Modules\Entity\BlogPost\BlogPost;
 use App\Modules\Entity\BlogPost\BlogPostRepository;
+use App\Utils\SlugGenerator;
 
 final readonly class Handler
 {
@@ -18,9 +19,10 @@ final readonly class Handler
         $post = $this->blogPostRepository->getById($command->postId);
 
         // Generate slug from title if not provided
-        $slug = $command->slug ?? strtolower(trim(preg_replace('/[^\w\s-]/', '', $command->title)));
-        $slug = preg_replace('/[-\s]+/', '-', $slug);
-        $slug = trim($slug, '-');
+        $slug = $command->slug ?? '';
+        if (empty($slug)) {
+            $slug = SlugGenerator::generate($command->title);
+        }
 
         // Check if slug is already taken by another post
         $existing = $this->blogPostRepository->findBySlugAll($slug);

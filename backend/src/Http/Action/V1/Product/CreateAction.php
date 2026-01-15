@@ -6,6 +6,7 @@ namespace App\Http\Action\V1\Product;
 
 use App\Modules\Command\Product\Create\Command;
 use App\Modules\Command\Product\Create\Handler;
+use App\Utils\SlugGenerator;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -23,10 +24,11 @@ final readonly class CreateAction implements RequestHandlerInterface
     {
         $body = json_decode((string)$request->getBody(), true);
 
-        // Generate slug from name if not provided
-        $slug = $body['slug'] ?? strtolower(trim(preg_replace('/[^\w\s-]/', '', $body['name'] ?? '')));
-        $slug = preg_replace('/[-\s]+/', '-', $slug);
-        $slug = trim($slug, '-');
+        // Generate slug from name if not provided or invalid (only dashes)
+        $slug = $body['slug'] ?? '';
+        if (empty($slug) || trim($slug, '-') === '') {
+            $slug = SlugGenerator::generate($body['name'] ?? '');
+        }
 
         $command = new Command(
             slug: $slug,

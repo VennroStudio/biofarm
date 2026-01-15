@@ -8,14 +8,14 @@ const marketplaces = [
     name: 'Wildberries',
     logo: 'WB',
     color: 'bg-purple-600',
-    url: 'https://www.wildberries.ru',
+    url: 'https://www.wildberries.ru/seller/1009387',
     benefits: ['Быстрая доставка', 'Пункты выдачи рядом', 'Кэшбек баллами'],
   },
   {
     name: 'Ozon',
     logo: 'Ozon',
     color: 'bg-blue-600',
-    url: 'https://www.ozon.ru',
+    url: 'https://www.ozon.ru/seller/institut-izucheniya-biologicheski-aktivnyh-veshchestv-biofarm-647407/',
     benefits: ['Premium-доставка', 'Рассрочка', 'Ozon Счёт'],
   },
 ];

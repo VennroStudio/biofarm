@@ -7,6 +7,7 @@ namespace App\Http\Action\V1\BlogPost;
 use App\Http\Serializer;
 use App\Modules\Command\BlogPost\Create\Command;
 use App\Modules\Command\BlogPost\Create\Handler;
+use App\Utils\SlugGenerator;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -27,9 +28,7 @@ final readonly class CreateAction implements RequestHandlerInterface
         // Generate slug if not provided or empty
         $slug = $body['slug'] ?? '';
         if (empty($slug)) {
-            $slug = strtolower(trim(preg_replace('/[^\w\s-]/', '', $body['title'] ?? '')));
-            $slug = preg_replace('/[-\s]+/', '-', $slug);
-            $slug = trim($slug, '-');
+            $slug = SlugGenerator::generate($body['title'] ?? '');
         }
 
         $command = new Command(

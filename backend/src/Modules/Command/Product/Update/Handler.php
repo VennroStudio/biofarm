@@ -6,6 +6,7 @@ namespace App\Modules\Command\Product\Update;
 
 use App\Modules\Entity\Product\Product;
 use App\Modules\Entity\Product\ProductRepository;
+use App\Utils\SlugGenerator;
 use DomainException;
 
 final readonly class Handler
@@ -18,10 +19,17 @@ final readonly class Handler
     {
         $product = $this->productRepository->getById($command->id);
 
-        // Generate slug from name if not provided
-        $slug = $command->slug ?? strtolower(trim(preg_replace('/[^\w\s-]/', '', $command->name)));
-        $slug = preg_replace('/[-\s]+/', '-', $slug);
-        $slug = trim($slug, '-');
+        // Generate slug from name if not provided or invalid (only dashes)
+        $slug = $command->slug ?? '';
+        if (empty($slug) || trim($slug, '-') === '') {
+            $slug = SlugGenerator::generate($command->name);
+        }
+        
+        // Check if slug is already taken by another product
+        $existing = $this->productRepository->findBySlug($slug);
+        if ($existing && $existing->getId() !== $product->getId()) {
+            throw new DomainException('Product with this slug already exists');
+        }
 
         $product->edit(
             name: $command->name,

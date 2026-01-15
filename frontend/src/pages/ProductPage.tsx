@@ -284,13 +284,14 @@ const ProductPage = () => {
                 prose-headings:font-display prose-headings:text-foreground prose-headings:font-bold
                 prose-h2:text-2xl prose-h2:mt-12 prose-h2:mb-6
                 prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-4
-                prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:mb-6
+                prose-p:text-muted-foreground prose-p:leading-relaxed
                 prose-strong:text-foreground prose-strong:font-semibold
                 prose-ul:text-muted-foreground prose-ul:my-6
+                prose-ol:text-muted-foreground prose-ol:my-6
                 prose-li:my-2
                 prose-a:text-primary prose-a:no-underline hover:prose-a:underline
-                prose-ol:text-muted-foreground prose-ol:my-6
                 prose-blockquote:text-muted-foreground prose-blockquote:border-l-primary
+                [&_p]:mb-6 [&_p:not(:first-child)]:mt-0 [&_p:first-child]:mt-0
                 mb-8"
               dangerouslySetInnerHTML={{ __html: product.description }}
             />
