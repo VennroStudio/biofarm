@@ -38,9 +38,14 @@ const AdminOrders = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
   useEffect(() => {
-    // Load all orders (demo: empty initially, would load from API)
-    ordersApi.getOrders('all').then(setOrders);
-  }, []);
+    // Load all orders
+    ordersApi.getAllOrders()
+      .then(setOrders)
+      .catch((error) => {
+        console.error('Failed to load orders:', error);
+        toast({ title: 'Ошибка загрузки заказов', variant: 'destructive' });
+      });
+  }, [toast]);
 
   const filteredOrders = orders.filter(order => {
     const matchesSearch = order.id.toLowerCase().includes(search.toLowerCase()) ||
@@ -55,6 +60,26 @@ const AdminOrders = () => {
       o.id === orderId ? { ...o, status: newStatus } : o
     ));
     toast({ title: 'Статус обновлён' });
+  };
+
+  const handlePaymentStatusChange = async (orderId: string, paymentStatus: Order['paymentStatus']) => {
+    try {
+      const updatedOrder = await ordersApi.updatePaymentStatus(orderId, paymentStatus);
+      if (updatedOrder) {
+        // Обновляем состояние заказов с актуальными данными
+        setOrders(prev => prev.map(o => 
+          o.id === orderId ? { ...o, paymentStatus: updatedOrder.paymentStatus, bonusEarned: updatedOrder.bonusEarned || 0 } : o
+        ));
+        toast({ title: 'Статус оплаты обновлён' });
+      } else {
+        // Если обновление не вернуло данные, перезагружаем все заказы
+        ordersApi.getAllOrders().then(setOrders);
+        toast({ title: 'Статус оплаты обновлён' });
+      }
+    } catch (error) {
+      console.error('Failed to update payment status:', error);
+      toast({ title: 'Ошибка обновления статуса оплаты', variant: 'destructive' });
+    }
   };
 
   const getStatusBadge = (status: Order['status']) => {
@@ -111,45 +136,67 @@ const AdminOrders = () => {
                     <TableHead>Дата</TableHead>
                     <TableHead>Сумма</TableHead>
                     <TableHead>Статус</TableHead>
+                    <TableHead>Оплата</TableHead>
                     <TableHead className="text-right">Действия</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredOrders.map((order) => (
-                    <TableRow key={order.id}>
-                      <TableCell className="font-medium">{order.id}</TableCell>
-                      <TableCell>
-                        <div>
-                          <p>{order.shippingAddress.name}</p>
-                          <p className="text-sm text-muted-foreground">{order.shippingAddress.phone}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {new Date(order.createdAt).toLocaleDateString('ru-RU')}
-                      </TableCell>
-                      <TableCell className="font-medium">{order.total.toLocaleString()} ₽</TableCell>
-                      <TableCell>
-                        <Select 
-                          value={order.status} 
-                          onValueChange={(v) => handleStatusChange(order.id, v as Order['status'])}
-                        >
-                          <SelectTrigger className="w-[140px]">
-                            {getStatusBadge(order.status)}
-                          </SelectTrigger>
-                          <SelectContent>
-                            {statusOptions.map(s => (
-                              <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" onClick={() => setSelectedOrder(order)}>
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {filteredOrders.map((order) => {
+                    const isPaid = order.paymentStatus === 'completed' || order.paidAt !== null;
+                    return (
+                      <TableRow key={order.id}>
+                        <TableCell className="font-medium">{order.id}</TableCell>
+                        <TableCell>
+                          <div>
+                            <p>{order.shippingAddress.name}</p>
+                            <p className="text-sm text-muted-foreground">{order.shippingAddress.phone}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {new Date(order.createdAt).toLocaleDateString('ru-RU')}
+                        </TableCell>
+                        <TableCell className="font-medium">{order.total.toLocaleString()} ₽</TableCell>
+                        <TableCell>
+                          <Select 
+                            value={order.status} 
+                            onValueChange={(v) => handleStatusChange(order.id, v as Order['status'])}
+                          >
+                            <SelectTrigger className="w-[140px]">
+                              {getStatusBadge(order.status)}
+                            </SelectTrigger>
+                            <SelectContent>
+                              {statusOptions.map(s => (
+                                <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell>
+                          <Select 
+                            key={`payment-${order.id}-${order.paymentStatus}`}
+                            value={order.paymentStatus || 'pending'} 
+                            onValueChange={(v) => handlePaymentStatusChange(order.id, v as Order['paymentStatus'])}
+                          >
+                            <SelectTrigger className="w-[140px]">
+                              <Badge variant={isPaid ? 'default' : 'outline'} className={isPaid ? 'bg-green-500 hover:bg-green-600' : ''}>
+                                {isPaid ? 'Оплачен' : 'Не оплачен'}
+                              </Badge>
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="pending">Не оплачен</SelectItem>
+                              <SelectItem value="completed">Оплачен</SelectItem>
+                              <SelectItem value="failed">Ошибка оплаты</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="icon" onClick={() => setSelectedOrder(order)}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>

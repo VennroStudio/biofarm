@@ -92,7 +92,8 @@ export const adminApi = {
     const users = await authApi.getAllUsers();
     
     const pendingWithdrawals = withdrawals.filter(w => w.status === 'pending');
-    const paidOrders = orders.filter(o => o.paymentStatus === 'completed');
+    // Выручка считается по оплаченным заказам (paymentStatus === 'completed' или paidAt !== null)
+    const paidOrders = orders.filter(o => o.paymentStatus === 'completed' || o.paidAt !== null);
     
     return {
       totalOrders: orders.length,

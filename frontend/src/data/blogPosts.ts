@@ -1,4 +1,4 @@
-import blogData from './blog.json';
+import { api } from '@/lib/api';
 
 export interface BlogPost {
   id: number;
@@ -16,12 +16,13 @@ export interface BlogPost {
   readTime: string;
 }
 
-// Transform JSON data to match the expected interface
-export const blogPosts: BlogPost[] = blogData.posts.map(post => {
-  const author = blogData.authors.find(a => a.id === post.author_id) || blogData.authors[0];
-  const category = blogData.categories.find(c => c.id === post.category_id);
+let cachedPosts: BlogPost[] | null = null;
+
+export const getBlogPosts = async (): Promise<BlogPost[]> => {
+  if (cachedPosts) return cachedPosts;
   
-  return {
+  const data = await api.blog.getAll();
+  cachedPosts = data.map((post: any) => ({
     id: post.id,
     slug: post.slug,
     title: post.title,
@@ -33,13 +34,45 @@ export const blogPosts: BlogPost[] = blogData.posts.map(post => {
       month: 'long', 
       year: 'numeric' 
     }),
-    category: category?.label || post.category_id,
+    category: post.category,
     author: {
-      name: author.name,
-      avatar: author.avatar,
+      name: 'Автор',
+      avatar: '',
     },
-    readTime: `${post.read_time} мин`,
-  };
-});
+    readTime: `${post.readTime} мин`,
+  }));
+  
+  return cachedPosts;
+};
 
-export const categories = ['Все', ...blogData.categories.filter(c => c.id !== 'all').map(c => c.label)];
+export const getBlogPostBySlug = async (slug: string): Promise<BlogPost | undefined> => {
+  try {
+    const data = await api.blog.getBySlug(slug);
+    return {
+      id: data.id,
+      slug: data.slug,
+      title: data.title,
+      excerpt: data.excerpt,
+      content: data.content,
+      image: data.image,
+      date: new Date(data.date).toLocaleDateString('ru-RU', { 
+        day: 'numeric', 
+        month: 'long', 
+        year: 'numeric' 
+      }),
+      category: data.category,
+      author: {
+        name: 'Автор',
+        avatar: '',
+      },
+      readTime: `${data.readTime} мин`,
+    };
+  } catch {
+    return undefined;
+  }
+};
+
+export const categories = ['Все', 'Советы', 'Здоровье', 'О нас', 'Рецепты'];
+
+// For backward compatibility
+export const blogPosts: BlogPost[] = [];

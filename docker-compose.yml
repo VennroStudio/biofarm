@@ -1,4 +1,3 @@
-version: '3.8'
 
 services:
   frontend:
@@ -15,7 +14,31 @@ services:
       - /app/.git
     environment:
       - NODE_ENV=development
+      - VITE_API_URL=http://localhost:8000
     stdin_open: true
     tty: true
     # Команда по умолчанию - запуск dev сервера
     command: npm run dev -- --host 0.0.0.0
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: biofarm-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      # Монтируем весь проект включая vendor для работы на хостинге без Docker
+      - ./backend:/app
+      # Монтируем frontend для доступа к JSON файлам фикстур
+      - ./frontend:/app-frontend:ro
+      # Исключаем только некоторые файлы
+      - /app/.git
+      - /app/var
+    environment:
+      - APP_ENV=development
+      - APP_DEBUG=true
+    stdin_open: true
+    tty: true

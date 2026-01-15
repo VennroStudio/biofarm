@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
@@ -18,7 +18,7 @@ import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { getProductBySlug, products } from '@/data/products';
+import { getProductBySlug, getProducts, Product } from '@/data/products';
 import { ProductCard } from '@/components/catalog/ProductCard';
 import { ProductGallery } from '@/components/product/ProductGallery';
 import { useCart } from '@/hooks/useCart';
@@ -26,9 +26,47 @@ import { toast } from 'sonner';
 
 const ProductPage = () => {
   const { slug } = useParams<{ slug: string }>();
-  const product = getProductBySlug(slug || '');
+  const [product, setProduct] = useState<Product | null>(null);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const { addToCart } = useCart();
+
+  useEffect(() => {
+    if (!slug) {
+      setLoading(false);
+      return;
+    }
+
+    Promise.all([
+      getProductBySlug(slug),
+      getProducts()
+    ])
+      .then(([productData, allProducts]) => {
+        if (productData) {
+          setProduct(productData);
+          setRelatedProducts(
+            allProducts.filter((p) => p.category === productData.category && p.id !== productData.id).slice(0, 4)
+          );
+        }
+      })
+      .catch((error) => {
+        console.error('Failed to load product:', error);
+      })
+      .finally(() => setLoading(false));
+  }, [slug]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container mx-auto px-4 py-32 text-center">
+          <p className="text-muted-foreground">Загрузка товара...</p>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   if (!product) {
     return (
@@ -45,10 +83,6 @@ const ProductPage = () => {
       </div>
     );
   }
-
-  const relatedProducts = products
-    .filter((p) => p.category === product.category && p.id !== product.id)
-    .slice(0, 3);
 
   const images = product.images || [product.image];
 

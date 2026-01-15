@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { reviewsApi, Review } from '@/data/reviews';
-import { products } from '@/data/products';
+import { getProducts, Product } from '@/data/products';
 import { useToast } from '@/hooks/use-toast';
 
 const REVIEWS_PER_PAGE = 10;
@@ -19,6 +19,7 @@ const REVIEWS_PER_PAGE = 10;
 const AdminReviews = () => {
   const { toast } = useToast();
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingReview, setEditingReview] = useState<Review | null>(null);
@@ -34,6 +35,11 @@ const AdminReviews = () => {
 
   useEffect(() => {
     reviewsApi.getAllReviews().then(setReviews);
+    getProducts()
+      .then(setProducts)
+      .catch((error) => {
+        console.error('Failed to load products:', error);
+      });
   }, []);
 
   const totalPages = Math.ceil(reviews.length / REVIEWS_PER_PAGE);
@@ -48,9 +54,18 @@ const AdminReviews = () => {
   };
 
   const handleDelete = async (id: string) => {
-    await reviewsApi.deleteReview(id);
-    setReviews(prev => prev.filter(r => r.id !== id));
-    toast({ title: 'Отзыв удалён' });
+    try {
+      const success = await reviewsApi.deleteReview(id);
+      if (success) {
+        setReviews(prev => prev.filter(r => r.id !== id));
+        toast({ title: 'Отзыв удалён' });
+      } else {
+        toast({ title: 'Ошибка удаления отзыва', variant: 'destructive' });
+      }
+    } catch (error) {
+      console.error('Failed to delete review:', error);
+      toast({ title: 'Ошибка удаления отзыва', variant: 'destructive' });
+    }
   };
 
   const handleEdit = (review: Review) => {
@@ -85,17 +100,27 @@ const AdminReviews = () => {
 
     if (editingReview) {
       // Update existing review
-      const updatedReview: Review = {
-        ...editingReview,
-        productId: Number(form.productId),
-        userName: form.userName,
-        rating: form.rating,
-        text: form.text,
-        source: form.source,
-        images: form.images.length > 0 ? form.images : undefined,
-      };
-      setReviews(prev => prev.map(r => r.id === editingReview.id ? updatedReview : r));
-      toast({ title: 'Отзыв обновлён' });
+      try {
+        const updatedReview = await reviewsApi.updateReview(editingReview.id, {
+          productId: Number(form.productId),
+          userId: editingReview.userId,
+          userName: form.userName,
+          rating: form.rating,
+          text: form.text,
+          source: form.source,
+          images: form.images.length > 0 ? form.images : undefined,
+        });
+        
+        if (updatedReview) {
+          setReviews(prev => prev.map(r => r.id === editingReview.id ? updatedReview : r));
+          toast({ title: 'Отзыв обновлён' });
+        } else {
+          toast({ title: 'Ошибка обновления отзыва', variant: 'destructive' });
+        }
+      } catch (error) {
+        console.error('Failed to update review:', error);
+        toast({ title: 'Ошибка обновления отзыва', variant: 'destructive' });
+      }
     } else {
       // Add new review
       const review = await reviewsApi.addReview({

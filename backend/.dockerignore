@@ -1,0 +1,8 @@
+vendor
+var/log/*
+var/cache/*
+.env.local
+.env.*.local
+.git
+.DS_Store
+*.log

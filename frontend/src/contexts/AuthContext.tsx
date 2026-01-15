@@ -7,9 +7,10 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<User | null>;
-  register: (email: string, password: string, name: string) => Promise<User | null>;
+  register: (email: string, password: string, name: string, referredBy?: string) => Promise<User | null>;
   logout: () => Promise<void>;
   updateProfile: (data: Partial<User>) => Promise<User | null>;
+  refreshUser: () => Promise<User | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);

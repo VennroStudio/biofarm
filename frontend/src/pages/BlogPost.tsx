@@ -1,19 +1,56 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Clock, ArrowLeft, Share2, Facebook, Twitter } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
-import { blogPosts } from '@/data/blogPosts';
+import { getBlogPostBySlug, getBlogPosts, BlogPost } from '@/data/blogPosts';
 
 const BlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  
-  const post = blogPosts.find((p) => p.slug === slug);
-  const relatedPosts = blogPosts
-    .filter((p) => p.slug !== slug && p.category === post?.category)
-    .slice(0, 3);
+  const [post, setPost] = useState<BlogPost | null>(null);
+  const [relatedPosts, setRelatedPosts] = useState<BlogPost[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!slug) {
+      setLoading(false);
+      return;
+    }
+
+    Promise.all([
+      getBlogPostBySlug(slug),
+      getBlogPosts()
+    ])
+      .then(([postData, allPosts]) => {
+        if (postData) {
+          setPost(postData);
+          setRelatedPosts(
+            allPosts.filter((p) => p.slug !== slug && p.category === postData.category).slice(0, 3)
+          );
+        }
+      })
+      .catch((error) => {
+        console.error('Failed to load blog post:', error);
+      })
+      .finally(() => setLoading(false));
+  }, [slug]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="pt-32 pb-20">
+          <div className="container mx-auto px-4 text-center">
+            <p className="text-muted-foreground">Загрузка статьи...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   if (!post) {
     return (

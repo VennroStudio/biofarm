@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Search, Edit, Trash2, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -25,12 +25,41 @@ import {
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
-import { products as initialProducts, categories, Product } from '@/data/products';
+import { getProducts, Product } from '@/data/products';
 import { useToast } from '@/hooks/use-toast';
+import { api } from '@/lib/api';
+
+interface Category {
+  id: number;
+  slug: string;
+  name: string;
+  description?: string;
+  image?: string;
+  isActive: boolean;
+}
 
 const AdminProducts = () => {
   const { toast } = useToast();
-  const [productList, setProductList] = useState<Product[]>(initialProducts);
+  const [productList, setProductList] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Загружаем категории и товары параллельно
+    Promise.all([
+      api.categories.getAll(),
+      getProducts()
+    ])
+      .then(([categoriesData, products]) => {
+        setCategories(categoriesData);
+        setProductList(products);
+      })
+      .catch((error) => {
+        console.error('Failed to load data:', error);
+        toast({ title: 'Ошибка загрузки данных', variant: 'destructive' });
+      })
+      .finally(() => setLoading(false));
+  }, [toast]);
   const [search, setSearch] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -96,45 +125,93 @@ const AdminProducts = () => {
     setForm(prev => ({ ...prev, images: prev.images.filter((_, i) => i !== index) }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const slug = form.name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
     
-    if (editingProduct) {
-      setProductList(prev => prev.map(p => 
-        p.id === editingProduct.id 
-          ? { ...p, ...form, price: Number(form.price), oldPrice: form.oldPrice ? Number(form.oldPrice) : undefined, images: form.images, ingredients: form.ingredients || undefined, slug }
-          : p
-      ));
-      toast({ title: 'Товар обновлён' });
-    } else {
-      const newProduct: Product = {
-        id: Date.now(),
-        slug,
-        name: form.name,
-        category: form.category,
-        price: Number(form.price),
-        oldPrice: form.oldPrice ? Number(form.oldPrice) : undefined,
-        weight: form.weight,
-        shortDescription: form.shortDescription,
-        description: form.description,
-        ingredients: form.ingredients || undefined,
-        image: form.image || 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=400&q=80',
-        images: form.images,
-        badge: form.badge || undefined,
-        wbLink: form.wbLink || undefined,
-        ozonLink: form.ozonLink || undefined,
-      };
-      setProductList(prev => [...prev, newProduct]);
-      toast({ title: 'Товар добавлен' });
+    try {
+      if (editingProduct) {
+        const updatedProduct = await api.products.update(editingProduct.id, {
+          name: form.name,
+          category: form.category,
+          categoryId: form.category,
+          price: Number(form.price),
+          oldPrice: form.oldPrice ? Number(form.oldPrice) : undefined,
+          weight: form.weight,
+          shortDescription: form.shortDescription,
+          description: form.description,
+          ingredients: form.ingredients || undefined,
+          image: form.image || 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=400&q=80',
+          images: form.images,
+          badge: form.badge || undefined,
+          wbLink: form.wbLink || undefined,
+          ozonLink: form.ozonLink || undefined,
+          isActive: true,
+          slug: slug,
+        });
+        
+        setProductList(prev => prev.map(p => 
+          p.id === editingProduct.id 
+            ? { 
+                id: updatedProduct.id,
+                slug: updatedProduct.slug,
+                name: updatedProduct.name,
+                category: updatedProduct.category,
+                price: updatedProduct.price,
+                oldPrice: updatedProduct.oldPrice ?? undefined,
+                weight: updatedProduct.weight,
+                shortDescription: updatedProduct.shortDescription,
+                description: updatedProduct.description,
+                ingredients: updatedProduct.ingredients ?? undefined,
+                image: updatedProduct.image,
+                images: updatedProduct.images,
+                badge: updatedProduct.badge ?? undefined,
+                wbLink: updatedProduct.wbLink ?? undefined,
+                ozonLink: updatedProduct.ozonLink ?? undefined,
+              }
+            : p
+        ));
+        toast({ title: 'Товар обновлён' });
+      } else {
+        // For new products, we would need a create endpoint
+        // For now, just update local state
+        const newProduct: Product = {
+          id: Date.now(),
+          slug,
+          name: form.name,
+          category: form.category,
+          price: Number(form.price),
+          oldPrice: form.oldPrice ? Number(form.oldPrice) : undefined,
+          weight: form.weight,
+          shortDescription: form.shortDescription,
+          description: form.description,
+          ingredients: form.ingredients || undefined,
+          image: form.image || 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=400&q=80',
+          images: form.images,
+          badge: form.badge || undefined,
+          wbLink: form.wbLink || undefined,
+          ozonLink: form.ozonLink || undefined,
+        };
+        setProductList(prev => [...prev, newProduct]);
+        toast({ title: 'Товар добавлен' });
+      }
+      
+      setIsDialogOpen(false);
+      resetForm();
+    } catch (error) {
+      console.error('Failed to save product:', error);
+      toast({ title: 'Ошибка сохранения товара', variant: 'destructive' });
     }
-    
-    setIsDialogOpen(false);
-    resetForm();
   };
 
-  const handleDelete = (id: number) => {
-    setProductList(prev => prev.filter(p => p.id !== id));
-    toast({ title: 'Товар удалён' });
+  const handleDelete = async (id: number) => {
+    try {
+      await api.products.delete(id);
+      setProductList(prev => prev.filter(p => p.id !== id));
+      toast({ title: 'Товар удалён' });
+    } catch (error) {
+      console.error('Failed to delete product:', error);
+      toast({ title: 'Ошибка удаления товара', variant: 'destructive' });
+    }
   };
 
   return (
@@ -167,9 +244,13 @@ const AdminProducts = () => {
                   <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {categories.filter(c => c.id !== 'all').map(c => (
-                        <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>
-                      ))}
+                      {categories.length > 0 ? (
+                        categories.map(c => (
+                          <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="" disabled>Загрузка категорий...</SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -268,9 +349,16 @@ const AdminProducts = () => {
               />
             </div>
             <Badge variant="secondary">{filteredProducts.length} товаров</Badge>
-          </div>
-        </CardHeader>
-        <CardContent>
+      </div>
+    </CardHeader>
+    {loading ? (
+      <CardContent>
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">Загрузка товаров...</p>
+        </div>
+      </CardContent>
+    ) : (
+    <CardContent>
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
@@ -303,7 +391,7 @@ const AdminProducts = () => {
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">
-                        {categories.find(c => c.id === product.category)?.label}
+                        {categories.find(c => String(c.id) === product.category)?.name || product.category}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -344,6 +432,7 @@ const AdminProducts = () => {
             </Table>
           </div>
         </CardContent>
+        )}
       </Card>
     </div>
   );

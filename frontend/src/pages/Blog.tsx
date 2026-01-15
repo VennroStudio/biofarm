@@ -1,25 +1,35 @@
-import { useState, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, useInView } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Calendar, Clock, ArrowRight, Search } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
-import { blogPosts, categories } from '@/data/blogPosts';
+import { getBlogPosts, categories, BlogPost } from '@/data/blogPosts';
 
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.1 },
+    transition: { 
+      staggerChildren: 0.15,
+      delayChildren: 0.9, // Задержка перед началом анимации детей (после featured post)
+    },
   },
 };
 
 const itemVariants = {
   hidden: { opacity: 0, y: 30 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+  visible: { 
+    opacity: 1, 
+    y: 0, 
+    transition: { 
+      duration: 0.6,
+      ease: "easeOut"
+    } 
+  },
 };
 
 const POSTS_PER_PAGE = 9;
@@ -28,8 +38,17 @@ const Blog = () => {
   const [selectedCategory, setSelectedCategory] = useState('Все');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: '-50px' });
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getBlogPosts()
+      .then(setBlogPosts)
+      .catch((error) => {
+        console.error('Failed to load blog posts:', error);
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
   const filteredPosts = blogPosts.filter((post) => {
     const matchesCategory = selectedCategory === 'Все' || post.category === selectedCategory;
@@ -130,8 +149,8 @@ const Blog = () => {
               {featuredPost && (
                 <motion.article
                   initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.3 }}
+                  animate={!loading ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+                  transition={{ duration: 0.6, delay: 0.2 }}
                   className="mb-16"
                 >
                   <Link to={`/blog/${featuredPost.slug}`} className="group block">
@@ -181,10 +200,9 @@ const Blog = () => {
 
               {/* Other Posts Grid */}
               <motion.div
-                ref={ref}
                 variants={containerVariants}
                 initial="hidden"
-                animate={isInView ? 'visible' : 'hidden'}
+                animate={!loading ? 'visible' : 'hidden'}
                 className="grid md:grid-cols-2 lg:grid-cols-3 gap-8"
               >
                 {otherPosts.map((post) => (

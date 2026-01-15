@@ -17,17 +17,23 @@ export function useAuth() {
       const loggedInUser = await authApi.login(email, password);
       setUser(loggedInUser);
       return loggedInUser;
+    } catch (error) {
+      // Пробрасываем ошибку дальше
+      throw error;
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  const register = useCallback(async (email: string, password: string, name: string) => {
+  const register = useCallback(async (email: string, password: string, name: string, referredBy?: string) => {
     setIsLoading(true);
     try {
-      const newUser = await authApi.register(email, password, name);
+      const newUser = await authApi.register(email, password, name, referredBy);
       setUser(newUser);
       return newUser;
+    } catch (error) {
+      // Пробрасываем ошибку дальше
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -47,6 +53,16 @@ export function useAuth() {
     return updated;
   }, [user]);
 
+  const refreshUser = useCallback(async () => {
+    const currentUser = authApi.getCurrentUser();
+    if (!currentUser) return null;
+    const refreshed = await authApi.refreshUser(currentUser.id);
+    if (refreshed) {
+      setUser(refreshed);
+    }
+    return refreshed;
+  }, []); // Убираем зависимость от user, чтобы избежать бесконечного цикла
+
   return {
     user,
     isLoading,
@@ -55,5 +71,6 @@ export function useAuth() {
     register,
     logout,
     updateProfile,
+    refreshUser,
   };
 }

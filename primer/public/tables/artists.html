@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artists</title>
+    <link rel="stylesheet" href="/tables/css/main.css?t=1727817206">
+    <script src="/tables/js/main.js?t=1727817206"></script>
+    <script src="/tables/js/Pagination.js?t=1727817206"></script>
+    <script src="/tables/js/Artists.js?t=1727817206"></script>
+    <script>
+        let artists = new Artists();
+
+        function redirect(offset) {
+
+            let params = {};
+
+            let search = document.getElementById('search').value.trim();
+            if (search !== '') {
+                params.search = search;
+            }
+
+            let type = document.getElementById('search_type').value;
+            if (type !== '') {
+                params.type = type;
+            }
+
+            let priority = document.getElementById('search_priority').value;
+            if (priority !== '') {
+                params.priority = priority;
+            }
+
+            let conflict = document.getElementById('search_conflict').value;
+            if (conflict !== '') {
+                params.conflict = conflict;
+            }
+
+            let sort = document.getElementById('data-order-id').getAttribute('data-order') || 'asc'
+            params.sort = sort === 'asc' ? 1 : 0;
+            params.field = 'id';
+
+            if (offset === undefined) {
+                const urlParams = new URLSearchParams(window.location.search);
+                offset = urlParams.get('offset');
+                params.offset = (offset !== '' && offset !== null) ? offset : 0;
+            } else {
+                params.offset = offset;
+            }
+
+            window.location.href = '/table/artists?' + new URLSearchParams(params).toString();
+        }
+
+        function init() {
+
+            let params = {};
+            const urlParams = new URLSearchParams(window.location.search);
+
+            let search = urlParams.get('search');
+            if (search !== '' && search !== null) {
+                params.search = search;
+                document.getElementById('search').value = search;
+            }
+
+            let type = urlParams.get('type');
+            if (type !== '' && type !== null) {
+                params.type = type;
+                document.getElementById('search_type').value = type;
+            }
+
+            let priority = urlParams.get('priority');
+            if (priority !== '' && priority !== null) {
+                params.priority = priority;
+                document.getElementById('search_priority').value = priority;
+            }
+
+            let conflict = urlParams.get('conflict');
+            if (conflict !== '' && conflict !== null) {
+                params.conflict = conflict;
+                document.getElementById('search_conflict').value = conflict;
+            }
+
+            let sort = urlParams.get('sort');
+            if (sort !== '' && sort !== null) {
+                params.sort = sort;
+                params.field = 'id';
+            }
+
+            let offset = urlParams.get('offset');
+            params.offset = (offset !== '' && offset !== null) ? offset : 0;
+
+            artists.generate('table-artists', params);
+
+            document.getElementById("search")
+                .addEventListener("keyup", function (event) {
+                    event.preventDefault();
+                    if (event.keyCode === 13) {
+                        redirect();
+                    }
+                });
+        }
+
+        document.addEventListener("DOMContentLoaded", init);
+    </script>
+</head>
+<body>
+<div class="container">
+    <table style="width: 100%">
+        <tr>
+            <td>
+                <h2>Artists</h2>
+            </td>
+            <td>
+                <div style="float: right; margin-bottom: 10px;">
+                    <a href="/table/playlists">Playlists</a> |
+                    <a href="/table/suggested-artists">Suggested Artists</a> |
+                    <a href="/table/track-problematic">Problematic Tracks</a>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <label>
+                    Поиск:
+                    <input id="search"> <button onclick="redirect()">Найти</button>
+                </label>
+            </td>
+            <td>
+                <div style="float: right; margin-bottom: 10px;">
+                    <label>
+                        Тип:
+                        <select id="search_type" onchange="redirect()">
+                            <option value="">- Не выбрано -</option>
+                            <option value="0">Залив новых</option>
+                            <option value="201">Залив новых (Spotify started)</option>
+                            <option value="202">Залив новых (Tidal started)</option>
+                            <option value="203">Залив новых (Apple started)</option>
+                            <option value="1">Обход залитых (все)</option>
+                            <option value="2">Обход залитых (пройденные)</option>
+                            <option value="3">Обход залитых (не пройденные)</option>
+                            <option value="4">Загружаемые</option>
+                            <option value="99">Пустые</option>
+                            <option value="100">Без аватарки</option>
+                            <option value="101">Без соц сети (Spotify)</option>
+                            <option value="102">Без соц сети (Tidal)</option>
+                            <option value="103">Без соц сети (Apple)</option>
+                            <option value="301">Без альбомов (Spotify)</option>
+                            <option value="302">Без альбомов (Tidal)</option>
+                            <option value="303">Без альбомов (Apple)</option>
+                            <option value="801">Метаданные (пройденные)</option>
+                            <option value="802">Метаданные (не пройденные)</option>
+                            <option value="901">Созданные автоматически</option>
+                        </select>
+                    </label>
+                    <label>
+                        Приоритет:
+                        <select id="search_priority" onchange="redirect()">
+                            <option value="">- Не выбрано -</option>
+                            <option value="-1">Низкий</option>
+                            <option value="0">Средний</option>
+                            <option value="1">Высокий</option>
+                        </select>
+                    </label>
+                    <label>
+                        Конфликты:
+                        <select id="search_conflict" onchange="redirect()">
+                            <option value="">- Не выбрано -</option>
+                            <option value="1">Есть</option>
+                            <option value="0">Нет</option>
+                        </select>
+                    </label>
+                </div>
+            </td>
+        </tr>
+    </table>
+    <table style="width: 100%">
+        <tr>
+            <td>
+                <div id="total-count" style="margin-top: 16px; margin-bottom: 8px; padding-left: 8px;"></div>
+            </td>
+            <td style="text-align: right">
+                <button onclick="artists.addArtistModal()">+ Добавить</button>
+            </td>
+        </tr>
+    </table>
+    <div id="table-artists"></div>
+    <div id="pagination"></div>
+</div>
+<div id="wrap" onclick="modalClose()"></div>
+<div id="modal">
+    <div id="modal-header"></div>
+    <div id="modal-body"></div>
+</div>
+</body>
+</html>

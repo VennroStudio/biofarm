@@ -1,0 +1,17 @@
+.loNavigation {
+    line-height: 18px;
+    position: fixed;
+    z-index: 1050;
+    left: 40px;
+    top: 40px;
+    background: rgba(50, 50, 50, 0.8);
+    padding: 10px;
+    border: 0;
+    color: #fff;
+    font-size: 13px;
+    -webkit-border-radius: 8px;
+    -moz-border-radius: 8px;
+    border-radius: 8px;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}

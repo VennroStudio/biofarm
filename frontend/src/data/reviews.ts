@@ -1,4 +1,4 @@
-// Reviews data layer - easily replaceable with API calls
+import { api } from '@/lib/api';
 
 export interface Review {
   id: string;
@@ -13,118 +13,118 @@ export interface Review {
   source?: 'site' | 'wildberries' | 'ozon';
 }
 
-export const reviews: Review[] = [
-  {
-    id: '1',
-    productId: 1,
-    userId: '1',
-    userName: 'Анна К.',
-    rating: 5,
-    text: 'Прекрасный мёд! Очень ароматный и вкусный. Заказываю уже не первый раз, качество всегда на высоте.',
-    images: ['https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=200&q=80'],
-    createdAt: '2024-12-10',
-    isApproved: true,
-    source: 'site',
-  },
-  {
-    id: '2',
-    productId: 1,
-    userId: '2',
-    userName: 'Сергей П.',
-    rating: 4,
-    text: 'Хороший мёд, но доставка была долгой. В остальном всё отлично.',
-    createdAt: '2024-12-08',
-    isApproved: true,
-    source: 'wildberries',
-  },
-  {
-    id: '3',
-    productId: 2,
-    userId: '3',
-    userName: 'Мария В.',
-    rating: 5,
-    text: 'Гречишный мёд — мой фаворит! Насыщенный вкус, настоящий!',
-    createdAt: '2024-12-05',
-    isApproved: true,
-    source: 'ozon',
-  },
-  {
-    id: '4',
-    productId: 4,
-    userId: '4',
-    userName: 'Олег Т.',
-    rating: 5,
-    text: 'Льняное масло отличного качества. Использую для салатов каждый день.',
-    createdAt: '2024-12-01',
-    isApproved: true,
-    source: 'site',
-  },
-  {
-    id: '5',
-    productId: 1,
-    userId: '5',
-    userName: 'Новый отзыв',
-    rating: 3,
-    text: 'Ожидает модерации',
-    createdAt: '2024-12-20',
-    isApproved: false,
-    source: 'site',
-  },
-];
+export const reviews: Review[] = [];
 
 // Reviews API abstraction
 export const reviewsApi = {
   getProductReviews: async (productId: number): Promise<Review[]> => {
-    await new Promise(resolve => setTimeout(resolve, 200));
-    const stored = localStorage.getItem('reviews');
-    const allReviews: Review[] = stored ? JSON.parse(stored) : reviews;
-    return allReviews.filter(r => r.productId === productId && r.isApproved);
+    const data = await api.reviews.getByProductId(productId);
+    return data.map((r: any) => ({
+      id: r.id,
+      productId: r.productId,
+      userId: r.userId || '',
+      userName: r.userName,
+      rating: r.rating,
+      text: r.text,
+      images: r.images,
+      createdAt: r.createdAt,
+      isApproved: r.isApproved,
+      source: r.source,
+    }));
   },
 
-  getAllReviews: async (): Promise<Review[]> => {
-    await new Promise(resolve => setTimeout(resolve, 200));
-    const stored = localStorage.getItem('reviews');
-    return stored ? JSON.parse(stored) : reviews;
+  getAllReviews: async (onlyApproved: boolean = false): Promise<Review[]> => {
+    const data = await api.reviews.getAll(!onlyApproved);
+    return data.map((r: any) => ({
+      id: r.id,
+      productId: r.productId,
+      userId: r.userId || '',
+      userName: r.userName,
+      rating: r.rating,
+      text: r.text,
+      images: r.images,
+      createdAt: r.createdAt,
+      isApproved: r.isApproved,
+      source: r.source,
+    }));
   },
 
   addReview: async (review: Omit<Review, 'id' | 'createdAt' | 'isApproved'>): Promise<Review> => {
-    await new Promise(resolve => setTimeout(resolve, 300));
+    const data = await api.reviews.create({
+      productId: review.productId,
+      userName: review.userName,
+      rating: review.rating,
+      text: review.text,
+      source: review.source || 'site',
+      userId: review.userId || undefined,
+      images: review.images,
+    });
     
-    const newReview: Review = {
-      ...review,
-      id: String(Date.now()),
+    return {
+      id: data.id,
+      productId: data.productId,
+      userId: data.userId || '',
+      userName: data.userName,
+      rating: data.rating,
+      text: data.text,
+      images: data.images,
       createdAt: new Date().toISOString(),
-      isApproved: false, // Requires moderation
+      isApproved: false,
+      source: review.source,
     };
-    
-    const stored = localStorage.getItem('reviews');
-    const allReviews: Review[] = stored ? JSON.parse(stored) : reviews;
-    allReviews.unshift(newReview);
-    localStorage.setItem('reviews', JSON.stringify(allReviews));
-    
-    return newReview;
+  },
+
+  updateReview: async (reviewId: string, review: Omit<Review, 'id' | 'createdAt' | 'isApproved'>): Promise<Review | null> => {
+    try {
+      const data = await api.reviews.update(reviewId, {
+        productId: review.productId,
+        userName: review.userName,
+        rating: review.rating,
+        text: review.text,
+        source: review.source || 'site',
+        userId: review.userId || undefined,
+        images: review.images,
+      });
+      
+      return {
+        id: data.id,
+        productId: data.productId,
+        userId: data.userId || '',
+        userName: data.userName,
+        rating: data.rating,
+        text: data.text,
+        images: data.images,
+        createdAt: data.createdAt || new Date().toISOString(),
+        isApproved: data.isApproved,
+        source: data.source,
+      };
+    } catch {
+      return null;
+    }
   },
 
   approveReview: async (reviewId: string): Promise<Review | null> => {
-    await new Promise(resolve => setTimeout(resolve, 200));
-    const stored = localStorage.getItem('reviews');
-    const allReviews: Review[] = stored ? JSON.parse(stored) : reviews;
-    const review = allReviews.find(r => r.id === reviewId);
+    const data = await api.reviews.approve(reviewId);
+    if (!data) return null;
     
-    if (review) {
-      review.isApproved = true;
-      localStorage.setItem('reviews', JSON.stringify(allReviews));
-      return review;
-    }
-    return null;
+    return {
+      id: data.id,
+      productId: 0,
+      userId: '',
+      userName: '',
+      rating: 0,
+      text: '',
+      createdAt: new Date().toISOString(),
+      isApproved: data.isApproved,
+    };
   },
 
   deleteReview: async (reviewId: string): Promise<boolean> => {
-    await new Promise(resolve => setTimeout(resolve, 200));
-    const stored = localStorage.getItem('reviews');
-    const allReviews: Review[] = stored ? JSON.parse(stored) : reviews;
-    const filtered = allReviews.filter(r => r.id !== reviewId);
-    localStorage.setItem('reviews', JSON.stringify(filtered));
-    return true;
+    try {
+      await api.reviews.delete(reviewId);
+      return true;
+    } catch {
+      return false;
+    }
   },
 };

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Grid3X3, LayoutList, SlidersHorizontal } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
@@ -6,7 +6,8 @@ import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ProductCard } from '@/components/catalog/ProductCard';
-import { categories, products } from '@/data/products';
+import { getProducts, Product } from '@/data/products';
+import { getCategories, Category } from '@/data/categories';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import {
   Select,
@@ -29,18 +30,36 @@ type SortOption = 'default' | 'price-asc' | 'price-desc' | 'name';
 const PRODUCTS_PER_PAGE = 12;
 
 const Catalog = () => {
-  const [activeCategory, setActiveCategory] = useState('all');
+  const [activeCategory, setActiveCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('default');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [currentPage, setCurrentPage] = useState(1);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([
+      getProducts(),
+      getCategories(true) // Только активные категории
+    ])
+      .then(([productsData, categoriesData]) => {
+        setProducts(productsData);
+        setCategories(categoriesData);
+      })
+      .catch((error) => {
+        console.error('Failed to load data:', error);
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
   const filteredAndSortedProducts = useMemo(() => {
     let result = products;
 
     // Filter by category
     if (activeCategory !== 'all') {
-      result = result.filter((p) => p.category === activeCategory);
+      result = result.filter((p) => String(p.category) === activeCategory);
     }
 
     // Filter by search query
@@ -69,7 +88,7 @@ const Catalog = () => {
     }
 
     return result;
-  }, [activeCategory, searchQuery, sortBy]);
+  }, [products, activeCategory, searchQuery, sortBy]);
 
   // Pagination
   const totalPages = Math.ceil(filteredAndSortedProducts.length / PRODUCTS_PER_PAGE);
@@ -136,15 +155,23 @@ const Catalog = () => {
             <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
               {/* Category Tabs */}
               <div className="flex flex-wrap gap-2">
+                <Button
+                  variant={activeCategory === 'all' ? 'default' : 'outline'}
+                  onClick={() => handleCategoryChange('all')}
+                  className={activeCategory === 'all' ? 'gradient-primary' : ''}
+                  size="sm"
+                >
+                  Все товары
+                </Button>
                 {categories.map((category) => (
                   <Button
                     key={category.id}
-                    variant={activeCategory === category.id ? 'default' : 'outline'}
-                    onClick={() => handleCategoryChange(category.id)}
-                    className={activeCategory === category.id ? 'gradient-primary' : ''}
+                    variant={activeCategory === String(category.id) ? 'default' : 'outline'}
+                    onClick={() => handleCategoryChange(String(category.id))}
+                    className={activeCategory === String(category.id) ? 'gradient-primary' : ''}
                     size="sm"
                   >
-                    {category.label}
+                    {category.name}
                   </Button>
                 ))}
               </div>
@@ -197,7 +224,11 @@ const Catalog = () => {
           </div>
 
           {/* Products Grid */}
-          {paginatedProducts.length > 0 ? (
+          {loading ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">Загрузка товаров...</p>
+            </div>
+          ) : paginatedProducts.length > 0 ? (
             <>
               <motion.div
                 variants={containerVariants}

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Music</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Sans:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Roboto", sans-serif;
+        }
+
+        body {
+            background: #E74C3C;
+        }
+
+        section {
+            position: relative;
+            height: 100vh;
+        }
+
+        .container {
+            display: flex;
+
+            flex-direction: column;
+            flex-wrap: nowrap;
+            justify-content: center;
+            align-items: center;
+
+            height: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .flex-wrapper {
+            display: flex;
+
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .title {
+            color: #fff;
+            font-size: 42px;
+            margin-bottom: 12px;
+        }
+
+        .block {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+
+            min-width: 340px;
+            min-height: 140px;
+
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s ease;
+
+            color: #fff;
+            background-color: rgba(192, 57, 43, 0.8);
+        }
+
+        .counter {
+            font-size: 32px;
+            font-weight: 600;
+        }
+
+        .caption {
+            font-size: 16px;
+            margin-top: 8px;
+        }
+
+        .counter span, .caption span {
+            color: rgb(210, 210, 210);
+        }
+
+        .footer {
+            margin-top: 18px;
+        }
+
+        .badge {
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 16px;
+            padding: 4px 8px;
+            color: rgba(37, 142, 207, 1);
+            font-size: 13px;
+        }
+    </style>
+    <script>
+        function updateCounters() {
+            fetch('/v1/stats')
+                .then(response => response.json())
+                .then(data => {
+                    const countArtists          = document.getElementById('countArtists');
+                    const countArtistsQueue     = document.getElementById('countArtistsQueue');
+                    const countAlbums           = document.getElementById('countAlbums');
+                    const countTracks           = document.getElementById('countTracks');
+
+                    let loadedAlbums = data.countAlbumsMapped - data.countAlbumsNotLoaded;
+                    let loadedTracks = data.countTracksMapped - data.countTracksNotLoaded;
+
+                    countArtists.innerHTML      = formatNumber(data.countArtists) + ' <span>|</span> ' + formatNumber(data.countArtistsSuggest);
+                    countArtistsQueue.innerHTML = formatNumber(data.countArtistsFullScan) + ' <span>|</span> ' + formatNumber(data.countArtistsChecking) + ' <span>|</span> ' + formatNumber(data.countArtistsUpload);
+                    countAlbums.innerHTML       = formatNumber(loadedAlbums) + ' <span>/</span> ' + formatNumber(data.countAlbumsMapped);
+                    countTracks.innerHTML       = formatNumber(loadedTracks) + ' <span>/</span> ' + formatNumber(data.countTracksMapped);
+                });
+        }
+
+        function formatNumber(x) {
+            return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+        }
+    </script>
+</head>
+<body>
+<section>
+    <div class="container">
+        <div class="title">MUSIC</div>
+        <div class="flex-wrapper">
+            <div class="block">
+                <div class="counter" id="countArtists">Loading...</div>
+                <div class="caption">Artists <span>(added | suggested)</span></div>
+            </div>
+
+            <div class="block">
+                <div class="counter" id="countArtistsQueue">Loading...</div>
+                <div class="caption">Queue <span>(scan | check | upload)</span></div>
+            </div>
+
+            <div class="block">
+                <div class="counter" id="countAlbums">Loading...</div>
+                <div class="caption">Albums <span>(loaded / all)</span></div>
+            </div>
+
+            <div class="block">
+                <div class="counter" id="countTracks">Loading...</div>
+                <div class="caption">Tracks <span>(loaded / all)</span></div>
+            </div>
+        </div>
+        <div class="footer" id="footer"></div>
+    </div>
+</section>
+
+<script>
+    setInterval(updateCounters, 30 * 1000);
+    updateCounters();
+</script>
+</body>
+</html>

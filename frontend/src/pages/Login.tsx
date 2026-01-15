@@ -29,6 +29,11 @@ const Login = () => {
   const [registerEmail, setRegisterEmail] = useState('');
   const [registerPassword, setRegisterPassword] = useState('');
   const [registerConfirm, setRegisterConfirm] = useState('');
+  
+  // Получаем реферальный код из localStorage
+  const getReferralCode = () => {
+    return localStorage.getItem('referralCode') || undefined;
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,10 +48,10 @@ const Login = () => {
         });
         navigate('/profile');
       }
-    } catch {
+    } catch (error: any) {
       toast({
         title: 'Ошибка входа',
-        description: 'Проверьте email и пароль',
+        description: error.message || 'Проверьте email и пароль',
         variant: 'destructive',
       });
     } finally {
@@ -69,18 +74,24 @@ const Login = () => {
     setIsLoading(true);
     
     try {
-      const user = await register(registerEmail, registerPassword, registerName);
+      // Получаем реферальный код и передаем при регистрации
+      const referralCode = getReferralCode();
+      const user = await register(registerEmail, registerPassword, registerName, referralCode);
       if (user) {
+        // Очищаем реферальный код после успешной регистрации
+        if (referralCode) {
+          localStorage.removeItem('referralCode');
+        }
         toast({
           title: 'Регистрация успешна!',
           description: 'Вам начислено 100 бонусных рублей',
         });
         navigate('/profile');
       }
-    } catch {
+    } catch (error: any) {
       toast({
         title: 'Ошибка регистрации',
-        description: 'Попробуйте другой email',
+        description: error.message || 'Попробуйте другой email',
         variant: 'destructive',
       });
     } finally {

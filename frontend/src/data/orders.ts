@@ -1,5 +1,4 @@
-// Orders data layer - easily replaceable with API calls
-import ordersData from './orders.json';
+import { api } from '@/lib/api';
 import { Product } from './products';
 
 export interface CartItem {
@@ -40,46 +39,6 @@ export interface ShippingAddress {
   comment?: string;
 }
 
-const ORDERS_STORAGE_KEY = 'biofarm_orders';
-
-// Load orders from JSON and transform to our interface
-const loadOrders = (): Order[] => {
-  const stored = localStorage.getItem(ORDERS_STORAGE_KEY);
-  if (stored) {
-    return JSON.parse(stored);
-  }
-  return ordersData.orders.map(o => ({
-    id: o.id,
-    userId: o.user_id,
-    items: o.items.map(i => ({
-      productId: i.product_id,
-      productName: i.product_name,
-      price: i.price,
-      quantity: i.quantity,
-    })),
-    status: o.status as Order['status'],
-    paymentStatus: o.payment_status as Order['paymentStatus'],
-    total: o.total,
-    bonusUsed: o.bonus_used,
-    bonusEarned: o.bonus_earned,
-    createdAt: o.created_at,
-    paidAt: o.paid_at,
-    shippingAddress: {
-      name: o.shipping_address.name,
-      phone: o.shipping_address.phone,
-      email: o.shipping_address.email,
-      city: o.shipping_address.city,
-      address: o.shipping_address.address,
-      postalCode: o.shipping_address.postal_code,
-    },
-    paymentMethod: o.payment_method,
-    trackingNumber: o.tracking_number || undefined,
-  }));
-};
-
-const saveOrders = (orders: Order[]) => {
-  localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(orders));
-};
 
 // Cart API abstraction
 export const cartApi = {
@@ -144,14 +103,60 @@ export const cartApi = {
 // Orders API abstraction
 export const ordersApi = {
   getOrders: async (userId: string): Promise<Order[]> => {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    const allOrders = loadOrders();
-    return allOrders.filter(o => o.userId === userId);
+    const data = await api.orders.getByUserId(Number(userId));
+    return data.map((o: any) => ({
+      id: String(o.id),
+      userId: String(o.userId),
+      items: o.items || [],
+      status: o.status as Order['status'],
+      paymentStatus: o.paymentStatus as Order['paymentStatus'],
+      total: o.total,
+      bonusUsed: o.bonusUsed || 0,
+      bonusEarned: o.bonusEarned || 0,
+      createdAt: o.createdAt,
+      paidAt: o.paidAt || null,
+      shippingAddress: o.shippingAddress || { name: '', phone: '', email: '', city: '', address: '', postalCode: '' },
+      paymentMethod: o.paymentMethod || 'card',
+      trackingNumber: o.trackingNumber || undefined,
+    }));
   },
 
   getAllOrders: async (): Promise<Order[]> => {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    return loadOrders();
+    const data = await api.orders.getAll();
+    return data.map((o: any) => ({
+      id: String(o.id),
+      userId: String(o.userId),
+      items: o.items || [],
+      status: o.status as Order['status'],
+      paymentStatus: o.paymentStatus as Order['paymentStatus'],
+      total: o.total,
+      bonusUsed: o.bonusUsed || 0,
+      bonusEarned: o.bonusEarned || 0,
+      createdAt: o.createdAt,
+      paidAt: o.paidAt || null,
+      shippingAddress: o.shippingAddress || { name: '', phone: '', email: '', city: '', address: '', postalCode: '' },
+      paymentMethod: o.paymentMethod || 'card',
+      trackingNumber: o.trackingNumber || undefined,
+    }));
+  },
+
+  getReferralOrders: async (referrerId: string): Promise<Order[]> => {
+    const data = await api.orders.getByReferrerId(Number(referrerId));
+    return data.map((o: any) => ({
+      id: String(o.id),
+      userId: String(o.userId),
+      items: o.items || [],
+      status: o.status as Order['status'],
+      paymentStatus: o.paymentStatus as Order['paymentStatus'],
+      total: o.total,
+      bonusUsed: o.bonusUsed || 0,
+      bonusEarned: o.bonusEarned || 0,
+      createdAt: o.createdAt,
+      paidAt: o.paidAt || null,
+      shippingAddress: o.shippingAddress || { name: '', phone: '', email: '', city: '', address: '', postalCode: '' },
+      paymentMethod: o.paymentMethod || 'card',
+      trackingNumber: o.trackingNumber || undefined,
+    }));
   },
 
   createOrder: async (
@@ -161,14 +166,31 @@ export const ordersApi = {
     paymentMethod: string,
     bonusUsed: number = 0
   ): Promise<Order> => {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
     const total = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0) - bonusUsed;
-    const bonusEarned = Math.floor(total * 0.05);
     
-    const order: Order = {
-      id: `ORD-${Date.now().toString(36).toUpperCase()}`,
-      userId,
+    // Получаем реферальный код из localStorage
+    const referralCode = localStorage.getItem('referralCode') || undefined;
+    
+    const data = await api.orders.create({
+      userId: Number(userId) || 0,
+      items: items.map(i => ({
+        productId: i.product.id,
+        productName: i.product.name,
+        price: i.product.price,
+        quantity: i.quantity,
+      })),
+      total,
+      shippingAddress,
+      paymentMethod,
+      bonusUsed,
+      referredBy: referralCode,
+    });
+    
+    cartApi.clearCart();
+    
+    return {
+      id: data.id,
+      userId: String(data.userId),
       items: items.map(i => ({
         productId: i.product.id,
         productName: i.product.name,
@@ -177,50 +199,50 @@ export const ordersApi = {
       })),
       status: 'pending',
       paymentStatus: 'pending',
-      total,
+      total: data.total,
       bonusUsed,
-      bonusEarned,
+      bonusEarned: 0,
       createdAt: new Date().toISOString(),
       paidAt: null,
       shippingAddress,
       paymentMethod,
     };
-    
-    const allOrders = loadOrders();
-    allOrders.unshift(order);
-    saveOrders(allOrders);
-    
-    cartApi.clearCart();
-    
-    return order;
   },
 
   updateOrderStatus: async (orderId: string, status: Order['status']): Promise<Order | null> => {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    const allOrders = loadOrders();
-    const order = allOrders.find(o => o.id === orderId);
+    const data = await api.orders.updateStatus(orderId, status);
+    if (!data) return null;
     
-    if (order) {
-      order.status = status;
-      saveOrders(allOrders);
-      return order;
-    }
-    return null;
+    return {
+      id: data.id,
+      userId: String(data.userId),
+      items: [],
+      status: data.status as Order['status'],
+      paymentStatus: 'pending',
+      total: data.total,
+      bonusUsed: 0,
+      bonusEarned: 0,
+      createdAt: new Date().toISOString(),
+      paidAt: null,
+      shippingAddress: { name: '', phone: '', email: '', city: '', address: '', postalCode: '' },
+      paymentMethod: 'card',
+    };
   },
 
   updatePaymentStatus: async (orderId: string, paymentStatus: Order['paymentStatus']): Promise<Order | null> => {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    const allOrders = loadOrders();
+    const data = await api.orders.updatePaymentStatus(orderId, paymentStatus);
+    if (!data) return null;
+    
+    // Получаем полную информацию о заказе
+    const allOrders = await ordersApi.getAllOrders();
     const order = allOrders.find(o => o.id === orderId);
     
-    if (order) {
-      order.paymentStatus = paymentStatus;
-      if (paymentStatus === 'completed') {
-        order.paidAt = new Date().toISOString();
-      }
-      saveOrders(allOrders);
-      return order;
-    }
-    return null;
+    if (!order) return null;
+    
+    return {
+      ...order,
+      paymentStatus: data.paymentStatus as Order['paymentStatus'],
+      bonusEarned: data.bonusEarned || 0,
+    };
   },
 };

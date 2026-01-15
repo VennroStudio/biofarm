@@ -12,15 +12,36 @@ const AdminUsers = () => {
   const { toast } = useToast();
   const [search, setSearch] = useState('');
   const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    authApi.getAllUsers().then(setUsers);
-  }, []);
+    authApi.getAllUsers()
+      .then(setUsers)
+      .catch((error) => {
+        console.error('Failed to load users:', error);
+        toast({ title: 'Ошибка загрузки пользователей', variant: 'destructive' });
+      })
+      .finally(() => setLoading(false));
+  }, [toast]);
 
   const filteredUsers = users.filter(user => 
     user.name.toLowerCase().includes(search.toLowerCase()) ||
     user.email.toLowerCase().includes(search.toLowerCase())
   );
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Пользователи</h1>
+          <p className="text-muted-foreground">Список зарегистрированных пользователей</p>
+        </div>
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">Загрузка пользователей...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleTogglePartner = async (userId: string, isPartner: boolean) => {
     const result = await authApi.setPartnerStatus(userId, !isPartner);

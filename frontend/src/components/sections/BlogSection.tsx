@@ -1,9 +1,9 @@
-import { useRef } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useInView } from 'framer-motion';
 import { Calendar, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { blogPosts } from '@/data/blogPosts';
+import { getBlogPosts, BlogPost } from '@/data/blogPosts';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -19,8 +19,17 @@ const itemVariants = {
 };
 
 export const BlogSection = () => {
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
+
+  useEffect(() => {
+    getBlogPosts()
+      .then(setBlogPosts)
+      .catch((error) => {
+        console.error('Failed to load blog posts:', error);
+      });
+  }, []);
 
   const displayPosts = blogPosts.slice(0, 3);
 

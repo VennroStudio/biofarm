@@ -1,4 +1,4 @@
-import productsData from './products.json';
+import { api } from '@/lib/api';
 
 export interface Product {
   id: number;
@@ -24,33 +24,70 @@ export interface Category {
   label: string;
 }
 
-// Transform JSON data to match the expected interface
-export const categories: Category[] = productsData.categories;
+// Categories are static
+export const categories: Category[] = [
+  { id: 'all', label: 'Все товары' },
+  { id: 'honey', label: 'Мёд' },
+  { id: 'oils', label: 'Масла' },
+];
 
-export const products: Product[] = productsData.products.map(p => ({
-  id: p.id,
-  slug: p.slug,
-  name: p.name,
-  category: p.category_id,
-  price: p.price,
-  oldPrice: p.old_price ?? undefined,
-  image: p.image,
-  images: p.images,
-  badge: p.badge ?? undefined,
-  weight: p.weight,
-  description: p.description,
-  shortDescription: p.short_description,
-  ingredients: p.ingredients ?? undefined,
-  features: p.features,
-  wbLink: p.wb_link ?? undefined,
-  ozonLink: p.ozon_link ?? undefined,
-}));
+let cachedProducts: Product[] | null = null;
 
-export const getProductBySlug = (slug: string): Product | undefined => {
-  return products.find((p) => p.slug === slug);
+export const getProducts = async (): Promise<Product[]> => {
+  if (cachedProducts) return cachedProducts;
+  const data = await api.products.getAll();
+  cachedProducts = data.map((p: any) => ({
+    id: p.id,
+    slug: p.slug,
+    name: p.name,
+    category: p.category,
+    price: p.price,
+    oldPrice: p.oldPrice ?? undefined,
+    image: p.image,
+    images: p.images,
+    badge: p.badge ?? undefined,
+    weight: p.weight,
+    description: p.description,
+    shortDescription: p.shortDescription,
+    ingredients: p.ingredients ?? undefined,
+    features: p.features,
+    wbLink: p.wbLink ?? undefined,
+    ozonLink: p.ozonLink ?? undefined,
+  }));
+  return cachedProducts;
 };
 
-export const getProductsByCategory = (categoryId: string): Product[] => {
-  if (categoryId === 'all') return products;
-  return products.filter((p) => p.category === categoryId);
+export const getProductBySlug = async (slug: string): Promise<Product | undefined> => {
+  try {
+    const data = await api.products.getBySlug(slug);
+    return {
+      id: data.id,
+      slug: data.slug,
+      name: data.name,
+      category: data.category,
+      price: data.price,
+      oldPrice: data.oldPrice ?? undefined,
+      image: data.image,
+      images: data.images,
+      badge: data.badge ?? undefined,
+      weight: data.weight,
+      description: data.description,
+      shortDescription: data.shortDescription,
+      ingredients: data.ingredients ?? undefined,
+      features: data.features,
+      wbLink: data.wbLink ?? undefined,
+      ozonLink: data.ozonLink ?? undefined,
+    };
+  } catch {
+    return undefined;
+  }
 };
+
+export const getProductsByCategory = async (categoryId: string): Promise<Product[]> => {
+  const allProducts = await getProducts();
+  if (categoryId === 'all') return allProducts;
+  return allProducts.filter((p) => p.category === categoryId);
+};
+
+// For backward compatibility
+export const products: Product[] = [];

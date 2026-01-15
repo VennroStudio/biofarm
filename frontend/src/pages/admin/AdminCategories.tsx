@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,56 +13,88 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { categories as initialCategories, products } from '@/data/products';
+import { getProducts, Product } from '@/data/products';
+import { categoriesApi, Category } from '@/data/categories';
 import { useToast } from '@/hooks/use-toast';
-
-interface Category {
-  id: string;
-  label: string;
-}
 
 const AdminCategories = () => {
   const { toast } = useToast();
-  const [categoryList, setCategoryList] = useState<Category[]>(
-    initialCategories.filter(c => c.id !== 'all')
-  );
+  const [categoryList, setCategoryList] = useState<Category[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  const [form, setForm] = useState({ label: '' });
+  const [form, setForm] = useState({ name: '' });
 
-  const getProductCount = (categoryId: string) => {
-    return products.filter(p => p.category === categoryId).length;
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [categoriesData, productsData] = await Promise.all([
+          categoriesApi.getAll(),
+          getProducts()
+        ]);
+        setCategoryList(categoriesData);
+        setProducts(productsData);
+      } catch (error) {
+        console.error('Failed to load data:', error);
+        toast({ title: 'Ошибка загрузки данных', variant: 'destructive' });
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, [toast]);
+
+  const getProductCount = (categoryId: number) => {
+    return products.filter(p => String(p.category) === String(categoryId)).length;
   };
 
   const resetForm = () => {
-    setForm({ label: '' });
+    setForm({ name: '' });
     setEditingCategory(null);
   };
 
   const handleEdit = (category: Category) => {
     setEditingCategory(category);
-    setForm({ label: category.label });
+    setForm({ name: category.name });
     setIsDialogOpen(true);
   };
 
-  const handleSave = () => {
-    if (editingCategory) {
-      setCategoryList(prev => prev.map(c => 
-        c.id === editingCategory.id 
-          ? { ...c, label: form.label }
-          : c
-      ));
-      toast({ title: 'Категория обновлена' });
-    } else {
-      const id = form.label.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
-      setCategoryList(prev => [...prev, { id, label: form.label }]);
-      toast({ title: 'Категория добавлена' });
+  const loadCategories = async () => {
+    try {
+      // Загружаем с принудительным обновлением (без кеша)
+      const categoriesData = await categoriesApi.getAll(false, true);
+      setCategoryList(categoriesData);
+    } catch (error) {
+      console.error('Failed to load categories:', error);
     }
-    setIsDialogOpen(false);
-    resetForm();
   };
 
-  const handleDelete = (id: string) => {
+  const handleSave = async () => {
+    try {
+      if (editingCategory) {
+        // Обновление категории
+        await categoriesApi.update(editingCategory.id, { name: form.name });
+        await loadCategories(); // Перезагружаем список категорий
+        toast({ title: 'Категория обновлена' });
+      } else {
+        // Создание новой категории
+        await categoriesApi.create({ name: form.name });
+        await loadCategories(); // Перезагружаем список категорий
+        toast({ title: 'Категория добавлена' });
+      }
+      setIsDialogOpen(false);
+      resetForm();
+    } catch (error: any) {
+      toast({ 
+        title: 'Ошибка', 
+        description: error.message || 'Не удалось сохранить категорию', 
+        variant: 'destructive' 
+      });
+    }
+  };
+
+  const handleDelete = async (id: number) => {
     if (getProductCount(id) > 0) {
       toast({ 
         title: 'Невозможно удалить', 
@@ -71,8 +103,18 @@ const AdminCategories = () => {
       });
       return;
     }
-    setCategoryList(prev => prev.filter(c => c.id !== id));
-    toast({ title: 'Категория удалена' });
+    
+    try {
+      await categoriesApi.delete(id);
+      await loadCategories(); // Перезагружаем список категорий
+      toast({ title: 'Категория удалена' });
+    } catch (error: any) {
+      toast({ 
+        title: 'Ошибка удаления', 
+        description: error.message || 'Не удалось удалить категорию', 
+        variant: 'destructive' 
+      });
+    }
   };
 
   return (
@@ -97,15 +139,15 @@ const AdminCategories = () => {
               <div className="space-y-2">
                 <Label>Название *</Label>
                 <Input 
-                  value={form.label} 
-                  onChange={(e) => setForm({ ...form, label: e.target.value })} 
+                  value={form.name} 
+                  onChange={(e) => setForm({ ...form, name: e.target.value })} 
                   placeholder="Название категории"
                 />
               </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Отмена</Button>
-              <Button onClick={handleSave} disabled={!form.label}>
+              <Button onClick={handleSave} disabled={!form.name}>
                 {editingCategory ? 'Сохранить' : 'Добавить'}
               </Button>
             </DialogFooter>
@@ -113,35 +155,49 @@ const AdminCategories = () => {
         </Dialog>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {categoryList.map((category) => (
-          <Card key={category.id} className="group">
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="font-semibold text-lg">{category.label}</h3>
-                  <Badge variant="secondary" className="mt-2">
-                    {getProductCount(category.id)} товаров
-                  </Badge>
+      {loading ? (
+        <Card>
+          <CardContent className="p-12 text-center">
+            <p className="text-muted-foreground">Загрузка категорий...</p>
+          </CardContent>
+        </Card>
+      ) : categoryList.length === 0 ? (
+        <Card>
+          <CardContent className="p-12 text-center">
+            <p className="text-muted-foreground">Категории не найдены</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {categoryList.map((category) => (
+            <Card key={category.id} className="group">
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h3 className="font-semibold text-lg">{category.name}</h3>
+                    <Badge variant="secondary" className="mt-2">
+                      {getProductCount(category.id)} товаров
+                    </Badge>
+                  </div>
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button variant="ghost" size="icon" onClick={() => handleEdit(category)}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="text-destructive"
+                      onClick={() => handleDelete(category.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button variant="ghost" size="icon" onClick={() => handleEdit(category)}>
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="text-destructive"
-                    onClick={() => handleDelete(category.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

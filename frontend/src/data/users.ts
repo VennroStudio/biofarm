@@ -1,5 +1,4 @@
-// User & Auth data layer - easily replaceable with API calls
-import usersData from './users.json';
+import { api } from '@/lib/api';
 
 export interface User {
   id: string;
@@ -21,64 +20,52 @@ export interface ReferralInfo {
   referralPercent: number;
 }
 
-// Load users from JSON and transform to our interface
-const loadUsers = (): User[] => {
-  const stored = localStorage.getItem('biofarm_users');
-  if (stored) {
-    return JSON.parse(stored);
-  }
-  return usersData.users.map(u => ({
-    id: u.id,
-    email: u.email,
-    name: u.name,
-    phone: u.phone,
-    createdAt: u.created_at,
-    referredBy: u.referred_by || undefined,
-    bonusBalance: u.bonus_balance,
-    isPartner: u.is_partner,
-    cardNumber: u.card_number || undefined,
-  }));
-};
-
-const saveUsers = (users: User[]) => {
-  localStorage.setItem('biofarm_users', JSON.stringify(users));
-};
-
-export const users: User[] = loadUsers();
-
 const USER_STORAGE_KEY = 'currentUser';
 
-// API abstraction layer - replace these with actual API calls later
 export const authApi = {
   login: async (email: string, password: string): Promise<User | null> => {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    const allUsers = loadUsers();
-    const user = allUsers.find(u => u.email === email);
-    if (user) {
+    try {
+      const data = await api.auth.login(email, password);
+      const user: User = {
+        id: String(data.id),
+        email: data.email,
+        name: data.name,
+        phone: data.phone || undefined,
+        bonusBalance: data.bonusBalance || 0,
+        isPartner: data.isPartner || false,
+        isActive: data.isActive ?? true,
+        cardNumber: data.cardNumber || undefined,
+        createdAt: data.createdAt || new Date().toISOString(),
+      };
       localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
       return user;
+    } catch (error: any) {
+      // Пробрасываем ошибку с сообщением от сервера
+      throw new Error(error.message || 'Ошибка входа');
     }
-    return null;
   },
 
   register: async (email: string, password: string, name: string, referredBy?: string): Promise<User | null> => {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    const allUsers = loadUsers();
-    
-    const newUser: User = {
-      id: String(Date.now()),
-      email,
-      name,
-      createdAt: new Date().toISOString(),
-      referredBy,
-      bonusBalance: 0,
-      isPartner: false,
-    };
-    
-    allUsers.push(newUser);
-    saveUsers(allUsers);
-    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(newUser));
-    return newUser;
+    try {
+      const data = await api.auth.register(email, password, name, referredBy);
+      const user: User = {
+        id: String(data.id),
+        email: data.email,
+        name: data.name,
+        phone: data.phone || undefined,
+        bonusBalance: data.bonusBalance || 0,
+        isPartner: data.isPartner || false,
+        isActive: data.isActive ?? true,
+        cardNumber: data.cardNumber || undefined,
+        createdAt: data.createdAt || new Date().toISOString(),
+        referredBy: referredBy || undefined,
+      };
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+      return user;
+    } catch (error: any) {
+      // Пробрасываем ошибку с сообщением от сервера
+      throw new Error(error.message || 'Ошибка регистрации');
+    }
   },
 
   logout: async (): Promise<void> => {
@@ -90,74 +77,120 @@ export const authApi = {
     return stored ? JSON.parse(stored) : null;
   },
 
+  refreshUser: async (userId: string): Promise<User | null> => {
+    try {
+      const data = await api.auth.getCurrent(Number(userId));
+      const user: User = {
+        id: String(data.id),
+        email: data.email,
+        name: data.name,
+        phone: data.phone || undefined,
+        bonusBalance: data.bonusBalance || 0,
+        isPartner: data.isPartner || false,
+        isActive: data.isActive ?? true,
+        cardNumber: data.cardNumber || undefined,
+        createdAt: data.createdAt || new Date().toISOString(),
+      };
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+      return user;
+    } catch (error) {
+      console.error('Failed to refresh user:', error);
+      return null;
+    }
+  },
+
   updateProfile: async (userId: string, data: Partial<User>): Promise<User | null> => {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    const allUsers = loadUsers();
-    const index = allUsers.findIndex(u => u.id === userId);
-    if (index >= 0) {
-      allUsers[index] = { ...allUsers[index], ...data };
-      saveUsers(allUsers);
+    try {
+      const userData = await api.auth.updateProfile(Number(userId), {
+        name: data.name,
+        phone: data.phone,
+        cardNumber: data.cardNumber,
+      });
+      const user: User = {
+        id: String(userData.id),
+        email: userData.email,
+        name: userData.name,
+        phone: userData.phone,
+        cardNumber: userData.cardNumber,
+        bonusBalance: data.bonusBalance ?? 0,
+        isPartner: data.isPartner ?? false,
+        createdAt: data.createdAt ?? new Date().toISOString(),
+      };
       const current = authApi.getCurrentUser();
       if (current?.id === userId) {
-        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(allUsers[index]));
+        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
       }
-      return allUsers[index];
+      return user;
+    } catch {
+      return null;
     }
-    return null;
   },
 
   getReferralInfo: async (userId: string): Promise<ReferralInfo> => {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    const stats = usersData.referral_stats[userId as keyof typeof usersData.referral_stats];
-    const { adminApi } = await import('./admin');
-    const settings = await adminApi.getReferralSettings();
-    
+    const data = await api.auth.getReferralInfo(Number(userId));
     return {
-      referredUsers: stats?.referred_users || 0,
-      totalEarnings: stats?.total_earnings || 0,
-      pendingEarnings: stats?.pending_earnings || 0,
-      referralPercent: settings.referralPercent,
+      referredUsers: data.referredUsers || 0,
+      totalEarnings: data.totalEarnings || 0,
+      pendingEarnings: data.pendingEarnings || 0,
+      referralPercent: data.referralPercent || 5,
     };
   },
 
   getAllUsers: async (): Promise<User[]> => {
-    await new Promise(resolve => setTimeout(resolve, 200));
-    return loadUsers();
+    try {
+      const data = await api.auth.getAllUsers();
+      return data.map((u: any) => ({
+        id: String(u.id),
+        email: u.email,
+        name: u.name,
+        phone: u.phone,
+        bonusBalance: u.bonusBalance ?? 0,
+        isPartner: u.isPartner ?? false,
+        isActive: u.isActive ?? true,
+        cardNumber: u.cardNumber,
+        createdAt: new Date().toISOString(),
+      }));
+    } catch (error) {
+      console.error('Failed to load users:', error);
+      return [];
+    }
   },
 
-  setPartnerStatus: async (userId: string, isPartner: boolean): Promise<User | null> => {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    const allUsers = loadUsers();
-    const index = allUsers.findIndex(u => u.id === userId);
-    if (index >= 0) {
-      allUsers[index].isPartner = isPartner;
-      saveUsers(allUsers);
-      return allUsers[index];
-    }
-    return null;
-  },
+      setPartnerStatus: async (userId: string, isPartner: boolean): Promise<User | null> => {
+        try {
+          const currentUser = authApi.getCurrentUser();
+          if (!currentUser) throw new Error('User not logged in');
+          const updatedUser = await api.auth.updateUser(parseInt(userId), { isPartner });
+          if (updatedUser) {
+            const userData: User = {
+              id: String(updatedUser.id),
+              email: updatedUser.email,
+              name: updatedUser.name,
+              phone: updatedUser.phone,
+              bonusBalance: updatedUser.bonusBalance ?? 0,
+              isPartner: updatedUser.isPartner ?? false,
+              isActive: updatedUser.isActive ?? true,
+              cardNumber: updatedUser.cardNumber ?? undefined,
+              createdAt: currentUser.createdAt,
+              updatedAt: new Date().toISOString(),
+            };
+            return userData;
+          }
+          return null;
+        } catch (error) {
+          console.error('Failed to set partner status:', error);
+          return null;
+        }
+      },
 
   updateCardNumber: async (userId: string, cardNumber: string): Promise<User | null> => {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    const allUsers = loadUsers();
-    const index = allUsers.findIndex(u => u.id === userId);
-    if (index >= 0) {
-      allUsers[index].cardNumber = cardNumber;
-      saveUsers(allUsers);
-      return allUsers[index];
-    }
-    return null;
+    return authApi.updateProfile(userId, { cardNumber });
   },
 
   deductBalance: async (userId: string, amount: number): Promise<User | null> => {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    const allUsers = loadUsers();
-    const index = allUsers.findIndex(u => u.id === userId);
-    if (index >= 0 && allUsers[index].bonusBalance >= amount) {
-      allUsers[index].bonusBalance -= amount;
-      saveUsers(allUsers);
-      return allUsers[index];
-    }
+    // TODO: Implement deduct balance API endpoint
     return null;
   },
 };
+
+export const users: User[] = [];

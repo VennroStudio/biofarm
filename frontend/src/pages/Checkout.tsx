@@ -60,7 +60,7 @@ const Checkout = () => {
     
     try {
       const order = await ordersApi.createOrder(
-        user?.id || 'guest',
+        user?.id || '0',
         cart,
         form,
         paymentMethod === 'card' ? 'Банковская карта' : 'СБП',

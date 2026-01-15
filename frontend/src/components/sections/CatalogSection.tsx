@@ -1,9 +1,10 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useInView } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { ProductCard } from '@/components/catalog/ProductCard';
-import { categories, products } from '@/data/products';
+import { getProducts, Product } from '@/data/products';
+import { getCategories, Category } from '@/data/categories';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -19,13 +20,29 @@ const itemVariants = {
 };
 
 export const CatalogSection = () => {
-  const [activeCategory, setActiveCategory] = useState('all');
+  const [activeCategory, setActiveCategory] = useState<string>('all');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
 
+  useEffect(() => {
+    Promise.all([
+      getProducts(),
+      getCategories(true) // Только активные категории
+    ])
+      .then(([productsData, categoriesData]) => {
+        setProducts(productsData);
+        setCategories(categoriesData);
+      })
+      .catch((error) => {
+        console.error('Failed to load data:', error);
+      });
+  }, []);
+
   const filteredProducts = activeCategory === 'all'
     ? products
-    : products.filter((p) => p.category === activeCategory);
+    : products.filter((p) => String(p.category) === activeCategory);
 
   return (
     <section id="catalog" className="py-20 lg:py-32">
@@ -56,14 +73,21 @@ export const CatalogSection = () => {
           transition={{ delay: 0.3 }}
           className="flex flex-wrap justify-center gap-3 mb-12"
         >
+          <Button
+            variant={activeCategory === 'all' ? 'default' : 'outline'}
+            onClick={() => setActiveCategory('all')}
+            className={activeCategory === 'all' ? 'gradient-primary' : ''}
+          >
+            Все товары
+          </Button>
           {categories.map((category) => (
             <Button
               key={category.id}
-              variant={activeCategory === category.id ? 'default' : 'outline'}
-              onClick={() => setActiveCategory(category.id)}
-              className={activeCategory === category.id ? 'gradient-primary' : ''}
+              variant={activeCategory === String(category.id) ? 'default' : 'outline'}
+              onClick={() => setActiveCategory(String(category.id))}
+              className={activeCategory === String(category.id) ? 'gradient-primary' : ''}
             >
-              {category.label}
+              {category.name}
             </Button>
           ))}
         </motion.div>

@@ -1,0 +1,21 @@
+{
+    "albumFolderFormat": "albums/{AlbumID}",
+    "apiKeyIndex": 4,
+    "audioQuality": "HiFi",
+    "checkExist": true,
+    "downloadDelay": true,
+    "downloadPath": "/app/var/tidal",
+    "includeEP": true,
+    "language": 0,
+    "lyricFile": true,
+    "multiThread": true,
+    "playlistFolderFormat": "playlists/{PlaylistUUID}",
+    "saveAlbumInfo": false,
+    "saveCovers": false,
+    "showProgress": false,
+    "showTrackInfo": false,
+    "trackFileFormat": "{TrackID}",
+    "usePlaylistFolder": true,
+    "videoFileFormat": "{VideoID}",
+    "videoQuality": "P1080"
+}

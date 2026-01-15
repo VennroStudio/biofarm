@@ -7,13 +7,29 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { adminApi, DashboardStats } from '@/data/admin';
+import { ordersApi, Order } from '@/data/orders';
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [recentOrders, setRecentOrders] = useState<Order[]>([]);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   useEffect(() => {
     adminApi.getDashboardStats().then(setStats);
+    ordersApi.getAllOrders()
+      .then(orders => {
+        const sorted = orders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        setRecentOrders(sorted.slice(0, 5));
+      })
+      .catch(console.error);
   }, []);
 
   const statCards = [
@@ -118,7 +134,7 @@ const AdminDashboard = () => {
         </CardContent>
       </Card>
 
-      {/* Recent Activity Placeholder */}
+      {/* Recent Orders */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Последние заказы</CardTitle>
@@ -129,12 +145,105 @@ const AdminDashboard = () => {
           </Button>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8 text-muted-foreground">
-            <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>Заказы будут отображаться здесь</p>
-          </div>
+          {recentOrders.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>Заказы будут отображаться здесь</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {recentOrders.map((order) => {
+                const statusMap = {
+                  pending: { label: 'Ожидает', variant: 'secondary' as const },
+                  processing: { label: 'Обработка', variant: 'default' as const },
+                  shipped: { label: 'Отправлен', variant: 'default' as const },
+                  delivered: { label: 'Доставлен', variant: 'default' as const },
+                  cancelled: { label: 'Отменён', variant: 'destructive' as const },
+                };
+                const status = statusMap[order.status] || statusMap.pending;
+                const isPaid = order.paymentStatus === 'completed' || order.paidAt !== null;
+                return (
+                  <div 
+                    key={order.id}
+                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                    onClick={() => setSelectedOrder(order)}
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-1">
+                        <span className="font-medium">{order.id}</span>
+                        <Badge variant={status.variant}>{status.label}</Badge>
+                        <Badge variant={isPaid ? 'default' : 'outline'} className={isPaid ? 'bg-green-500 hover:bg-green-600' : ''}>
+                          {isPaid ? 'Оплачен' : 'Не оплачен'}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {order.shippingAddress?.name || 'Клиент'} • {new Date(order.createdAt).toLocaleDateString('ru-RU')} • {order.total.toLocaleString()} ₽
+                      </p>
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </CardContent>
       </Card>
+
+      {/* Order Details Dialog */}
+      <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Заказ {selectedOrder?.id}</DialogTitle>
+          </DialogHeader>
+          {selectedOrder && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-medium mb-2">Клиент</h4>
+                  <p>{selectedOrder.shippingAddress?.name || 'Не указано'}</p>
+                  <p className="text-muted-foreground">{selectedOrder.shippingAddress?.phone || 'Не указано'}</p>
+                  <p className="text-muted-foreground">{selectedOrder.shippingAddress?.email || 'Не указано'}</p>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">Адрес доставки</h4>
+                  <p>{selectedOrder.shippingAddress?.city || 'Не указано'}</p>
+                  <p className="text-muted-foreground">{selectedOrder.shippingAddress?.address || 'Не указано'}</p>
+                  <p className="text-muted-foreground">{selectedOrder.shippingAddress?.postalCode || 'Не указано'}</p>
+                </div>
+              </div>
+              
+              <div>
+                <h4 className="font-medium mb-2">Товары</h4>
+                {selectedOrder.items && selectedOrder.items.length > 0 ? (
+                  <div className="space-y-2">
+                    {selectedOrder.items.map((item, index) => (
+                      <div key={`${item.productId}-${index}`} className="flex justify-between items-center p-2 bg-muted/50 rounded">
+                        <div>
+                          <p className="font-medium">{item.productName}</p>
+                          <p className="text-sm text-muted-foreground">{item.quantity} × {item.price.toLocaleString()} ₽</p>
+                        </div>
+                        <p className="font-medium">{(item.price * item.quantity).toLocaleString()} ₽</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground">Товары не загружены</p>
+                )}
+              </div>
+              
+              <div className="flex justify-between items-center pt-4 border-t">
+                <div>
+                  <p className="text-muted-foreground">Способ оплаты: {selectedOrder.paymentMethod || 'Не указано'}</p>
+                  {selectedOrder.bonusUsed > 0 && (
+                    <p className="text-muted-foreground">Использовано бонусов: {selectedOrder.bonusUsed.toLocaleString()} ₽</p>
+                  )}
+                </div>
+                <p className="text-xl font-bold">{selectedOrder.total.toLocaleString()} ₽</p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

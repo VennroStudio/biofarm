@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Albums not found</title>
+    <link rel="stylesheet" href="/tables/css/main.css?t=1727817206">
+    <script src="/tables/js/main.js?t=1727817206"></script>
+</head>
+<body>
+<div class="container">
+    <h2>Albums not mapped</h2>
+    <table style="width: 100%">
+        <tr>
+            <td valign="top">
+                <div id="table-albums-spotify"></div>
+            </td>
+            <td valign="top">
+                <div id="table-albums-tidal"></div>
+            </td>
+            <td valign="top">
+                <div id="table-albums-apple"></div>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<script>
+    function getAlbumsSpotify(artistId) {
+
+        let url = '/v1/stats/albums/not-found-spotify?';
+
+        if (artistId) {
+            url += 'artistId=' + artistId;
+        }
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('table-albums-spotify').innerHTML = generateTableSpotify(data.data);
+            });
+    }
+
+    function getAlbumsTidal(artistId) {
+
+        let url = '/v1/stats/albums/not-found-tidal?';
+
+        if (artistId) {
+            url += 'artistId=' + artistId;
+        }
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('table-albums-tidal').innerHTML = generateTableTidal(data.data);
+            });
+    }
+
+    function getAlbumsApple(artistId) {
+
+        let url = '/v1/stats/albums/not-found-apple?';
+
+        if (artistId) {
+            url += 'artistId=' + artistId;
+        }
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('table-albums-apple').innerHTML = generateTableApple(data.data);
+            });
+    }
+
+    function generateTableSpotify(data) {
+        let table = '<table class="table"><tr><th>ID</th><th>Spotify</th></tr>';
+
+        if (data.length === 0) {
+            table += '<tr><td colspan="2" style="text-align: center">no data</td></tr>';
+        }
+
+        for (let i = 0; i < data.length; i++) {
+
+            let released_at =  data[i].released_at !== null ? timeConverter(data[i].released_at) : '-';
+
+            table += '<tr>';
+            table += '<td style="text-align: center">' + (i + 1) + '</td>';
+            table += '<td>' +
+                '<a href="https://open.spotify.com/album/' + data[i].spotify_id + '" target="_blank">' + data[i].name + '</a>' +
+                '<br><span style="color: rgb(40, 40, 40); font-size: 13px;">' + data[i].artists + '</span>' +
+                '<br><span style="color: rgb(80, 80, 80); font-size: 13px;">UPC: ' + (data[i].upc ?? '-') + '</span>' +
+                '<div class="small">[' + data[i].id + '] ' + data[i].type + ' — ' + released_at + ', tracks: ' + data[i].total_tracks + '</div>' +
+                '</td>';
+            table += '</tr>';
+        }
+        table += '</table>';
+        return table;
+    }
+
+    function generateTableTidal(data) {
+        let table = '<table class="table"><tr><th>ID</th><th>Tidal</th></tr>';
+
+        if (data.length === 0) {
+            table += '<tr><td colspan="2" style="text-align: center">no data</td></tr>';
+        }
+
+        for (let i = 0; i < data.length; i++) {
+
+            let released_at =  data[i].released_at !== null ? timeConverter(data[i].released_at) : '-';
+
+            table += '<tr>';
+            table += '<td style="text-align: center">' + (i + 1) + '</td>';
+            table += '<td>' +
+                '<a href="https://listen.tidal.com/album/' + data[i].tidal_id + '" target="_blank">' + data[i].name + '</a>' +
+                '<br><span style="color: rgb(40, 40, 40); font-size: 13px;">' + data[i].artists + '</span>' +
+                '<br><span style="color: rgb(80, 80, 80); font-size: 13px;">UPC: ' + (data[i].upc ?? '-') + '</span>' +
+                '<div class="small">[' + data[i].id + '] ' + data[i].type + ' — ' + released_at + ', tracks: ' + data[i].total_tracks + '</div>' +
+                '</td>';
+            table += '</tr>';
+        }
+        table += '</table>';
+        return table;
+    }
+
+    function generateTableApple(data) {
+        let table = '<table class="table"><tr><th>ID</th><th>Apple</th></tr>';
+
+        if (data.length === 0) {
+            table += '<tr><td colspan="2" style="text-align: center">no data</td></tr>';
+        }
+
+        for (let i = 0; i < data.length; i++) {
+
+            let released_at =  data[i].released_at !== null ? timeConverter(data[i].released_at) : '-';
+
+            table += '<tr>';
+            table += '<td style="text-align: center">' + (i + 1) + '</td>';
+            table += '<td>' +
+                '<a href="https://music.apple.com/us/album/' + data[i].apple_id + '" target="_blank">' + data[i].name + '</a>' +
+                '<br><span style="color: rgb(40, 40, 40); font-size: 13px;">' + data[i].artists + '</span>' +
+                '<br><span style="color: rgb(80, 80, 80); font-size: 13px;">UPC: ' + (data[i].upc ?? '-') + '</span>' +
+                '<div class="small">[' + data[i].id + '] ' + data[i].type + ' — ' + released_at + ', tracks: ' + data[i].total_tracks + '</div>' +
+                '</td>';
+            table += '</tr>';
+        }
+        table += '</table>';
+        return table;
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    let artistId = urlParams.get('artistId');
+
+    getAlbumsSpotify(artistId);
+    getAlbumsTidal(artistId);
+    getAlbumsApple(artistId);
+</script>
+</body>
+</html>

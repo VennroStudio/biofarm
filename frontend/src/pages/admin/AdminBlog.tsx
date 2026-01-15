@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Search, Edit, Trash2, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,12 +22,24 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
-import { blogPosts as initialPosts, BlogPost } from '@/data/blogPosts';
+import { getBlogPosts, BlogPost } from '@/data/blogPosts';
 import { useToast } from '@/hooks/use-toast';
+import { api } from '@/lib/api';
 
 const AdminBlog = () => {
   const { toast } = useToast();
-  const [posts, setPosts] = useState<BlogPost[]>(initialPosts);
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getBlogPosts()
+      .then(setPosts)
+      .catch((error) => {
+        console.error('Failed to load blog posts:', error);
+        toast({ title: 'Ошибка загрузки статей', variant: 'destructive' });
+      })
+      .finally(() => setLoading(false));
+  }, [toast]);
   const [search, setSearch] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
@@ -45,6 +57,20 @@ const AdminBlog = () => {
   const filteredPosts = posts.filter(p => 
     p.title.toLowerCase().includes(search.toLowerCase())
   );
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Блог</h1>
+          <p className="text-muted-foreground">Управление статьями</p>
+        </div>
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">Загрузка статей...</p>
+        </div>
+      </div>
+    );
+  }
 
   const resetForm = () => {
     setForm({
@@ -69,49 +95,77 @@ const AdminBlog = () => {
     setIsDialogOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const slug = form.title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
     
-    if (editingPost) {
-      setPosts(prev => prev.map(p => 
-        p.id === editingPost.id 
-          ? { 
-              ...p, 
-              title: form.title,
-              excerpt: form.excerpt,
-              content: form.content,
-              image: form.image || p.image,
-              category: form.category,
-              author: { name: form.authorName, avatar: form.authorAvatar },
-              slug 
-            }
-          : p
-      ));
-      toast({ title: 'Статья обновлена' });
-    } else {
-      const newPost: BlogPost = {
-        id: Date.now(),
-        slug,
-        title: form.title,
-        excerpt: form.excerpt,
-        content: form.content,
-        image: form.image || 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=800&q=80',
-        category: form.category,
-        author: { name: form.authorName, avatar: form.authorAvatar },
-        date: new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }),
-        readTime: `${Math.ceil(form.content.length / 1000)} мин`,
-      };
-      setPosts(prev => [newPost, ...prev]);
-      toast({ title: 'Статья добавлена' });
+    try {
+      if (editingPost) {
+        const updatedPost = await api.blog.update(editingPost.id, {
+          title: form.title,
+          excerpt: form.excerpt,
+          content: form.content,
+          image: form.image || editingPost.image,
+          category: form.category,
+          categoryId: form.category,
+          authorId: 1,
+          readTime: Math.ceil(form.content.length / 1000),
+          isPublished: true,
+          slug: slug,
+        });
+        
+        setPosts(prev => prev.map(p => 
+          p.id === editingPost.id 
+            ? { 
+                id: updatedPost.id,
+                slug: updatedPost.slug,
+                title: updatedPost.title,
+                excerpt: updatedPost.excerpt,
+                content: updatedPost.content,
+                image: updatedPost.image,
+                category: updatedPost.category,
+                author: { name: form.authorName, avatar: form.authorAvatar },
+                date: new Date(updatedPost.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }),
+                readTime: `${updatedPost.readTime} мин`,
+              }
+            : p
+        ));
+        toast({ title: 'Статья обновлена' });
+      } else {
+        // For new posts, we would need a create endpoint
+        // For now, just update local state
+        const newPost: BlogPost = {
+          id: Date.now(),
+          slug,
+          title: form.title,
+          excerpt: form.excerpt,
+          content: form.content,
+          image: form.image || 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=800&q=80',
+          category: form.category,
+          author: { name: form.authorName, avatar: form.authorAvatar },
+          date: new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }),
+          readTime: `${Math.ceil(form.content.length / 1000)} мин`,
+        };
+        setPosts(prev => [newPost, ...prev]);
+        toast({ title: 'Статья добавлена' });
+      }
+      
+      setIsDialogOpen(false);
+      resetForm();
+    } catch (error) {
+      console.error('Failed to save blog post:', error);
+      toast({ title: 'Ошибка сохранения статьи', variant: 'destructive' });
     }
-    
-    setIsDialogOpen(false);
-    resetForm();
   };
 
-  const handleDelete = (id: number) => {
-    setPosts(prev => prev.filter(p => p.id !== id));
-    toast({ title: 'Статья удалена' });
+  const handleDelete = async (id: number) => {
+    try {
+      await api.blog.delete(id);
+      setPosts(prev => prev.filter(p => p.id !== id));
+      toast({ title: 'Статья удалена' });
+    } catch (error) {
+      console.error('Failed to delete blog post:', error);
+      toast({ title: 'Ошибка удаления статьи', variant: 'destructive' });
+    }
   };
 
   return (

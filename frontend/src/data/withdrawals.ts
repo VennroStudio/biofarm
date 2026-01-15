@@ -1,5 +1,4 @@
-// Withdrawal requests data layer
-import withdrawalsData from './withdrawals.json';
+import { api } from '@/lib/api';
 
 export interface WithdrawalRequest {
   id: string;
@@ -11,91 +10,75 @@ export interface WithdrawalRequest {
   processedBy?: string;
 }
 
-const STORAGE_KEY = 'biofarm_withdrawals';
-
-const loadWithdrawals = (): WithdrawalRequest[] => {
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored) {
-    return JSON.parse(stored);
-  }
-  return withdrawalsData.withdrawals.map(w => ({
-    id: w.id,
-    userId: w.user_id,
-    amount: w.amount,
-    status: w.status as WithdrawalRequest['status'],
-    createdAt: w.created_at,
-    processedAt: w.processed_at || undefined,
-    processedBy: w.processed_by || undefined,
-  }));
-};
-
-const saveWithdrawals = (data: WithdrawalRequest[]) => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-};
-
 export const withdrawalsApi = {
   getAll: async (): Promise<WithdrawalRequest[]> => {
-    await new Promise(resolve => setTimeout(resolve, 200));
-    return loadWithdrawals();
+    const data = await api.withdrawals.getAll();
+    return data.map((w: any) => ({
+      id: w.id,
+      userId: String(w.userId),
+      amount: w.amount,
+      status: w.status as WithdrawalRequest['status'],
+      createdAt: w.createdAt,
+      processedAt: w.processedAt,
+      processedBy: w.processedBy,
+    }));
   },
 
   getByUser: async (userId: string): Promise<WithdrawalRequest[]> => {
-    await new Promise(resolve => setTimeout(resolve, 200));
-    return loadWithdrawals().filter(w => w.userId === userId);
+    const data = await api.withdrawals.getByUserId(Number(userId));
+    return data.map((w: any) => ({
+      id: w.id,
+      userId: String(w.userId),
+      amount: w.amount,
+      status: w.status as WithdrawalRequest['status'],
+      createdAt: w.createdAt,
+      processedAt: w.processedAt,
+      processedBy: w.processedBy,
+    }));
   },
 
   create: async (userId: string, amount: number): Promise<WithdrawalRequest> => {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    const requests = loadWithdrawals();
-    const newRequest: WithdrawalRequest = {
-      id: `wd-${Date.now()}`,
-      userId,
+    const data = await api.withdrawals.create({
+      userId: Number(userId),
       amount,
-      status: 'pending',
+    });
+    
+    return {
+      id: data.id,
+      userId: String(data.userId),
+      amount: data.amount,
+      status: data.status as WithdrawalRequest['status'],
       createdAt: new Date().toISOString(),
     };
-    requests.push(newRequest);
-    saveWithdrawals(requests);
-    return newRequest;
   },
 
   approve: async (id: string, adminName: string): Promise<WithdrawalRequest | null> => {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    const requests = loadWithdrawals();
-    const index = requests.findIndex(w => w.id === id);
-    if (index >= 0) {
-      const withdrawal = requests[index];
-      
-      // Deduct balance from user
-      const { authApi } = await import('./users');
-      await authApi.deductBalance(withdrawal.userId, withdrawal.amount);
-      
-      requests[index] = {
-        ...requests[index],
-        status: 'approved',
-        processedAt: new Date().toISOString(),
-        processedBy: adminName,
-      };
-      saveWithdrawals(requests);
-      return requests[index];
-    }
-    return null;
+    const data = await api.withdrawals.updateStatus(id, 'approved', adminName);
+    if (!data) return null;
+    
+    return {
+      id: data.id,
+      userId: String(data.userId),
+      amount: data.amount,
+      status: 'approved',
+      createdAt: new Date().toISOString(),
+      processedAt: new Date().toISOString(),
+      processedBy: adminName,
+    };
   },
 
   reject: async (id: string, adminName: string): Promise<WithdrawalRequest | null> => {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    const requests = loadWithdrawals();
-    const index = requests.findIndex(w => w.id === id);
-    if (index >= 0) {
-      requests[index] = {
-        ...requests[index],
-        status: 'rejected',
-        processedAt: new Date().toISOString(),
-        processedBy: adminName,
-      };
-      saveWithdrawals(requests);
-      return requests[index];
-    }
-    return null;
+    const data = await api.withdrawals.updateStatus(id, 'rejected', adminName);
+    if (!data) return null;
+    
+    return {
+      id: data.id,
+      userId: String(data.userId),
+      amount: data.amount,
+      status: 'rejected',
+      createdAt: new Date().toISOString(),
+      processedAt: new Date().toISOString(),
+      processedBy: adminName,
+    };
   },
 };

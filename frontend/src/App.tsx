@@ -4,6 +4,28 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { useEffect } from "react";
+
+// Компонент для обработки реферальной ссылки
+const ReferralHandler = () => {
+  useEffect(() => {
+    // Читаем параметр ref из URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const refParam = urlParams.get('ref');
+    
+    if (refParam) {
+      // Сохраняем в localStorage для использования при регистрации
+      localStorage.setItem('referralCode', refParam);
+      
+      // Удаляем параметр из URL для чистоты
+      urlParams.delete('ref');
+      const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, []);
+  
+  return null;
+};
 import Index from "./pages/Index";
 import Catalog from "./pages/Catalog";
 import ProductPage from "./pages/ProductPage";
@@ -36,6 +58,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <ReferralHandler />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/catalog" element={<Catalog />} />

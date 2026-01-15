@@ -1,73 +1,87 @@
-import { useRef, useState } from 'react';
-import { motion, useInView } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { Star, ChevronLeft, ChevronRight, Quote } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { reviewsApi, Review } from '@/data/reviews';
+import { getProducts } from '@/data/products';
 
-const reviews = [
-  {
-    id: 1,
-    name: 'Анна Петрова',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80',
-    rating: 5,
-    text: 'Отличный мёд! Заказываю уже не первый раз. Вкус натуральный, густой, ароматный. Дети в восторге!',
-    date: '12 января 2024',
-    product: 'Мёд цветочный',
-    images: [
-      'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=300&q=80',
-      'https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?w=300&q=80',
-    ],
-  },
-  {
-    id: 2,
-    name: 'Михаил Сидоров',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80',
-    rating: 5,
-    text: 'Льняное масло высшего качества. Принимаю каждый день натощак — самочувствие отличное!',
-    date: '10 января 2024',
-    product: 'Масло льняное',
-    images: [
-      'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=300&q=80',
-    ],
-  },
-  {
-    id: 3,
-    name: 'Елена Козлова',
-    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&q=80',
-    rating: 5,
-    text: 'Заказывала на подарок родителям гречишный мёд. Все в восторге! Упаковка красивая, доставка быстрая.',
-    date: '8 января 2024',
-    product: 'Мёд гречишный',
-  },
-  {
-    id: 4,
-    name: 'Дмитрий Волков',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80',
-    rating: 4,
-    text: 'Хорошее подсолнечное масло. Вкус как в детстве у бабушки. Рекомендую!',
-    date: '5 января 2024',
-    product: 'Масло подсолнечное',
-    images: [
-      'https://images.unsplash.com/photo-1620706857370-e1b9770e8bb1?w=300&q=80',
-      'https://images.unsplash.com/photo-1599599810694-b5b37304c041?w=300&q=80',
-      'https://images.unsplash.com/photo-1612187715648-a8ad6d2c7c58?w=300&q=80',
-    ],
-  },
-  {
-    id: 5,
-    name: 'Ольга Новикова',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&q=80',
-    rating: 5,
-    text: 'Лучший мёд, который я пробовала! Теперь только BioFarm. Спасибо за качество!',
-    date: '3 января 2024',
-    product: 'Мёд липовый',
-  },
-];
+interface DisplayReview {
+  id: string;
+  name: string;
+  avatar: string;
+  rating: number;
+  text: string;
+  date: string;
+  product: string;
+  images?: string[];
+}
 
 export const ReviewsSection = () => {
+  const [reviews, setReviews] = useState<DisplayReview[]>([]);
+  const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: '-100px' });
+
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([
+      reviewsApi.getAllReviews(true), // Получаем только одобренные отзывы
+      getProducts()
+    ])
+      .then(([reviewsData, productsData]) => {
+        // Take first 5 approved reviews
+        const approvedReviews = reviewsData.slice(0, 5);
+        
+        const displayReviews: DisplayReview[] = approvedReviews.map((review) => {
+          const product = productsData.find(p => p.id === review.productId);
+          return {
+            id: review.id,
+            name: review.userName,
+            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(review.userName)}&background=random`,
+            rating: review.rating,
+            text: review.text,
+            date: new Date(review.createdAt).toLocaleDateString('ru-RU', {
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric'
+            }),
+            product: product?.name || 'Товар',
+            images: review.images || [],
+          };
+        });
+        
+        // If we have less than 3 reviews, duplicate them to have at least 3 for carousel
+        if (displayReviews.length > 0 && displayReviews.length < 3) {
+          while (displayReviews.length < 3) {
+            displayReviews.push(...displayReviews);
+          }
+        }
+        
+        setReviews(displayReviews);
+      })
+      .catch((error) => {
+        console.error('Failed to load reviews:', error);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) {
+    return (
+      <section id="reviews" className="py-20 lg:py-32 bg-secondary/30">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <p className="text-muted-foreground">Загрузка отзывов...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (reviews.length === 0) {
+    return null;
+  }
 
   const nextSlide = () => {
     setCurrentIndex((prev) => (prev + 1) % reviews.length);
@@ -87,9 +101,8 @@ export const ReviewsSection = () => {
     <section id="reviews" className="py-20 lg:py-32 bg-secondary/30">
       <div className="container mx-auto px-4">
         <motion.div
-          ref={ref}
           initial={{ opacity: 0, y: 30 }}
-          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+          animate={!loading ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
           transition={{ duration: 0.6 }}
           className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12"
         >
@@ -124,10 +137,10 @@ export const ReviewsSection = () => {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {visibleReviews.map((review, index) => (
             <motion.div
-              key={review.id}
+              key={`${review.id}-${currentIndex}-${index}`}
               initial={{ opacity: 0, y: 30 }}
-              animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
+              animate={!loading ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+              transition={{ duration: 0.6, delay: 0.2 + index * 0.15 }}
               className="bg-card rounded-2xl p-6 shadow-premium relative"
             >
               <Quote className="absolute top-6 right-6 h-8 w-8 text-primary/10" />
