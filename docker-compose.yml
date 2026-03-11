@@ -40,5 +40,7 @@ services:
     environment:
       - APP_ENV=development
       - APP_DEBUG=true
+      # Вторая БД: из контейнера хост — это host.docker.internal (MySQL на твоём Mac)
+      - DB2_HOST=host.docker.internal
     stdin_open: true
     tty: true

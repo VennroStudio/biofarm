@@ -27,3 +27,6 @@ build-frontend-prod:
 
 build-app:
 	docker-compose exec frontend sh -c "cd /app && npm run build"
+
+test-db:
+	docker compose run backend php bin/console.php app:other-db
