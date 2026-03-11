@@ -19,7 +19,6 @@ const contactInfo = [
     title: 'Связаться с нами',
     lines: ['bio.active@bk.ru'],
     buttons: [
-      { label: 'WhatsApp', icon: MessageCircle, href: 'https://wa.me/79138748420' },
       { label: 'Email', icon: Mail, href: 'mailto:bio.active@bk.ru' },
     ],
   },

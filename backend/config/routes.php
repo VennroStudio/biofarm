@@ -40,6 +40,7 @@ use App\Http\Action\V1\Withdrawal\CreateAction as WithdrawalCreateAction;
 use App\Http\Action\V1\Withdrawal\GetAllAction as WithdrawalGetAllAction;
 use App\Http\Action\V1\Withdrawal\GetByUserIdAction as WithdrawalGetByUserIdAction;
 use App\Http\Action\V1\Withdrawal\UpdateStatusAction as WithdrawalUpdateStatusAction;
+use App\Http\Action\V1\Feedback\SendAction as FeedbackSendAction;
 use Slim\App;
 
 return static function (App $app, array $dependencies): void {
@@ -102,4 +103,7 @@ return static function (App $app, array $dependencies): void {
     $app->get('/api/v1/withdrawals/user', new WithdrawalGetByUserIdAction($fetchers['withdrawalsGetByUserId']));
     $app->post('/api/v1/withdrawals', new WithdrawalCreateAction($handlers['withdrawalCreate'], $em));
     $app->put('/api/v1/withdrawals/{id}/status', new WithdrawalUpdateStatusAction($handlers['withdrawalUpdateStatus'], $em));
+
+    // Feedback (форма обратной связи)
+    $app->post('/api/v1/feedback', new FeedbackSendAction($dependencies['mailer'], $dependencies['mailFrom']));
 };

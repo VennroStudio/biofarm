@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useInView } from 'framer-motion';
 import { useRef } from 'react';
@@ -5,6 +6,8 @@ import { Leaf, Award, Truck, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { api } from '@/lib/api';
 
 const features = [
   {
@@ -47,6 +50,38 @@ const itemVariants = {
 export const FeaturesSection = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
+  const { toast } = useToast();
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [message, setMessage] = useState('');
+  const [sending, setSending] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (sending) return;
+    if (!name.trim() || !email.trim() || !message.trim()) {
+      toast({ title: 'Заполните имя, email и сообщение', variant: 'destructive' });
+      return;
+    }
+    setSending(true);
+    try {
+      await api.feedback.send({ name: name.trim(), phone: phone.trim() || undefined, email: email.trim(), message: message.trim() });
+      toast({ title: 'Заявка отправлена', description: 'Мы свяжемся с вами в ближайшее время' });
+      setName('');
+      setPhone('');
+      setEmail('');
+      setMessage('');
+    } catch (err) {
+      toast({
+        title: 'Ошибка отправки',
+        description: err instanceof Error ? err.message : 'Попробуйте позже',
+        variant: 'destructive',
+      });
+    } finally {
+      setSending(false);
+    }
+  };
 
   return (
     <section id="partner" className="py-20 lg:py-32 bg-secondary/30">
@@ -107,26 +142,44 @@ export const FeaturesSection = () => {
               Заполните форму и мы свяжемся с вами в ближайшее время
             </p>
 
-            <form className="space-y-6">
+            <form className="space-y-6" onSubmit={handleSubmit}>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-foreground mb-2 block">
                     Ваше имя
                   </label>
-                  <Input placeholder="Иван Иванов" className="bg-background" />
+                  <Input
+                    placeholder="Иван Иванов"
+                    className="bg-background"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                  />
                 </div>
                 <div>
                   <label className="text-sm font-medium text-foreground mb-2 block">
                     Телефон
                   </label>
-                  <Input placeholder="+7 (999) 123-45-67" className="bg-background" />
+                  <Input
+                    placeholder="+7 (999) 123-45-67"
+                    className="bg-background"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                  />
                 </div>
               </div>
               <div>
                 <label className="text-sm font-medium text-foreground mb-2 block">
                   Email
                 </label>
-                <Input type="email" placeholder="your@email.com" className="bg-background" />
+                <Input
+                  type="email"
+                  placeholder="your@email.com"
+                  className="bg-background"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
               </div>
               <div>
                 <label className="text-sm font-medium text-foreground mb-2 block">
@@ -136,10 +189,13 @@ export const FeaturesSection = () => {
                   placeholder="Напишите ваш вопрос..."
                   rows={4}
                   className="bg-background resize-none"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  required
                 />
               </div>
-              <Button type="submit" className="w-full gradient-primary text-primary-foreground py-6">
-                Отправить заявку
+              <Button type="submit" className="w-full gradient-primary text-primary-foreground py-6" disabled={sending}>
+                {sending ? 'Отправка…' : 'Отправить заявку'}
               </Button>
               <p className="text-xs text-muted-foreground text-center">
                 Нажимая кнопку, вы соглашаетесь с политикой конфиденциальности

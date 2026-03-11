@@ -54,6 +54,8 @@ use App\Modules\Command\Category\Update\Handler as CategoryUpdateHandler;
 use App\Modules\Command\Category\Delete\Handler as CategoryDeleteHandler;
 use App\Modules\Command\Withdrawal\Create\Handler as WithdrawalCreateHandler;
 use App\Modules\Command\Withdrawal\UpdateStatus\Handler as WithdrawalUpdateStatusHandler;
+use Symfony\Component\Mailer\Mailer;
+use Symfony\Component\Mailer\Transport;
 
 // Load .env file
 $dotenv = Dotenv::createImmutable(__DIR__ . '/../../');
@@ -146,6 +148,21 @@ $categoryDeleteHandler = new CategoryDeleteHandler($categoryRepository, $product
 $withdrawalCreateHandler = new WithdrawalCreateHandler($withdrawalRepository);
 $withdrawalUpdateStatusHandler = new WithdrawalUpdateStatusHandler($withdrawalRepository);
 
+// Mailer (SMTP для формы обратной связи)
+$smtpUser = $_ENV['SMTP_USER'] ?? '';
+$smtpPassword = $_ENV['SMTP_PASSWORD'] ?? '';
+$smtpHost = $_ENV['SMTP_HOST'] ?? 'mail.hosting.reg.ru';
+$smtpPort = (int)($_ENV['SMTP_PORT'] ?? 465);
+$fromEmail = $_ENV['MAIL_FROM'] ?? $smtpUser;
+$mailerDsn = sprintf(
+    'smtps://%s:%s@%s:%d',
+    rawurlencode($smtpUser),
+    rawurlencode($smtpPassword),
+    $smtpHost,
+    $smtpPort
+);
+$mailer = new Mailer(Transport::fromDsn($mailerDsn));
+
 return [
     'em' => $entityManager,
     'orderItemRepository' => $orderItemRepository,
@@ -192,4 +209,6 @@ return [
         'withdrawalCreate' => $withdrawalCreateHandler,
         'withdrawalUpdateStatus' => $withdrawalUpdateStatusHandler,
     ],
+    'mailer' => $mailer,
+    'mailFrom' => $fromEmail,
 ];
