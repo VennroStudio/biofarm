@@ -48,6 +48,9 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminWithdrawals from "./pages/admin/AdminWithdrawals";
 import NotFound from "./pages/NotFound";
+import PersonalDataConsent from "./pages/PersonalDataConsent";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import PublicOffer from "./pages/PublicOffer";
 
 const queryClient = new QueryClient();
 
@@ -66,6 +69,9 @@ const App = () => (
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/personal-data-consent" element={<PersonalDataConsent />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/oferta" element={<PublicOffer />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/checkout" element={<Checkout />} />

@@ -249,9 +249,9 @@ const Login = () => {
                         </div>
                       </div>
                       
-                      <div className="bg-accent/10 p-3 rounded-lg text-sm">
-                        🎁 При регистрации вы получите <strong>100 бонусных рублей</strong>
-                      </div>
+                      {/*<div className="bg-accent/10 p-3 rounded-lg text-sm">*/}
+                      {/*  🎁 При регистрации вы получите <strong>100 бонусных рублей</strong>*/}
+                      {/*</div>*/}
                       
                       <Button type="submit" className="w-full" disabled={isLoading}>
                         {isLoading ? 'Регистрация...' : 'Зарегистрироваться'}
@@ -264,9 +264,18 @@ const Login = () => {
                 <div className="mt-6 text-center text-sm text-muted-foreground">
                   <p>
                     Продолжая, вы соглашаетесь с{' '}
-                    <Link to="/terms" className="text-primary hover:underline">
-                      условиями использования
+                    <Link to="/privacy" className="text-primary hover:underline">
+                      политикой конфиденциальности
                     </Link>
+                    , даёте{' '}
+                    <Link to="/personal-data-consent" className="text-primary hover:underline">
+                      согласие на обработку персональных данных
+                    </Link>
+                    {' '}и принимаете условия{' '}
+                    <Link to="/oferta" className="text-primary hover:underline">
+                      публичной оферты
+                    </Link>
+                    .
                   </p>
                 </div>
               </CardContent>

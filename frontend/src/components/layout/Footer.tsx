@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { Building2 } from 'lucide-react';
 
 const footerLinks = {
@@ -25,7 +26,8 @@ const footerLinks = {
       { label: 'Доставка', href: '#' },
       { label: 'Оплата', href: '#' },
       { label: 'Возврат', href: '#' },
-      { label: 'Политика конфиденциальности', href: '#' },
+      { label: 'Публичная оферта', href: '/oferta' },
+      { label: 'Политика конфиденциальности', href: '/privacy' },
     ],
   },
 };
@@ -106,12 +108,21 @@ export const Footer = () => {
             <ul className="space-y-3">
               {footerLinks.info.links.map((link) => (
                 <li key={link.label}>
-                  <a
-                    href={link.href}
-                    className="text-primary-foreground/70 hover:text-primary-foreground transition-colors text-sm"
-                  >
-                    {link.label}
-                  </a>
+                  {link.href.startsWith('/') ? (
+                    <Link
+                      to={link.href}
+                      className="text-primary-foreground/70 hover:text-primary-foreground transition-colors text-sm"
+                    >
+                      {link.label}
+                    </Link>
+                  ) : (
+                    <a
+                      href={link.href}
+                      className="text-primary-foreground/70 hover:text-primary-foreground transition-colors text-sm"
+                    >
+                      {link.label}
+                    </a>
+                  )}
                 </li>
               ))}
             </ul>
