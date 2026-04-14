@@ -54,13 +54,6 @@ export const VideoSection = () => {
                 </motion.li>
               ))}
             </ul>
-            <Button
-              size="lg"
-              variant="secondary"
-              className="bg-primary-foreground text-primary hover:bg-primary-foreground/90"
-            >
-              Подробнее о нас
-            </Button>
           </motion.div>
 
           {/* Video Thumbnail */}

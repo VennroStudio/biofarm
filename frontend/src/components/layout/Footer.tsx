@@ -33,7 +33,7 @@ const footerLinks = {
 export const Footer = () => {
   return (
     <footer className="bg-primary text-primary-foreground">
-      <div className="container mx-auto px-4 py-16">
+      <div className="container mx-auto px-4 py-6">
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-12">
           {/* Legal Information */}
           <div className="sm:col-span-2 lg:col-span-1">
@@ -123,11 +123,11 @@ export const Footer = () => {
           <p className="text-primary-foreground/50 text-sm">
             © {new Date().getFullYear()} BioFarm. Все права защищены.
           </p>
-          <div className="flex items-center gap-4">
-            <span className="text-primary-foreground/50 text-sm">
-              Сделано VNS Studio
-            </span>
-          </div>
+          {/*<div className="flex items-center gap-4">*/}
+          {/*  <span className="text-primary-foreground/50 text-sm">*/}
+          {/*    Сделано VNS Studio*/}
+          {/*  </span>*/}
+          {/*</div>*/}
         </div>
       </div>
     </footer>
