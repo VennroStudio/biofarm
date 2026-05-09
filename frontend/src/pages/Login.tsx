@@ -12,6 +12,7 @@ import { Footer } from '@/components/layout/Footer';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { features } from '@/lib/features';
 
 const Login = () => {
   useDocumentTitle('Вход');
@@ -113,19 +114,21 @@ const Login = () => {
             transition={{ duration: 0.5 }}
           >
             <Card className="border-0 shadow-premium-lg">
-              <CardHeader className="text-center pb-2">
-                <CardTitle className="text-2xl font-bold">Личный кабинет</CardTitle>
-                <CardDescription>
-                  Войдите или создайте аккаунт
-                </CardDescription>
-              </CardHeader>
+                <CardHeader className="text-center pb-2">
+                  <CardTitle className="text-2xl font-bold">Личный кабинет</CardTitle>
+                  <CardDescription>
+                  {features.registrationEnabled ? 'Войдите или создайте аккаунт' : 'Войдите в свой аккаунт'}
+                  </CardDescription>
+                </CardHeader>
               
               <CardContent>
                 <Tabs defaultValue="login" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 mb-6">
-                    <TabsTrigger value="login">Вход</TabsTrigger>
-                    <TabsTrigger value="register">Регистрация</TabsTrigger>
-                  </TabsList>
+                  {features.registrationEnabled && (
+                    <TabsList className="grid w-full grid-cols-2 mb-6">
+                      <TabsTrigger value="login">Вход</TabsTrigger>
+                      <TabsTrigger value="register">Регистрация</TabsTrigger>
+                    </TabsList>
+                  )}
                   
                   <TabsContent value="login">
                     <form onSubmit={handleLogin} className="space-y-4">
@@ -175,90 +178,88 @@ const Login = () => {
                     </form>
                   </TabsContent>
                   
-                  <TabsContent value="register">
-                    <form onSubmit={handleRegister} className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="register-name">Имя</Label>
-                        <div className="relative">
-                          <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            id="register-name"
-                            type="text"
-                            placeholder="Иван Иванов"
-                            value={registerName}
-                            onChange={(e) => setRegisterName(e.target.value)}
-                            className="pl-10"
-                            required
-                          />
+                  {features.registrationEnabled && (
+                    <TabsContent value="register">
+                      <form onSubmit={handleRegister} className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="register-name">Имя</Label>
+                          <div className="relative">
+                            <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              id="register-name"
+                              type="text"
+                              placeholder="Иван Иванов"
+                              value={registerName}
+                              onChange={(e) => setRegisterName(e.target.value)}
+                              className="pl-10"
+                              required
+                            />
+                          </div>
                         </div>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="register-email">Email</Label>
-                        <div className="relative">
-                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            id="register-email"
-                            type="email"
-                            placeholder="your@email.com"
-                            value={registerEmail}
-                            onChange={(e) => setRegisterEmail(e.target.value)}
-                            className="pl-10"
-                            required
-                          />
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="register-email">Email</Label>
+                          <div className="relative">
+                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              id="register-email"
+                              type="email"
+                              placeholder="your@email.com"
+                              value={registerEmail}
+                              onChange={(e) => setRegisterEmail(e.target.value)}
+                              className="pl-10"
+                              required
+                            />
+                          </div>
                         </div>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="register-password">Пароль</Label>
-                        <div className="relative">
-                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            id="register-password"
-                            type={showPassword ? 'text' : 'password'}
-                            placeholder="••••••••"
-                            value={registerPassword}
-                            onChange={(e) => setRegisterPassword(e.target.value)}
-                            className="pl-10 pr-10"
-                            required
-                            minLength={6}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                          >
-                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          </button>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="register-password">Пароль</Label>
+                          <div className="relative">
+                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              id="register-password"
+                              type={showPassword ? 'text' : 'password'}
+                              placeholder="••••••••"
+                              value={registerPassword}
+                              onChange={(e) => setRegisterPassword(e.target.value)}
+                              className="pl-10 pr-10"
+                              required
+                              minLength={6}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowPassword(!showPassword)}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                            >
+                              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="register-confirm">Подтвердите пароль</Label>
-                        <div className="relative">
-                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            id="register-confirm"
-                            type="password"
-                            placeholder="••••••••"
-                            value={registerConfirm}
-                            onChange={(e) => setRegisterConfirm(e.target.value)}
-                            className="pl-10"
-                            required
-                          />
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="register-confirm">Подтвердите пароль</Label>
+                          <div className="relative">
+                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              id="register-confirm"
+                              type="password"
+                              placeholder="••••••••"
+                              value={registerConfirm}
+                              onChange={(e) => setRegisterConfirm(e.target.value)}
+                              className="pl-10"
+                              required
+                            />
+                          </div>
                         </div>
-                      </div>
-                      
-                      {/*<div className="bg-accent/10 p-3 rounded-lg text-sm">*/}
-                      {/*  🎁 При регистрации вы получите <strong>100 бонусных рублей</strong>*/}
-                      {/*</div>*/}
-                      
-                      <Button type="submit" className="w-full" disabled={isLoading}>
-                        {isLoading ? 'Регистрация...' : 'Зарегистрироваться'}
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </Button>
-                    </form>
-                  </TabsContent>
+                        
+                        <Button type="submit" className="w-full" disabled={isLoading}>
+                          {isLoading ? 'Регистрация...' : 'Зарегистрироваться'}
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                      </form>
+                    </TabsContent>
+                  )}
                 </Tabs>
                 
                 <div className="mt-6 text-center text-sm text-muted-foreground">

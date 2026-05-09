@@ -23,6 +23,7 @@ import { ProductCard } from '@/components/catalog/ProductCard';
 import { ProductGallery } from '@/components/product/ProductGallery';
 import { useCart } from '@/hooks/useCart';
 import { toast } from 'sonner';
+import { features } from '@/lib/features';
 
 const ProductPage = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -172,48 +173,61 @@ const ProductPage = () => {
                   )}
                 </div>
 
-                {/* Quantity */}
-                <div className="flex items-center gap-4 mb-6">
-                  <span className="text-muted-foreground">Количество:</span>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    >
-                      <Minus className="h-4 w-4" />
+                {features.cartEnabled ? (
+                  <>
+                    {/* Quantity */}
+                    <div className="flex items-center gap-4 mb-6">
+                      <span className="text-muted-foreground">Количество:</span>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                        >
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                        <span className="w-12 text-center font-semibold">{quantity}</span>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => setQuantity(quantity + 1)}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Add to Cart */}
+                    <div className="flex flex-col sm:flex-row gap-3 mb-6">
+                      <Button 
+                        size="lg" 
+                        className="flex-1 gradient-primary text-primary-foreground"
+                        onClick={() => {
+                          addToCart(product, quantity);
+                          toast.success(`${product.name} добавлен в корзину`);
+                        }}
+                      >
+                        <ShoppingCart className="mr-2 h-5 w-5" />
+                        Добавить в корзину — {product.price * quantity} ₽
+                      </Button>
+                      <Button size="lg" variant="outline" className="gap-2">
+                        <Heart className="h-5 w-5" />
+                      </Button>
+                      <Button size="lg" variant="outline" className="gap-2">
+                        <Share2 className="h-5 w-5" />
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex flex-col sm:flex-row gap-3 mb-6">
+                    <Button size="lg" variant="outline" className="gap-2">
+                      <Heart className="h-5 w-5" />
                     </Button>
-                    <span className="w-12 text-center font-semibold">{quantity}</span>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => setQuantity(quantity + 1)}
-                    >
-                      <Plus className="h-4 w-4" />
+                    <Button size="lg" variant="outline" className="gap-2">
+                      <Share2 className="h-5 w-5" />
                     </Button>
                   </div>
-                </div>
-
-                {/* Add to Cart */}
-                <div className="flex flex-col sm:flex-row gap-3 mb-6">
-                  <Button 
-                    size="lg" 
-                    className="flex-1 gradient-primary text-primary-foreground"
-                    onClick={() => {
-                      addToCart(product, quantity);
-                      toast.success(`${product.name} добавлен в корзину`);
-                    }}
-                  >
-                    <ShoppingCart className="mr-2 h-5 w-5" />
-                    Добавить в корзину — {product.price * quantity} ₽
-                  </Button>
-                  <Button size="lg" variant="outline" className="gap-2">
-                    <Heart className="h-5 w-5" />
-                  </Button>
-                  <Button size="lg" variant="outline" className="gap-2">
-                    <Share2 className="h-5 w-5" />
-                  </Button>
-                </div>
+                )}
 
                 {/* Marketplace Links */}
                 <div className="flex flex-col sm:flex-row gap-3 mb-8">

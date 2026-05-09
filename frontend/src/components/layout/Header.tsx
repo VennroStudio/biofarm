@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/hooks/useCart';
 import { useAuthContext } from '@/contexts/AuthContext';
+import { features } from '@/lib/features';
 
 const navLinks = [
   { href: '/#partner', label: 'Сотрудничество' },
@@ -66,32 +67,25 @@ export const Header = () => {
 
           {/* Actions */}
           <div className="hidden lg:flex items-center gap-4">
-            <Link to="/cart">
-              <Button
-                variant="ghost"
-                size="icon"
-                className={`relative ${isScrolled ? 'text-foreground' : 'text-white'}`}
-              >
-                <ShoppingCart className="h-5 w-5" />
-                {cartCount > 0 && (
-                  <Badge 
-                    className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
-                    variant="destructive"
-                  >
-                    {cartCount}
-                  </Badge>
-                )}
-              </Button>
-            </Link>
-            <Link to={isAuthenticated ? "/profile" : "/login"}>
-              <Button
-                variant="ghost"
-                size="icon"
-                className={isScrolled ? 'text-foreground' : 'text-white'}
-              >
-                <User className="h-5 w-5" />
-              </Button>
-            </Link>
+            {features.cartEnabled && (
+              <Link to="/cart">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={`relative ${isScrolled ? 'text-foreground' : 'text-white'}`}
+                >
+                  <ShoppingCart className="h-5 w-5" />
+                  {cartCount > 0 && (
+                    <Badge 
+                      className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                      variant="destructive"
+                    >
+                      {cartCount}
+                    </Badge>
+                  )}
+                </Button>
+              </Link>
+            )}
             <Button asChild className="gradient-primary text-primary-foreground">
               <Link to="/catalog">Заказать</Link>
             </Button>
@@ -132,18 +126,14 @@ export const Header = () => {
                 </a>
               ))}
               <div className="flex gap-4 pt-4 border-t border-border">
-                <Button asChild variant="outline" className="flex-1">
-                  <Link to={isAuthenticated ? "/profile" : "/login"} onClick={() => setIsMobileMenuOpen(false)}>
-                    <User className="h-4 w-4 mr-2" />
-                    {isAuthenticated ? 'Профиль' : 'Войти'}
-                  </Link>
-                </Button>
-                <Button asChild className="flex-1 gradient-primary">
-                  <Link to="/cart" onClick={() => setIsMobileMenuOpen(false)}>
-                    <ShoppingCart className="h-4 w-4 mr-2" />
-                    Корзина {cartCount > 0 && `(${cartCount})`}
-                  </Link>
-                </Button>
+                {features.cartEnabled && (
+                  <Button asChild className="flex-1 gradient-primary">
+                    <Link to="/cart" onClick={() => setIsMobileMenuOpen(false)}>
+                      <ShoppingCart className="h-4 w-4 mr-2" />
+                      Корзина {cartCount > 0 && `(${cartCount})`}
+                    </Link>
+                  </Button>
+                )}
               </div>
             </nav>
           </motion.div>

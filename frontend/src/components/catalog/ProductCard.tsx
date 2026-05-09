@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/hooks/useCart';
 import { toast } from 'sonner';
 import type { Product } from '@/data/products';
+import { features } from '@/lib/features';
 
 interface ProductCardProps {
   product: Product;
@@ -69,14 +70,16 @@ export const ProductCard = ({ product, index = 0, viewMode = 'grid' }: ProductCa
                   </span>
                 )}
               </div>
-              <Button 
-                onClick={handleAddToCart}
-                size="sm"
-                className="gradient-primary text-primary-foreground"
-              >
-                <ShoppingCart className="mr-1 h-4 w-4" />
-                В корзину
-              </Button>
+              {features.cartEnabled && (
+                <Button 
+                  onClick={handleAddToCart}
+                  size="sm"
+                  className="gradient-primary text-primary-foreground"
+                >
+                  <ShoppingCart className="mr-1 h-4 w-4" />
+                  В корзину
+                </Button>
+              )}
             </div>
           </div>
         </Link>
@@ -134,15 +137,17 @@ export const ProductCard = ({ product, index = 0, viewMode = 'grid' }: ProductCa
             </span>
           )}
         </div>
-        <div className="flex gap-2">
-          <Button 
-            onClick={handleAddToCart}
-            className="flex-1 gradient-primary text-primary-foreground"
-          >
-            <ShoppingCart className="mr-2 h-4 w-4" />
-            В корзину
-          </Button>
-        </div>
+        {features.cartEnabled && (
+          <div className="flex gap-2">
+            <Button 
+              onClick={handleAddToCart}
+              className="flex-1 gradient-primary text-primary-foreground"
+            >
+              <ShoppingCart className="mr-2 h-4 w-4" />
+              В корзину
+            </Button>
+          </div>
+        )}
       </div>
     </motion.div>
   );

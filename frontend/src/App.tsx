@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { useEffect } from "react";
+import { features } from "@/lib/features";
 
 // Компонент для обработки реферальной ссылки
 const ReferralHandler = () => {
@@ -73,9 +74,9 @@ const App = () => (
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/oferta" element={<PublicOffer />} />
             <Route path="/profile" element={<Profile />} />
-            <Route path="/cart" element={<Cart />} />
-            <Route path="/checkout" element={<Checkout />} />
-            <Route path="/order-success" element={<OrderSuccess />} />
+            {features.cartEnabled && <Route path="/cart" element={<Cart />} />}
+            {features.cartEnabled && <Route path="/checkout" element={<Checkout />} />}
+            {features.cartEnabled && <Route path="/order-success" element={<OrderSuccess />} />}
             
             {/* Admin Routes */}
             <Route path="/admin/login" element={<AdminLogin />} />
