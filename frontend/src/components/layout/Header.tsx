@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, ShoppingCart, User } from 'lucide-react';
+import { Menu, X, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/hooks/useCart';
-import { useAuthContext } from '@/contexts/AuthContext';
 import { features } from '@/lib/features';
+
+const LOGO_URL = `https://biofarm.store/uploads/images/logo.png`;
+const LOGO_GREEN_FILTER = 'brightness(0) saturate(100%) invert(30%) sepia(20%) saturate(1118%) hue-rotate(94deg) brightness(94%) contrast(90%)';
 
 const navLinks = [
   { href: '/#partner', label: 'Сотрудничество' },
@@ -21,7 +23,6 @@ export const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { itemCount: cartCount } = useCart();
-  const { isAuthenticated } = useAuthContext();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -43,11 +44,12 @@ export const Header = () => {
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
-            <span className={`text-2xl font-display font-bold transition-colors ${
-              isScrolled ? 'text-primary' : 'text-white'
-            }`}>
-              БИОФАРМ
-            </span>
+            <img
+              src={LOGO_URL}
+              alt="БИОФАРМ"
+              className="h-12 w-auto object-contain transition-[filter] duration-300"
+              style={{ filter: isScrolled ? LOGO_GREEN_FILTER : 'none' }}
+            />
           </Link>
 
           {/* Desktop Navigation */}
