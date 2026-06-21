@@ -1,0 +1,22 @@
+# Environment files
+.env
+.env.deploy
+.env.prod
+
+# Composer
+/vendor/
+composer.lock
+auth.json
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+/var/
+/primer/

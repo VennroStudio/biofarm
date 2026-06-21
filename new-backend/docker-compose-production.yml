@@ -1,0 +1,31 @@
+name: vs-project
+
+services:
+  nginx:
+    image: ${REGISTRY}/vs-project-nginx:${IMAGE_TAG}
+    container_name: vs-project-nginx
+    restart: unless-stopped
+    depends_on:
+      - php-fpm
+    networks:
+      - proxy
+
+  php-fpm:
+    image: ${REGISTRY}/vs-project-php-fpm:${IMAGE_TAG}
+    container_name: vs-project-php-fpm
+    restart: unless-stopped
+    env_file: .env
+    networks:
+      - proxy
+
+  php-cli:
+    image: ${REGISTRY}/vs-project-php-cli:${IMAGE_TAG}
+    container_name: vs-project-php-cli
+    restart: unless-stopped
+    env_file: .env
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true

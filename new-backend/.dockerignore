@@ -1,0 +1,8 @@
+.git
+.idea
+.env.deploy
+
+docker-compose.yml
+docker-compose-production.yml
+Makefile
+vendor

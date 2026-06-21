@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<psalm
+    errorLevel="1"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns="https://getpsalm.org/schema/config"
+    xsi:schemaLocation="https://getpsalm.org/schema/config vendor/vimeo/psalm/config.xsd"
+    cacheDirectory="./var/cache/.psalm"
+>
+    <projectFiles>
+        <directory name="bin" />
+        <directory name="config" />
+        <directory name="public" />
+        <directory name="src" />
+
+        <ignoreFiles>
+            <directory name="vendor" />
+        </ignoreFiles>
+    </projectFiles>
+
+    <issueHandlers>
+        <LessSpecificReturnType errorLevel="info" />
+        <ClassMustBeFinal errorLevel="suppress" />
+
+        <InvalidOperand errorLevel="info" />
+        <RiskyTruthyFalsyComparison errorLevel="info" />
+        <PossiblyFalseArgument errorLevel="info" />
+
+        <PossiblyUnusedMethod errorLevel="info" />
+        <PossiblyUnusedProperty errorLevel="info" />
+        <PossiblyUnusedReturnValue errorLevel="info" />
+        <PossiblyUnusedParam errorLevel="info" />
+
+        <UnusedProperty errorLevel="info" />
+        <UnusedMethod errorLevel="info" />
+        <UnusedClass errorLevel="info" />
+    </issueHandlers>
+</psalm>
