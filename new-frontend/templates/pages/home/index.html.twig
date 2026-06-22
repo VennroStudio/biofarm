@@ -6,6 +6,7 @@
 
 {% block content %}
     {% include 'sections/home/hero.html.twig' only %}
+    {% include 'sections/home/features.html.twig' only %}
     {% include 'sections/system/api-notice.html.twig' with { apiError: page.apiError } only %}
     {% include 'sections/home/metrics.html.twig' with { metrics: page.metrics } only %}
     {% include 'sections/product/featured-product.html.twig' with { product: page.featuredProduct } only %}
