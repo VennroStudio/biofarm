@@ -56,17 +56,32 @@ src/
 
 templates/
 ├── layouts/
+│   └── main.html.twig
 ├── pages/
 │   └── home/
-│       ├── index.html.twig
-│       ├── sections/
-│       └── partials/
-├── components/
+│       └── index.html.twig
+├── sections/
+│   ├── home/
+│   │   ├── hero.html.twig
+│   │   └── metrics.html.twig
 │   ├── product/
-│   └── review/
+│   │   ├── category-strip.html.twig
+│   │   ├── featured-product.html.twig
+│   │   └── product-grid.html.twig
+│   ├── review/
+│   │   └── review-list.html.twig
+│   ├── order/
+│   │   └── order-list.html.twig
+│   └── system/
+│       ├── api-notice.html.twig
+│       └── architecture.html.twig
+├── components/
+│   ├── order/
+│   ├── product/
+│   ├── review/
+│   └── ui/
 └── shared/
-    ├── layout/
-    └── ui/
+    └── layout/
 ```
 
 ---
@@ -243,11 +258,11 @@ src/Http/Web/{Page}/{Page}Controller.php
 Правила:
 
 - layout: `templates/layouts`;
-- страницы: `templates/pages/{page}`;
-- секции страницы: `templates/pages/{page}/sections`;
-- маленькие частичные шаблоны страницы: `templates/pages/{page}/partials`;
-- переиспользуемые UI-компоненты: `templates/components`;
-- общие header/footer/ui: `templates/shared`;
+- страницы: `templates/pages/{page}`; страница только задает порядок секций;
+- переиспользуемые крупные секции: `templates/sections/{domain}`;
+- маленькие компоненты сущностей и UI: `templates/components/{domain}`;
+- общие header/footer: `templates/shared/layout`;
+- если блок может пригодиться на другой странице, он не должен лежать внутри `pages/{page}`;
 - не смешивать все partials/sections в одной папке;
 - Twig получает готовые модели/объекты, а не сырой внешний JSON.
 

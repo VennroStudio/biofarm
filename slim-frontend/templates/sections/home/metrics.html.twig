@@ -1,7 +1,7 @@
 {% if metrics %}
     <section class="metrics" aria-label="Page metrics">
         {% for metric in metrics %}
-            {% include 'pages/home/partials/metric-card.html.twig' with { metric: metric } only %}
+            {% include 'components/ui/metric-card.html.twig' with { metric: metric } only %}
         {% endfor %}
     </section>
 {% endif %}

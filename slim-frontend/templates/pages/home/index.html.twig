@@ -5,13 +5,13 @@
 {% block description %}Тестовая Slim/Twig страница, собранная из внешнего Fake E-commerce API.{% endblock %}
 
 {% block content %}
-    {% include 'pages/home/sections/hero.html.twig' only %}
-    {% include 'pages/home/sections/api-notice.html.twig' with { apiError: page.apiError } only %}
-    {% include 'pages/home/sections/metrics.html.twig' with { metrics: page.metrics } only %}
-    {% include 'pages/home/sections/featured-product.html.twig' with { product: page.featuredProduct } only %}
-    {% include 'pages/home/sections/category-strip.html.twig' with { categories: page.categories } only %}
-    {% include 'pages/home/sections/product-grid.html.twig' with { products: page.products } only %}
-    {% include 'pages/home/sections/reviews.html.twig' with { reviews: page.reviews } only %}
-    {% include 'pages/home/sections/orders.html.twig' with { orders: page.orders } only %}
-    {% include 'pages/home/sections/architecture.html.twig' only %}
+    {% include 'sections/home/hero.html.twig' only %}
+    {% include 'sections/system/api-notice.html.twig' with { apiError: page.apiError } only %}
+    {% include 'sections/home/metrics.html.twig' with { metrics: page.metrics } only %}
+    {% include 'sections/product/featured-product.html.twig' with { product: page.featuredProduct } only %}
+    {% include 'sections/product/category-strip.html.twig' with { categories: page.categories } only %}
+    {% include 'sections/product/product-grid.html.twig' with { products: page.products } only %}
+    {% include 'sections/review/review-list.html.twig' with { reviews: page.reviews } only %}
+    {% include 'sections/order/order-list.html.twig' with { orders: page.orders } only %}
+    {% include 'sections/system/architecture.html.twig' only %}
 {% endblock %}
