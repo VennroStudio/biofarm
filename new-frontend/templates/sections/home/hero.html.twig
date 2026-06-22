@@ -1,12 +1,11 @@
 <section class="relative flex min-h-screen items-center justify-center overflow-hidden" aria-labelledby="home-hero-title">
     <div class="absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
         <video
-            class="absolute left-1/2 top-1/2 h-full w-full -translate-x-1/2 -translate-y-1/2 scale-[1.34] object-cover"
+            class="h-full w-full object-cover object-bottom"
             autoplay
             muted
             loop
             playsinline
-            preload="metadata"
             poster="/assets/images/home/hero-poster.jpg"
         >
             <source src="https://biofarm.store/uploads/videos/biofarm.mp4" type="video/mp4">
@@ -39,11 +38,13 @@
         </div>
     </div>
 
-    <a class="absolute bottom-8 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-2 text-white/60" href="#catalog" aria-label="Перейти ниже">
-        <span class="text-xs uppercase tracking-widest">Листайте вниз</span>
-        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-            <path d="M12 5v14"></path>
-            <path d="m19 12-7 7-7-7"></path>
-        </svg>
+    <a class="absolute bottom-8 left-1/2 z-10 -translate-x-1/2 text-white/60" href="#catalog" aria-label="Перейти ниже">
+        <span class="flex animate-scroll-bounce flex-col items-center gap-2">
+            <span class="text-xs uppercase tracking-widest">Листайте вниз</span>
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <path d="M12 5v14"></path>
+                <path d="m19 12-7 7-7-7"></path>
+            </svg>
+        </span>
     </a>
 </section>

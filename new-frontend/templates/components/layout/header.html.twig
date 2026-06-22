@@ -1,4 +1,7 @@
-<header class="fixed top-0 left-0 right-0 z-50 bg-primary/90 backdrop-blur-sm transition-all duration-300">
+<header
+    class="fixed top-0 left-0 right-0 z-50 bg-primary/90 backdrop-blur-sm transition-all duration-300"
+    data-site-header-root
+>
     <div class="container mx-auto px-4">
         <div class="flex h-20 items-center justify-between">
         <a class="flex items-center gap-2" href="/" aria-label="{{ site.brand.title }}">
@@ -34,7 +37,7 @@
         </nav>
 
         <div class="hidden items-center gap-4 lg:flex">
-            <a class="inline-flex min-h-11 items-center justify-center rounded-lg bg-primary-foreground px-5 text-sm font-bold text-primary transition-colors hover:bg-primary-foreground/90" href="/#catalog">
+            <a class="gradient-primary inline-flex min-h-11 items-center justify-center rounded-lg px-5 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-95" href="/#catalog">
                 Заказать
             </a>
         </div>
@@ -70,4 +73,10 @@
         </details>
         </div>
     </div>
+
+    <div
+        data-react-island="site-header"
+        data-root-selector="[data-site-header-root]"
+        hidden
+    ></div>
 </header>
