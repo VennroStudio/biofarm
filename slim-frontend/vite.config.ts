@@ -9,6 +9,7 @@ export default defineConfig({
     emptyOutDir: true,
     rollupOptions: {
       input: {
+        app: 'assets/styles/app.css',
         mount: 'assets/react/mount.tsx',
       },
       output: {

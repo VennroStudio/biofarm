@@ -1,0 +1,40 @@
+{% extends 'layouts/main.html.twig' %}
+
+{% block title %}{{ action.title }} | Slim Frontend{% endblock %}
+
+{% block description %}Product command handler result.{% endblock %}
+
+{% block content %}
+    <section class="command-result">
+        <p class="eyebrow">Product command</p>
+        <h1>{{ action.title }}</h1>
+
+        <div class="command-result__meta">
+            <span>{{ action.method }}</span>
+            <strong>{{ action.endpoint }}</strong>
+        </div>
+
+        {% if error %}
+            <div class="notice">
+                <strong>External API returned an error.</strong>
+                <span>{{ error }}</span>
+            </div>
+        {% endif %}
+
+        {% if product %}
+            <div class="command-result__content">
+                {% include 'components/product/card.html.twig' with { product: product } only %}
+            </div>
+        {% endif %}
+
+        {% if delete %}
+            <div class="command-result__delete">
+                <strong>Product #{{ delete.id }}</strong>
+                <span>{{ delete.deleted ? 'Deleted' : 'Not deleted' }}</span>
+                <p>{{ delete.message }}</p>
+            </div>
+        {% endif %}
+
+        <a class="button button--secondary" href="/#product-commands">Back to commands</a>
+    </section>
+{% endblock %}

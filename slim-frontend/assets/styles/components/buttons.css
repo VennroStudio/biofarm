@@ -1,0 +1,30 @@
+.button {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    padding: 0 18px;
+    border: 1px solid var(--green);
+    border-radius: 8px;
+    color: #fff;
+    background: var(--green);
+    font-size: 14px;
+    font-weight: 850;
+}
+
+.button--secondary {
+    border-color: var(--line);
+    color: var(--text);
+    background: var(--surface);
+}
+
+.button--ghost {
+    border-color: var(--line);
+    color: var(--green-dark);
+    background: transparent;
+}
+
+.button--compact {
+    min-height: 38px;
+    padding-inline: 14px;
+}

@@ -1,0 +1,31 @@
+.island-counter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.island-counter button {
+    min-height: 40px;
+    padding: 0 13px;
+    border: 1px solid var(--green);
+    border-radius: 8px;
+    color: #fff;
+    background: var(--green);
+    cursor: pointer;
+    font: inherit;
+    font-weight: 850;
+}
+
+.island-counter button[data-variant="light"] {
+    width: 40px;
+    padding: 0;
+    color: var(--green-dark);
+    background: #edf7ef;
+}
+
+.island-counter span {
+    min-width: 28px;
+    text-align: center;
+    font-weight: 850;
+}
