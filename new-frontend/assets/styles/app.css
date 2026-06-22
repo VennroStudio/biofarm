@@ -17,6 +17,7 @@
 @import "./components/review/card.css";
 @import "./sections/home/hero.css";
 @import "./sections/home/metrics.css";
+@import "./sections/home/video.css";
 @import "./sections/product/category-strip.css";
 @import "./sections/product/featured-product.css";
 @import "./sections/product/product-grid.css";

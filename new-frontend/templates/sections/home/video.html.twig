@@ -1,0 +1,62 @@
+<section class="production-video" id="video" data-home-video-root>
+    <div class="production-video__inner">
+        <div class="production-video__content">
+            <p class="eyebrow">Наше производство</p>
+            <h2>От сырья до готового продукта</h2>
+            <p class="production-video__lead">
+                Мы контролируем каждый этап: от отбора и входного контроля сырья до производства,
+                фасовки и выпуска партии. Собственная лаборатория проверяет качество и безопасность
+                по установленным показателям, а каждая партия проходит документированную проверку.
+            </p>
+
+            <ul class="production-video__facts">
+                <li>Собственная лаборатория контроля качества</li>
+                <li>Полный цикл производства</li>
+                <li>Сертификация и документация на партии</li>
+                <li>Гибкие условия сотрудничества</li>
+            </ul>
+        </div>
+
+        <div class="production-video__media">
+            <img
+                src="https://biofarm.store/uploads/images/index/poster.webp"
+                alt="Производство БИОФАРМ"
+                loading="lazy"
+                decoding="async"
+            >
+            <button
+                class="production-video__play"
+                type="button"
+                aria-label="Смотреть видео о производстве"
+                data-home-video-open
+            >
+                <span></span>
+            </button>
+        </div>
+    </div>
+
+    <div
+        data-react-island="home-video"
+        data-root-selector="[data-home-video-root]"
+        data-modal-selector="[data-modal='home-production-video']"
+        hidden
+    ></div>
+
+    {% embed 'components/ui/modal.html.twig' with {
+        id: 'home-production-video',
+        eyebrow: 'Наше производство',
+        title: 'От сырья до готового продукта',
+    } only %}
+        {% block body %}
+            <div class="production-video__frame">
+                <iframe
+                    title="О производстве БИОФАРМ"
+                    data-home-video-frame
+                    data-src="https://www.youtube.com/embed/O6zCel2mbfM?autoplay=1"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen
+                ></iframe>
+            </div>
+        {% endblock %}
+    {% endembed %}
+</section>

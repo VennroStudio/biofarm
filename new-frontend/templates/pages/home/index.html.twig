@@ -18,6 +18,7 @@
         products: page.products,
         selectedCategory: page.selectedCategory,
     } only %}
+    {% include 'sections/home/video.html.twig' only %}
     {% include 'widgets/product/command-panel.html.twig' only %}
     {% include 'sections/review/review-list.html.twig' with { reviews: page.reviews } only %}
     {% include 'sections/order/order-list.html.twig' with { orders: page.orders } only %}

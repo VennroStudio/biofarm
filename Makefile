@@ -30,3 +30,8 @@ build-app:
 
 test-db:
 	docker compose run backend php bin/console.php app:other-db
+
+push:
+	git add .
+	git commit -m save
+	git push
