@@ -2,12 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Web\Product;
+namespace App\Components\Http\Form;
 
-use App\Components\Http\Form\FormValidationException;
 use Psr\Http\Message\ServerRequestInterface;
 
-final readonly class ProductFormData
+final readonly class FormData
 {
     /**
      * @return array<string, string>

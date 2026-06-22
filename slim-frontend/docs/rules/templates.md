@@ -97,9 +97,30 @@ assets/react/
 └── islands/
 ```
 
-React island используется для интерактивного поведения внутри уже отрендеренного Twig widget: отправка форм через `fetch`, модалки, toast, локальное состояние. Он не должен превращать страницу в SPA и не должен дублировать серверную разметку целиком.
+React island используется для интерактивного поведения внутри уже отрендеренного Twig widget: отправка форм через `fetch`, модалки, toast, локальное состояние.
 
-Если island только добавляет поведение, его React-компонент возвращает `null`, а весь HTML остается в Twig. React монтировать в пустой marker-элемент рядом с Twig-разметкой, а не в контейнер с уже отрендеренными дочерними элементами.
+Если island только добавляет поведение, React-компонент возвращает `null`, а HTML остается в Twig.
+
+Mount point использует root/selector contract.
+
+```twig
+<div data-product-counter-root>
+    <div data-product-counter></div>
+
+    <div
+        data-react-island="product-counter"
+        data-target-selector="[data-product-counter]"
+        hidden
+    ></div>
+</div>
+```
+
+```ts
+const rootElement = htmlElement.closest<HTMLElement>('[data-product-counter-root]');
+const targetElement = rootElement?.querySelector<HTMLElement>(
+  htmlElement.dataset.targetSelector || '[data-product-counter]',
+);
+```
 
 ---
 
@@ -118,8 +139,8 @@ Widget — самостоятельный составной блок. Он мо
 </section>
 ```
 
-Widget не должен содержать бизнес-запросы, сырые API payloads или controller-логику.
-Если widget содержит формы, результат должен оставаться внутри widget через React island. Отдельную result page не создавать; HTML fallback может быть redirect обратно к widget.
+Widget содержит только Twig composition. Данные приходят через page view object.
+Формы внутри widget обрабатываются через React island; HTML fallback делает redirect обратно к widget.
 
 ---
 
@@ -148,8 +169,8 @@ CSS повторяет ownership Twig:
 - `templates/sections/product/product-grid.html.twig` → `assets/styles/sections/product/product-grid.css`
 - `templates/widgets/product/command-panel.html.twig` → `assets/styles/widgets/product/command-panel.css`
 
-`app.css` остается только точкой сборки `@import`. Он не содержит селекторы.
-Не создавать общие файлы-свалки вроде `cards.css`, `forms.css`, `islands.css` или общий `responsive.css`. Адаптив конкретного блока держать в CSS-файле этого блока.
+`app.css` остается точкой сборки `@import`.
+Адаптив конкретного блока хранится в CSS-файле этого блока.
 
 Twig подключает собранный файл:
 
@@ -181,17 +202,18 @@ Twig подключает собранный файл:
 
 ## Правила
 
-- `pages` не содержит большие куски верстки, только blocks и includes.
-- `shared` не использовать. Общее живет в `components/ui`, глобальная обвязка в `components/layout`.
+- `pages` содержит blocks и includes.
+- Общее живет в `components/ui`, глобальная обвязка в `components/layout`.
 - Переиспользуемый маленький блок лежит в `components`.
 - Переиспользуемый составной блок лежит в `widgets/{domain}`.
 - Крупная секция конкретной страницы или домена лежит в `sections/{domain}`.
 - Доменную папку определяет владелец смысла, а не страница, где блок отображается.
 - Для `include` использовать `only`, если не нужен весь контекст.
-- Twig получает модели и page array, не сырой внешний JSON.
+- Twig получает модели и view objects, не сырой внешний JSON.
 - SEO-данные страницы приходят через `page.meta` или action meta, а не хардкодятся в layout.
 - Дублирующиеся формы, карточки, notice, empty states и React island mount points выносить в components.
-- React не рендерит HTML для Twig-страницы. Он только читает `data-*`, слушает события и обновляет уже существующие Twig-элементы.
+- React island читает `data-*`, слушает события и обновляет Twig-элементы.
+- React island использует root/selector contract.
 - Модалки и overlay-shells держать в `components/ui`, а доменный widget заполняет их содержимое через `embed`/blocks/data-targets.
 - List-section сама отвечает за empty state через `components/ui/empty-state.html.twig`.
 - Для каждого нового Twig component/section/widget создавать отдельный CSS-файл в зеркальной папке `assets/styles`.

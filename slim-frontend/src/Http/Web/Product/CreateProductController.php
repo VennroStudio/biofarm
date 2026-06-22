@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Web\Product;
 
 use App\Components\Api\ApiException;
+use App\Components\Http\Form\FormData;
 use App\Components\Http\Form\FormValidationException;
 use App\Components\Security\CsrfToken;
 use App\Modules\Product\Command\CreateProduct\CreateProductCommand;
@@ -25,21 +26,21 @@ final readonly class CreateProductController implements RequestHandlerInterface
     #[Override]
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        $data = ProductFormData::fromRequest($request);
+        $data = FormData::fromRequest($request);
         $result = null;
         $error = null;
         $status = 200;
 
         try {
-            $this->csrf->validate('products.create', ProductFormData::string($data, '_csrf_token'));
+            $this->csrf->validate('products.create', FormData::string($data, '_csrf_token'));
             $result = $this->handler->handle(new CreateProductCommand(
-                title: ProductFormData::requiredString($data, 'title'),
-                price: ProductFormData::requiredFloat($data, 'price', 0.0),
-                description: ProductFormData::requiredString($data, 'description'),
-                category: ProductFormData::requiredString($data, 'category'),
-                brand: ProductFormData::requiredString($data, 'brand'),
-                stock: ProductFormData::requiredInt($data, 'stock', 0),
-                image: ProductFormData::requiredString($data, 'image'),
+                title: FormData::requiredString($data, 'title'),
+                price: FormData::requiredFloat($data, 'price', 0.0),
+                description: FormData::requiredString($data, 'description'),
+                category: FormData::requiredString($data, 'category'),
+                brand: FormData::requiredString($data, 'brand'),
+                stock: FormData::requiredInt($data, 'stock', 0),
+                image: FormData::requiredString($data, 'image'),
             ));
         } catch (FormValidationException $exception) {
             $error = $exception->getMessage();

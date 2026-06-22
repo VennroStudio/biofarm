@@ -50,7 +50,8 @@ Use `APP_DEBUG=false` or `APP_DEBUG=0` in production. `APP_SECRET` must be chang
 ## Architecture
 
 - `src/Http/Web` contains HTTP controllers.
-- `src/Http/Unifier` builds page arrays for Twig.
+- `src/Http/Unifier` builds page view objects for Twig.
+- `src/Http/View` contains explicit Twig page contracts.
 - `src/Modules/{Entity}/Api` contains upstream API clients per domain.
 - `src/Modules/{Entity}/Command` contains write scenarios and handlers.
 - `templates/pages` defines page composition.
@@ -90,6 +91,13 @@ Controllers validate CSRF and form values before calling command handlers.
 - `GET /readyz` verifies runtime prerequisites such as Vite manifest assets.
 
 Every response receives an `X-Request-Id` header. HTTP requests are logged to `LOG_STREAM` with method, path, status, duration and request id.
+
+## Production Security
+
+The template ships with basic browser safety headers. Add these only after the real domain and external resources are known:
+
+- `Content-Security-Policy` controls where scripts, styles, images and API calls may load from. Configure it after adding analytics, maps, CDN assets or external images.
+- `Strict-Transport-Security` tells browsers to use HTTPS only. Enable it only after HTTPS works for the production domain and subdomains.
 
 ## Quality Gate
 

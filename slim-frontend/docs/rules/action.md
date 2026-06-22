@@ -44,29 +44,28 @@ final readonly class {Page}Controller implements RequestHandlerInterface
 
 ## Form Action
 
-Form Action читает body, вызывает Handler и возвращает JSON для React island.
-HTML fallback для обычной формы должен возвращать redirect обратно к виджету, а не отдельную result page.
+Form Action читает body через `FormData`, вызывает Handler и возвращает результат через responder.
 
 ```php
 final readonly class Create{Entity}Controller implements RequestHandlerInterface
 {
     public function __construct(
         private Create{Entity}Handler $handler,
-        private HtmlResponder $html,
+        private {Entity}CommandResponder $responder,
         private CsrfToken $csrf,
     ) {}
 
     #[Override]
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        $data = (array) $request->getParsedBody();
+        $data = FormData::fromRequest($request);
         $error = null;
         $result = null;
 
         try {
-            $this->csrf->validate('{entities}.create', ProductFormData::string($data, '_csrf_token'));
+            $this->csrf->validate('{entities}.create', FormData::string($data, '_csrf_token'));
             $result = $this->handler->handle(new Create{Entity}Command(
-                name: ProductFormData::requiredString($data, 'name'),
+                name: FormData::requiredString($data, 'name'),
             ));
         } catch (FormValidationException $exception) {
             $error = $exception->getMessage();
@@ -107,8 +106,9 @@ $group->post('/{entities}/create', Create{Entity}Controller::class);
 - Action принимает HTTP-данные.
 - Action вызывает Unifier или Handler.
 - Action рендерит Twig через `HtmlResponder`.
-- Form Action для интерактивного widget возвращает JSON через responder при `Accept: application/json`.
-- Form Action без JS делает redirect обратно к widget-якорю.
+- Form Action читает body через `App\Components\Http\Form\FormData`.
+- Form Action возвращает JSON через responder при `Accept: application/json`.
+- HTML fallback формы возвращает redirect к widget-якорю.
 - Action возвращает `ResponseInterface`.
 - Form Action валидирует CSRF и входные данные до Handler.
 - Сборка страницы находится в Unifier.

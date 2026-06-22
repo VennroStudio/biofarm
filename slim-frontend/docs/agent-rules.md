@@ -14,9 +14,12 @@
 4. [Unifier](rules/unifier.md)
 5. [Templates](rules/templates.md)
 
-## Runtime правила
+## Общие правила
 
-- Новые page/form actions рендерят Twig через `HtmlResponder`.
-- Новые write forms используют `csrf_token()` и валидацию входа до Handler.
-- Новые runtime checks добавлять в `/healthz` или `/readyz`, если они нужны для deploy-платформы.
-- Не выводить пользователю raw upstream URL, secrets или transport exception details.
+- Page Action: `Controller -> Unifier -> HtmlResponder`.
+- Page data: view object из `src/Http/View`.
+- Form Action: `FormData -> CsrfToken -> Command Handler -> Responder`.
+- Module API возвращает Response-модели.
+- Twig: `pages` собирают секции, `sections` собирают блоки, `widgets` содержат составные use-case блоки, `components` содержат малые переиспользуемые части.
+- React island: HTML в Twig, поведение в `assets/react/islands`, mount через явный root/selector contract.
+- CSS зеркалит Twig ownership и подключается через `assets/styles/app.css`.

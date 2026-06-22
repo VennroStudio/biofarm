@@ -28,7 +28,7 @@ src/Modules/{Entity}/Handler/{Scenario}/
 - submit;
 - login/logout через внешний auth API;
 - подготовка данных перед сохранением;
-- обработка данных перед выводом на странице, если это бизнес-сценарий, а не простая сборка page array.
+- обработка данных перед выводом на странице, если это бизнес-сценарий, а не простая сборка view object.
 
 ---
 
@@ -144,6 +144,6 @@ final readonly class Delete{Entity}Handler
 
 - Command не читает HTTP request.
 - Handler не рендерит Twig.
-- Handler не собирает page array.
+- Handler не собирает view object страницы.
 - HTTP-запрос к внешнему API выполняется через `{Entity}Api`.
 - Unifier может вызвать Handler, если странице нужна сценарная обработка данных.

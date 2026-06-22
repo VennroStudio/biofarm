@@ -4,14 +4,15 @@
 - 4. Unifier;
 - 5. Templates.
 
-После этого приступай к задаче.
-
 Создай страницу Page:
 - src/Http/Web/Page/PageController.php
 - src/Http/Unifier/Page/PageUnifier.php
+- src/Http/View/Page/PageView.php
 - templates/pages/page/index.html.twig
 
-Если странице нужны данные внешнего API, используй Modules/Entity/Api/EntityApi.
+Если странице нужны данные внешнего API, используй `Modules/Entity/Api/EntityApi`.
+
+Unifier возвращает view object из `src/Http/View`.
 
 Разбей Twig:
 - pages/page/index.html.twig — порядок секций;
@@ -27,6 +28,8 @@
 - assets/styles/components/domain/component.css или components/ui/component.css для каждого нового компонента.
 
 Подключи новые CSS-файлы только через assets/styles/app.css.
+
+Если добавляешь React island, используй root/selector contract в Twig и mount.tsx.
 
 Зарегистрируй route в config/routes/web.php.
 

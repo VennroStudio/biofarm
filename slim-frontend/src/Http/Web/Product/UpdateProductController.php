@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Web\Product;
 
 use App\Components\Api\ApiException;
+use App\Components\Http\Form\FormData;
 use App\Components\Http\Form\FormValidationException;
 use App\Components\Security\CsrfToken;
 use App\Modules\Product\Command\UpdateProduct\UpdateProductCommand;
@@ -25,22 +26,22 @@ final readonly class UpdateProductController implements RequestHandlerInterface
     #[Override]
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        $data = ProductFormData::fromRequest($request);
+        $data = FormData::fromRequest($request);
         $result = null;
         $error = null;
         $status = 200;
 
         try {
-            $this->csrf->validate('products.update', ProductFormData::string($data, '_csrf_token'));
+            $this->csrf->validate('products.update', FormData::string($data, '_csrf_token'));
             $result = $this->handler->handle(new UpdateProductCommand(
-                id: ProductFormData::requiredInt($data, 'id', 1),
-                title: ProductFormData::stringOrNull($data, 'title'),
-                price: ProductFormData::optionalFloat($data, 'price', 0.0),
-                description: ProductFormData::stringOrNull($data, 'description'),
-                category: ProductFormData::stringOrNull($data, 'category'),
-                brand: ProductFormData::stringOrNull($data, 'brand'),
-                stock: ProductFormData::optionalInt($data, 'stock', 0),
-                image: ProductFormData::stringOrNull($data, 'image'),
+                id: FormData::requiredInt($data, 'id', 1),
+                title: FormData::stringOrNull($data, 'title'),
+                price: FormData::optionalFloat($data, 'price', 0.0),
+                description: FormData::stringOrNull($data, 'description'),
+                category: FormData::stringOrNull($data, 'category'),
+                brand: FormData::stringOrNull($data, 'brand'),
+                stock: FormData::optionalInt($data, 'stock', 0),
+                image: FormData::stringOrNull($data, 'image'),
             ));
         } catch (FormValidationException $exception) {
             $error = $exception->getMessage();

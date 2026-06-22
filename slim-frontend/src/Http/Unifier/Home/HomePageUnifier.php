@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace App\Http\Unifier\Home;
 
 use App\Components\Api\ApiException;
+use App\Http\View\Home\HomeCategoryView;
+use App\Http\View\Home\HomePageView;
+use App\Http\View\MetricView;
+use App\Http\View\PageMetaView;
 use App\Modules\Order\Api\OrderApi;
 use App\Modules\Order\Api\Response\OrderResponse;
 use App\Modules\Product\Api\ProductApi;
 use App\Modules\Product\Api\Response\ProductResponse;
-use App\Modules\Review\Api\Response\ReviewResponse;
 use App\Modules\Review\Api\ReviewApi;
 
 final readonly class HomePageUnifier
@@ -20,21 +23,7 @@ final readonly class HomePageUnifier
         private OrderApi $orders,
     ) {}
 
-    /**
-     * @return array{
-     *     meta: array{title: string, description: string},
-     *     products: list<ProductResponse>,
-     *     selectedCategory: string|null,
-     *     featuredProduct: ProductResponse|null,
-     *     reviews: list<ReviewResponse>,
-     *     orders: list<OrderResponse>,
-     *     categories: list<array{name: string, productsCount: int}>,
-     *     categoriesTotal: int,
-     *     metrics: list<array{label: string, value: string, description: string}>,
-     *     apiError: string|null
-     * }
-     */
-    public function unify(?string $selectedCategory = null): array
+    public function unify(?string $selectedCategory = null): HomePageView
     {
         $meta = $this->meta();
         $apiErrors = [];
@@ -78,41 +67,40 @@ final readonly class HomePageUnifier
         }
 
         $categories = $this->mapCategories($products);
+        $categoriesTotal = array_sum(array_map(
+            static fn (HomeCategoryView $category): int => $category->productsCount,
+            $categories,
+        ));
 
-        return [
-            'meta'             => $meta,
-            'products'         => $catalogProducts,
-            'selectedCategory' => $selectedCategory,
-            'featuredProduct'  => $featuredProduct,
-            'reviews'          => $reviews,
-            'orders'           => $orders,
-            'categories'       => $categories,
-            'categoriesTotal'  => array_sum(array_map(
-                static fn (array $category): int => $category['productsCount'],
-                $categories,
-            )),
-            'metrics'  => $this->mapMetrics($catalogProducts, $orders, $categories),
-            'apiError' => $apiErrors === [] ? null : implode(' ', $apiErrors),
-        ];
+        return new HomePageView(
+            meta: $meta,
+            products: $catalogProducts,
+            selectedCategory: $selectedCategory,
+            featuredProduct: $featuredProduct,
+            reviews: $reviews,
+            orders: $orders,
+            categories: $categories,
+            categoriesTotal: $categoriesTotal,
+            metrics: $this->mapMetrics($catalogProducts, $orders, $categories),
+            apiError: $apiErrors === [] ? null : implode(' ', $apiErrors),
+        );
     }
 
-    /**
-     * @return array{title: string, description: string}
-     */
-    private function meta(): array
+    private function meta(): PageMetaView
     {
-        return [
-            'title'       => 'Slim Frontend Template',
-            'description' => 'Тестовая Slim/Twig страница, собранная из внешнего Fake E-commerce API.',
-        ];
+        return new PageMetaView(
+            title: 'Slim Frontend Template',
+            description: 'Тестовая Slim/Twig страница, собранная из внешнего Fake E-commerce API.',
+        );
     }
 
     /**
      * @param list<ProductResponse> $products
-     * @return list<array{name: string, productsCount: int}>
+     * @return list<HomeCategoryView>
      */
     private function mapCategories(array $products): array
     {
+        /** @var array<string, int> $counts */
         $counts = [];
 
         foreach ($products as $product) {
@@ -121,21 +109,22 @@ final readonly class HomePageUnifier
 
         ksort($counts);
 
-        return array_map(
-            static fn (string $name, int $count): array => [
-                'name'          => $name,
-                'productsCount' => $count,
-            ],
-            array_keys($counts),
-            array_values($counts),
-        );
+        $categories = [];
+        foreach ($counts as $name => $count) {
+            $categories[] = new HomeCategoryView(
+                name: $name,
+                productsCount: $count,
+            );
+        }
+
+        return $categories;
     }
 
     /**
      * @param list<ProductResponse> $products
      * @param list<OrderResponse> $orders
-     * @param list<array{name: string, productsCount: int}> $categories
-     * @return list<array{label: string, value: string, description: string}>
+     * @param list<HomeCategoryView> $categories
+     * @return list<MetricView>
      */
     private function mapMetrics(array $products, array $orders, array $categories): array
     {
@@ -149,26 +138,26 @@ final readonly class HomePageUnifier
         )) / \count($products);
 
         return [
-            [
-                'label'       => 'Products',
-                'value'       => (string)\count($products),
-                'description' => 'items loaded from Fake API',
-            ],
-            [
-                'label'       => 'Categories',
-                'value'       => (string)\count($categories),
-                'description' => 'grouped for the page',
-            ],
-            [
-                'label'       => 'Avg rating',
-                'value'       => number_format($averageRating, 1),
-                'description' => 'calculated from API models',
-            ],
-            [
-                'label'       => 'Orders',
-                'value'       => (string)\count($orders),
-                'description' => 'loaded from the Order module',
-            ],
+            new MetricView(
+                label: 'Products',
+                value: (string)\count($products),
+                description: 'items loaded from Fake API',
+            ),
+            new MetricView(
+                label: 'Categories',
+                value: (string)\count($categories),
+                description: 'grouped for the page',
+            ),
+            new MetricView(
+                label: 'Avg rating',
+                value: number_format($averageRating, 1),
+                description: 'calculated from API models',
+            ),
+            new MetricView(
+                label: 'Orders',
+                value: (string)\count($orders),
+                description: 'loaded from the Order module',
+            ),
         ];
     }
 }

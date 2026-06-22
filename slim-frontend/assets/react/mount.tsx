@@ -4,9 +4,12 @@ import { ProductCounter } from './islands/ProductCounter';
 
 document.querySelectorAll('[data-react-island="product-counter"]').forEach((element) => {
   const htmlElement = element as HTMLElement;
-  const counterElement = htmlElement.previousElementSibling;
+  const rootElement = htmlElement.closest<HTMLElement>('[data-product-counter-root]');
+  const counterElement = rootElement?.querySelector<HTMLElement>(
+    htmlElement.dataset.counterSelector || '[data-product-counter]',
+  );
 
-  if (counterElement instanceof HTMLElement && counterElement.matches('[data-product-counter]')) {
+  if (counterElement) {
     createRoot(htmlElement).render(<ProductCounter counterElement={counterElement} />);
   }
 });

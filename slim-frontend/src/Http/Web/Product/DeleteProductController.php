@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Web\Product;
 
 use App\Components\Api\ApiException;
+use App\Components\Http\Form\FormData;
 use App\Components\Http\Form\FormValidationException;
 use App\Components\Security\CsrfToken;
 use App\Modules\Product\Command\DeleteProduct\DeleteProductCommand;
@@ -25,15 +26,15 @@ final readonly class DeleteProductController implements RequestHandlerInterface
     #[Override]
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        $data = ProductFormData::fromRequest($request);
+        $data = FormData::fromRequest($request);
         $result = null;
         $error = null;
         $status = 200;
 
         try {
-            $this->csrf->validate('products.delete', ProductFormData::string($data, '_csrf_token'));
+            $this->csrf->validate('products.delete', FormData::string($data, '_csrf_token'));
             $result = $this->handler->handle(new DeleteProductCommand(
-                id: ProductFormData::requiredInt($data, 'id', 1),
+                id: FormData::requiredInt($data, 'id', 1),
             ));
         } catch (FormValidationException $exception) {
             $error = $exception->getMessage();

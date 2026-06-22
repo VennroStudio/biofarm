@@ -4,8 +4,6 @@
 - 2. Command / Handler;
 - 3. Action.
 
-После этого приступай к задаче.
-
 Создай command/handler сущности Entity для нужных write-сценариев:
 - create;
 - update;
@@ -23,6 +21,7 @@ Handler вызывает EntityApi.
 Handler может содержать сценарную бизнес-логику: нормализацию, расчеты, фильтрацию, подготовку payload перед сохранением или подготовку данных перед выводом.
 
 Если write-сценарий запускается из формы, создай Action в src/Http/Web/Entity и route в config/routes/web.php.
+Form Action читает данные через `App\Components\Http\Form\FormData`.
 
 Примеры в правилах абстрактные. Поля, endpoints и result view подстрой под задачу.
 ```
