@@ -1,3 +1,4 @@
+@import "./tailwind.css";
 @import "./base/tokens.css";
 @import "./base/reset.css";
 @import "./base/layout.css";
