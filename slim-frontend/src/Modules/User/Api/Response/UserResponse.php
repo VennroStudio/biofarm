@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\User\Api\Response;
 
+use App\Components\Api\ApiPayload;
+
 final readonly class UserResponse
 {
     /**
@@ -36,21 +38,21 @@ final readonly class UserResponse
      */
     public static function fromArray(array $item): self
     {
-        $name = $item['name'] ?? [];
-        $address = $item['address'] ?? [];
+        $name = ApiPayload::optionalArray($item, 'name');
+        $address = ApiPayload::optionalArray($item, 'address');
 
         return new self(
-            id: $item['id'] ?? 0,
-            email: $item['email'] ?? '',
-            username: $item['username'] ?? '',
-            firstname: $name['firstname'] ?? '',
-            lastname: $name['lastname'] ?? '',
-            street: $address['street'] ?? '',
-            city: $address['city'] ?? '',
-            zipcode: $address['zipcode'] ?? '',
-            country: $address['country'] ?? '',
-            phone: $item['phone'] ?? '',
-            orders: $item['orders'] ?? [],
+            id: ApiPayload::requireInt($item, 'id'),
+            email: ApiPayload::requireString($item, 'email'),
+            username: ApiPayload::requireString($item, 'username'),
+            firstname: ApiPayload::requireString($name, 'firstname'),
+            lastname: ApiPayload::requireString($name, 'lastname'),
+            street: ApiPayload::requireString($address, 'street'),
+            city: ApiPayload::requireString($address, 'city'),
+            zipcode: ApiPayload::requireString($address, 'zipcode'),
+            country: ApiPayload::requireString($address, 'country'),
+            phone: ApiPayload::requireString($item, 'phone'),
+            orders: ApiPayload::optionalIntList($item, 'orders'),
         );
     }
 }

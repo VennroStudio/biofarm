@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Review\Api\Response;
 
+use App\Components\Api\ApiPayload;
+
 final readonly class ReviewResponse
 {
     public function __construct(
@@ -30,13 +32,13 @@ final readonly class ReviewResponse
     public static function fromArray(array $item): self
     {
         return new self(
-            id: $item['id'] ?? 0,
-            productId: $item['productId'] ?? 0,
-            userId: $item['userId'] ?? 0,
-            rating: $item['rating'] ?? 0,
-            title: $item['title'] ?? '',
-            content: $item['content'] ?? '',
-            date: $item['date'] ?? '',
+            id: ApiPayload::requireInt($item, 'id'),
+            productId: ApiPayload::requireInt($item, 'productId'),
+            userId: ApiPayload::requireInt($item, 'userId'),
+            rating: ApiPayload::requireInt($item, 'rating'),
+            title: ApiPayload::requireString($item, 'title'),
+            content: ApiPayload::requireString($item, 'content'),
+            date: ApiPayload::requireString($item, 'date'),
         );
     }
 }

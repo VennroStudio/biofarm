@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Order\Api\Response;
 
+use App\Components\Api\ApiPayload;
 use App\Components\Api\ApiResponse;
 
 final readonly class OrderResponse
@@ -34,14 +35,17 @@ final readonly class OrderResponse
      */
     public static function fromArray(array $item): self
     {
+        /** @var list<array{productId?: int, quantity?: int}> $products */
+        $products = ApiPayload::optionalArray($item, 'products');
+
         return new self(
-            id: $item['id'] ?? 0,
-            userId: $item['userId'] ?? 0,
-            products: ApiResponse::fromArrayList($item['products'] ?? [], OrderProductResponse::fromArray(...)),
-            totalAmount: (float)($item['totalAmount'] ?? 0),
-            status: $item['status'] ?? '',
-            orderDate: $item['orderDate'] ?? '',
-            deliveryDate: $item['deliveryDate'] ?? '',
+            id: ApiPayload::requireInt($item, 'id'),
+            userId: ApiPayload::requireInt($item, 'userId'),
+            products: ApiResponse::fromArrayList($products, OrderProductResponse::fromArray(...)),
+            totalAmount: ApiPayload::requireFloat($item, 'totalAmount'),
+            status: ApiPayload::requireString($item, 'status'),
+            orderDate: ApiPayload::requireString($item, 'orderDate'),
+            deliveryDate: ApiPayload::requireString($item, 'deliveryDate'),
         );
     }
 }

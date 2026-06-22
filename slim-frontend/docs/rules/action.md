@@ -27,15 +27,15 @@ final readonly class {Page}Controller implements RequestHandlerInterface
 {
     public function __construct(
         private {Page}Unifier $unifier,
-        private Environment $twig,
+        private HtmlResponder $html,
     ) {}
 
     #[Override]
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        return new HtmlResponse($this->twig->render('pages/{page}/index.html.twig', [
+        return $this->html->render('pages/{page}/index.html.twig', [
             'page' => $this->unifier->unify(),
-        ]));
+        ]);
     }
 }
 ```
@@ -51,7 +51,8 @@ final readonly class Create{Entity}Controller implements RequestHandlerInterface
 {
     public function __construct(
         private Create{Entity}Handler $handler,
-        private Environment $twig,
+        private HtmlResponder $html,
+        private CsrfToken $csrf,
     ) {}
 
     #[Override]
@@ -62,17 +63,20 @@ final readonly class Create{Entity}Controller implements RequestHandlerInterface
         $result = null;
 
         try {
+            $this->csrf->validate('{entities}.create', ProductFormData::string($data, '_csrf_token'));
             $result = $this->handler->handle(new Create{Entity}Command(
-                name: trim((string) ($data['name'] ?? '')),
+                name: ProductFormData::requiredString($data, 'name'),
             ));
+        } catch (FormValidationException $exception) {
+            $error = $exception->getMessage();
         } catch (ApiException $exception) {
             $error = $exception->getMessage();
         }
 
-        return new HtmlResponse($this->twig->render('pages/{entity}-command/result.html.twig', [
+        return $this->html->render('pages/{entity}-command/result.html.twig', [
             'result' => $result,
             'error' => $error,
-        ]), $error === null ? 200 : 502);
+        ], $error === null ? 200 : 502);
     }
 }
 ```
@@ -92,7 +96,8 @@ $group->post('/{entities}/create', Create{Entity}Controller::class);
 
 - Action принимает HTTP-данные.
 - Action вызывает Unifier или Handler.
-- Action рендерит Twig.
-- Action возвращает `HtmlResponse`.
+- Action рендерит Twig через `HtmlResponder`.
+- Action возвращает `ResponseInterface`.
+- Form Action валидирует CSRF и входные данные до Handler.
 - Сборка страницы находится в Unifier.
 - Write-сценарий находится в Handler.

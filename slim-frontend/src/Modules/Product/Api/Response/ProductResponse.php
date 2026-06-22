@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Product\Api\Response;
 
+use App\Components\Api\ApiPayload;
+
 final readonly class ProductResponse
 {
     /**
@@ -39,20 +41,20 @@ final readonly class ProductResponse
      */
     public static function fromArray(array $item): self
     {
-        $rating = $item['rating'] ?? [];
+        $rating = ApiPayload::optionalArray($item, 'rating');
 
         return new self(
-            id: $item['id'] ?? 0,
-            title: $item['title'] ?? '',
-            price: (float)($item['price'] ?? 0),
-            description: $item['description'] ?? '',
-            category: $item['category'] ?? 'uncategorized',
-            brand: $item['brand'] ?? 'Unknown',
-            stock: $item['stock'] ?? 0,
-            image: $item['image'] ?? '',
-            specs: $item['specs'] ?? [],
-            ratingRate: (float)($rating['rate'] ?? 0),
-            ratingCount: $rating['count'] ?? 0,
+            id: ApiPayload::requireInt($item, 'id'),
+            title: ApiPayload::requireString($item, 'title'),
+            price: ApiPayload::requireFloat($item, 'price'),
+            description: ApiPayload::requireString($item, 'description'),
+            category: ApiPayload::requireString($item, 'category'),
+            brand: ApiPayload::requireString($item, 'brand'),
+            stock: ApiPayload::requireInt($item, 'stock'),
+            image: ApiPayload::requireString($item, 'image'),
+            specs: ApiPayload::optionalScalarMap($item, 'specs'),
+            ratingRate: ApiPayload::optionalFloat($rating, 'rate'),
+            ratingCount: ApiPayload::optionalInt($rating, 'count'),
         );
     }
 }

@@ -96,7 +96,8 @@ assets/styles/
 Twig подключает собранный файл:
 
 ```twig
-<link rel="stylesheet" href="/build/app.css">
+<link rel="stylesheet" href="{{ vite_asset('assets/styles/app.css') }}">
+<script type="module" src="{{ vite_asset('assets/react/mount.tsx') }}"></script>
 ```
 
 ---
@@ -107,3 +108,4 @@ Twig подключает собранный файл:
 - Переиспользуемый блок лежит в `sections` или `components`.
 - Для `include` использовать `only`, если не нужен весь контекст.
 - Twig получает модели и page array, не сырой внешний JSON.
+- Статические assets подключать через Vite manifest helper `vite_asset()`, не хардкодить `/build/*.js`.

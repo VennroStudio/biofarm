@@ -113,9 +113,9 @@ final readonly class {Entity}Response
     public static function fromArray(array $item): self
     {
         return new self(
-            id: $item['id'] ?? 0,
-            name: $item['name'] ?? '',
-            description: $item['description'] ?? null,
+            id: ApiPayload::requireInt($item, 'id'),
+            name: ApiPayload::requireString($item, 'name'),
+            description: ApiPayload::optionalString($item, 'description'),
         );
     }
 }
@@ -130,4 +130,6 @@ final readonly class {Entity}Response
 - `Response` знает форму ответа своей сущности.
 - `ApiPayload` достает `data`.
 - `ApiResponse::fromArrayList()` собирает списки.
+- Required поля ответа читать через строгие helper-методы `ApiPayload::require*()`.
+- Defaults использовать только для реально optional полей.
 - Сырой JSON наружу не отдавать.

@@ -5,20 +5,22 @@ declare(strict_types=1);
 namespace App\Http\Web\Product;
 
 use App\Components\Api\ApiException;
-use App\Components\Http\Response\HtmlResponse;
+use App\Components\Http\Form\FormValidationException;
+use App\Components\Security\CsrfToken;
+use App\Components\Twig\HtmlResponder;
 use App\Modules\Product\Command\DeleteProduct\DeleteProductCommand;
 use App\Modules\Product\Command\DeleteProduct\DeleteProductHandler;
 use Override;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use Twig\Environment;
 
 final readonly class DeleteProductController implements RequestHandlerInterface
 {
     public function __construct(
         private DeleteProductHandler $handler,
-        private Environment $twig,
+        private HtmlResponder $html,
+        private CsrfToken $csrf,
     ) {}
 
     #[Override]
@@ -27,16 +29,22 @@ final readonly class DeleteProductController implements RequestHandlerInterface
         $data = ProductFormData::fromRequest($request);
         $result = null;
         $error = null;
+        $status = 200;
 
         try {
+            $this->csrf->validate('products.delete', ProductFormData::string($data, '_csrf_token'));
             $result = $this->handler->handle(new DeleteProductCommand(
-                id: ProductFormData::int($data, 'id'),
+                id: ProductFormData::requiredInt($data, 'id', 1),
             ));
+        } catch (FormValidationException $exception) {
+            $error = $exception->getMessage();
+            $status = $exception->statusCode();
         } catch (ApiException $exception) {
             $error = $exception->getMessage();
+            $status = 502;
         }
 
-        return new HtmlResponse($this->twig->render('pages/product-command/result.html.twig', [
+        return $this->html->render('pages/product-command/result.html.twig', [
             'action' => [
                 'title'    => 'Delete product',
                 'method'   => 'DELETE',
@@ -45,6 +53,6 @@ final readonly class DeleteProductController implements RequestHandlerInterface
             'product' => null,
             'delete'  => $result,
             'error'   => $error,
-        ]), $error === null ? 200 : 502);
+        ], $status);
     }
 }

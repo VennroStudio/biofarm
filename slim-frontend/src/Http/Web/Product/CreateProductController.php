@@ -5,20 +5,22 @@ declare(strict_types=1);
 namespace App\Http\Web\Product;
 
 use App\Components\Api\ApiException;
-use App\Components\Http\Response\HtmlResponse;
+use App\Components\Http\Form\FormValidationException;
+use App\Components\Security\CsrfToken;
+use App\Components\Twig\HtmlResponder;
 use App\Modules\Product\Command\CreateProduct\CreateProductCommand;
 use App\Modules\Product\Command\CreateProduct\CreateProductHandler;
 use Override;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use Twig\Environment;
 
 final readonly class CreateProductController implements RequestHandlerInterface
 {
     public function __construct(
         private CreateProductHandler $handler,
-        private Environment $twig,
+        private HtmlResponder $html,
+        private CsrfToken $csrf,
     ) {}
 
     #[Override]
@@ -27,22 +29,28 @@ final readonly class CreateProductController implements RequestHandlerInterface
         $data = ProductFormData::fromRequest($request);
         $result = null;
         $error = null;
+        $status = 200;
 
         try {
+            $this->csrf->validate('products.create', ProductFormData::string($data, '_csrf_token'));
             $result = $this->handler->handle(new CreateProductCommand(
-                title: ProductFormData::string($data, 'title'),
-                price: ProductFormData::float($data, 'price'),
-                description: ProductFormData::string($data, 'description'),
-                category: ProductFormData::string($data, 'category'),
-                brand: ProductFormData::string($data, 'brand'),
-                stock: ProductFormData::int($data, 'stock'),
-                image: ProductFormData::string($data, 'image'),
+                title: ProductFormData::requiredString($data, 'title'),
+                price: ProductFormData::requiredFloat($data, 'price', 0.0),
+                description: ProductFormData::requiredString($data, 'description'),
+                category: ProductFormData::requiredString($data, 'category'),
+                brand: ProductFormData::requiredString($data, 'brand'),
+                stock: ProductFormData::requiredInt($data, 'stock', 0),
+                image: ProductFormData::requiredString($data, 'image'),
             ));
+        } catch (FormValidationException $exception) {
+            $error = $exception->getMessage();
+            $status = $exception->statusCode();
         } catch (ApiException $exception) {
             $error = $exception->getMessage();
+            $status = 502;
         }
 
-        return new HtmlResponse($this->twig->render('pages/product-command/result.html.twig', [
+        return $this->html->render('pages/product-command/result.html.twig', [
             'action' => [
                 'title'    => 'Create product',
                 'method'   => 'POST',
@@ -51,6 +59,6 @@ final readonly class CreateProductController implements RequestHandlerInterface
             'product' => $result,
             'delete'  => null,
             'error'   => $error,
-        ]), $error === null ? 200 : 502);
+        ], $status);
     }
 }

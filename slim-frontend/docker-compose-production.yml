@@ -9,6 +9,11 @@ services:
       - php-fpm
     networks:
       - proxy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost/healthz >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
 
   php-fpm:
     image: ${REGISTRY}/slim-frontend-php-fpm:${IMAGE_TAG}

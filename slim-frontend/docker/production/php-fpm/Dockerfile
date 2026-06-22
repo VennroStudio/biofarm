@@ -1,4 +1,4 @@
-FROM php:8.4-fpm-alpine AS builder
+FROM php:8.4-fpm-alpine AS vendor
 
 RUN apk update && apk add --no-cache unzip
 
@@ -8,10 +8,23 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/bin --fil
 
 WORKDIR /app
 
-COPY ./composer.json ./
+COPY ./composer.json ./composer.lock ./
 
 RUN composer install --no-dev --prefer-dist --no-progress --optimize-autoloader \
     && rm -rf /root/.composer/cache
+
+FROM node:20-alpine AS assets
+
+WORKDIR /app
+
+COPY ./package.json ./package-lock.json ./
+
+RUN npm ci
+
+COPY ./assets ./assets
+COPY ./tsconfig.json ./vite.config.ts ./
+
+RUN npm run build
 ##### FPM #####
 
 FROM php:8.4-fpm-alpine
@@ -29,9 +42,14 @@ COPY ./docker/production/php/conf.d /usr/local/etc/php/conf.d
 
 WORKDIR /app
 
-COPY --from=builder /app ./
+COPY --from=vendor /app/composer.json /app/composer.lock ./
+COPY --from=vendor /app/vendor ./vendor
 
-COPY . /app
+COPY ./config ./config
+COPY ./public ./public
+COPY --from=assets /app/public/build ./public/build
+COPY ./src ./src
+COPY ./templates ./templates
 
 RUN mkdir -p var/cache var/log \
     && chown -R www-data:www-data var

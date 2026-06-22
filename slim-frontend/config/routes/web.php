@@ -7,6 +7,8 @@ use App\Http\Web\Home\HomePageController;
 use App\Http\Web\Product\CreateProductController;
 use App\Http\Web\Product\DeleteProductController;
 use App\Http\Web\Product\UpdateProductController;
+use App\Http\Web\System\HealthController;
+use App\Http\Web\System\ReadinessController;
 use Psr\Container\ContainerInterface;
 use Slim\App;
 use Slim\Routing\RouteCollectorProxy;
@@ -15,6 +17,8 @@ use Slim\Routing\RouteCollectorProxy;
 return static function (App $app): void {
     $app->group('', new Group(static function (RouteCollectorProxy $group): void {
         $group->get('/', HomePageController::class);
+        $group->get('/healthz', HealthController::class);
+        $group->get('/readyz', ReadinessController::class);
         $group->post('/products/create', CreateProductController::class);
         $group->post('/products/update', UpdateProductController::class);
         $group->post('/products/delete', DeleteProductController::class);

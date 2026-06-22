@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Product\Api\Response;
 
+use App\Components\Api\ApiPayload;
+
 final readonly class ProductDeleteResponse
 {
     public function __construct(
@@ -18,9 +20,9 @@ final readonly class ProductDeleteResponse
     public static function fromArray(array $item): self
     {
         return new self(
-            id: $item['id'] ?? 0,
-            deleted: $item['deleted'] ?? true,
-            message: $item['message'] ?? 'Product deleted',
+            id: ApiPayload::requireInt($item, 'id'),
+            deleted: ApiPayload::optionalBool($item, 'deleted', true),
+            message: ApiPayload::optionalString($item, 'message', 'Product deleted'),
         );
     }
 }

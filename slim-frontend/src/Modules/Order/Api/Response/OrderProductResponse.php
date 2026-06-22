@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Order\Api\Response;
 
+use App\Components\Api\ApiPayload;
+
 final readonly class OrderProductResponse
 {
     public function __construct(
@@ -17,8 +19,8 @@ final readonly class OrderProductResponse
     public static function fromArray(array $item): self
     {
         return new self(
-            productId: $item['productId'] ?? 0,
-            quantity: $item['quantity'] ?? 0,
+            productId: ApiPayload::requireInt($item, 'productId'),
+            quantity: ApiPayload::requireInt($item, 'quantity'),
         );
     }
 }

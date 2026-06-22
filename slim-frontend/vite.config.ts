@@ -1,4 +1,6 @@
+// @ts-ignore
 import { defineConfig } from 'vite';
+// @ts-ignore
 import react from '@vitejs/plugin-react';
 
 export default defineConfig({
@@ -7,14 +9,11 @@ export default defineConfig({
   build: {
     outDir: 'public/build',
     emptyOutDir: true,
+    manifest: true,
     rollupOptions: {
       input: {
         app: 'assets/styles/app.css',
         mount: 'assets/react/mount.tsx',
-      },
-      output: {
-        entryFileNames: '[name].js',
-        assetFileNames: '[name].[ext]',
       },
     },
   },

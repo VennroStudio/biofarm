@@ -6,6 +6,7 @@
 
     <div class="command-forms">
         <form class="command-form" method="post" action="/products/create">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('products.create') }}">
             <div class="command-form__head">
                 <span>POST</span>
                 <strong>/products/create</strong>
@@ -44,6 +45,7 @@
         </form>
 
         <form class="command-form" method="post" action="/products/update">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('products.update') }}">
             <div class="command-form__head">
                 <span>PATCH</span>
                 <strong>/products/update</strong>
@@ -74,6 +76,7 @@
         </form>
 
         <form class="command-form" method="post" action="/products/delete">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('products.delete') }}">
             <div class="command-form__head">
                 <span>DELETE</span>
                 <strong>/products/delete</strong>

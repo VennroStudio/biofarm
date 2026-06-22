@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Components\Api;
 
+use Symfony\Contracts\HttpClient\Exception\DecodingExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
+use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 final readonly class ApiClient
@@ -65,15 +67,24 @@ final readonly class ApiClient
     private function request(string $method, string $path, array $options): array
     {
         $url = $this->baseUrl . '/' . ltrim($path, '/');
-        $response = $this->httpClient->request($method, $url, $options);
-        $statusCode = $response->getStatusCode();
+
+        try {
+            $response = $this->httpClient->request($method, $url, $options);
+            $statusCode = $response->getStatusCode();
+        } catch (TransportExceptionInterface $exception) {
+            throw ApiException::transportFailed($method, $exception);
+        }
 
         if ($statusCode >= 400) {
-            throw ApiException::requestFailed($method, $url, $statusCode);
+            throw ApiException::requestFailed($method, $statusCode);
         }
 
         try {
             return $response->toArray(false);
+        } catch (DecodingExceptionInterface $exception) {
+            throw ApiException::invalidResponse($exception);
+        } catch (TransportExceptionInterface $exception) {
+            throw ApiException::transportFailed($method, $exception);
         } catch (ExceptionInterface $exception) {
             throw new ApiException($exception->getMessage(), 0, $exception);
         }

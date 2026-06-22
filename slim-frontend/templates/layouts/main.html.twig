@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}Slim Frontend{% endblock %}</title>
     <meta name="description" content="{% block description %}PHP/Twig frontend with React islands.{% endblock %}">
-    <link rel="stylesheet" href="/build/app.css">
+    <link rel="stylesheet" href="{{ vite_asset('assets/styles/app.css') }}">
 </head>
 <body>
     {% include 'shared/layout/header.html.twig' %}
@@ -16,6 +16,6 @@
 
     {% include 'shared/layout/footer.html.twig' %}
 
-    <script type="module" src="/build/mount.js"></script>
+    <script type="module" src="{{ vite_asset('assets/react/mount.tsx') }}"></script>
 </body>
 </html>

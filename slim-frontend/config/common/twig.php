@@ -2,12 +2,15 @@
 
 declare(strict_types=1);
 
+use App\Components\Asset\ViteManifest;
+use App\Components\Security\CsrfToken;
 use Psr\Container\ContainerInterface;
 use Twig\Environment;
 use Twig\Extension\DebugExtension;
 use Twig\Loader\FilesystemLoader;
+use Twig\TwigFunction;
 
-use function App\Components\env;
+use function App\Components\env_bool;
 
 return [
     Environment::class => static function (ContainerInterface $container): Environment {
@@ -47,13 +50,19 @@ return [
         }
 
         $environment->addGlobal('site', $fullConfig['site']);
+        /** @var ViteManifest $assets */
+        $assets = $container->get(ViteManifest::class);
+        $environment->addFunction(new TwigFunction('vite_asset', $assets->asset(...)));
+        /** @var CsrfToken $csrf */
+        $csrf = $container->get(CsrfToken::class);
+        $environment->addFunction(new TwigFunction('csrf_token', $csrf->generate(...)));
 
         return $environment;
     },
 
     'config' => [
         'twig' => [
-            'debug'         => (bool)env('APP_DEBUG', '1'),
+            'debug'         => env_bool('APP_DEBUG', true),
             'template_dirs' => [
                 FilesystemLoader::MAIN_NAMESPACE => __DIR__ . '/../../templates',
             ],

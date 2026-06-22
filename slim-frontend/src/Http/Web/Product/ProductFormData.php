@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Web\Product;
 
+use App\Components\Http\Form\FormValidationException;
 use Psr\Http\Message\ServerRequestInterface;
 
 final readonly class ProductFormData
@@ -88,5 +89,106 @@ final readonly class ProductFormData
         $value = self::string($data, $key);
 
         return $value === '' ? null : (float)$value;
+    }
+
+    /**
+     * @param array<string, string> $data
+     */
+    public static function requiredString(array $data, string $key): string
+    {
+        $value = self::string($data, $key);
+        if ($value === '') {
+            throw new FormValidationException("Field '{$key}' is required.");
+        }
+
+        return $value;
+    }
+
+    /**
+     * @param array<string, string> $data
+     */
+    public static function requiredInt(array $data, string $key, ?int $min = null): int
+    {
+        $value = self::string($data, $key);
+        if ($value === '') {
+            throw new FormValidationException("Field '{$key}' is required.");
+        }
+
+        $result = filter_var($value, FILTER_VALIDATE_INT);
+        if ($result === false) {
+            throw new FormValidationException("Field '{$key}' must be an integer.");
+        }
+
+        if ($min !== null && $result < $min) {
+            throw new FormValidationException("Field '{$key}' must be at least {$min}.");
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param array<string, string> $data
+     */
+    public static function optionalInt(array $data, string $key, ?int $min = null): ?int
+    {
+        $value = self::string($data, $key);
+        if ($value === '') {
+            return null;
+        }
+
+        $result = filter_var($value, FILTER_VALIDATE_INT);
+        if ($result === false) {
+            throw new FormValidationException("Field '{$key}' must be an integer.");
+        }
+
+        if ($min !== null && $result < $min) {
+            throw new FormValidationException("Field '{$key}' must be at least {$min}.");
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param array<string, string> $data
+     */
+    public static function requiredFloat(array $data, string $key, ?float $min = null): float
+    {
+        $value = self::string($data, $key);
+        if ($value === '') {
+            throw new FormValidationException("Field '{$key}' is required.");
+        }
+
+        $result = filter_var($value, FILTER_VALIDATE_FLOAT);
+        if ($result === false) {
+            throw new FormValidationException("Field '{$key}' must be a number.");
+        }
+
+        if ($min !== null && $result < $min) {
+            throw new FormValidationException("Field '{$key}' must be at least {$min}.");
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param array<string, string> $data
+     */
+    public static function optionalFloat(array $data, string $key, ?float $min = null): ?float
+    {
+        $value = self::string($data, $key);
+        if ($value === '') {
+            return null;
+        }
+
+        $result = filter_var($value, FILTER_VALIDATE_FLOAT);
+        if ($result === false) {
+            throw new FormValidationException("Field '{$key}' must be a number.");
+        }
+
+        if ($min !== null && $result < $min) {
+            throw new FormValidationException("Field '{$key}' must be at least {$min}.");
+        }
+
+        return $result;
     }
 }

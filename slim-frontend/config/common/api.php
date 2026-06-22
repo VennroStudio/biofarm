@@ -7,6 +7,7 @@ use Psr\Container\ContainerInterface;
 use Symfony\Component\HttpClient\HttpClient;
 
 use function App\Components\env;
+use function App\Components\env_float;
 
 return [
     ApiClient::class => static function (ContainerInterface $container): ApiClient {
@@ -25,7 +26,7 @@ return [
     'config' => [
         'api' => [
             'base_url' => rtrim(env('API_BASE_URL', 'https://fakeapi.net'), '/'),
-            'timeout'  => (float)env('API_TIMEOUT', '5'),
+            'timeout'  => env_float('API_TIMEOUT', 5.0),
         ],
     ],
 ];
