@@ -7,7 +7,6 @@
     cacheDirectory="./var/cache/.psalm"
 >
     <projectFiles>
-        <directory name="bin" />
         <directory name="config" />
         <directory name="public" />
         <directory name="src" />

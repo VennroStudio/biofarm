@@ -1,0 +1,26 @@
+<article class="product-card">
+    <div class="product-card__media">
+        <img src="{{ product.image }}" alt="{{ product.title }}">
+        <span class="pill">{{ product.category }}</span>
+    </div>
+
+    <div class="product-card__body">
+        <div>
+            <span class="muted">{{ product.brand }}</span>
+            <h3>{{ product.title }}</h3>
+            <p>{{ product.description }}</p>
+        </div>
+
+        <div class="product-card__meta">
+            <strong>${{ product.price|number_format(2, '.', ' ') }}</strong>
+            <span>{{ product.ratingRate }}/5 · {{ product.ratingCount }} reviews</span>
+        </div>
+
+        <div
+            data-react-island="product-counter"
+            data-product-id="{{ product.id }}"
+            data-product-title="{{ product.title }}"
+            data-product-price="{{ product.price }}"
+        ></div>
+    </div>
+</article>

@@ -8,6 +8,11 @@
 composer.lock
 auth.json
 
+# Node / Vite
+node_modules/
+package-lock.json
+public/build/
+
 # IDE
 .idea/
 *.swp
@@ -19,4 +24,3 @@ auth.json
 Thumbs.db
 
 /var/
-/primer/

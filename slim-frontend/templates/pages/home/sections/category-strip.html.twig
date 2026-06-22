@@ -1,0 +1,10 @@
+{% if categories %}
+    <section class="category-strip" aria-label="Loaded categories">
+        {% for category in categories %}
+            <a href="#catalog">
+                {{ category.name }}
+                <span>{{ category.productsCount }}</span>
+            </a>
+        {% endfor %}
+    </section>
+{% endif %}

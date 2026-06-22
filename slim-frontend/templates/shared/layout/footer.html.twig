@@ -1,0 +1,17 @@
+<footer class="site-footer">
+    <div>
+        <strong>{{ site.footer.title }}</strong>
+        <p>{{ site.footer.description }}</p>
+    </div>
+
+    <div class="footer-links">
+        {% for item in site.footer.links %}
+            <a
+                href="{{ item.href }}"
+                {% if item.external|default(false) %}target="_blank" rel="noreferrer"{% endif %}
+            >
+                {{ item.label }}
+            </a>
+        {% endfor %}
+    </div>
+</footer>

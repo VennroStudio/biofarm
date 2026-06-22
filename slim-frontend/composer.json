@@ -1,47 +1,19 @@
 {
-    "name": "slim-backend/api",
-    "description": "",
+    "name": "biofarm/slim-frontend",
+    "description": "Slim frontend renderer with Twig pages and React islands.",
     "type": "project",
-    "authors": [
-        {
-            "name": "Vennro"
-        }
-    ],
+    "license": "proprietary",
     "config": {
-        "sort-packages": true,
-        "allow-plugins": {
-            "php-http/discovery": true
-        }
+        "sort-packages": true
     },
     "require": {
         "php": ">=8.4",
-        "ext-fileinfo": "*",
-        "aws/aws-sdk-php": "^3.372",
-        "doctrine/data-fixtures": "^2.2",
-        "doctrine/migrations": "^3.9",
-        "doctrine/orm": "^3.6",
-        "firebase/php-jwt": "^7.0",
-        "laminas/laminas-config-aggregator": "^1.19",
-        "monolog/monolog": "^3.10",
         "php-di/php-di": "^7.1",
-        "phpdocumentor/reflection-docblock": "5.6.*",
         "slim/psr7": "^1.8",
         "slim/slim": "^4.15",
-        "symfony/cache": "^8.0",
-        "symfony/config": "^8.0",
-        "symfony/console": "^8.0",
-        "symfony/mailer": "^8.0",
-        "symfony/property-access": "^8.0",
-        "symfony/property-info": "^8.0",
-        "symfony/serializer": "^8.0",
-        "symfony/translation": "^8.0",
-        "symfony/validator": "^8.0",
+        "symfony/http-client": "^8.0",
         "twig/twig": "^3.23",
-        "vlucas/phpdotenv": "^5.6",
-        "zircote/swagger-php": "^6.0",
-        "ext-redis": "*",
-        "ext-gd": "*",
-        "ext-exif": "*"
+        "vlucas/phpdotenv": "^5.6"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.93",
@@ -59,10 +31,9 @@
         ]
     },
     "scripts": {
-        "php-cs-fixer": "php-cs-fixer --config=.php-cs-fixer.php --allow-risky=yes",
+        "php-cs-fixer": "php-cs-fixer fix --config=.php-cs-fixer.php --allow-risky=yes",
         "lint": "phplint",
         "psalm": "psalm",
-        "rector": "rector process",
-        "app": "php bin/app.php --ansi"
+        "rector": "rector process"
     }
 }

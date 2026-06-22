@@ -1,0 +1,14 @@
+{% if reviews %}
+    <section class="section" id="reviews">
+        {% include 'shared/ui/section-head.html.twig' with {
+            eyebrow: 'Reviews',
+            title: 'Отзывы к первому товару',
+        } only %}
+
+        <div class="reviews">
+            {% for review in reviews %}
+                {% include 'components/review/card.html.twig' with { review: review } only %}
+            {% endfor %}
+        </div>
+    </section>
+{% endif %}

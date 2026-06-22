@@ -1,0 +1,27 @@
+<article class="order-card">
+    <div class="order-card__head">
+        <span>Order #{{ order.id }}</span>
+        <strong>{{ order.status }}</strong>
+    </div>
+
+    <dl class="order-card__facts">
+        <div>
+            <dt>User</dt>
+            <dd>#{{ order.userId }}</dd>
+        </div>
+        <div>
+            <dt>Total</dt>
+            <dd>${{ order.totalAmount|number_format(2, '.', ' ') }}</dd>
+        </div>
+        <div>
+            <dt>Date</dt>
+            <dd>{{ order.orderDate }}</dd>
+        </div>
+    </dl>
+
+    <div class="order-card__products">
+        {% for item in order.products %}
+            <span>Product #{{ item.productId }} x {{ item.quantity }}</span>
+        {% endfor %}
+    </div>
+</article>

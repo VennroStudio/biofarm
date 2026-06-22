@@ -12,7 +12,7 @@ function env(string $name, ?string $default = null): string
     static $loaded = false;
 
     if (!$loaded) {
-        Dotenv::createImmutable(__DIR__ . '/../../')->load();
+        Dotenv::createImmutable(__DIR__ . '/../../')->safeLoad();
         $loaded = true;
     }
 

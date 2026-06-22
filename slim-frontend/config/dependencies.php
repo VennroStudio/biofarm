@@ -2,14 +2,19 @@
 
 declare(strict_types=1);
 
-use Laminas\ConfigAggregator\ConfigAggregator;
-use Laminas\ConfigAggregator\PhpFileProvider;
-
 use function App\Components\env;
 
-$aggregator = new ConfigAggregator([
-    new PhpFileProvider(__DIR__ . '/common/*.php'),
-    new PhpFileProvider(__DIR__ . '/' . env('APP_ENV', 'prod') . '/*.php'),
-]);
+$definitions = [];
+$paths = [
+    __DIR__ . '/common/*.php',
+    __DIR__ . '/' . env('APP_ENV', 'dev') . '/*.php',
+];
 
-return $aggregator->getMergedConfig();
+foreach ($paths as $path) {
+    foreach (glob($path) ?: [] as $file) {
+        /** @psalm-suppress UnresolvableInclude */
+        $definitions = array_replace_recursive($definitions, require $file);
+    }
+}
+
+return $definitions;

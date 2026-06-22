@@ -1,0 +1,14 @@
+{% if orders %}
+    <section class="section" id="orders">
+        {% include 'shared/ui/section-head.html.twig' with {
+            eyebrow: 'Orders',
+            title: 'Последние заказы из Order API',
+        } only %}
+
+        <div class="orders">
+            {% for order in orders %}
+                {% include 'components/order/card.html.twig' with { order: order } only %}
+            {% endfor %}
+        </div>
+    </section>
+{% endif %}

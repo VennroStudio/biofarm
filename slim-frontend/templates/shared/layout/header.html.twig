@@ -1,0 +1,20 @@
+<header class="site-header">
+    <a class="brand" href="/">
+        <span class="brand__mark">{{ site.brand.mark }}</span>
+        <span>
+            <strong>{{ site.brand.title }}</strong>
+            <small>{{ site.brand.subtitle }}</small>
+        </span>
+    </a>
+
+    <nav class="site-nav" aria-label="Main navigation">
+        {% for item in site.navigation %}
+            <a
+                href="{{ item.href }}"
+                {% if item.external|default(false) %}target="_blank" rel="noreferrer"{% endif %}
+            >
+                {{ item.label }}
+            </a>
+        {% endfor %}
+    </nav>
+</header>

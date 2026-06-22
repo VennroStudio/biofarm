@@ -1,9 +1,9 @@
-name: vs-project
+name: slim-frontend
 
 services:
   nginx:
-    image: ${REGISTRY}/vs-project-nginx:${IMAGE_TAG}
-    container_name: vs-project-nginx
+    image: ${REGISTRY}/slim-frontend-nginx:${IMAGE_TAG}
+    container_name: slim-frontend-nginx
     restart: unless-stopped
     depends_on:
       - php-fpm
@@ -11,16 +11,16 @@ services:
       - proxy
 
   php-fpm:
-    image: ${REGISTRY}/vs-project-php-fpm:${IMAGE_TAG}
-    container_name: vs-project-php-fpm
+    image: ${REGISTRY}/slim-frontend-php-fpm:${IMAGE_TAG}
+    container_name: slim-frontend-php-fpm
     restart: unless-stopped
     env_file: .env
     networks:
       - proxy
 
   php-cli:
-    image: ${REGISTRY}/vs-project-php-cli:${IMAGE_TAG}
-    container_name: vs-project-php-cli
+    image: ${REGISTRY}/slim-frontend-php-cli:${IMAGE_TAG}
+    container_name: slim-frontend-php-cli
     restart: unless-stopped
     env_file: .env
     networks:

@@ -1,0 +1,20 @@
+<section class="section" id="catalog">
+    {% include 'shared/ui/section-head.html.twig' with {
+        eyebrow: 'Products',
+        title: 'Тестовая витрина из Fake API',
+        action: {
+            label: 'API reference',
+            href: 'https://fakeapi.net/docs/fake-e-commerce-api',
+            class: 'button--ghost',
+            external: true,
+        },
+    } only %}
+
+    <div class="product-grid">
+        {% for product in products %}
+            {% include 'components/product/card.html.twig' with { product: product } only %}
+        {% else %}
+            <p class="empty">Товары не загрузились. Проверь API_BASE_URL и сеть.</p>
+        {% endfor %}
+    </div>
+</section>

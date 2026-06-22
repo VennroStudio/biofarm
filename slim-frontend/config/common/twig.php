@@ -2,12 +2,9 @@
 
 declare(strict_types=1);
 
-use App\Components\Frontend\FrontendUrlTwigExtension;
-use App\Components\Translator\TranslatorTwigExtension;
 use Psr\Container\ContainerInterface;
 use Twig\Environment;
 use Twig\Extension\DebugExtension;
-use Twig\Extension\ExtensionInterface;
 use Twig\Loader\FilesystemLoader;
 
 use function App\Components\env;
@@ -18,7 +15,15 @@ return [
          *     debug: bool,
          *     template_dirs: array<string, string>,
          *     cache_dir: string,
-         *     extensions: string[],
+         * },
+         * site: array{
+         *     brand: array{mark: string, title: string, subtitle: string},
+         *     navigation: list<array{label: string, href: string, external?: bool}>,
+         *     footer: array{
+         *         title: string,
+         *         description: string,
+         *         links: list<array{label: string, href: string, external?: bool}>
+         *     }
          * }} $fullConfig
          */
         $fullConfig = $container->get('config');
@@ -41,26 +46,18 @@ return [
             $environment->addExtension(new DebugExtension());
         }
 
-        foreach ($config['extensions'] as $class) {
-            /** @var ExtensionInterface $extension */
-            $extension = $container->get($class);
-            $environment->addExtension($extension);
-        }
+        $environment->addGlobal('site', $fullConfig['site']);
 
         return $environment;
     },
 
     'config' => [
         'twig' => [
-            'debug'         => (bool)env('APP_DEBUG'),
+            'debug'         => (bool)env('APP_DEBUG', '1'),
             'template_dirs' => [
                 FilesystemLoader::MAIN_NAMESPACE => __DIR__ . '/../../templates',
             ],
-            'cache_dir'  => __DIR__ . '/../../var/cache/twig',
-            'extensions' => [
-                FrontendUrlTwigExtension::class,
-                TranslatorTwigExtension::class,
-            ],
+            'cache_dir' => __DIR__ . '/../../var/cache/twig',
         ],
     ],
 ];

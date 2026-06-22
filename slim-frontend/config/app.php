@@ -14,7 +14,7 @@ return static function (ContainerInterface $container): App {
     $middleware($app);
 
     /** @var callable(App<ContainerInterface>): void $routes */
-    $routes = require __DIR__ . '/../config/routes/v1.php';
+    $routes = require __DIR__ . '/../config/routes/web.php';
     $routes($app);
 
     return $app;

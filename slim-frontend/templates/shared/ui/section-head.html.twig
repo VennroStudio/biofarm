@@ -1,0 +1,18 @@
+<div class="section__head">
+    <div>
+        {% if eyebrow is defined and eyebrow %}
+            <p class="eyebrow">{{ eyebrow }}</p>
+        {% endif %}
+        <h2>{{ title }}</h2>
+    </div>
+
+    {% if action is defined and action %}
+        <a
+            class="button {{ action.class|default('button--ghost') }}"
+            href="{{ action.href }}"
+            {% if action.external|default(false) %}target="_blank" rel="noreferrer"{% endif %}
+        >
+            {{ action.label }}
+        </a>
+    {% endif %}
+</div>

@@ -1,37 +1,35 @@
-name: vs-project
+name: slim-frontend
 
 services:
   nginx:
-    container_name: vs-project-nginx
+    container_name: slim-frontend-nginx
     build:
       context: docker
       dockerfile: development/nginx/Dockerfile
+    ports:
+      - "${HTTP_PORT:-8088}:80"
     volumes:
       - ./:/app
     networks:
       - proxy
 
   php-fpm:
-    container_name: vs-project-php-fpm
+    container_name: slim-frontend-php-fpm
     build:
       context: docker
       dockerfile: development/php-fpm/Dockerfile
-    env_file: .env
     volumes:
       - ./:/app
-      - ./auth.json:/root/.composer/auth.json
     networks:
       - proxy
 
   php-cli:
-    container_name: vs-project-php-cli
+    container_name: slim-frontend-php-cli
     build:
       context: docker
       dockerfile: development/php-cli/Dockerfile
-    env_file: .env
     volumes:
       - ./:/app
-      - ./auth.json:/root/.composer/auth.json
     networks:
       - proxy
 

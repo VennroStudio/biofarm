@@ -1,0 +1,30 @@
+{% if product %}
+    <section class="featured">
+        <div>
+            <p class="eyebrow">Featured product</p>
+            <h2>{{ product.title }}</h2>
+            <p>{{ product.description }}</p>
+            <dl class="facts">
+                <div>
+                    <dt>Brand</dt>
+                    <dd>{{ product.brand }}</dd>
+                </div>
+                <div>
+                    <dt>Rating</dt>
+                    <dd>{{ product.ratingRate }}/5 · {{ product.ratingCount }}</dd>
+                </div>
+                <div>
+                    <dt>Stock</dt>
+                    <dd>{{ product.stock }}</dd>
+                </div>
+            </dl>
+            <div
+                data-react-island="product-counter"
+                data-product-id="{{ product.id }}"
+                data-product-title="{{ product.title }}"
+                data-product-price="{{ product.price }}"
+            ></div>
+        </div>
+        <img src="{{ product.image }}" alt="{{ product.title }}">
+    </section>
+{% endif %}

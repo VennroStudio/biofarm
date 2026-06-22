@@ -10,7 +10,6 @@ return new Config()
     ->setFinder(
         Finder::create()
             ->in([
-                __DIR__ . '/bin',
                 __DIR__ . '/config',
                 __DIR__ . '/public',
                 __DIR__ . '/src',

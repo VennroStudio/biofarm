@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Slim Frontend{% endblock %}</title>
+    <meta name="description" content="{% block description %}PHP/Twig frontend with React islands.{% endblock %}">
+    <link rel="stylesheet" href="/assets/app.css">
+</head>
+<body>
+    {% include 'shared/layout/header.html.twig' %}
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    {% include 'shared/layout/footer.html.twig' %}
+
+    <script type="module" src="/build/mount.js"></script>
+</body>
+</html>
