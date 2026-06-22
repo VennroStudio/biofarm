@@ -58,7 +58,7 @@ Use `APP_DEBUG=false` or `APP_DEBUG=0` in production. `APP_SECRET` must be chang
 - `templates/sections` contains large page/domain sections.
 - `templates/widgets` contains reusable composite domain blocks.
 - `templates/components` contains reusable layout, UI and domain blocks.
-- `assets/react/islands` contains isolated React islands mounted from Twig.
+- `assets/react/{components,sections,widgets,pages}` mirrors Twig ownership for isolated React islands mounted from Twig.
 
 Twig never receives raw upstream JSON. Module APIs map data into response models, and invalid upstream payloads fail explicitly.
 

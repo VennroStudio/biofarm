@@ -29,7 +29,9 @@ Unifier возвращает view object из `src/Http/View`.
 
 Подключи новые CSS-файлы только через assets/styles/app.css.
 
-Если добавляешь React island, используй root/selector contract в Twig и mount.tsx.
+Если добавляешь React island, используй root/selector contract в Twig.
+React-файл положи в зеркальный путь от Twig ownership: `templates/components/layout/header.html.twig` → `assets/react/components/layout/header.tsx`.
+Из React-файла экспортируй mount-функцию, а в `assets/react/mount.tsx` только импортируй и вызови ее.
 
 Зарегистрируй route в config/routes/web.php.
 

@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { createRoot } from 'react-dom/client';
 
 type CommandAction = {
   title: string;
@@ -125,7 +126,7 @@ const openModal = (modal: HTMLElement, result: CommandResult) => {
   modal.querySelector<HTMLElement>('.modal__dialog')?.focus();
 };
 
-export function ProductCommandPanel({ feedbackSelector, modalSelector, panelSelector }: Props) {
+function ProductCommandPanel({ feedbackSelector, modalSelector, panelSelector }: Props) {
   useEffect(() => {
     const panel = document.querySelector<HTMLElement>(panelSelector);
     const feedback = document.querySelector<HTMLElement>(feedbackSelector);
@@ -214,4 +215,18 @@ export function ProductCommandPanel({ feedbackSelector, modalSelector, panelSele
   }, [feedbackSelector, modalSelector, panelSelector]);
 
   return null;
+}
+
+export function mountProductCommandPanel() {
+  document.querySelectorAll('[data-react-island="product-command-panel"]').forEach((element) => {
+    const htmlElement = element as HTMLElement;
+
+    createRoot(htmlElement).render(
+      <ProductCommandPanel
+        feedbackSelector={htmlElement.dataset.feedbackSelector || '[data-command-feedback]'}
+        panelSelector={htmlElement.dataset.panelSelector || '#product-commands'}
+        modalSelector={htmlElement.dataset.modalSelector || '[data-modal="product-command-result"]'}
+      />,
+    );
+  });
 }

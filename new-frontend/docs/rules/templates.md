@@ -94,7 +94,39 @@ React source:
 ```
 assets/react/
 ├── mount.tsx
-└── islands/
+├── pages/
+├── sections/
+│   └── {domain}/
+├── components/
+│   ├── layout/
+│   ├── ui/
+│   └── {domain}/
+└── widgets/
+    └── {domain}/
+```
+
+React source повторяет ownership Twig, если блоку нужно поведение:
+
+- `templates/components/layout/header.html.twig` → `assets/react/components/layout/header.tsx`
+- `templates/components/product/counter-island.html.twig` → `assets/react/components/product/counter-island.tsx`
+- `templates/widgets/product/command-panel.html.twig` → `assets/react/widgets/product/command-panel.tsx`
+
+Каждый React island файл экспортирует свою mount-функцию:
+
+```ts
+export function mountSiteHeader() {
+  document.querySelectorAll('[data-react-island="site-header"]').forEach((element) => {
+    // local root/selector contract
+  });
+}
+```
+
+`assets/react/mount.tsx` только собирает islands:
+
+```ts
+import { mountSiteHeader } from './components/layout/header';
+
+mountSiteHeader();
 ```
 
 React island используется для интерактивного поведения внутри уже отрендеренного Twig widget: отправка форм через `fetch`, модалки, toast, локальное состояние.
@@ -266,6 +298,9 @@ Twig подключает собранный файл:
 - Twig получает модели и view objects, не сырой внешний JSON.
 - SEO-данные страницы приходят через `page.meta` или action meta, а не хардкодятся в layout.
 - Дублирующиеся формы, карточки, notice, empty states и React island mount points выносить в components.
+- React source для island хранить в зеркальном пути относительно Twig ownership.
+- Каждый React island экспортирует mount-функцию из своего файла.
+- `assets/react/mount.tsx` не содержит selectors и бизнес-поведение, только импортирует и вызывает mount-функции.
 - React island читает `data-*`, слушает события и обновляет Twig-элементы.
 - React island использует root/selector contract.
 - Модалки и overlay-shells держать в `components/ui`, а доменный widget заполняет их содержимое через `embed`/blocks/data-targets.

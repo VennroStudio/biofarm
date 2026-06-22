@@ -1,0 +1,75 @@
+<header class="site-header" data-site-header-root>
+    <div class="site-header__inner">
+        <a class="site-brand" href="/" aria-label="{{ site.brand.title }}">
+            {% if site.brand.logoUrl is defined and site.brand.logoUrl %}
+                <img
+                    class="site-brand__logo"
+                    src="{{ site.brand.logoUrl }}"
+                    alt="{{ site.brand.title }}"
+                    width="172"
+                    height="64"
+                    loading="eager"
+                    fetchpriority="high"
+                    decoding="async"
+                >
+            {% else %}
+                <span class="site-brand__mark">{{ site.brand.mark }}</span>
+                <span class="site-brand__text">
+                    <strong>{{ site.brand.title }}</strong>
+                    <small>{{ site.brand.subtitle }}</small>
+                </span>
+            {% endif %}
+        </a>
+
+        <nav class="site-header__nav" aria-label="Основная навигация">
+            {% for item in site.navigation %}
+                {% include 'components/ui/link.html.twig' with {
+                    class: 'site-header__link',
+                    href: item.href,
+                    label: item.label,
+                    external: item.external|default(false),
+                } only %}
+            {% endfor %}
+        </nav>
+
+        <div class="site-header__actions">
+            <a class="button site-header__order" href="/#catalog">Заказать</a>
+            <button
+                class="site-header__menu-toggle"
+                type="button"
+                aria-label="Открыть меню"
+                aria-expanded="false"
+                aria-controls="site-header-mobile-menu"
+                data-site-header-menu-toggle
+            >
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </div>
+
+    <nav
+        class="site-header__mobile-nav"
+        id="site-header-mobile-menu"
+        aria-label="Мобильная навигация"
+        data-site-header-mobile-menu
+        hidden
+    >
+        {% for item in site.navigation %}
+            {% include 'components/ui/link.html.twig' with {
+                class: 'site-header__mobile-link',
+                href: item.href,
+                label: item.label,
+                external: item.external|default(false),
+            } only %}
+        {% endfor %}
+        <a class="button site-header__mobile-order" href="/#catalog">Заказать</a>
+    </nav>
+
+    <div
+        data-react-island="site-header"
+        data-root-selector="[data-site-header-root]"
+        hidden
+    ></div>
+</header>

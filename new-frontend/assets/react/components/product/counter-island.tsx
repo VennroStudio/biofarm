@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { createRoot } from 'react-dom/client';
 
 type Props = {
   counterElement: HTMLElement;
@@ -15,7 +16,7 @@ const readPositiveNumber = (value: string | undefined, fallback: number) => {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 };
 
-export function ProductCounter({ counterElement }: Props) {
+function ProductCounter({ counterElement }: Props) {
   useEffect(() => {
     const decrement = counterElement.querySelector<HTMLButtonElement>('[data-counter-decrement]');
     const increment = counterElement.querySelector<HTMLButtonElement>('[data-counter-increment]');
@@ -56,4 +57,18 @@ export function ProductCounter({ counterElement }: Props) {
   }, [counterElement]);
 
   return null;
+}
+
+export function mountProductCounter() {
+  document.querySelectorAll('[data-react-island="product-counter"]').forEach((element) => {
+    const htmlElement = element as HTMLElement;
+    const rootElement = htmlElement.closest<HTMLElement>('[data-product-counter-root]');
+    const counterElement = rootElement?.querySelector<HTMLElement>(
+      htmlElement.dataset.counterSelector || '[data-product-counter]',
+    );
+
+    if (counterElement) {
+      createRoot(htmlElement).render(<ProductCounter counterElement={counterElement} />);
+    }
+  });
 }

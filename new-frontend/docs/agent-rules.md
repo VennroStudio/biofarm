@@ -21,5 +21,6 @@
 - Form Action: `FormData -> CsrfToken -> Command Handler -> Responder`.
 - Module API возвращает Response-модели.
 - Twig: `pages` собирают секции, `sections` собирают блоки, `widgets` содержат составные use-case блоки, `components` содержат малые переиспользуемые части.
-- React island: HTML в Twig, поведение в `assets/react/islands`, mount через явный root/selector contract.
+- React island: HTML в Twig, поведение в зеркальном пути `assets/react/{components|sections|widgets|pages}`, mount через явный root/selector contract.
+- `assets/react/mount.tsx` только импортирует и вызывает mount-функции конкретных React islands.
 - CSS зеркалит Twig ownership и подключается через `assets/styles/app.css`.
