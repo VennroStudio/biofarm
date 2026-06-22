@@ -132,9 +132,24 @@ assets/styles/
 ├── app.css
 ├── base/
 ├── components/
+│   ├── layout/
+│   ├── ui/
+│   └── {domain}/
 ├── sections/
-└── pages/
+│   └── {domain}/
+└── widgets/
+    └── {domain}/
 ```
+
+CSS повторяет ownership Twig:
+
+- `templates/components/ui/modal.html.twig` → `assets/styles/components/ui/modal.css`
+- `templates/components/product/card.html.twig` → `assets/styles/components/product/card.css`
+- `templates/sections/product/product-grid.html.twig` → `assets/styles/sections/product/product-grid.css`
+- `templates/widgets/product/command-panel.html.twig` → `assets/styles/widgets/product/command-panel.css`
+
+`app.css` остается только точкой сборки `@import`. Он не содержит селекторы.
+Не создавать общие файлы-свалки вроде `cards.css`, `forms.css`, `islands.css` или общий `responsive.css`. Адаптив конкретного блока держать в CSS-файле этого блока.
 
 Twig подключает собранный файл:
 
@@ -179,4 +194,6 @@ Twig подключает собранный файл:
 - React не рендерит HTML для Twig-страницы. Он только читает `data-*`, слушает события и обновляет уже существующие Twig-элементы.
 - Модалки и overlay-shells держать в `components/ui`, а доменный widget заполняет их содержимое через `embed`/blocks/data-targets.
 - List-section сама отвечает за empty state через `components/ui/empty-state.html.twig`.
+- Для каждого нового Twig component/section/widget создавать отдельный CSS-файл в зеркальной папке `assets/styles`.
+- Селекторы CSS должны принадлежать своему блоку: `product-card__category`, а не общий `pill`; `featured-product__facts`, а не общий `facts`.
 - Статические assets подключать через Vite manifest helper `vite_asset()`, не хардкодить `/build/*.js`.

@@ -1,13 +1,13 @@
 <header class="site-header">
-    <a class="brand" href="/">
-        <span class="brand__mark">{{ site.brand.mark }}</span>
+    <a class="site-brand" href="/">
+        <span class="site-brand__mark">{{ site.brand.mark }}</span>
         <span>
             <strong>{{ site.brand.title }}</strong>
             <small>{{ site.brand.subtitle }}</small>
         </span>
     </a>
 
-    <nav class="site-nav" aria-label="Main navigation">
+    <nav class="site-header__nav" aria-label="Main navigation">
         {% for item in site.navigation %}
             {% include 'components/ui/link.html.twig' with {
                 href: item.href,

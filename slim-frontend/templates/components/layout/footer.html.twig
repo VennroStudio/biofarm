@@ -4,7 +4,7 @@
         <p>{{ site.footer.description }}</p>
     </div>
 
-    <div class="footer-links">
+    <div class="site-footer__links">
         {% for item in site.footer.links %}
             {% include 'components/ui/link.html.twig' with {
                 href: item.href,

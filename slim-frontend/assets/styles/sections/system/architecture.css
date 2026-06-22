@@ -1,0 +1,64 @@
+.architecture {
+    width: min(1120px, calc(100% - 32px));
+    margin: 60px auto 0;
+    padding: 36px;
+    color: #f6fbf8;
+    background: var(--surface-strong);
+    border-radius: 8px;
+}
+
+.architecture .eyebrow {
+    color: #9bd6b2;
+}
+
+.architecture h2 {
+    margin: 8px 0 0;
+    font-size: clamp(28px, 4vw, 42px);
+    line-height: 1.05;
+    letter-spacing: 0;
+}
+
+.architecture__grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 24px;
+}
+
+.architecture__item {
+    padding: 18px;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.architecture__index {
+    display: grid;
+    width: 32px;
+    height: 32px;
+    margin-bottom: 14px;
+    place-items: center;
+    color: #fff;
+    background: var(--rose);
+    border-radius: 8px;
+    font-weight: 900;
+}
+
+.architecture p {
+    color: var(--muted);
+    line-height: 1.55;
+}
+
+@media (max-width: 980px) {
+    .architecture__grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .architecture__grid {
+        grid-template-columns: 1fr;
+    }
+}

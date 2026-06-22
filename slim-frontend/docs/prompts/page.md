@@ -21,6 +21,13 @@
 - components/ui/*.html.twig — общие UI-блоки;
 - components/layout/*.html.twig — глобальная layout-обвязка.
 
+Разбей CSS зеркально Twig:
+- assets/styles/sections/domain/page-section.css для каждой новой секции;
+- assets/styles/widgets/domain/widget.css для каждого нового widget;
+- assets/styles/components/domain/component.css или components/ui/component.css для каждого нового компонента.
+
+Подключи новые CSS-файлы только через assets/styles/app.css.
+
 Зарегистрируй route в config/routes/web.php.
 
 Примеры в правилах абстрактные. Поля, route и зависимости подстрой под задачу.

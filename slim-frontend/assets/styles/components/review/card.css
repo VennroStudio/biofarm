@@ -1,0 +1,34 @@
+.review-card {
+    padding: 20px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.review-card__rating {
+    display: inline-flex;
+    min-height: 30px;
+    align-items: center;
+    margin-bottom: 14px;
+    padding: 0 10px;
+    color: #fff;
+    background: var(--blue);
+    border-radius: 8px;
+    font-weight: 850;
+}
+
+.review-card strong {
+    display: block;
+    font-size: 18px;
+}
+
+.review-card p {
+    color: var(--muted);
+    line-height: 1.55;
+}
+
+.review-card span {
+    color: var(--muted);
+    font-size: 13px;
+}
