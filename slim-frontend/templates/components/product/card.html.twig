@@ -1,6 +1,11 @@
 <article class="product-card">
     <div class="product-card__media">
-        <img src="{{ product.image }}" alt="{{ product.title }}">
+        <img
+            src="{{ product.image }}"
+            alt="{{ product.title }}"
+            loading="lazy"
+            decoding="async"
+        >
         <span class="product-card__category">{{ product.category }}</span>
     </div>
 

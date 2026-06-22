@@ -200,6 +200,60 @@ Twig подключает собранный файл:
 
 ---
 
+## Media
+
+Картинки в списках, карточках и модалках:
+
+```twig
+<img
+    src="{{ item.image }}"
+    alt="{{ item.title }}"
+    loading="lazy"
+    decoding="async"
+>
+```
+
+Главная картинка первого экрана:
+
+```twig
+<img
+    src="{{ item.image }}"
+    alt="{{ item.title }}"
+    loading="eager"
+    fetchpriority="high"
+    decoding="async"
+>
+```
+
+Видео:
+
+```twig
+<video
+    controls
+    preload="metadata"
+    poster="{{ video.poster }}"
+    playsinline
+>
+    <source src="{{ video.src }}" type="video/mp4">
+</video>
+```
+
+Тяжелое видео ниже первого экрана:
+
+```twig
+<video
+    controls
+    preload="none"
+    poster="{{ video.poster }}"
+    playsinline
+    data-lazy-video
+>
+    <source data-src="{{ video.src }}" type="video/mp4">
+</video>
+```
+
+---
+
 ## Правила
 
 - `pages` содержит blocks и includes.
@@ -219,3 +273,6 @@ Twig подключает собранный файл:
 - Для каждого нового Twig component/section/widget создавать отдельный CSS-файл в зеркальной папке `assets/styles`.
 - Селекторы CSS должны принадлежать своему блоку: `product-card__category`, а не общий `pill`; `featured-product__facts`, а не общий `facts`.
 - Статические assets подключать через Vite manifest helper `vite_asset()`, не хардкодить `/build/*.js`.
+- Картинки в карточках, списках и модалках используют `loading="lazy"` и `decoding="async"`.
+- Картинка первого экрана использует `loading="eager"`, `fetchpriority="high"` и `decoding="async"`.
+- Видео использует `poster`, `playsinline` и `preload="metadata"`; тяжелое видео ниже первого экрана использует `preload="none"` и `data-src`.

@@ -20,6 +20,12 @@
             </dl>
             {% include 'components/product/counter-island.html.twig' with { product: product } only %}
         </div>
-        <img src="{{ product.image }}" alt="{{ product.title }}">
+        <img
+            src="{{ product.image }}"
+            alt="{{ product.title }}"
+            loading="eager"
+            fetchpriority="high"
+            decoding="async"
+        >
     </section>
 {% endif %}
