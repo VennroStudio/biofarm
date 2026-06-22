@@ -1,9 +1,10 @@
-<header class="site-header" data-site-header-root>
-    <div class="site-header__inner">
-        <a class="site-brand" href="/" aria-label="{{ site.brand.title }}">
+<header class="fixed top-0 left-0 right-0 z-50 bg-primary/90 backdrop-blur-sm transition-all duration-300">
+    <div class="container mx-auto px-4">
+        <div class="flex h-20 items-center justify-between">
+        <a class="flex items-center gap-2" href="/" aria-label="{{ site.brand.title }}">
             {% if site.brand.logoUrl is defined and site.brand.logoUrl %}
                 <img
-                    class="site-brand__logo"
+                    class="h-12 w-auto object-contain transition-[filter] duration-300"
                     src="{{ site.brand.logoUrl }}"
                     alt="{{ site.brand.title }}"
                     width="172"
@@ -13,18 +14,18 @@
                     decoding="async"
                 >
             {% else %}
-                <span class="site-brand__mark">{{ site.brand.mark }}</span>
-                <span class="site-brand__text">
+                <span class="grid h-11 w-11 place-items-center rounded-lg bg-primary-foreground text-primary font-black">{{ site.brand.mark }}</span>
+                <span class="block text-primary-foreground">
                     <strong>{{ site.brand.title }}</strong>
-                    <small>{{ site.brand.subtitle }}</small>
+                    <small class="block text-xs text-primary-foreground/70">{{ site.brand.subtitle }}</small>
                 </span>
             {% endif %}
         </a>
 
-        <nav class="site-header__nav" aria-label="Основная навигация">
+        <nav class="hidden items-center gap-8 lg:flex" aria-label="Основная навигация">
             {% for item in site.navigation %}
                 {% include 'components/ui/link.html.twig' with {
-                    class: 'site-header__link',
+                    class: 'text-sm font-medium text-white/90 transition-colors hover:text-accent',
                     href: item.href,
                     label: item.label,
                     external: item.external|default(false),
@@ -32,44 +33,41 @@
             {% endfor %}
         </nav>
 
-        <div class="site-header__actions">
-            <a class="button site-header__order" href="/#catalog">Заказать</a>
-            <button
-                class="site-header__menu-toggle"
-                type="button"
+        <div class="hidden items-center gap-4 lg:flex">
+            <a class="inline-flex min-h-11 items-center justify-center rounded-lg bg-primary-foreground px-5 text-sm font-bold text-primary transition-colors hover:bg-primary-foreground/90" href="/#catalog">
+                Заказать
+            </a>
+        </div>
+
+        <details class="group lg:hidden [&>summary::-webkit-details-marker]:hidden">
+            <summary
+                class="flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-lg text-white"
                 aria-label="Открыть меню"
-                aria-expanded="false"
-                aria-controls="site-header-mobile-menu"
-                data-site-header-menu-toggle
             >
-                <span></span>
-                <span></span>
-                <span></span>
-            </button>
+                <span class="relative block h-5 w-6">
+                    <span class="absolute left-0 top-0 h-0.5 w-6 rounded-full bg-current transition-transform duration-200 group-open:translate-y-2 group-open:rotate-45"></span>
+                    <span class="absolute left-0 top-2 h-0.5 w-6 rounded-full bg-current transition-opacity duration-200 group-open:opacity-0"></span>
+                    <span class="absolute left-0 top-4 h-0.5 w-6 rounded-full bg-current transition-transform duration-200 group-open:-translate-y-2 group-open:-rotate-45"></span>
+                </span>
+            </summary>
+
+            <nav
+                class="absolute left-0 right-0 top-20 border-t border-border bg-background px-4 py-6 shadow-premium lg:hidden"
+                id="site-header-mobile-menu"
+                aria-label="Мобильная навигация"
+            >
+                <div class="container mx-auto flex flex-col gap-4">
+                    {% for item in site.navigation %}
+                        {% include 'components/ui/link.html.twig' with {
+                            class: 'py-2 text-lg font-medium text-foreground transition-colors hover:text-primary',
+                            href: item.href,
+                            label: item.label,
+                            external: item.external|default(false),
+                        } only %}
+                    {% endfor %}
+                </div>
+            </nav>
+        </details>
         </div>
     </div>
-
-    <nav
-        class="site-header__mobile-nav"
-        id="site-header-mobile-menu"
-        aria-label="Мобильная навигация"
-        data-site-header-mobile-menu
-        hidden
-    >
-        {% for item in site.navigation %}
-            {% include 'components/ui/link.html.twig' with {
-                class: 'site-header__mobile-link',
-                href: item.href,
-                label: item.label,
-                external: item.external|default(false),
-            } only %}
-        {% endfor %}
-        <a class="button site-header__mobile-order" href="/#catalog">Заказать</a>
-    </nav>
-
-    <div
-        data-react-island="site-header"
-        data-root-selector="[data-site-header-root]"
-        hidden
-    ></div>
 </header>

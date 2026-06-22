@@ -2,7 +2,6 @@
 @import "./base/tokens.css";
 @import "./base/reset.css";
 @import "./base/layout.css";
-@import "./components/layout/header.css";
 @import "./components/layout/footer.css";
 @import "./components/ui/button.css";
 @import "./components/ui/empty-state.css";
@@ -16,7 +15,6 @@
 @import "./components/product/counter.css";
 @import "./components/order/card.css";
 @import "./components/review/card.css";
-@import "./sections/home/hero.css";
 @import "./sections/home/metrics.css";
 @import "./sections/home/video.css";
 @import "./sections/product/category-strip.css";

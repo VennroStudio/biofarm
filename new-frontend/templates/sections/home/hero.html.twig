@@ -1,6 +1,7 @@
-<section class="hero" aria-labelledby="home-hero-title">
-    <div class="hero__media" aria-hidden="true">
+<section class="relative flex min-h-screen items-center justify-center overflow-hidden" aria-labelledby="home-hero-title">
+    <div class="absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
         <video
+            class="absolute left-1/2 top-1/2 h-full w-full -translate-x-1/2 -translate-y-1/2 scale-[1.34] object-cover"
             autoplay
             muted
             loop
@@ -10,29 +11,39 @@
         >
             <source src="https://biofarm.store/uploads/videos/biofarm.mp4" type="video/mp4">
         </video>
+        <div class="absolute inset-0 gradient-hero"></div>
     </div>
 
-    <div class="hero__content">
-        <p class="hero__badge">Натуральные продукты БИОФАРМ</p>
-        <h1 id="home-hero-title">
-            Качество, проверенное
-            <span>природой</span>
-        </h1>
-        <p class="hero__lead">
-            Мы поставляем экологически чистые продукты напрямую из
-            собственных лабораторий.
+    <div class="container relative z-10 mx-auto px-4 text-center">
+        <p class="mb-6 inline-block rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm">
+            Натуральные продукты БИОФАРМ
         </p>
-        <div class="hero__actions">
-            <a class="button hero__catalog" href="#catalog">Смотреть каталог</a>
-            <a class="button hero__video-link" href="#video">
-                <span class="hero__play" aria-hidden="true"></span>
+        <h1 id="home-hero-title" class="mb-6 text-balance font-display text-4xl font-bold text-white md:text-6xl lg:text-7xl">
+            Качество, проверенное
+            <br>
+            <span class="text-accent">природой</span>
+        </h1>
+        <p class="mx-auto mb-10 max-w-2xl text-lg text-white/80 md:text-xl">
+            Мы поставляем экологически чистые продукты напрямую из собственных лабораторий.
+        </p>
+        <div class="flex flex-col items-center justify-center gap-4 sm:flex-row">
+            <a class="gradient-primary inline-flex min-h-14 items-center justify-center rounded-lg px-8 py-4 text-lg font-bold text-primary-foreground shadow-premium-lg transition-opacity hover:opacity-95" href="#catalog">
+                Смотреть каталог
+            </a>
+            <a class="inline-flex min-h-14 items-center justify-center rounded-lg border border-white/30 bg-white/10 px-8 py-4 text-lg font-bold text-white backdrop-blur-sm transition-colors hover:bg-white/20" href="#video">
+                <svg class="mr-2 h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+                    <path d="M8 5v14l11-7z"></path>
+                </svg>
                 О производстве
             </a>
         </div>
     </div>
 
-    <a class="hero__scroll" href="#catalog" aria-label="Перейти ниже">
-        <span>Листайте вниз</span>
-        <span class="hero__scroll-arrow" aria-hidden="true"></span>
+    <a class="absolute bottom-8 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-2 text-white/60" href="#catalog" aria-label="Перейти ниже">
+        <span class="text-xs uppercase tracking-widest">Листайте вниз</span>
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+            <path d="M12 5v14"></path>
+            <path d="m19 12-7 7-7-7"></path>
+        </svg>
     </a>
 </section>
