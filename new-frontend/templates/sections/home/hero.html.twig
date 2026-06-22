@@ -1,14 +1,38 @@
-<section class="hero">
+<section class="hero" aria-labelledby="home-hero-title">
+    <div class="hero__media" aria-hidden="true">
+        <video
+            autoplay
+            muted
+            loop
+            playsinline
+            preload="metadata"
+            poster="/assets/images/home/hero-poster.jpg"
+        >
+            <source src="https://biofarm.store/uploads/videos/biofarm.mp4" type="video/mp4">
+        </video>
+    </div>
+
     <div class="hero__content">
-        <p class="eyebrow">Slim + Twig + React Islands</p>
-        <h1>Готовый frontend-шаблон</h1>
+        <p class="hero__badge">Натуральные продукты БИОФАРМ</p>
+        <h1 id="home-hero-title">
+            Качество, проверенное
+            <span>природой</span>
+        </h1>
         <p class="hero__lead">
-            PHP рендерит полноценный HTML, модуль получает данные из API,
-            а React оживляет отдельные интерактивные блоки.
+            Мы поставляем экологически чистые продукты напрямую из
+            собственных лабораторий.
         </p>
         <div class="hero__actions">
-            <a class="button" href="#catalog">Смотреть витрину</a>
-            <a class="button button--secondary" href="#architecture">Посмотреть структуру</a>
+            <a class="button hero__catalog" href="#catalog">Смотреть каталог</a>
+            <a class="button hero__video-link" href="#video">
+                <span class="hero__play" aria-hidden="true"></span>
+                О производстве
+            </a>
         </div>
     </div>
+
+    <a class="hero__scroll" href="#catalog" aria-label="Перейти ниже">
+        <span>Листайте вниз</span>
+        <span class="hero__scroll-arrow" aria-hidden="true"></span>
+    </a>
 </section>
