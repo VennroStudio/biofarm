@@ -12,15 +12,10 @@
         </div>
 
         <div class="product-card__meta">
-            <strong>${{ product.price|number_format(2, '.', ' ') }}</strong>
-            <span>{{ product.ratingRate }}/5 · {{ product.ratingCount }} reviews</span>
+            <strong>{{ product.price|money }}</strong>
+            <span>{{ product.ratingRate|rating }} · {{ product.ratingCount }} reviews</span>
         </div>
 
-        <div
-            data-react-island="product-counter"
-            data-product-id="{{ product.id }}"
-            data-product-title="{{ product.title }}"
-            data-product-price="{{ product.price }}"
-        ></div>
+        {% include 'components/product/counter-island.html.twig' with { product: product } only %}
     </div>
 </article>

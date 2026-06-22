@@ -68,6 +68,16 @@
     font-weight: 850;
 }
 
+.category-strip a[aria-current="true"] {
+    color: #fff;
+    background: var(--green);
+    border-color: var(--green);
+}
+
+.category-strip a[aria-current="true"] span {
+    color: rgba(255, 255, 255, 0.76);
+}
+
 .category-strip span {
     color: var(--muted);
 }

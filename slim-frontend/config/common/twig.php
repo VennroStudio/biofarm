@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Components\Asset\ViteManifest;
 use App\Components\Security\CsrfToken;
+use App\Components\Twig\FormattingExtension;
 use Psr\Container\ContainerInterface;
 use Twig\Environment;
 use Twig\Extension\DebugExtension;
@@ -20,6 +21,8 @@ return [
          *     cache_dir: string,
          * },
          * site: array{
+         *     locale: string,
+         *     meta: array{title: string, description: string},
          *     brand: array{mark: string, title: string, subtitle: string},
          *     navigation: list<array{label: string, href: string, external?: bool}>,
          *     footer: array{
@@ -48,6 +51,10 @@ return [
         if ($debug) {
             $environment->addExtension(new DebugExtension());
         }
+
+        /** @var FormattingExtension $formatting */
+        $formatting = $container->get(FormattingExtension::class);
+        $environment->addExtension($formatting);
 
         $environment->addGlobal('site', $fullConfig['site']);
         /** @var ViteManifest $assets */

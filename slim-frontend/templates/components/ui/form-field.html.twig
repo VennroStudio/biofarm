@@ -1,0 +1,17 @@
+<label>
+    <span>{{ field.label }}</span>
+    {% if field.multiline|default(false) %}
+        <textarea
+            name="{{ field.name }}"
+            {% if field.required|default(false) %}required{% endif %}
+        >{{ field.value|default('') }}</textarea>
+    {% else %}
+        <input
+            name="{{ field.name }}"
+            type="{{ field.type|default('text') }}"
+            value="{{ field.value|default('') }}"
+            {% if field.step is defined and field.step %}step="{{ field.step }}"{% endif %}
+            {% if field.required|default(false) %}required{% endif %}
+        >
+    {% endif %}
+</label>

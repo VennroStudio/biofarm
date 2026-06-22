@@ -1,6 +1,4 @@
-.command-form,
-.command-result,
-.command-result__delete {
+.command-form {
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: 8px;
@@ -13,16 +11,14 @@
     padding: 18px;
 }
 
-.command-form__head,
-.command-result__meta {
+.command-form__head {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
 }
 
-.command-form__head span,
-.command-result__meta span {
+.command-form__head span {
     padding: 6px 9px;
     color: #fff;
     background: var(--blue);
@@ -31,8 +27,7 @@
     font-weight: 900;
 }
 
-.command-form__head strong,
-.command-result__meta strong {
+.command-form__head strong {
     color: var(--muted);
     font-size: 13px;
 }

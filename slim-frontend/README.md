@@ -54,8 +54,10 @@ Use `APP_DEBUG=false` or `APP_DEBUG=0` in production. `APP_SECRET` must be chang
 - `src/Modules/{Entity}/Api` contains upstream API clients per domain.
 - `src/Modules/{Entity}/Command` contains write scenarios and handlers.
 - `templates/pages` defines page composition.
-- `templates/sections` and `templates/components` contain Twig sections and reusable blocks.
-- `assets/react/islands` contains isolated React widgets.
+- `templates/sections` contains large page/domain sections.
+- `templates/widgets` contains reusable composite domain blocks.
+- `templates/components` contains reusable layout, UI and domain blocks.
+- `assets/react/islands` contains isolated React islands mounted from Twig.
 
 Twig never receives raw upstream JSON. Module APIs map data into response models, and invalid upstream payloads fail explicitly.
 

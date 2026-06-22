@@ -11,19 +11,14 @@
                 </div>
                 <div>
                     <dt>Rating</dt>
-                    <dd>{{ product.ratingRate }}/5 · {{ product.ratingCount }}</dd>
+                    <dd>{{ product.ratingRate|rating }} · {{ product.ratingCount }}</dd>
                 </div>
                 <div>
                     <dt>Stock</dt>
                     <dd>{{ product.stock }}</dd>
                 </div>
             </dl>
-            <div
-                data-react-island="product-counter"
-                data-product-id="{{ product.id }}"
-                data-product-title="{{ product.title }}"
-                data-product-price="{{ product.price }}"
-            ></div>
+            {% include 'components/product/counter-island.html.twig' with { product: product } only %}
         </div>
         <img src="{{ product.image }}" alt="{{ product.title }}">
     </section>

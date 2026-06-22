@@ -7,12 +7,11 @@
     </div>
 
     {% if action is defined and action %}
-        <a
-            class="button {{ action.class|default('button--ghost') }}"
-            href="{{ action.href }}"
-            {% if action.external|default(false) %}target="_blank" rel="noreferrer"{% endif %}
-        >
-            {{ action.label }}
-        </a>
+        {% include 'components/ui/link.html.twig' with {
+            class: 'button ' ~ (action.class|default('button--ghost')),
+            href: action.href,
+            label: action.label,
+            external: action.external|default(false),
+        } only %}
     {% endif %}
 </div>

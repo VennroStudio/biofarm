@@ -7,7 +7,6 @@ namespace App\Http\Web\Product;
 use App\Components\Api\ApiException;
 use App\Components\Http\Form\FormValidationException;
 use App\Components\Security\CsrfToken;
-use App\Components\Twig\HtmlResponder;
 use App\Modules\Product\Command\CreateProduct\CreateProductCommand;
 use App\Modules\Product\Command\CreateProduct\CreateProductHandler;
 use Override;
@@ -19,7 +18,7 @@ final readonly class CreateProductController implements RequestHandlerInterface
 {
     public function __construct(
         private CreateProductHandler $handler,
-        private HtmlResponder $html,
+        private ProductCommandResponder $responder,
         private CsrfToken $csrf,
     ) {}
 
@@ -50,15 +49,18 @@ final readonly class CreateProductController implements RequestHandlerInterface
             $status = 502;
         }
 
-        return $this->html->render('pages/product-command/result.html.twig', [
-            'action' => [
-                'title'    => 'Create product',
-                'method'   => 'POST',
-                'endpoint' => '/products/create',
+        return $this->responder->respond(
+            request: $request,
+            action: [
+                'title'       => 'Create product',
+                'description' => 'Result of the product create command handler.',
+                'method'      => 'POST',
+                'endpoint'    => '/products/create',
             ],
-            'product' => $result,
-            'delete'  => null,
-            'error'   => $error,
-        ], $status);
+            product: $result,
+            delete: null,
+            error: $error,
+            status: $status,
+        );
     }
 }

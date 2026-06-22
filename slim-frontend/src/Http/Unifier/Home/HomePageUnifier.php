@@ -22,46 +22,89 @@ final readonly class HomePageUnifier
 
     /**
      * @return array{
+     *     meta: array{title: string, description: string},
      *     products: list<ProductResponse>,
+     *     selectedCategory: string|null,
      *     featuredProduct: ProductResponse|null,
      *     reviews: list<ReviewResponse>,
      *     orders: list<OrderResponse>,
      *     categories: list<array{name: string, productsCount: int}>,
+     *     categoriesTotal: int,
      *     metrics: list<array{label: string, value: string, description: string}>,
      *     apiError: string|null
      * }
      */
-    public function unify(): array
+    public function unify(?string $selectedCategory = null): array
     {
+        $meta = $this->meta();
+        $apiErrors = [];
+        $products = [];
+        $reviews = [];
+        $orders = [];
+
         try {
             $products = $this->products->getProducts(limit: 8);
-            $featuredProduct = $products[0] ?? null;
-            $reviews = $featuredProduct !== null
-                ? $this->reviews->getProductReviews(productId: $featuredProduct->id, limit: 3)
-                : [];
-            $orders = $this->orders->getOrders(limit: 4);
-            $categories = $this->mapCategories($products);
-
-            return [
-                'products'        => $products,
-                'featuredProduct' => $featuredProduct,
-                'reviews'         => $reviews,
-                'orders'          => $orders,
-                'categories'      => $categories,
-                'metrics'         => $this->mapMetrics($products, $orders, $categories),
-                'apiError'        => null,
-            ];
         } catch (ApiException $exception) {
-            return [
-                'products'        => [],
-                'featuredProduct' => null,
-                'reviews'         => [],
-                'orders'          => [],
-                'categories'      => [],
-                'metrics'         => [],
-                'apiError'        => $exception->getMessage(),
-            ];
+            $apiErrors[] = 'Products: ' . $exception->getMessage();
         }
+
+        $catalogProducts = $products;
+        if ($selectedCategory !== null) {
+            try {
+                $catalogProducts = $this->products->getProductsByCategory($selectedCategory, limit: 8);
+            } catch (ApiException $exception) {
+                $catalogProducts = [];
+                $apiErrors[] = "Products category '{$selectedCategory}': " . $exception->getMessage();
+            }
+        }
+
+        $featuredProduct = $catalogProducts[0] ?? null;
+        if ($featuredProduct === null) {
+            $featuredProduct = $products[0] ?? null;
+        }
+
+        if ($featuredProduct !== null) {
+            try {
+                $reviews = $this->reviews->getProductReviews(productId: $featuredProduct->id, limit: 3);
+            } catch (ApiException $exception) {
+                $apiErrors[] = 'Reviews: ' . $exception->getMessage();
+            }
+        }
+
+        try {
+            $orders = $this->orders->getOrders(limit: 4);
+        } catch (ApiException $exception) {
+            $apiErrors[] = 'Orders: ' . $exception->getMessage();
+        }
+
+        $categories = $this->mapCategories($products);
+
+        return [
+            'meta'             => $meta,
+            'products'         => $catalogProducts,
+            'selectedCategory' => $selectedCategory,
+            'featuredProduct'  => $featuredProduct,
+            'reviews'          => $reviews,
+            'orders'           => $orders,
+            'categories'       => $categories,
+            'categoriesTotal'  => array_sum(array_map(
+                static fn (array $category): int => $category['productsCount'],
+                $categories,
+            )),
+            'metrics'  => $this->mapMetrics($catalogProducts, $orders, $categories),
+            'apiError' => $apiErrors === [] ? null : implode(' ', $apiErrors),
+        ];
+    }
+
+    /**
+     * @return array{title: string, description: string}
+     */
+    private function meta(): array
+    {
+        return [
+            'title'       => 'Slim Frontend Template',
+            'description' => 'Тестовая Slim/Twig страница, собранная из внешнего Fake E-commerce API.',
+        ];
     }
 
     /**

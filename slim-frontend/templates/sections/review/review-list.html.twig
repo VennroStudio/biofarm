@@ -1,14 +1,17 @@
-{% if reviews %}
-    <section class="section" id="reviews">
-        {% include 'components/ui/section-head.html.twig' with {
-            eyebrow: 'Reviews',
-            title: 'Отзывы к первому товару',
-        } only %}
+<section class="section" id="reviews">
+    {% include 'components/ui/section-head.html.twig' with {
+        eyebrow: 'Reviews',
+        title: 'Отзывы к первому товару',
+    } only %}
 
-        <div class="reviews">
-            {% for review in reviews %}
-                {% include 'components/review/card.html.twig' with { review: review } only %}
-            {% endfor %}
-        </div>
-    </section>
-{% endif %}
+    <div class="reviews">
+        {% for review in reviews %}
+            {% include 'components/review/card.html.twig' with { review: review } only %}
+        {% else %}
+            {% include 'components/ui/empty-state.html.twig' with {
+                title: 'Отзывы не загрузились',
+                message: 'Секция остается стабильной, даже если Review API вернул пустой список.',
+            } only %}
+        {% endfor %}
+    </div>
+</section>

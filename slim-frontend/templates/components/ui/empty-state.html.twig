@@ -1,0 +1,8 @@
+<div class="empty-state" role="{{ role|default('status') }}">
+    {% if title is defined and title %}
+        <strong>{{ title }}</strong>
+    {% endif %}
+    {% if message is defined and message %}
+        <span>{{ message }}</span>
+    {% endif %}
+</div>

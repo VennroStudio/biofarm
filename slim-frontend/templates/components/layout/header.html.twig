@@ -9,12 +9,11 @@
 
     <nav class="site-nav" aria-label="Main navigation">
         {% for item in site.navigation %}
-            <a
-                href="{{ item.href }}"
-                {% if item.external|default(false) %}target="_blank" rel="noreferrer"{% endif %}
-            >
-                {{ item.label }}
-            </a>
+            {% include 'components/ui/link.html.twig' with {
+                href: item.href,
+                label: item.label,
+                external: item.external|default(false),
+            } only %}
         {% endfor %}
     </nav>
 </header>

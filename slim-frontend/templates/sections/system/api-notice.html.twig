@@ -1,6 +1,8 @@
 {% if apiError %}
-    <section class="notice">
-        <strong>Fake API временно недоступен.</strong>
-        <span>{{ apiError }}</span>
-    </section>
+    {% include 'components/ui/notice.html.twig' with {
+        element: 'section',
+        title: 'Fake API временно недоступен.',
+        message: apiError,
+        role: 'alert',
+    } only %}
 {% endif %}

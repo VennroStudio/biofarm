@@ -1,6 +1,6 @@
 <article class="review">
-    <div class="review__rating">{{ review.rating }}/5</div>
+    <div class="review__rating">{{ review.rating|rating(0) }}</div>
     <strong>{{ review.title }}</strong>
     <p>{{ review.content }}</p>
-    <span>User #{{ review.userId }} · {{ review.date }}</span>
+    <span>User #{{ review.userId }} · {{ review.date|short_date }}</span>
 </article>

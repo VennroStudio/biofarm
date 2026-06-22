@@ -39,6 +39,10 @@
         grid-template-columns: 1fr;
     }
 
+    .command-modal__product {
+        grid-template-columns: 1fr;
+    }
+
     .section__head,
     .site-footer {
         align-items: flex-start;

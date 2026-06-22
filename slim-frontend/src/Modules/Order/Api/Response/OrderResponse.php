@@ -30,7 +30,7 @@ final readonly class OrderResponse
      *     totalAmount?: float|int,
      *     status?: string,
      *     orderDate?: string,
-     *     deliveryDate?: string
+     *     deliveryDate?: string|null
      * } $item
      */
     public static function fromArray(array $item): self
@@ -45,7 +45,7 @@ final readonly class OrderResponse
             totalAmount: ApiPayload::requireFloat($item, 'totalAmount'),
             status: ApiPayload::requireString($item, 'status'),
             orderDate: ApiPayload::requireString($item, 'orderDate'),
-            deliveryDate: ApiPayload::requireString($item, 'deliveryDate'),
+            deliveryDate: ApiPayload::optionalString($item, 'deliveryDate'),
         );
     }
 }

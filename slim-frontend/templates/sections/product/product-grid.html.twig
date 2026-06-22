@@ -1,7 +1,7 @@
 <section class="section" id="catalog">
     {% include 'components/ui/section-head.html.twig' with {
         eyebrow: 'Products',
-        title: 'Тестовая витрина из Fake API',
+        title: selectedCategory ? 'Категория: ' ~ selectedCategory : 'Тестовая витрина из Fake API',
         action: {
             label: 'API reference',
             href: 'https://fakeapi.net/docs/fake-e-commerce-api',
@@ -14,7 +14,12 @@
         {% for product in products %}
             {% include 'components/product/card.html.twig' with { product: product } only %}
         {% else %}
-            <p class="empty">Товары не загрузились. Проверь API_BASE_URL и сеть.</p>
+            {% include 'components/ui/empty-state.html.twig' with {
+                title: 'Товары не загрузились',
+                message: selectedCategory
+                    ? 'В выбранной категории пока нет товаров или API вернул пустой список.'
+                    : 'Проверь API_BASE_URL и сеть.',
+            } only %}
         {% endfor %}
     </div>
 </section>

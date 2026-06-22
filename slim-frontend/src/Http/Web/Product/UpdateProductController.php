@@ -7,7 +7,6 @@ namespace App\Http\Web\Product;
 use App\Components\Api\ApiException;
 use App\Components\Http\Form\FormValidationException;
 use App\Components\Security\CsrfToken;
-use App\Components\Twig\HtmlResponder;
 use App\Modules\Product\Command\UpdateProduct\UpdateProductCommand;
 use App\Modules\Product\Command\UpdateProduct\UpdateProductHandler;
 use Override;
@@ -19,7 +18,7 @@ final readonly class UpdateProductController implements RequestHandlerInterface
 {
     public function __construct(
         private UpdateProductHandler $handler,
-        private HtmlResponder $html,
+        private ProductCommandResponder $responder,
         private CsrfToken $csrf,
     ) {}
 
@@ -51,15 +50,18 @@ final readonly class UpdateProductController implements RequestHandlerInterface
             $status = 502;
         }
 
-        return $this->html->render('pages/product-command/result.html.twig', [
-            'action' => [
-                'title'    => 'Update product',
-                'method'   => 'PATCH',
-                'endpoint' => '/products/update',
+        return $this->responder->respond(
+            request: $request,
+            action: [
+                'title'       => 'Update product',
+                'description' => 'Result of the product update command handler.',
+                'method'      => 'PATCH',
+                'endpoint'    => '/products/update',
             ],
-            'product' => $result,
-            'delete'  => null,
-            'error'   => $error,
-        ], $status);
+            product: $result,
+            delete: null,
+            error: $error,
+            status: $status,
+        );
     }
 }

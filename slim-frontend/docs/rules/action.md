@@ -44,7 +44,8 @@ final readonly class {Page}Controller implements RequestHandlerInterface
 
 ## Form Action
 
-Form Action читает body, вызывает Handler и рендерит result page.
+Form Action читает body, вызывает Handler и возвращает JSON для React island.
+HTML fallback для обычной формы должен возвращать redirect обратно к виджету, а не отдельную result page.
 
 ```php
 final readonly class Create{Entity}Controller implements RequestHandlerInterface
@@ -73,10 +74,19 @@ final readonly class Create{Entity}Controller implements RequestHandlerInterface
             $error = $exception->getMessage();
         }
 
-        return $this->html->render('pages/{entity}-command/result.html.twig', [
-            'result' => $result,
-            'error' => $error,
-        ], $error === null ? 200 : 502);
+        return $this->responder->respond(
+            request: $request,
+            action: [
+                'title' => 'Create entity',
+                'description' => 'Result of the entity command handler.',
+                'method' => 'POST',
+                'endpoint' => '/{entities}/create',
+            ],
+            product: $result,
+            delete: null,
+            error: $error,
+            status: $error === null ? 200 : 502,
+        );
     }
 }
 ```
@@ -97,6 +107,8 @@ $group->post('/{entities}/create', Create{Entity}Controller::class);
 - Action принимает HTTP-данные.
 - Action вызывает Unifier или Handler.
 - Action рендерит Twig через `HtmlResponder`.
+- Form Action для интерактивного widget возвращает JSON через responder при `Accept: application/json`.
+- Form Action без JS делает redirect обратно к widget-якорю.
 - Action возвращает `ResponseInterface`.
 - Form Action валидирует CSRF и входные данные до Handler.
 - Сборка страницы находится в Unifier.

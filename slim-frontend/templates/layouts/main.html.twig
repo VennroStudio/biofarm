@@ -1,21 +1,25 @@
 <!doctype html>
-<html lang="ru">
+<html lang="{{ site.locale|default('ru') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}Slim Frontend{% endblock %}</title>
-    <meta name="description" content="{% block description %}PHP/Twig frontend with React islands.{% endblock %}">
-    <link rel="stylesheet" href="{{ vite_asset('assets/styles/app.css') }}">
+    <title>{% block title %}{{ site.meta.title|default('Slim Frontend') }}{% endblock %}</title>
+    <meta name="description" content="{% block description %}{{ site.meta.description|default('PHP/Twig frontend with React islands.') }}{% endblock %}">
+    {% block stylesheets %}
+        <link rel="stylesheet" href="{{ vite_asset('assets/styles/app.css') }}">
+    {% endblock %}
 </head>
 <body>
-    {% include 'shared/layout/header.html.twig' %}
+    {% include 'components/layout/header.html.twig' with { site: site } only %}
 
     <main>
         {% block content %}{% endblock %}
     </main>
 
-    {% include 'shared/layout/footer.html.twig' %}
+    {% include 'components/layout/footer.html.twig' with { site: site } only %}
 
-    <script type="module" src="{{ vite_asset('assets/react/mount.tsx') }}"></script>
+    {% block javascripts %}
+        <script type="module" src="{{ vite_asset('assets/react/mount.tsx') }}"></script>
+    {% endblock %}
 </body>
 </html>

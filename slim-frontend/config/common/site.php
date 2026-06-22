@@ -5,6 +5,11 @@ declare(strict_types=1);
 return [
     'config' => [
         'site' => [
+            'locale' => 'ru',
+            'meta'   => [
+                'title'       => 'Slim Frontend',
+                'description' => 'PHP/Twig frontend with React islands.',
+            ],
             'brand' => [
                 'mark'     => 'SF',
                 'title'    => 'Slim Frontend',

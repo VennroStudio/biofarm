@@ -1,14 +1,17 @@
-{% if orders %}
-    <section class="section" id="orders">
-        {% include 'components/ui/section-head.html.twig' with {
-            eyebrow: 'Orders',
-            title: 'Последние заказы из Order API',
-        } only %}
+<section class="section" id="orders">
+    {% include 'components/ui/section-head.html.twig' with {
+        eyebrow: 'Orders',
+        title: 'Последние заказы из Order API',
+    } only %}
 
-        <div class="orders">
-            {% for order in orders %}
-                {% include 'components/order/card.html.twig' with { order: order } only %}
-            {% endfor %}
-        </div>
-    </section>
-{% endif %}
+    <div class="orders">
+        {% for order in orders %}
+            {% include 'components/order/card.html.twig' with { order: order } only %}
+        {% else %}
+            {% include 'components/ui/empty-state.html.twig' with {
+                title: 'Заказы не загрузились',
+                message: 'Секция остается стабильной, даже если Order API вернул пустой список.',
+            } only %}
+        {% endfor %}
+    </div>
+</section>

@@ -1,36 +1,59 @@
-import { useState } from 'react';
+import { useEffect } from 'react';
 
 type Props = {
-  productId: number;
-  productTitle: string;
-  productPrice: number;
+  counterElement: HTMLElement;
 };
 
-export function ProductCounter({ productId, productTitle, productPrice }: Props) {
-  const [quantity, setQuantity] = useState(1);
+const money = new Intl.NumberFormat('en-US', {
+  currency: 'USD',
+  style: 'currency',
+});
 
-  return (
-    <div className="island-counter" data-product-id={productId}>
-      <button
-        type="button"
-        data-variant="light"
-        aria-label={`Decrease ${productTitle}`}
-        onClick={() => setQuantity((value) => Math.max(1, value - 1))}
-      >
-        -
-      </button>
-      <span>{quantity}</span>
-      <button
-        type="button"
-        data-variant="light"
-        aria-label={`Increase ${productTitle}`}
-        onClick={() => setQuantity((value) => value + 1)}
-      >
-        +
-      </button>
-      <button type="button">
-        ${(productPrice * quantity).toFixed(2)}
-      </button>
-    </div>
-  );
+const readPositiveNumber = (value: string | undefined, fallback: number) => {
+  const parsed = Number(value);
+
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+};
+
+export function ProductCounter({ counterElement }: Props) {
+  useEffect(() => {
+    const decrement = counterElement.querySelector<HTMLButtonElement>('[data-counter-decrement]');
+    const increment = counterElement.querySelector<HTMLButtonElement>('[data-counter-increment]');
+    const quantityElement = counterElement.querySelector<HTMLElement>('[data-counter-quantity]');
+    const totalElement = counterElement.querySelector<HTMLElement>('[data-counter-total]');
+
+    if (!decrement || !increment || !quantityElement || !totalElement) {
+      return undefined;
+    }
+
+    const productPrice = readPositiveNumber(counterElement.dataset.productPrice, 0);
+    let quantity = readPositiveNumber(counterElement.dataset.productQuantity, 1);
+
+    const render = () => {
+      quantityElement.textContent = String(quantity);
+      totalElement.textContent = money.format(productPrice * quantity);
+      decrement.disabled = quantity <= 1;
+    };
+
+    const decrease = () => {
+      quantity = Math.max(1, quantity - 1);
+      render();
+    };
+
+    const increase = () => {
+      quantity += 1;
+      render();
+    };
+
+    decrement.addEventListener('click', decrease);
+    increment.addEventListener('click', increase);
+    render();
+
+    return () => {
+      decrement.removeEventListener('click', decrease);
+      increment.removeEventListener('click', increase);
+    };
+  }, [counterElement]);
+
+  return null;
 }

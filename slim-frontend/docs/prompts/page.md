@@ -16,7 +16,10 @@
 Разбей Twig:
 - pages/page/index.html.twig — порядок секций;
 - sections/domain/*.html.twig — крупные секции;
-- components/domain/*.html.twig — переиспользуемые блоки.
+- widgets/domain/*.html.twig — составные переиспользуемые блоки домена;
+- components/domain/*.html.twig — маленькие переиспользуемые блоки домена;
+- components/ui/*.html.twig — общие UI-блоки;
+- components/layout/*.html.twig — глобальная layout-обвязка.
 
 Зарегистрируй route в config/routes/web.php.
 

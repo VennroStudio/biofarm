@@ -11,11 +11,11 @@
         </div>
         <div>
             <dt>Total</dt>
-            <dd>${{ order.totalAmount|number_format(2, '.', ' ') }}</dd>
+            <dd>{{ order.totalAmount|money }}</dd>
         </div>
         <div>
             <dt>Date</dt>
-            <dd>{{ order.orderDate }}</dd>
+            <dd>{{ order.orderDate|short_date }}</dd>
         </div>
     </dl>
 

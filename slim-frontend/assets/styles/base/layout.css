@@ -45,8 +45,23 @@ main {
 }
 
 .muted,
-.empty {
+.empty,
+.empty-state {
     color: var(--muted);
+}
+
+.empty-state {
+    display: grid;
+    grid-column: 1 / -1;
+    gap: 4px;
+    padding: 18px;
+    background: var(--surface);
+    border: 1px dashed var(--line);
+    border-radius: 8px;
+}
+
+.empty-state strong {
+    color: var(--text);
 }
 
 .notice {

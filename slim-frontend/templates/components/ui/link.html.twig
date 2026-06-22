@@ -1,0 +1,7 @@
+<a
+    {% if class is defined and class %}class="{{ class }}"{% endif %}
+    href="{{ href }}"
+    {% if external|default(false) %}target="_blank" rel="noreferrer"{% endif %}
+>
+    {{ label }}
+</a>

@@ -1,17 +1,24 @@
 {% extends 'layouts/main.html.twig' %}
 
-{% block title %}Slim Frontend Template{% endblock %}
+{% block title %}{{ page.meta.title }}{% endblock %}
 
-{% block description %}Тестовая Slim/Twig страница, собранная из внешнего Fake E-commerce API.{% endblock %}
+{% block description %}{{ page.meta.description }}{% endblock %}
 
 {% block content %}
     {% include 'sections/home/hero.html.twig' only %}
     {% include 'sections/system/api-notice.html.twig' with { apiError: page.apiError } only %}
     {% include 'sections/home/metrics.html.twig' with { metrics: page.metrics } only %}
     {% include 'sections/product/featured-product.html.twig' with { product: page.featuredProduct } only %}
-    {% include 'sections/product/category-strip.html.twig' with { categories: page.categories } only %}
-    {% include 'sections/product/product-grid.html.twig' with { products: page.products } only %}
-    {% include 'sections/product/command-demo.html.twig' only %}
+    {% include 'sections/product/category-strip.html.twig' with {
+        categories: page.categories,
+        categoriesTotal: page.categoriesTotal,
+        selectedCategory: page.selectedCategory,
+    } only %}
+    {% include 'sections/product/product-grid.html.twig' with {
+        products: page.products,
+        selectedCategory: page.selectedCategory,
+    } only %}
+    {% include 'widgets/product/command-panel.html.twig' only %}
     {% include 'sections/review/review-list.html.twig' with { reviews: page.reviews } only %}
     {% include 'sections/order/order-list.html.twig' with { orders: page.orders } only %}
     {% include 'sections/system/architecture.html.twig' only %}

@@ -7,7 +7,6 @@ namespace App\Http\Web\Product;
 use App\Components\Api\ApiException;
 use App\Components\Http\Form\FormValidationException;
 use App\Components\Security\CsrfToken;
-use App\Components\Twig\HtmlResponder;
 use App\Modules\Product\Command\DeleteProduct\DeleteProductCommand;
 use App\Modules\Product\Command\DeleteProduct\DeleteProductHandler;
 use Override;
@@ -19,7 +18,7 @@ final readonly class DeleteProductController implements RequestHandlerInterface
 {
     public function __construct(
         private DeleteProductHandler $handler,
-        private HtmlResponder $html,
+        private ProductCommandResponder $responder,
         private CsrfToken $csrf,
     ) {}
 
@@ -44,15 +43,18 @@ final readonly class DeleteProductController implements RequestHandlerInterface
             $status = 502;
         }
 
-        return $this->html->render('pages/product-command/result.html.twig', [
-            'action' => [
-                'title'    => 'Delete product',
-                'method'   => 'DELETE',
-                'endpoint' => '/products/delete',
+        return $this->responder->respond(
+            request: $request,
+            action: [
+                'title'       => 'Delete product',
+                'description' => 'Result of the product delete command handler.',
+                'method'      => 'DELETE',
+                'endpoint'    => '/products/delete',
             ],
-            'product' => null,
-            'delete'  => $result,
-            'error'   => $error,
-        ], $status);
+            product: null,
+            delete: $result,
+            error: $error,
+            status: $status,
+        );
     }
 }
