@@ -13,9 +13,13 @@ return static function (ContainerInterface $container): App {
     $middleware = require __DIR__ . '/../config/middleware.php';
     $middleware($app);
 
-    /** @var callable(App<ContainerInterface>): void $routes */
-    $routes = require __DIR__ . '/../config/routes/v1.php';
-    $routes($app);
+    /** @var callable(App<ContainerInterface>): void $webRoutes */
+    $webRoutes = require __DIR__ . '/../config/routes/web.php';
+    $webRoutes($app);
+
+    /** @var callable(App<ContainerInterface>): void $apiRoutes */
+    $apiRoutes = require __DIR__ . '/../config/routes/v1.php';
+    $apiRoutes($app);
 
     return $app;
 };

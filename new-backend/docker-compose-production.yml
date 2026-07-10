@@ -1,26 +1,31 @@
-name: vs-project
+name: biofarm
 
 services:
   nginx:
-    image: ${REGISTRY}/vs-project-nginx:${IMAGE_TAG}
-    container_name: vs-project-nginx
+    image: ${REGISTRY}/biofarm-nginx:${IMAGE_TAG}
+    container_name: biofarm-nginx
     restart: unless-stopped
     depends_on:
       - php-fpm
     networks:
       - proxy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/healthz >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
 
   php-fpm:
-    image: ${REGISTRY}/vs-project-php-fpm:${IMAGE_TAG}
-    container_name: vs-project-php-fpm
+    image: ${REGISTRY}/biofarm-php-fpm:${IMAGE_TAG}
+    container_name: biofarm-php-fpm
     restart: unless-stopped
     env_file: .env
     networks:
       - proxy
 
   php-cli:
-    image: ${REGISTRY}/vs-project-php-cli:${IMAGE_TAG}
-    container_name: vs-project-php-cli
+    image: ${REGISTRY}/biofarm-php-cli:${IMAGE_TAG}
+    container_name: biofarm-php-cli
     restart: unless-stopped
     env_file: .env
     networks:

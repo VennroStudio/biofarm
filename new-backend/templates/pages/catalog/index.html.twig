@@ -1,0 +1,17 @@
+{% extends 'layouts/main.html.twig' %}
+
+{% block title %}{{ page.meta.title }}{% endblock %}
+
+{% block description %}{{ page.meta.description }}{% endblock %}
+
+{% block content %}
+    {% include 'sections/product/category-strip.html.twig' with {
+        categories: page.categories,
+        categoriesTotal: page.categoriesTotal,
+        selectedCategory: page.selectedCategory,
+    } only %}
+    {% include 'sections/product/product-grid.html.twig' with {
+        products: page.products,
+        selectedCategory: page.selectedCategory,
+    } only %}
+{% endblock %}

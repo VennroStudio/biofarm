@@ -2,15 +2,19 @@
 
 declare(strict_types=1);
 
+use App\Components\Asset\ViteManifest;
 use App\Components\Frontend\FrontendUrlTwigExtension;
+use App\Components\Security\CsrfToken;
 use App\Components\Translator\TranslatorTwigExtension;
+use App\Components\Twig\FormattingExtension;
 use Psr\Container\ContainerInterface;
 use Twig\Environment;
 use Twig\Extension\DebugExtension;
 use Twig\Extension\ExtensionInterface;
 use Twig\Loader\FilesystemLoader;
+use Twig\TwigFunction;
 
-use function App\Components\env;
+use function App\Components\env_bool;
 
 return [
     Environment::class => static function (ContainerInterface $container): Environment {
@@ -19,7 +23,9 @@ return [
          *     template_dirs: array<string, string>,
          *     cache_dir: string,
          *     extensions: string[],
-         * }} $fullConfig
+         * },
+         * site: array<string, mixed>
+         * } $fullConfig
          */
         $fullConfig = $container->get('config');
         $config = $fullConfig['twig'];
@@ -47,12 +53,22 @@ return [
             $environment->addExtension($extension);
         }
 
+        $environment->addGlobal('site', $fullConfig['site']);
+
+        /** @var ViteManifest $assets */
+        $assets = $container->get(ViteManifest::class);
+        $environment->addFunction(new TwigFunction('vite_asset', $assets->asset(...)));
+
+        /** @var CsrfToken $csrf */
+        $csrf = $container->get(CsrfToken::class);
+        $environment->addFunction(new TwigFunction('csrf_token', $csrf->generate(...)));
+
         return $environment;
     },
 
     'config' => [
         'twig' => [
-            'debug'         => (bool)env('APP_DEBUG'),
+            'debug'         => env_bool('APP_DEBUG', false),
             'template_dirs' => [
                 FilesystemLoader::MAIN_NAMESPACE => __DIR__ . '/../../templates',
             ],
@@ -60,6 +76,7 @@ return [
             'extensions' => [
                 FrontendUrlTwigExtension::class,
                 TranslatorTwigExtension::class,
+                FormattingExtension::class,
             ],
         ],
     ],

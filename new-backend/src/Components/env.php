@@ -12,7 +12,7 @@ function env(string $name, ?string $default = null): string
     static $loaded = false;
 
     if (!$loaded) {
-        Dotenv::createImmutable(__DIR__ . '/../../')->load();
+        Dotenv::createImmutable(__DIR__ . '/../../')->safeLoad();
         $loaded = true;
     }
 
@@ -35,4 +35,39 @@ function env(string $name, ?string $default = null): string
     }
 
     throw new RuntimeException("Undefined env '{$name}'.");
+}
+
+function env_bool(string $name, ?bool $default = null): bool
+{
+    $value = env($name, $default === null ? null : ($default ? '1' : '0'));
+    $result = filter_var($value, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE);
+
+    if ($result === null) {
+        throw new RuntimeException("Env '{$name}' must be boolean.");
+    }
+
+    return $result;
+}
+
+function env_int(string $name, ?int $default = null): int
+{
+    $value = env($name, $default === null ? null : (string)$default);
+    $result = filter_var($value, FILTER_VALIDATE_INT);
+
+    if ($result === false) {
+        throw new RuntimeException("Env '{$name}' must be integer.");
+    }
+
+    return $result;
+}
+
+function env_float(string $name, ?float $default = null): float
+{
+    $value = env($name, $default === null ? null : (string)$default);
+
+    if (!is_numeric($value)) {
+        throw new RuntimeException("Env '{$name}' must be float.");
+    }
+
+    return (float)$value;
 }

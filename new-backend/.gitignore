@@ -5,8 +5,11 @@
 
 # Composer
 /vendor/
-composer.lock
 auth.json
+
+# Node / Vite
+node_modules/
+public/build/
 
 # IDE
 .idea/

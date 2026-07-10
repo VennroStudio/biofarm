@@ -1,0 +1,41 @@
+{% extends 'layouts/main.html.twig' %}
+
+{% block title %}{{ page.meta.title }}{% endblock %}
+
+{% block description %}{{ page.meta.description }}{% endblock %}
+
+{% block content %}
+    <section class="section" id="blog">
+        {% include 'components/ui/section-head.html.twig' with {
+            eyebrow: 'Блог',
+            title: 'Статьи БИОФАРМ',
+        } only %}
+
+        <div class="product-grid">
+            {% for post in page.posts %}
+                <article class="product-card">
+                    <div class="product-card__media">
+                        <img src="{{ post.image }}" alt="{{ post.title }}" loading="lazy" decoding="async">
+                    </div>
+                    <div class="product-card__body">
+                        <div>
+                            <span class="muted">{{ post.date }} · {{ post.readTime }} мин.</span>
+                            <h3>{{ post.title }}</h3>
+                            <p>{{ post.excerpt }}</p>
+                        </div>
+                        {% include 'components/ui/link.html.twig' with {
+                            class: 'button button--ghost',
+                            href: '/blog/' ~ post.slug,
+                            label: 'Читать',
+                        } only %}
+                    </div>
+                </article>
+            {% else %}
+                {% include 'components/ui/empty-state.html.twig' with {
+                    title: 'Статьи пока не добавлены',
+                    message: 'Блог наполнится после миграции базы данных.',
+                } only %}
+            {% endfor %}
+        </div>
+    </section>
+{% endblock %}

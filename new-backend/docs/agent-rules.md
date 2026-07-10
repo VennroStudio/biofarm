@@ -1,6 +1,6 @@
 # Agent Rules
 
-Единый справочник по структуре и паттернам проекта **vs-project**.
+Единый справочник по структуре и паттернам проекта **biofarm**.
 
 > **⚠️ Важно:** Примеры в правилах — ориентир, не шаблон для слепого копирования. У каждой сущности свои поля, связи, бизнес-правила и зависимости.
 
@@ -24,6 +24,7 @@
 14. [Components](rules/components.md)
 15. [Исключения и HTTP-коды](rules/exceptions.md)
 16. [Frontend API Docs](rules/frontend-api-docs.md)
+17. [Frontend UI / Twig / React islands](frontend-ui/agent-rules.md)
 
 ---
 

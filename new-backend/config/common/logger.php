@@ -8,7 +8,7 @@ use Monolog\Logger;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
-use function App\Components\env;
+use function App\Components\env_bool;
 
 return [
     LoggerInterface::class => static function (ContainerInterface $container): LoggerInterface {
@@ -32,7 +32,7 @@ return [
 
     'config' => [
         'logger' => [
-            'debug'  => (bool)env('APP_DEBUG'),
+            'debug'  => env_bool('APP_DEBUG', false),
             'file'   => null,
             'stderr' => true,
         ],

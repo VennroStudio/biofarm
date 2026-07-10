@@ -9,7 +9,7 @@ use Psr\Log\LoggerInterface;
 use Slim\Interfaces\CallableResolverInterface;
 use Slim\Middleware\ErrorMiddleware;
 
-use function App\Components\env;
+use function App\Components\env_bool;
 
 return [
     ErrorMiddleware::class => static function (ContainerInterface $container): ErrorMiddleware {
@@ -43,7 +43,7 @@ return [
 
     'config' => [
         'errors' => [
-            'display_details' => (bool)env('APP_DEBUG'),
+            'display_details' => env_bool('APP_DEBUG', false),
         ],
     ],
 ];

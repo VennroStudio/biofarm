@@ -1,8 +1,0 @@
-{% if apiError %}
-    {% include 'components/ui/notice.html.twig' with {
-        element: 'section',
-        title: 'Fake API временно недоступен.',
-        message: apiError,
-        role: 'alert',
-    } only %}
-{% endif %}

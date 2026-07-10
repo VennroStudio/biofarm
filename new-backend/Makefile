@@ -3,9 +3,9 @@ export
 
 VERSION := $(IMAGE_TAG).$(BUILD_NUMBER)
 
-init: docker-clear docker-build docker-up composer-init
+init: docker-clear docker-build docker-up composer-init frontend-install frontend-build
 restart: docker-down docker-up
-lint: php-linter
+lint: php-linter frontend-check
 fix: php-linter-fix
 
 docker-up:
@@ -40,14 +40,14 @@ server-logout:
 	ssh -t $(HOST) -p $(PORT) 'docker logout'
 
 build:
-	docker --log-level=debug build --platform linux/amd64 --pull --file=./docker/production/nginx/Dockerfile --tag=${REGISTRY}/vs-project-nginx:${VERSION} .
-	docker --log-level=debug build --platform linux/amd64 --pull --file=./docker/production/php-fpm/Dockerfile --tag=${REGISTRY}/vs-project-php-fpm:${VERSION} .
-	docker --log-level=debug build --platform linux/amd64 --pull --file=./docker/production/php-cli/Dockerfile --tag=${REGISTRY}/vs-project-php-cli:${VERSION} .
+	docker --log-level=debug build --platform linux/amd64 --pull --file=./docker/production/nginx/Dockerfile --tag=${REGISTRY}/biofarm-nginx:${VERSION} .
+	docker --log-level=debug build --platform linux/amd64 --pull --file=./docker/production/php-fpm/Dockerfile --tag=${REGISTRY}/biofarm-php-fpm:${VERSION} .
+	docker --log-level=debug build --platform linux/amd64 --pull --file=./docker/production/php-cli/Dockerfile --tag=${REGISTRY}/biofarm-php-cli:${VERSION} .
 
 push:
-	docker push ${REGISTRY}/vs-project-nginx:${VERSION}
-	docker push ${REGISTRY}/vs-project-php-fpm:${VERSION}
-	docker push ${REGISTRY}/vs-project-php-cli:${VERSION}
+	docker push ${REGISTRY}/biofarm-nginx:${VERSION}
+	docker push ${REGISTRY}/biofarm-php-fpm:${VERSION}
+	docker push ${REGISTRY}/biofarm-php-cli:${VERSION}
 
 deploy:
 	ssh $(HOST) -p $(PORT) 'rm -rf $(PROJECT_NAME)_$(BUILD_NUMBER)'
@@ -99,6 +99,18 @@ composer-add:
 composer-remove:
 	docker compose run --rm php-cli composer remove $(PACK)
 
+frontend-install:
+	docker run --rm -v "$$PWD":/app -w /app node:20-alpine npm ci
+
+frontend-dev:
+	docker run --rm -it -v "$$PWD":/app -w /app -p 5173:5173 node:20-alpine sh -lc "npm ci && npm run dev -- --host 0.0.0.0"
+
+frontend-check:
+	docker run --rm -v "$$PWD":/app -w /app node:20-alpine sh -lc "npm ci >/dev/null && npm run check"
+
+frontend-build:
+	docker run --rm -v "$$PWD":/app -w /app node:20-alpine sh -lc "npm ci >/dev/null && npm run build"
+
 test-hello:
 	docker compose run --rm php-cli composer app hello
 
@@ -107,7 +119,10 @@ help:
 	@echo "-DEVELOPMENT:"
 	@echo "  make init              		- Инициализация проекта dev-разработки"
 	@echo "  make restart           		- Рестарт dev-контейнеров"
-	@echo "  make lint           			- Проверка кодовой базы на ошибки"
+	@echo "  make lint           			- Проверка PHP и frontend-кода"
+	@echo "  make frontend-dev      		- Vite dev server"
+	@echo "  make frontend-check    		- TypeScript + ESLint + Vite build"
+	@echo "  make frontend-build    		- Собрать assets в public/build"
 	@echo ""
 	@echo "-MIGRATIONS (APP_ENV=dev):"
 	@echo "  make migrations-diff     		- Сгенерировать миграцию по отличию сущностей от БД"
@@ -137,4 +152,5 @@ help:
 
 .PHONY: help init restart docker-up docker-down docker-clear docker-build \
         ansible-build ansible-setup ansible-clean \
-        docker-login server-login build push deploy rollback clean-v list-v
+        docker-login server-login build push deploy rollback clean-v list-v \
+        frontend-install frontend-dev frontend-check frontend-build

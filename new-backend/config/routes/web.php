@@ -1,0 +1,38 @@
+<?php
+
+declare(strict_types=1);
+
+use App\Components\Router\StaticRouteGroup as Group;
+use App\Http\Web\Blog\BlogPageController;
+use App\Http\Web\Blog\BlogPostPageController;
+use App\Http\Web\Catalog\CatalogPageController;
+use App\Http\Web\Feedback\FeedbackController;
+use App\Http\Web\Home\HomePageController;
+use App\Http\Web\Product\CreateProductController;
+use App\Http\Web\Product\DeleteProductController;
+use App\Http\Web\Product\ProductPageController;
+use App\Http\Web\Product\UpdateProductController;
+use App\Http\Web\System\HealthController;
+use App\Http\Web\System\ReadinessController;
+use Psr\Container\ContainerInterface;
+use Slim\App;
+use Slim\Routing\RouteCollectorProxy;
+
+/** @param App<ContainerInterface> $app */
+return static function (App $app): void {
+    $app->group('', new Group(static function (RouteCollectorProxy $group): void {
+        $group->get('/', HomePageController::class);
+        $group->get('/catalog', CatalogPageController::class);
+        $group->get('/catalog/{slug}', ProductPageController::class);
+        $group->get('/blog', BlogPageController::class);
+        $group->get('/blog/{slug}', BlogPostPageController::class);
+
+        $group->post('/feedback', FeedbackController::class);
+        $group->post('/products/create', CreateProductController::class);
+        $group->post('/products/update', UpdateProductController::class);
+        $group->post('/products/delete', DeleteProductController::class);
+
+        $group->get('/healthz', HealthController::class);
+        $group->get('/readyz', ReadinessController::class);
+    }));
+};

@@ -1,0 +1,19 @@
+{% extends 'layouts/main.html.twig' %}
+
+{% block title %}{{ page.meta.title }}{% endblock %}
+
+{% block description %}{{ page.meta.description }}{% endblock %}
+
+{% block content %}
+    {% if page.product %}
+        {% include 'sections/product/featured-product.html.twig' with { product: page.product } only %}
+        {% include 'sections/review/review-list.html.twig' with { reviews: page.reviews } only %}
+    {% else %}
+        <section class="section">
+            {% include 'components/ui/empty-state.html.twig' with {
+                title: 'Товар не найден',
+                message: 'Карточки товаров появятся после миграции базы данных.',
+            } only %}
+        </section>
+    {% endif %}
+{% endblock %}

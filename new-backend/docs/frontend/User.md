@@ -385,7 +385,7 @@ Query-параметры:
     "first_name": "Иван",
     "last_name": "Иванов",
     "email": "user@example.com",
-    "avatar": "https://storage.vennro.ru/vs-project/avatars/1/abc123.jpg",
+    "avatar": "https://storage.vennro.ru/biofarm/avatars/1/abc123.jpg",
     "created_at": "2024-01-01 12:00:00",
     "updated_at": null,
     "deleted_at": null
@@ -558,7 +558,7 @@ Query-параметры:
 ```json
 {
   "data": {
-    "avatar": "https://storage.vennro.ru/vs-project/avatars/1/abc123def456.jpg"
+    "avatar": "https://storage.vennro.ru/biofarm/avatars/1/abc123def456.jpg"
   }
 }
 ```

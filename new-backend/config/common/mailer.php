@@ -12,6 +12,7 @@ use Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport;
 use Symfony\Component\Mime\Address;
 
 use function App\Components\env;
+use function App\Components\env_int;
 
 return [
     MailerInterface::class => static function (ContainerInterface $container): MailerInterface {
@@ -53,7 +54,7 @@ return [
     'config' => [
         'mailer' => [
             'host'     => env('MAILER_HOST'),
-            'port'     => (int)env('MAILER_PORT'),
+            'port'     => env_int('MAILER_PORT'),
             'user'     => env('MAILER_USERNAME'),
             'password' => env('MAILER_PASSWORD'),
             'from'     => [

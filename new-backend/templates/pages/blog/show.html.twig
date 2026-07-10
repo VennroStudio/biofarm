@@ -1,0 +1,23 @@
+{% extends 'layouts/main.html.twig' %}
+
+{% block title %}{{ page.meta.title }}{% endblock %}
+
+{% block description %}{{ page.meta.description }}{% endblock %}
+
+{% block content %}
+    {% if page.post %}
+        <article class="section">
+            <p class="eyebrow">{{ page.post.date }} · {{ page.post.readTime }} мин.</p>
+            <h1>{{ page.post.title }}</h1>
+            <p>{{ page.post.excerpt }}</p>
+            <div>{{ page.post.content|nl2br }}</div>
+        </article>
+    {% else %}
+        <section class="section">
+            {% include 'components/ui/empty-state.html.twig' with {
+                title: 'Статья не найдена',
+                message: 'Материалы блога появятся после миграции базы данных.',
+            } only %}
+        </section>
+    {% endif %}
+{% endblock %}

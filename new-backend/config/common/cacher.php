@@ -7,6 +7,7 @@ use App\Components\Cacher\RedisCacher;
 use Psr\Container\ContainerInterface;
 
 use function App\Components\env;
+use function App\Components\env_int;
 
 return [
     Cacher::class => static function (ContainerInterface $container): RedisCacher {
@@ -33,7 +34,7 @@ return [
     'config' => [
         'cacher-redis' => [
             'host'     => env('REDIS_HOST'),
-            'port'     => (int)env('REDIS_PORT'),
+            'port'     => env_int('REDIS_PORT'),
             'password' => env('REDIS_PASSWORD'),
         ],
     ],

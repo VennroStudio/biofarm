@@ -1,0 +1,17 @@
+<section class="section" id="reviews">
+    {% include 'components/ui/section-head.html.twig' with {
+        eyebrow: 'Отзывы',
+        title: 'Отзывы покупателей',
+    } only %}
+
+    <div class="reviews">
+        {% for review in reviews %}
+            {% include 'components/review/card.html.twig' with { review: review } only %}
+        {% else %}
+            {% include 'components/ui/empty-state.html.twig' with {
+                title: 'Отзывы пока не добавлены',
+                message: 'Отзывы появятся после миграции базы данных.',
+            } only %}
+        {% endfor %}
+    </div>
+</section>

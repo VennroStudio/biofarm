@@ -1,0 +1,12 @@
+<section class="section" id="product-commands">
+    {% include 'components/ui/section-head.html.twig' with {
+        eyebrow: 'Управление товарами',
+        title: 'Формы для сценариев после миграции БД',
+    } only %}
+
+    <div class="command-forms">
+        {% include 'components/product/forms/create-form.html.twig' only %}
+        {% include 'components/product/forms/update-form.html.twig' only %}
+        {% include 'components/product/forms/delete-form.html.twig' only %}
+    </div>
+</section>

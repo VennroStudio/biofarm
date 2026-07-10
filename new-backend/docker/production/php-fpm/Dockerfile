@@ -17,8 +17,22 @@ WORKDIR /app
 
 COPY ./composer.json ./composer.lock ./
 
-RUN composer install --no-dev --prefer-dist --no-progress --no-suggest --optimize-autoloader \
+RUN composer install --no-dev --prefer-dist --no-progress --optimize-autoloader \
     && rm -rf /root/.composer/cache
+
+FROM node:20-alpine AS assets
+
+WORKDIR /app
+
+COPY ./package.json ./package-lock.json ./
+
+RUN npm ci
+
+COPY ./assets ./assets
+COPY ./templates ./templates
+COPY ./tsconfig.json ./vite.config.ts ./tailwind.config.ts ./postcss.config.js ./
+
+RUN npm run build
 ##### FPM #####
 
 FROM php:8.4-fpm-alpine
@@ -42,9 +56,15 @@ COPY ./docker/production/php/conf.d /usr/local/etc/php/conf.d
 
 WORKDIR /app
 
-COPY --from=builder /app ./
+COPY --from=builder /app/composer.json /app/composer.lock ./
+COPY --from=builder /app/vendor ./vendor
 
-COPY . /app
+COPY ./bin ./bin
+COPY ./config ./config
+COPY ./public ./public
+COPY ./src ./src
+COPY ./templates ./templates
+COPY --from=assets /app/public/build ./public/build
 
 RUN mkdir -p var/cache var/log \
     && chown -R www-data:www-data var
