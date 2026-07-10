@@ -1,0 +1,157 @@
+<div class="flex gap-4" data-product-gallery>
+    {% if product.images|length > 1 %}
+        <div class="flex h-full w-20 flex-shrink-0 flex-col gap-2">
+            <button
+                class="inline-flex h-8 w-full items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                type="button"
+                aria-label="Предыдущее фото"
+                data-product-gallery-up
+            >
+                <svg class="h-4 w-4" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m18 15-6-6-6 6"></path>
+                </svg>
+            </button>
+
+            <div class="flex min-h-0 flex-1 flex-col justify-start gap-2">
+                {% for image in product.images|slice(0, 4) %}
+                    <button
+                        class="{{ loop.first ? 'border-primary ring-2 ring-primary/20' : 'border-transparent hover:border-muted-foreground/30' }} min-h-0 w-full flex-1 flex-shrink-0 overflow-hidden rounded-lg border-2 transition-all duration-200"
+                        type="button"
+                        aria-label="Показать фото {{ loop.index }}"
+                        data-product-gallery-thumb
+                        data-gallery-index="{{ loop.index0 }}"
+                    >
+                        <img
+                            src="{{ image }}"
+                            alt="{{ product.title }} - фото {{ loop.index }}"
+                            class="h-full w-full object-cover"
+                            loading="{{ loop.first ? 'eager' : 'lazy' }}"
+                            decoding="async"
+                        >
+                    </button>
+                {% endfor %}
+            </div>
+
+            <button
+                class="inline-flex h-8 w-full items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                type="button"
+                aria-label="Следующее фото"
+                data-product-gallery-down
+            >
+                <svg class="h-4 w-4" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m6 9 6 6 6-6"></path>
+                </svg>
+            </button>
+        </div>
+    {% endif %}
+
+    <div class="flex-1">
+        <button
+            class="group relative aspect-square w-full cursor-zoom-in overflow-hidden rounded-2xl bg-muted text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            type="button"
+            aria-label="Открыть фото товара"
+            data-product-gallery-open
+        >
+            <img
+                class="h-full w-full object-contain"
+                src="{{ product.images[0] }}"
+                alt="{{ product.title }}"
+                loading="eager"
+                fetchpriority="high"
+                decoding="async"
+                data-product-gallery-main
+            >
+            {% if product.badge %}
+                <span class="absolute left-4 top-4 rounded-full bg-accent px-4 py-2 text-base font-medium text-accent-foreground">
+                    {{ product.badge }}
+                </span>
+            {% endif %}
+            <span class="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/10">
+                <span class="rounded-full bg-white/90 p-3 opacity-0 transition-opacity group-hover:opacity-100">
+                    <svg class="h-6 w-6 text-foreground" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.35-4.35"></path>
+                        <path d="M11 8v6"></path>
+                        <path d="M8 11h6"></path>
+                    </svg>
+                </span>
+            </span>
+        </button>
+    </div>
+
+    <div
+        class="fixed inset-0 z-50 hidden items-center justify-center bg-black/95"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Галерея товара"
+        aria-hidden="true"
+        tabindex="-1"
+        data-product-gallery-lightbox
+    >
+        <button
+            class="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium text-white ring-offset-background transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+            type="button"
+            aria-label="Закрыть галерею"
+            data-product-gallery-close
+        >
+            <svg class="h-6 w-6" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 6 6 18"></path>
+                <path d="m6 6 12 12"></path>
+            </svg>
+        </button>
+
+        {% if product.images|length > 1 %}
+            <button
+                class="absolute left-4 top-1/2 inline-flex h-12 w-12 -translate-y-1/2 items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium text-white ring-offset-background transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                type="button"
+                aria-label="Предыдущее фото"
+                data-product-gallery-prev
+            >
+                <svg class="h-8 w-8" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m15 18-6-6 6-6"></path>
+                </svg>
+            </button>
+            <button
+                class="absolute right-4 top-1/2 inline-flex h-12 w-12 -translate-y-1/2 items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium text-white ring-offset-background transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                type="button"
+                aria-label="Следующее фото"
+                data-product-gallery-next
+            >
+                <svg class="h-8 w-8" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m9 18 6-6-6-6"></path>
+                </svg>
+            </button>
+        {% endif %}
+
+        <img
+            src="{{ product.images[0] }}"
+            alt="{{ product.title }}"
+            class="max-h-[90vh] max-w-[90vw] object-contain"
+            data-product-gallery-lightbox-image
+        >
+
+        {% if product.images|length > 1 %}
+            <div class="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
+                {% for image in product.images %}
+                    <button
+                        class="{{ loop.first ? 'border-white opacity-100' : 'border-transparent opacity-60 hover:opacity-100' }} h-16 w-16 overflow-hidden rounded-lg border-2 transition-all"
+                        type="button"
+                        aria-label="Показать фото {{ loop.index }}"
+                        data-product-gallery-lightbox-thumb
+                        data-gallery-index="{{ loop.index0 }}"
+                    >
+                        <img src="{{ image }}" alt="" class="h-full w-full object-cover" loading="lazy" decoding="async">
+                    </button>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    <div
+        data-react-island="product-gallery"
+        data-root-selector="[data-product-gallery]"
+        data-images="{{ product.images|json_encode|e('html_attr') }}"
+        data-product-name="{{ product.title }}"
+        hidden
+    ></div>
+</div>

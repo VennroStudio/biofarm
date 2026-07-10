@@ -1,0 +1,17 @@
+{% if products is not empty %}
+    <section class="bg-muted/30 py-16">
+        <div class="container mx-auto px-4">
+            <h2 class="mb-8 font-display text-2xl font-bold text-foreground">
+                Похожие товары
+            </h2>
+            <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {% for product in products %}
+                    {% include 'components/product/card.html.twig' with {
+                        product: product,
+                        revealDelay: loop.index0 * 100,
+                    } only %}
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+{% endif %}

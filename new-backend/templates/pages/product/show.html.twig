@@ -6,9 +6,11 @@
 
 {% block content %}
     {% if page.product %}
-        {% include 'sections/product/featured-product.html.twig' with {
+        {% include 'sections/product/detail.html.twig' with {
             product: page.product,
-            relatedProducts: page.relatedProducts,
+        } only %}
+        {% include 'sections/product/related.html.twig' with {
+            products: page.relatedProducts,
         } only %}
     {% else %}
         <div class="container mx-auto px-4 py-32 text-center">

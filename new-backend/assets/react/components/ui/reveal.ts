@@ -42,7 +42,7 @@ const prepare = (element: RevealElement) => {
   element.style.willChange = 'opacity, transform';
 };
 
-export function mountHomeReveals() {
+export function mountRevealEffects() {
   const elements = Array.from(document.querySelectorAll<RevealElement>('[data-reveal]'));
 
   if (elements.length === 0) {
