@@ -67,7 +67,7 @@ templates/
 ## Section
 
 ```twig
-<section class="section">
+<section class="py-20 lg:py-32">
     {% include 'components/ui/section-head.html.twig' with {
         eyebrow: 'Section',
         title: 'Section title',
@@ -161,7 +161,7 @@ const targetElement = rootElement?.querySelector<HTMLElement>(
 Widget — самостоятельный составной блок. Он может включать несколько components и иметь корневой `<section>`, если рендерится как блок страницы.
 
 ```twig
-<section class="section" id="{domain}-{widget}">
+<section class="py-20 lg:py-32" id="{domain}-{widget}">
     {% include 'components/ui/section-head.html.twig' with {
         eyebrow: 'Domain',
         title: 'Widget title',
@@ -178,31 +178,20 @@ Widget содержит только Twig composition. Данные приход
 
 ## Styles
 
+Twig-блоки стилизуются utility-классами Tailwind прямо в шаблонах.
+Не создавай зеркальные CSS-файлы для новых `components`, `sections` или `widgets`.
+
 CSS source:
 
 ```
 assets/styles/
 ├── app.css
-├── base/
-├── components/
-│   ├── layout/
-│   ├── ui/
-│   └── {domain}/
-├── sections/
-│   └── {domain}/
-└── widgets/
-    └── {domain}/
+└── tailwind.css
 ```
 
-CSS повторяет ownership Twig:
-
-- `templates/components/ui/modal.html.twig` → `assets/styles/components/ui/modal.css`
-- `templates/components/product/card.html.twig` → `assets/styles/components/product/card.css`
-- `templates/sections/product/product-grid.html.twig` → `assets/styles/sections/product/product-grid.css`
-- `templates/widgets/product/command-panel.html.twig` → `assets/styles/widgets/product/command-panel.css`
-
-`app.css` остается точкой сборки `@import`.
-Адаптив конкретного блока хранится в CSS-файле этого блока.
+`app.css` остается точкой входа и импортирует только Tailwind entry.
+`tailwind.css` хранит Tailwind directives, глобальные design tokens и общие utility из старого frontend.
+Адаптив конкретного блока описывается Tailwind-классами в Twig.
 
 Twig подключает собранный файл:
 
@@ -305,8 +294,8 @@ Twig подключает собранный файл:
 - React island использует root/selector contract.
 - Модалки и overlay-shells держать в `components/ui`, а доменный widget заполняет их содержимое через `embed`/blocks/data-targets.
 - List-section сама отвечает за empty state через `components/ui/empty-state.html.twig`.
-- Для каждого нового Twig component/section/widget создавать отдельный CSS-файл в зеркальной папке `assets/styles`.
-- Селекторы CSS должны принадлежать своему блоку: `product-card__category`, а не общий `pill`; `featured-product__facts`, а не общий `facts`.
+- Для новых Twig component/section/widget не создавать отдельный CSS-файл; использовать Tailwind utility-классы в Twig.
+- Новый кастомный CSS допускается только для глобальных design tokens или поведения, которое нельзя выразить Tailwind-классами без ухудшения поддержки.
 - Статические assets подключать через Vite manifest helper `vite_asset()`, не хардкодить `/build/*.js`.
 - Картинки в карточках, списках и модалках используют `loading="lazy"` и `decoding="async"`.
 - Картинка первого экрана использует `loading="eager"`, `fetchpriority="high"` и `decoding="async"`.

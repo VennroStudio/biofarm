@@ -1,26 +1,91 @@
-<article class="product-card">
-    <div class="product-card__media">
-        <img
-            src="{{ product.image }}"
-            alt="{{ product.title }}"
-            loading="lazy"
-            decoding="async"
-        >
-        <span class="product-card__category">{{ product.category }}</span>
-    </div>
+{% set mode = viewMode|default('grid') %}
+{% set revealDelay = revealDelay|default(0) %}
 
-    <div class="product-card__body">
-        <div>
-            <span class="muted">{{ product.brand }}</span>
-            <h3>{{ product.title }}</h3>
-            <p>{{ product.description }}</p>
+{% if mode == 'list' %}
+    <article class="group overflow-hidden rounded-2xl bg-card shadow-premium transition-all duration-300 hover:shadow-premium-lg" data-reveal data-reveal-duration="500" data-reveal-delay="{{ revealDelay }}">
+        <a href="/product/{{ product.slug }}" class="flex gap-4 p-4 max-sm:flex-col">
+            <div class="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-lg bg-white max-sm:h-auto max-sm:w-full max-sm:aspect-square">
+                <img
+                    class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    src="{{ product.image }}"
+                    alt="{{ product.title }}"
+                    loading="lazy"
+                    decoding="async"
+                >
+                {% if product.badge %}
+                    <span class="absolute left-1 top-1 rounded-full bg-accent px-1.5 py-0.5 text-xs font-bold text-accent-foreground">
+                        {{ product.badge }}
+                    </span>
+                {% endif %}
+            </div>
+
+            <div class="min-w-0 flex-1">
+                <div class="mb-1 flex items-start justify-between">
+                    <h3 class="line-clamp-1 text-lg font-bold text-foreground transition-colors group-hover:text-primary">
+                        {{ product.title }}
+                    </h3>
+                    <span class="ml-2 flex-shrink-0 text-sm text-muted-foreground">{{ product.weight }}</span>
+                </div>
+
+                {% if product.shortDescription %}
+                    <p class="mb-2 line-clamp-1 text-sm text-muted-foreground">{{ product.shortDescription }}</p>
+                {% endif %}
+
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl font-bold text-primary">{{ product.price|number_format(0, '.', ' ') }} ₽</span>
+                        {% if product.oldPrice %}
+                            <span class="text-sm text-muted-foreground line-through">{{ product.oldPrice|number_format(0, '.', ' ') }} ₽</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </a>
+    </article>
+{% else %}
+    <article class="group overflow-hidden rounded-2xl bg-card shadow-premium transition-all duration-300 hover:shadow-premium-lg" data-reveal data-reveal-duration="500" data-reveal-delay="{{ revealDelay }}">
+        <a href="/product/{{ product.slug }}">
+            <div class="relative aspect-square overflow-hidden bg-white">
+                <img
+                    class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    src="{{ product.image }}"
+                    alt="{{ product.title }}"
+                    loading="lazy"
+                    decoding="async"
+                >
+                {% if product.badge %}
+                    <span class="absolute left-4 top-4 rounded-full bg-accent px-3 py-1 text-xs font-bold text-accent-foreground">
+                        {{ product.badge }}
+                    </span>
+                {% endif %}
+                <div class="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors duration-300 group-hover:bg-black/20">
+                    <span class="inline-flex min-h-9 items-center justify-center gap-2 rounded-lg bg-secondary px-3 text-sm font-bold text-secondary-foreground opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                        Подробнее
+                    </span>
+                </div>
+            </div>
+        </a>
+
+        <div class="p-6">
+            <div class="mb-2 flex items-start justify-between gap-3">
+                <a href="/product/{{ product.slug }}">
+                    <h3 class="text-lg font-bold leading-snug text-foreground transition-colors group-hover:text-primary">
+                        {{ product.title }}
+                    </h3>
+                </a>
+                <span class="max-w-24 text-right text-sm text-muted-foreground">{{ product.weight }}</span>
+            </div>
+
+            {% if product.shortDescription %}
+                <p class="mb-4 line-clamp-2 min-h-[42px] text-sm leading-6 text-muted-foreground">{{ product.shortDescription }}</p>
+            {% endif %}
+
+            <div class="flex items-center gap-2">
+                <span class="text-2xl font-bold text-primary">{{ product.price|number_format(0, '.', ' ') }} ₽</span>
+                {% if product.oldPrice %}
+                    <span class="text-muted-foreground line-through">{{ product.oldPrice|number_format(0, '.', ' ') }} ₽</span>
+                {% endif %}
+            </div>
         </div>
-
-        <div class="product-card__meta">
-            <strong>{{ product.price|money }}</strong>
-            <span>{{ product.ratingRate|rating }} · {{ product.ratingCount }} reviews</span>
-        </div>
-
-        {% include 'components/product/counter-island.html.twig' with { product: product } only %}
-    </div>
-</article>
+    </article>
+{% endif %}

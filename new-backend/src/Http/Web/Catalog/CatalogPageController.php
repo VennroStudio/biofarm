@@ -21,20 +21,46 @@ final readonly class CatalogPageController implements RequestHandlerInterface
     #[Override]
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
+        $query = $request->getQueryParams();
+
         return $this->html->render('pages/catalog/index.html.twig', [
-            'page' => $this->catalogPage->unify($this->selectedCategory($request)),
+            'page' => $this->catalogPage->unify(
+                selectedCategory: $this->queryString($query, 'category'),
+                searchQuery: $this->queryString($query, 'q'),
+                sortBy: $this->queryString($query, 'sort'),
+                viewMode: $this->queryString($query, 'view'),
+                page: $this->queryInt($query, 'page'),
+            ),
         ]);
     }
 
-    private function selectedCategory(ServerRequestInterface $request): ?string
+    /**
+     * @param array<string, mixed> $query
+     */
+    private function queryString(array $query, string $key): ?string
     {
-        $value = $request->getQueryParams()['category'] ?? null;
+        $value = $query[$key] ?? null;
         if (!\is_string($value)) {
             return null;
         }
 
-        $category = trim($value);
+        $normalized = trim($value);
 
-        return $category === '' ? null : $category;
+        return $normalized === '' ? null : $normalized;
+    }
+
+    /**
+     * @param array<string, mixed> $query
+     */
+    private function queryInt(array $query, string $key): ?int
+    {
+        $value = $query[$key] ?? null;
+        if (!\is_scalar($value)) {
+            return null;
+        }
+
+        $number = (int)$value;
+
+        return $number > 0 ? $number : null;
     }
 }

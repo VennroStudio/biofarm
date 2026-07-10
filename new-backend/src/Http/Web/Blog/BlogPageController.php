@@ -21,8 +21,14 @@ final readonly class BlogPageController implements RequestHandlerInterface
     #[Override]
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
+        $queryParams = $request->getQueryParams();
+
         return $this->html->render('pages/blog/index.html.twig', [
-            'page' => $this->blogPage->unify(),
+            'page' => $this->blogPage->unify(
+                isset($queryParams['category']) ? (string)$queryParams['category'] : null,
+                isset($queryParams['q']) ? (string)$queryParams['q'] : null,
+                isset($queryParams['page']) ? (int)$queryParams['page'] : 1,
+            ),
         ]);
     }
 }

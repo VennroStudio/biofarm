@@ -10,7 +10,7 @@ function HomeVideo({ modalElement, rootElement }: Props) {
   useEffect(() => {
     const openButton = rootElement.querySelector<HTMLButtonElement>('[data-home-video-open]');
     const frame = modalElement.querySelector<HTMLIFrameElement>('[data-home-video-frame]');
-    const dialog = modalElement.querySelector<HTMLElement>('.modal__dialog');
+    const dialog = modalElement.querySelector<HTMLElement>('[data-modal-dialog]');
     if (!openButton || !frame || !dialog) {
       return undefined;
     }
@@ -21,18 +21,34 @@ function HomeVideo({ modalElement, rootElement }: Props) {
         frame.src = src;
       }
 
+      modalElement.style.opacity = '0';
+      modalElement.style.transition = 'opacity 200ms ease';
+      dialog.style.opacity = '0';
+      dialog.style.transform = 'scale(0.95)';
+      dialog.style.transition = 'opacity 200ms ease, transform 200ms ease';
       modalElement.hidden = false;
-      dialog.focus();
+
+      requestAnimationFrame(() => {
+        modalElement.style.opacity = '1';
+        dialog.style.opacity = '1';
+        dialog.style.transform = 'scale(1)';
+        dialog.focus();
+      });
     };
 
     const close = () => {
       modalElement.hidden = true;
+      modalElement.style.opacity = '';
+      modalElement.style.transition = '';
+      dialog.style.opacity = '';
+      dialog.style.transform = '';
+      dialog.style.transition = '';
       frame.removeAttribute('src');
       openButton.focus();
     };
 
     const closeOnBackdrop = (event: MouseEvent) => {
-      if (event.target === modalElement) {
+      if (event.target instanceof Node && !dialog.contains(event.target)) {
         close();
       }
     };

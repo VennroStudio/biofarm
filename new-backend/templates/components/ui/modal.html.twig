@@ -1,36 +1,39 @@
 <div
-    class="modal"
+    class="fixed inset-0 z-50 overflow-y-auto bg-black/90 p-4"
     data-modal="{{ id }}"
     role="presentation"
     hidden
 >
-    <div
-        class="modal__dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="{{ id }}-title"
-        tabindex="-1"
-    >
-        <div class="modal__head">
-            <div>
-                {% if eyebrow is defined and eyebrow %}
-                    <p class="eyebrow" data-modal-eyebrow>{{ eyebrow }}</p>
-                {% else %}
-                    <p class="eyebrow" data-modal-eyebrow hidden></p>
-                {% endif %}
-                <h3 id="{{ id }}-title" data-modal-title>{{ title }}</h3>
+    <div class="flex min-h-full items-center justify-center">
+        <div
+            class="max-h-[calc(100vh-2rem)] w-full max-w-4xl overflow-auto rounded-lg bg-black text-white outline-none"
+            data-modal-dialog
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="{{ id }}-title"
+            tabindex="-1"
+        >
+            <div class="flex items-start justify-between gap-5 p-4">
+                <div>
+                    {% if eyebrow is defined and eyebrow %}
+                        <p class="text-xs font-black uppercase tracking-[0.12em] text-accent" data-modal-eyebrow>{{ eyebrow }}</p>
+                    {% else %}
+                        <p class="text-xs font-black uppercase tracking-[0.12em] text-accent" data-modal-eyebrow hidden></p>
+                    {% endif %}
+                    <h3 class="mt-2 font-display text-2xl font-bold leading-tight" id="{{ id }}-title" data-modal-title>{{ title }}</h3>
+                </div>
+                <button class="grid h-10 w-10 flex-shrink-0 place-items-center rounded-lg border border-white/20 bg-white/10 text-xl font-bold transition-colors hover:bg-white/20" type="button" aria-label="Закрыть окно" data-modal-close>x</button>
             </div>
-            <button type="button" aria-label="Close modal" data-modal-close>x</button>
-        </div>
 
-        <div class="modal__body" data-modal-body>
-            {% block body %}{% endblock %}
-        </div>
-
-        {% if block('actions') is defined %}
-            <div class="modal__actions" data-modal-actions>
-                {% block actions %}{% endblock %}
+            <div class="p-4 pt-0" data-modal-body>
+                {% block body %}{% endblock %}
             </div>
-        {% endif %}
+
+            {% if block('actions') is defined %}
+                <div class="flex flex-wrap justify-end gap-3 p-4 pt-0" data-modal-actions>
+                    {% block actions %}{% endblock %}
+                </div>
+            {% endif %}
+        </div>
     </div>
 </div>

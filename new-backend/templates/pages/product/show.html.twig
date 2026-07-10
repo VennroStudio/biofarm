@@ -6,14 +6,24 @@
 
 {% block content %}
     {% if page.product %}
-        {% include 'sections/product/featured-product.html.twig' with { product: page.product } only %}
-        {% include 'sections/review/review-list.html.twig' with { reviews: page.reviews } only %}
+        {% include 'sections/product/featured-product.html.twig' with {
+            product: page.product,
+            relatedProducts: page.relatedProducts,
+        } only %}
     {% else %}
-        <section class="section">
-            {% include 'components/ui/empty-state.html.twig' with {
-                title: 'Товар не найден',
-                message: 'Карточки товаров появятся после миграции базы данных.',
-            } only %}
-        </section>
+        <div class="container mx-auto px-4 py-32 text-center">
+            <h1 class="mb-4 text-3xl font-bold text-foreground">
+                Товар не найден
+            </h1>
+            <p class="mb-8 text-muted-foreground">
+                К сожалению, такого товара не существует
+            </p>
+            <a
+                href="/catalog"
+                class="gradient-primary inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium text-primary-foreground ring-offset-background transition-opacity hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+                Вернуться в каталог
+            </a>
+        </div>
     {% endif %}
 {% endblock %}

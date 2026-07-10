@@ -23,11 +23,11 @@ return [
                 ],
                 [
                     'label' => 'Каталог',
-                    'href'  => '/catalog',
+                    'href'  => '/#catalog',
                 ],
                 [
                     'label' => 'Блог',
-                    'href'  => '/blog',
+                    'href'  => '/#blog',
                 ],
                 [
                     'label' => 'О нас',
@@ -40,24 +40,6 @@ return [
                 [
                     'label' => 'Контакты',
                     'href'  => '/#contacts',
-                ],
-            ],
-            'footer' => [
-                'title'       => 'БИОФАРМ',
-                'description' => 'Серверный PHP/Twig сайт с готовым HTML для скорости и SEO.',
-                'links'       => [
-                    [
-                        'label' => 'Главная',
-                        'href'  => '/',
-                    ],
-                    [
-                        'label' => 'Каталог',
-                        'href'  => '/catalog',
-                    ],
-                    [
-                        'label' => 'Блог',
-                        'href'  => '/blog',
-                    ],
                 ],
             ],
         ],

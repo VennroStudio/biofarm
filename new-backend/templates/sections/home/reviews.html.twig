@@ -1,0 +1,145 @@
+{% if reviews is not empty %}
+    <section id="reviews" class="bg-secondary/30 py-20 lg:py-32" data-home-reviews-root>
+        <div class="container mx-auto px-4">
+            <div class="mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-end" data-reveal data-reveal-duration="600">
+                <div>
+                    <span class="mb-4 inline-block font-medium text-accent">
+                        Отзывы
+                    </span>
+                    <h2 class="font-display text-3xl font-bold text-foreground md:text-4xl">
+                        Что говорят наши клиенты
+                    </h2>
+                </div>
+                <div class="flex gap-2">
+                    <button
+                        type="button"
+                        class="inline-flex h-10 w-10 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-input bg-background text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                        aria-label="Предыдущие отзывы"
+                        data-reviews-prev
+                    >
+                        <svg class="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m15 18-6-6 6-6"></path>
+                        </svg>
+                    </button>
+                    <button
+                        type="button"
+                        class="inline-flex h-10 w-10 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-input bg-background text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                        aria-label="Следующие отзывы"
+                        data-reviews-next
+                    >
+                        <svg class="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m9 18 6-6-6-6"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3" data-reviews-track>
+                {% for review in reviews %}
+                    <article
+                        class="relative rounded-2xl bg-card p-6 shadow-premium"
+                        data-review-card
+                        data-review-index="{{ loop.index0 }}"
+                        {% if loop.index0 >= 3 %}hidden{% endif %}
+                    >
+                        <svg class="absolute right-6 top-6 h-8 w-8 text-primary/10" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 21c3 0 7-1 7-8V5c0-1.25-.76-2-2-2H4c-1.25 0-2 .75-2 2v6c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"></path>
+                            <path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2-2-2h-4c-1.25 0-2 .75-2 2v6c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"></path>
+                        </svg>
+
+                        <div class="mb-4 flex items-center gap-4">
+                            <img
+                                src="{{ review.avatar }}"
+                                alt="{{ review.name }}"
+                                class="h-12 w-12 rounded-full object-cover"
+                                loading="lazy"
+                                decoding="async"
+                            >
+                            <div>
+                                <h4 class="font-bold text-foreground">{{ review.name }}</h4>
+                                <p class="text-sm text-muted-foreground">{{ review.product }}</p>
+                            </div>
+                        </div>
+
+                        <div class="mb-4 flex gap-1" aria-label="Оценка {{ review.rating }} из 5">
+                            {% for index in 0..4 %}
+                                <svg
+                                    class="h-4 w-4 {{ index < review.rating ? 'fill-accent text-accent' : 'text-muted-foreground' }}"
+                                    aria-hidden="true"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                >
+                                    <path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.12 2.12 0 0 0 1.595 1.16l5.166.751a.53.53 0 0 1 .294.904l-3.738 3.644a2.12 2.12 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.12 2.12 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.12 2.12 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.75a2.12 2.12 0 0 0 1.596-1.16z"></path>
+                                </svg>
+                            {% endfor %}
+                        </div>
+
+                        <p class="mb-4 line-clamp-3 text-muted-foreground">
+                            {{ review.text }}
+                        </p>
+
+                        {% if review.images is not empty %}
+                            <div class="mb-4 flex gap-2 overflow-x-auto">
+                                {% for image in review.images %}
+                                    <button
+                                        type="button"
+                                        class="flex-shrink-0 rounded-lg transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                        aria-label="Открыть фото к отзыву {{ loop.index }}"
+                                        data-review-image
+                                        data-lightbox-image="{{ image }}"
+                                    >
+                                        <img
+                                            src="{{ image }}"
+                                            alt="Фото к отзыву {{ loop.index }}"
+                                            class="h-16 w-16 rounded-lg object-cover"
+                                            loading="lazy"
+                                            decoding="async"
+                                        >
+                                    </button>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </article>
+                {% endfor %}
+            </div>
+
+            <div class="mt-8 flex justify-center gap-2">
+                {% for review in reviews %}
+                    <button
+                        type="button"
+                        class="{{ loop.first ? 'w-6 bg-primary' : 'w-2 bg-primary/30 hover:bg-primary/50' }} h-2 rounded-full transition-all"
+                        aria-label="Показать отзывы с позиции {{ loop.index }}"
+                        data-review-dot
+                        data-review-index="{{ loop.index0 }}"
+                    ></button>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div
+            class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Увеличенное фото"
+            aria-hidden="true"
+            tabindex="-1"
+            data-reviews-lightbox
+        >
+            <img
+                alt="Увеличенное фото"
+                class="max-h-[90vh] max-w-full rounded-lg object-contain"
+                data-reviews-lightbox-image
+            >
+        </div>
+
+        <div
+            data-react-island="home-reviews"
+            data-root-selector="[data-home-reviews-root]"
+            hidden
+        ></div>
+    </section>
+{% endif %}

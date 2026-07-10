@@ -1,9 +1,0 @@
-.command-form {
-    display: grid;
-    gap: 12px;
-    align-content: start;
-    padding: 18px;
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 8px;
-}

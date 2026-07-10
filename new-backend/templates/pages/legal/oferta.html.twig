@@ -1,0 +1,46 @@
+{% extends 'layouts/main.html.twig' %}
+
+{% block title %}Публичная оферта{% endblock %}
+
+{% block description %}Публичная оферта BioFarm{% endblock %}
+
+{% block content %}
+    <main class="container mx-auto mt-10 px-4 py-16 md:py-16">
+        <a class="mb-8 -ml-2 inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-md px-3 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" href="/">
+            <svg class="mr-2 h-4 w-4" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m12 19-7-7 7-7"></path>
+                <path d="M19 12H5"></path>
+            </svg>
+            На главную
+        </a>
+
+        <article class="mx-auto max-w-3xl space-y-6 text-muted-foreground">
+            <h1 class="font-display text-3xl font-bold text-foreground">Публичная оферта</h1>
+            <p class="text-lg leading-relaxed">о заключении договора купли-продажи</p>
+
+            <h2 class="pt-4 font-display text-xl font-bold text-foreground">Общие положения</h2>
+            <p class="leading-relaxed">
+                Настоящая публичная оферта содержит условия заключения договора купли-продажи. Совершение действий по оформлению заявки или оплате товара подтверждает согласие покупателя с условиями оферты.
+            </p>
+
+            <h2 class="pt-4 font-display text-xl font-bold text-foreground">Предмет договора</h2>
+            <p class="leading-relaxed">
+                Продавец обязуется передать товар в собственность покупателя, а покупатель обязуется принять товар и оплатить его стоимость. Наименование, количество, ассортимент и стоимость товара определяются на основании сведений на сайте или в заявке покупателя.
+            </p>
+
+            <h2 class="pt-4 font-display text-xl font-bold text-foreground">Обмен и возврат</h2>
+            <p class="leading-relaxed">
+                Возврат и обмен товаров осуществляются в соответствии с требованиями законодательства Российской Федерации, включая Закон РФ «О защите прав потребителей».
+            </p>
+
+            <h2 class="pt-4 font-display text-xl font-bold text-foreground">Реквизиты продавца</h2>
+            <p class="leading-relaxed">
+                ООО «Институт изучения биологически активных веществ "Биофарм"», ИНН 7017490966, ОГРН 1227000001557.
+            </p>
+
+            <p class="border-t border-border pt-6 text-sm">
+                См. также <a class="text-primary hover:underline" href="/privacy">политику конфиденциальности</a>.
+            </p>
+        </article>
+    </main>
+{% endblock %}

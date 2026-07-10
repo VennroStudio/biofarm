@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="{{ site.locale|default('ru') }}">
+<html class="scroll-smooth" lang="{{ site.locale|default('ru') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,14 +9,14 @@
         <link rel="stylesheet" href="{{ vite_asset('assets/styles/app.css') }}">
     {% endblock %}
 </head>
-<body>
+<body class="bg-background font-sans text-foreground antialiased">
     {% include 'components/layout/header.html.twig' with { site: site } only %}
 
-    <main>
+    <main class="min-h-screen">
         {% block content %}{% endblock %}
     </main>
 
-    {% include 'components/layout/footer.html.twig' with { site: site } only %}
+    {% include 'components/layout/footer.html.twig' only %}
 
     {% block javascripts %}
         <script type="module" src="{{ vite_asset('assets/react/mount.tsx') }}"></script>

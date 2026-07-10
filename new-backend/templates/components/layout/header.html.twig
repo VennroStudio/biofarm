@@ -37,12 +37,12 @@
         </nav>
 
         <div class="hidden items-center gap-4 lg:flex">
-            <a class="gradient-primary inline-flex min-h-11 items-center justify-center rounded-lg px-5 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-95" href="/#catalog">
+            <a class="gradient-primary inline-flex min-h-11 items-center justify-center rounded-lg px-5 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-95" href="/catalog">
                 Заказать
             </a>
         </div>
 
-        <details class="group lg:hidden [&>summary::-webkit-details-marker]:hidden">
+        <details class="group lg:hidden [&>nav]:block [&>summary::-webkit-details-marker]:hidden">
             <summary
                 class="flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-lg text-white"
                 aria-label="Открыть меню"
@@ -55,11 +55,11 @@
             </summary>
 
             <nav
-                class="absolute left-0 right-0 top-20 border-t border-border bg-background px-4 py-6 shadow-premium lg:hidden"
+                class="pointer-events-none absolute left-0 right-0 top-20 max-h-0 overflow-hidden border-t border-border bg-background opacity-0 shadow-premium transition-[max-height,opacity] duration-300 ease-out group-open:pointer-events-auto group-open:max-h-[440px] group-open:opacity-100 lg:hidden"
                 id="site-header-mobile-menu"
                 aria-label="Мобильная навигация"
             >
-                <div class="container mx-auto flex flex-col gap-4">
+                <div class="container mx-auto flex flex-col gap-4 px-4 py-6">
                     {% for item in site.navigation %}
                         {% include 'components/ui/link.html.twig' with {
                             class: 'py-2 text-lg font-medium text-foreground transition-colors hover:text-primary',

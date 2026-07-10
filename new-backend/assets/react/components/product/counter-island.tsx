@@ -5,10 +5,7 @@ type Props = {
   counterElement: HTMLElement;
 };
 
-const money = new Intl.NumberFormat('en-US', {
-  currency: 'USD',
-  style: 'currency',
-});
+const money = (value: number) => `${new Intl.NumberFormat('ru-RU').format(value)} ₽`;
 
 const readPositiveNumber = (value: string | undefined, fallback: number) => {
   const parsed = Number(value);
@@ -32,7 +29,7 @@ function ProductCounter({ counterElement }: Props) {
 
     const render = () => {
       quantityElement.textContent = String(quantity);
-      totalElement.textContent = money.format(productPrice * quantity);
+      totalElement.textContent = money(productPrice * quantity);
       decrement.disabled = quantity <= 1;
     };
 

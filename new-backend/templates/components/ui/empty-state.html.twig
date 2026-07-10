@@ -1,6 +1,6 @@
-<div class="empty-state" role="{{ role|default('status') }}">
+<div class="col-span-full grid gap-1 rounded-lg border border-dashed border-border bg-card p-5 text-muted-foreground" role="{{ role|default('status') }}">
     {% if title is defined and title %}
-        <strong>{{ title }}</strong>
+        <strong class="text-foreground">{{ title }}</strong>
     {% endif %}
     {% if message is defined and message %}
         <span>{{ message }}</span>

@@ -4,18 +4,40 @@ declare(strict_types=1);
 
 namespace App\Http\Unifier\Home;
 
+use App\Http\View\Blog\BlogPostView;
 use App\Http\View\Home\HomeCategoryView;
 use App\Http\View\Home\HomePageView;
-use App\Http\View\MetricView;
+use App\Http\View\Home\HomeReviewView;
 use App\Http\View\PageMetaView;
-use App\Http\View\Product\ProductCardView;
+use App\Http\Unifier\Product\ProductCatalogDataProvider;
+use Doctrine\DBAL\Connection;
 
 final readonly class HomePageUnifier
 {
+    private const array MONTHS = [
+        1 => 'января',
+        2 => 'февраля',
+        3 => 'марта',
+        4 => 'апреля',
+        5 => 'мая',
+        6 => 'июня',
+        7 => 'июля',
+        8 => 'августа',
+        9 => 'сентября',
+        10 => 'октября',
+        11 => 'ноября',
+        12 => 'декабря',
+    ];
+
+    public function __construct(
+        private ProductCatalogDataProvider $catalogData,
+        private Connection $connection,
+    ) {}
+
     public function unify(?string $selectedCategory = null): HomePageView
     {
-        $products = $this->products($selectedCategory);
-        $categories = $this->categories($products);
+        $products = $this->catalogData->products($selectedCategory, 6);
+        $categories = $this->catalogData->categories();
 
         return new HomePageView(
             meta: new PageMetaView(
@@ -25,62 +47,159 @@ final readonly class HomePageUnifier
             products: $products,
             selectedCategory: $selectedCategory,
             featuredProduct: $products[0] ?? null,
-            reviews: [],
-            orders: [],
             categories: $categories,
             categoriesTotal: array_sum(array_map(
                 static fn (HomeCategoryView $category): int => $category->productsCount,
                 $categories,
             )),
-            metrics: $this->metrics($products, $categories),
+            blogPosts: $this->blogPosts(),
+            reviews: $this->reviews(),
         );
     }
 
     /**
-     * @return list<ProductCardView>
+     * @return list<BlogPostView>
+     * @throws \Doctrine\DBAL\Exception
      */
-    private function products(?string $selectedCategory): array
+    private function blogPosts(): array
     {
-        unset($selectedCategory);
+        $rows = $this->connection->createQueryBuilder()
+            ->select(
+                'bp.id',
+                'bp.slug',
+                'bp.title',
+                'bp.excerpt',
+                'bp.content',
+                'bp.image',
+                'bp.category_id',
+                'bp.created_at',
+                'bp.author_name',
+                'bp.read_time',
+            )
+            ->from('blog_posts', 'bp')
+            ->where('bp.deleted_at IS NULL')
+            ->andWhere('bp.is_published = 1')
+            ->orderBy('bp.created_at', 'DESC')
+            ->addOrderBy('bp.id', 'DESC')
+            ->setMaxResults(3)
+            ->executeQuery()
+            ->fetchAllAssociative();
 
-        return [];
+        return array_map(fn (array $row): BlogPostView => $this->mapPost($row), $rows);
     }
 
     /**
-     * @param list<ProductCardView> $products
-     * @return list<HomeCategoryView>
+     * @param array<string, mixed> $row
      */
-    private function categories(array $products): array
+    private function mapPost(array $row): BlogPostView
     {
-        $counts = [];
-        foreach ($products as $product) {
-            $counts[$product->category] = ($counts[$product->category] ?? 0) + 1;
-        }
-
-        ksort($counts);
-
-        $categories = [];
-        foreach ($counts as $name => $count) {
-            $categories[] = new HomeCategoryView($name, $count);
-        }
-
-        return $categories;
+        return new BlogPostView(
+            id: (int)$row['id'],
+            slug: (string)$row['slug'],
+            title: (string)$row['title'],
+            excerpt: (string)$row['excerpt'],
+            content: (string)$row['content'],
+            image: (string)$row['image'],
+            category: (string)$row['category_id'],
+            date: $this->formatDate((string)$row['created_at']),
+            authorName: (string)($row['author_name'] ?: 'Автор'),
+            authorAvatar: '',
+            readTime: (int)$row['read_time'],
+        );
     }
 
     /**
-     * @param list<ProductCardView> $products
-     * @param list<HomeCategoryView> $categories
-     * @return list<MetricView>
+     * @return list<HomeReviewView>
+     * @throws \Doctrine\DBAL\Exception
      */
-    private function metrics(array $products, array $categories): array
+    private function reviews(): array
     {
-        if ($products === []) {
+        $rows = $this->connection->createQueryBuilder()
+            ->select(
+                'r.id',
+                'r.user_name',
+                'r.rating',
+                'r.text',
+                'r.images',
+                'r.created_at',
+                'COALESCE(p.name, :fallback_product) AS product_name',
+            )
+            ->from('reviews', 'r')
+            ->leftJoin('r', 'products', 'p', 'p.id = r.product_id AND p.deleted_at IS NULL')
+            ->where('r.deleted_at IS NULL')
+            ->andWhere('r.is_approved = 1')
+            ->setParameter('fallback_product', 'Товар')
+            ->orderBy('r.created_at', 'DESC')
+            ->setMaxResults(5)
+            ->executeQuery()
+            ->fetchAllAssociative();
+
+        $reviews = array_map(fn (array $row): HomeReviewView => $this->mapReview($row), $rows);
+
+        if ($reviews !== [] && \count($reviews) < 3) {
+            while (\count($reviews) < 3) {
+                $reviews = [...$reviews, ...$reviews];
+            }
+
+            $reviews = array_slice($reviews, 0, 3);
+        }
+
+        return $reviews;
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     */
+    private function mapReview(array $row): HomeReviewView
+    {
+        $name = (string)$row['user_name'];
+
+        return new HomeReviewView(
+            id: (string)$row['id'],
+            name: $name,
+            avatar: 'https://ui-avatars.com/api/?name=' . rawurlencode($name) . '&background=random',
+            rating: (int)$row['rating'],
+            text: (string)$row['text'],
+            date: $this->formatDate((string)$row['created_at']),
+            product: (string)$row['product_name'],
+            images: $this->jsonList($row['images']),
+        );
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function jsonList(mixed $value): array
+    {
+        if ($value === null) {
             return [];
         }
 
-        return [
-            new MetricView('Товары', (string)\count($products), 'загружены из базы сайта'),
-            new MetricView('Категории', (string)\count($categories), 'сгруппированы для каталога'),
-        ];
+        if (\is_array($value)) {
+            return array_values(array_filter($value, static fn (mixed $item): bool => \is_string($item) && $item !== ''));
+        }
+
+        if (!\is_string($value) || $value === '') {
+            return [];
+        }
+
+        $decoded = json_decode($value, true);
+
+        if (!\is_array($decoded)) {
+            return [];
+        }
+
+        return array_values(array_filter($decoded, static fn (mixed $item): bool => \is_string($item) && $item !== ''));
+    }
+
+    private function formatDate(string $date): string
+    {
+        $time = strtotime($date);
+
+        if ($time === false) {
+            return $date;
+        }
+
+        return (int)date('j', $time) . ' ' . self::MONTHS[(int)date('n', $time)] . ' ' . date('Y', $time) . ' г.';
     }
 }

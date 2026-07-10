@@ -1,0 +1,94 @@
+{% set marketplaces = [
+    {
+        name: 'Wildberries',
+        logo: 'WB',
+        color: 'bg-purple-600',
+        url: 'https://www.wildberries.ru/seller/1009387',
+        benefits: ['Быстрая доставка', 'Пункты выдачи рядом', 'Кэшбек баллами'],
+    },
+    {
+        name: 'Ozon',
+        logo: 'Ozon',
+        color: 'bg-blue-600',
+        url: 'https://www.ozon.ru/seller/institut-izucheniya-biologicheski-aktivnyh-veshchestv-biofarm-647407/',
+        benefits: ['Premium-доставка', 'Рассрочка', 'Ozon Счёт'],
+    },
+] %}
+
+{% set advantages = [
+    'Официальные продавцы',
+    'Гарантия качества',
+    'Оригинальная продукция',
+    'Быстрая доставка по всей России',
+] %}
+
+<section class="py-20 lg:py-32">
+    <div class="container mx-auto px-4">
+        <div class="mb-12 text-center" data-reveal data-reveal-duration="600">
+            <span class="mb-4 inline-block font-medium text-accent">
+                Где купить
+            </span>
+            <h2 class="mb-6 font-display text-3xl font-bold text-foreground md:text-4xl">
+                Наши товары на маркетплейсах
+            </h2>
+            <p class="mx-auto max-w-2xl text-muted-foreground">
+                Покупайте нашу продукцию на популярных маркетплейсах.
+                Официальный магазин, быстрая доставка и гарантия качества.
+            </p>
+        </div>
+
+        <div class="mb-12 grid gap-8 lg:grid-cols-2">
+            {% for marketplace in marketplaces %}
+                <div class="rounded-2xl bg-card p-8 shadow-premium transition-all hover:shadow-premium-lg" data-reveal data-reveal-duration="600" data-reveal-delay="{{ loop.index0 * 150 }}">
+                    <div class="mb-6 flex items-center gap-4">
+                        <div class="{{ marketplace.color }} flex h-16 w-16 items-center justify-center rounded-xl text-lg font-bold text-white">
+                            {{ marketplace.logo }}
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-foreground">{{ marketplace.name }}</h3>
+                            <p class="text-sm text-muted-foreground">Официальный магазин</p>
+                        </div>
+                    </div>
+
+                    <ul class="mb-6 space-y-3">
+                        {% for benefit in marketplace.benefits %}
+                            <li class="flex items-center gap-3 text-muted-foreground">
+                                <div class="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10">
+                                    <svg class="h-3 w-3 text-primary" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M20 6 9 17l-5-5"></path>
+                                    </svg>
+                                </div>
+                                {{ benefit }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+
+                    <a
+                        href="{{ marketplace.url }}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="gradient-primary inline-flex h-10 w-full items-center justify-center gap-2 whitespace-nowrap rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground ring-offset-background transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                    >
+                        Перейти в магазин
+                        <svg class="ml-2 h-4 w-4" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M15 3h6v6"></path>
+                            <path d="M10 14 21 3"></path>
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                        </svg>
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="flex flex-wrap justify-center gap-4" data-reveal data-reveal-y="0" data-reveal-delay="500">
+            {% for advantage in advantages %}
+                <div class="flex items-center gap-2 rounded-full bg-secondary px-4 py-2 text-sm text-secondary-foreground">
+                    <svg class="h-4 w-4 text-primary" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 6 9 17l-5-5"></path>
+                    </svg>
+                    {{ advantage }}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>

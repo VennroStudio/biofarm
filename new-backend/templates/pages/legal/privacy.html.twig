@@ -1,0 +1,50 @@
+{% extends 'layouts/main.html.twig' %}
+
+{% block title %}Политика конфиденциальности{% endblock %}
+
+{% block description %}Политика конфиденциальности BioFarm{% endblock %}
+
+{% block content %}
+    <main class="container mx-auto mt-10 px-4 py-16 md:py-16">
+        <a class="mb-8 -ml-2 inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-md px-3 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" href="/">
+            <svg class="mr-2 h-4 w-4" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m12 19-7-7 7-7"></path>
+                <path d="M19 12H5"></path>
+            </svg>
+            На главную
+        </a>
+
+        <article class="mx-auto max-w-3xl space-y-6 text-muted-foreground">
+            <h1 class="font-display text-3xl font-bold text-foreground">Политика конфиденциальности</h1>
+            <p class="leading-relaxed">
+                Настоящая политика описывает порядок обработки и защиты персональных данных пользователей сайта BioFarm, принадлежащего ООО «Институт изучения биологически активных веществ "Биофарм"».
+            </p>
+
+            <h2 class="pt-4 font-display text-xl font-bold text-foreground">1. Общие положения</h2>
+            <p class="leading-relaxed">
+                Оператор обрабатывает персональные данные в соответствии с Конституцией Российской Федерации, Федеральным законом от 27.07.2006 № 152-ФЗ «О персональных данных» и иными нормативными актами. Использование сайта означает согласие с настоящей политикой.
+            </p>
+
+            <h2 class="pt-4 font-display text-xl font-bold text-foreground">2. Какие данные мы обрабатываем</h2>
+            <ul class="list-disc space-y-1 pl-6">
+                <li>идентификационные данные: имя, контактный e-mail, телефон;</li>
+                <li>данные, необходимые для доставки и исполнения заказа;</li>
+                <li>технические данные в объеме, необходимом для работы сайта.</li>
+            </ul>
+
+            <h2 class="pt-4 font-display text-xl font-bold text-foreground">3. Цели обработки</h2>
+            <p class="leading-relaxed">
+                Данные обрабатываются для предоставления функций сайта, оформления и исполнения заказов, связи с вами, улучшения сервиса и выполнения обязанностей перед законом.
+            </p>
+
+            <h2 class="pt-4 font-display text-xl font-bold text-foreground">4. Хранение и безопасность</h2>
+            <p class="leading-relaxed">
+                Оператор принимает организационные и технические меры, направленные на защиту персональных данных от неправомерного доступа, изменения, раскрытия или уничтожения.
+            </p>
+
+            <p class="border-t border-border pt-6 text-sm">
+                Актуальная редакция: 14 апреля 2026 г.
+            </p>
+        </article>
+    </main>
+{% endblock %}

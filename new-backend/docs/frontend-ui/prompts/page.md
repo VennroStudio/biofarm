@@ -22,12 +22,9 @@ Unifier возвращает view object из `src/Http/View`.
 - components/ui/*.html.twig — общие UI-блоки;
 - components/layout/*.html.twig — глобальная layout-обвязка.
 
-Разбей CSS зеркально Twig:
-- assets/styles/sections/domain/page-section.css для каждой новой секции;
-- assets/styles/widgets/domain/widget.css для каждого нового widget;
-- assets/styles/components/domain/component.css или components/ui/component.css для каждого нового компонента.
-
-Подключи новые CSS-файлы только через assets/styles/app.css.
+Стили новых Twig-блоков делай utility-классами Tailwind прямо в шаблонах.
+Не создавай отдельные CSS-файлы для секций, widgets или components.
+`assets/styles/app.css` должен оставаться Tailwind entry point.
 
 Если добавляешь React island, используй root/selector contract в Twig.
 React-файл положи в зеркальный путь от Twig ownership: `templates/components/layout/header.html.twig` → `assets/react/components/layout/header.tsx`.

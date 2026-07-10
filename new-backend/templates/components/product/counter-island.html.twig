@@ -1,6 +1,6 @@
 <div data-product-counter-root>
     <div
-        class="island-counter"
+        class="flex flex-wrap items-center gap-2"
         data-product-counter
         data-product-id="{{ product.id }}"
         data-product-title="{{ product.title }}"
@@ -8,20 +8,22 @@
         data-product-quantity="1"
     >
         <button
+            class="grid h-10 w-10 place-items-center rounded-lg border border-primary bg-primary/10 font-bold text-primary disabled:cursor-not-allowed disabled:opacity-55"
             type="button"
             data-counter-decrement
             data-variant="light"
-            aria-label="Decrease {{ product.title }}"
+            aria-label="Уменьшить количество {{ product.title }}"
             disabled
         >-</button>
-        <span data-counter-quantity aria-live="polite">1</span>
+        <span class="min-w-7 text-center font-bold" data-counter-quantity aria-live="polite">1</span>
         <button
+            class="grid h-10 w-10 place-items-center rounded-lg border border-primary bg-primary/10 font-bold text-primary disabled:cursor-not-allowed disabled:opacity-55"
             type="button"
             data-counter-increment
             data-variant="light"
-            aria-label="Increase {{ product.title }}"
+            aria-label="Увеличить количество {{ product.title }}"
         >+</button>
-        <output data-counter-total aria-live="polite">{{ product.price|money }}</output>
+        <output class="inline-grid min-h-10 place-items-center rounded-lg border border-primary bg-primary px-4 font-bold text-primary-foreground" data-counter-total aria-live="polite">{{ product.price|money }}</output>
     </div>
 
     <div

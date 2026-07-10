@@ -3,6 +3,25 @@
 @tailwind utilities;
 
 @layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-bold tracking-tight;
+  }
+}
+
+@layer base {
   :root {
     --background: 60 30% 96%;
     --foreground: 150 25% 15%;

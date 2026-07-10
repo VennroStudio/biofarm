@@ -44,6 +44,6 @@ final readonly class CreateProductController implements RequestHandlerInterface
     private function redirectToProducts(): ResponseInterface
     {
         return $this->responseFactory->createResponse(303)
-            ->withHeader('Location', '/#product-commands');
+            ->withHeader('Location', '/#catalog');
     }
 }

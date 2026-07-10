@@ -24,4 +24,4 @@
 - React island: HTML в Twig, UI-поведение в зеркальном пути `assets/react/{components|sections|widgets|pages}`, mount через явный root/selector contract.
 - Формы отправляются обычным HTML POST в web-контроллеры.
 - `assets/react/mount.tsx` только импортирует и вызывает mount-функции конкретных React islands.
-- CSS зеркалит Twig ownership и подключается через `assets/styles/app.css`.
+- Стили Twig-блоков пишутся Tailwind utility-классами в шаблонах; `assets/styles/app.css` остается Tailwind entry point.

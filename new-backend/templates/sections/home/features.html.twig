@@ -2,15 +2,15 @@
     <div class="container mx-auto px-4">
         <div class="grid items-start gap-16 lg:grid-cols-2">
             <div>
-                <span class="mb-4 inline-block font-medium text-accent">
+                <span class="mb-4 inline-block font-medium text-accent" data-reveal>
                     Сотрудничество с нами
                 </span>
-                <h2 class="mb-12 font-display text-3xl font-bold text-foreground md:text-4xl">
+                <h2 class="mb-12 font-display text-3xl font-bold text-foreground md:text-4xl" data-reveal data-reveal-delay="150">
                     Мы рады надежным партнерам!
                 </h2>
 
                 <div class="grid gap-6 sm:grid-cols-2">
-                    <article class="rounded-lg bg-card p-6 shadow-premium transition-shadow hover:shadow-premium-lg">
+                    <article class="rounded-lg bg-card p-6 shadow-premium transition-shadow hover:shadow-premium-lg" data-reveal data-reveal-delay="300">
                         <div class="gradient-primary mb-4 flex h-12 w-12 items-center justify-center rounded-lg">
                             <svg class="h-6 w-6 text-primary-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
                                 <path d="M11 20A7 7 0 0 1 4 13c0-6 8-9 16-9 0 8-3 16-9 16Z"></path>
@@ -23,7 +23,7 @@
                         </p>
                     </article>
 
-                    <article class="rounded-lg bg-card p-6 shadow-premium transition-shadow hover:shadow-premium-lg">
+                    <article class="rounded-lg bg-card p-6 shadow-premium transition-shadow hover:shadow-premium-lg" data-reveal data-reveal-delay="450">
                         <div class="gradient-primary mb-4 flex h-12 w-12 items-center justify-center rounded-lg">
                             <svg class="h-6 w-6 text-primary-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
                                 <path d="M12 15a6 6 0 1 0 0-12 6 6 0 0 0 0 12Z"></path>
@@ -36,7 +36,7 @@
                         </p>
                     </article>
 
-                    <article class="rounded-lg bg-card p-6 shadow-premium transition-shadow hover:shadow-premium-lg">
+                    <article class="rounded-lg bg-card p-6 shadow-premium transition-shadow hover:shadow-premium-lg" data-reveal data-reveal-delay="600">
                         <div class="gradient-primary mb-4 flex h-12 w-12 items-center justify-center rounded-lg">
                             <svg class="h-6 w-6 text-primary-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
                                 <path d="M10 17h4V5H2v12h3"></path>
@@ -52,7 +52,7 @@
                         </p>
                     </article>
 
-                    <article class="rounded-lg bg-card p-6 shadow-premium transition-shadow hover:shadow-premium-lg">
+                    <article class="rounded-lg bg-card p-6 shadow-premium transition-shadow hover:shadow-premium-lg" data-reveal data-reveal-delay="750">
                         <div class="gradient-primary mb-4 flex h-12 w-12 items-center justify-center rounded-lg">
                             <svg class="h-6 w-6 text-primary-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
                                 <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path>
@@ -66,7 +66,7 @@
                 </div>
             </div>
 
-            <div class="rounded-2xl bg-card p-8 shadow-premium-lg lg:p-10">
+            <div class="rounded-2xl bg-card p-8 shadow-premium-lg lg:p-10" data-reveal data-reveal-x="30" data-reveal-y="0" data-reveal-duration="800" data-reveal-delay="300">
                 <h3 class="mb-2 font-display text-2xl font-bold text-foreground">
                     Остались вопросы?
                 </h3>
@@ -74,7 +74,7 @@
                     Заполните форму и мы свяжемся с вами в ближайшее время
                 </p>
 
-                <form class="space-y-6">
+                <form class="space-y-6" method="post" action="/feedback">
                     <div class="grid gap-4 sm:grid-cols-2">
                         <div>
                             <label class="mb-2 block text-sm font-medium text-foreground" for="partner-name">
@@ -135,8 +135,8 @@
                     </div>
 
                     <button
-                        class="gradient-primary inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-md py-6 text-sm font-medium text-primary-foreground ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                        type="button"
+                        class="gradient-primary inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-md py-6 text-sm font-medium text-primary-foreground ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+                        type="submit"
                     >
                         Отправить заявку
                     </button>

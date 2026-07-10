@@ -5,13 +5,27 @@
 {% block description %}{{ page.meta.description }}{% endblock %}
 
 {% block content %}
-    {% include 'sections/product/category-strip.html.twig' with {
+    {% include 'sections/product/catalog.html.twig' with {
+        products: page.products,
         categories: page.categories,
         categoriesTotal: page.categoriesTotal,
         selectedCategory: page.selectedCategory,
-    } only %}
-    {% include 'sections/product/product-grid.html.twig' with {
-        products: page.products,
-        selectedCategory: page.selectedCategory,
+        productsTotal: page.productsTotal,
+        searchQuery: page.searchQuery,
+        sortBy: page.sortBy,
+        viewMode: page.viewMode,
+        currentPage: page.currentPage,
+        totalPages: page.totalPages,
+        previousPageUrl: page.previousPageUrl,
+        nextPageUrl: page.nextPageUrl,
+        pageNumbers: page.pageNumbers,
+        pageUrls: page.pageUrls,
+        allCategoryUrl: page.allCategoryUrl,
+        categoryUrls: page.categoryUrls,
+        viewUrls: page.viewUrls,
+        resetUrl: page.resetUrl,
+        basePath: '/catalog',
+        variant: 'page',
+        showAllLink: false,
     } only %}
 {% endblock %}

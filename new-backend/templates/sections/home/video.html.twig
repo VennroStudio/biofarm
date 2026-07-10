@@ -1,37 +1,62 @@
-<section class="production-video" id="video" data-home-video-root>
-    <div class="production-video__inner">
-        <div class="production-video__content">
-            <p class="eyebrow">Наше производство</p>
-            <h2>От сырья до готового продукта</h2>
-            <p class="production-video__lead">
-                Мы контролируем каждый этап: от отбора и входного контроля сырья до производства,
-                фасовки и выпуска партии. Собственная лаборатория проверяет качество и безопасность
-                по установленным показателям, а каждая партия проходит документированную проверку.
-            </p>
+<section id="video" class="relative overflow-hidden bg-primary py-20 lg:py-32" data-home-video-root>
+    <div class="absolute inset-0 opacity-10" aria-hidden="true">
+        <div class="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,_white_1px,_transparent_1px)] bg-[length:30px_30px]"></div>
+    </div>
 
-            <ul class="production-video__facts">
-                <li>Собственная лаборатория контроля качества</li>
-                <li>Полный цикл производства</li>
-                <li>Сертификация и документация на партии</li>
-                <li>Гибкие условия сотрудничества</li>
-            </ul>
-        </div>
+    <div class="container relative z-10 mx-auto px-4">
+        <div class="grid items-center gap-12 lg:grid-cols-2">
+            <div data-reveal data-reveal-x="-30" data-reveal-y="0" data-reveal-duration="800">
+                <span class="mb-4 inline-block font-medium text-accent">Наше производство</span>
+                <h2 class="mb-6 font-display text-3xl font-bold text-primary-foreground md:text-4xl">
+                    От сырья до готового продукта
+                </h2>
+                <p class="mb-6 leading-relaxed text-primary-foreground/80">
+                    Мы контролируем каждый этап — от отбора и входного контроля сырья до производства,
+                    фасовки и выпуска партии. Собственная лаборатория проверяет качество и безопасность
+                    по установленным показателям, а каждая партия проходит документированную проверку.
+                </p>
 
-        <div class="production-video__media">
-            <img
-                src="https://biofarm.store/uploads/images/index/poster.webp"
-                alt="Производство БИОФАРМ"
-                loading="lazy"
-                decoding="async"
-            >
-            <button
-                class="production-video__play"
-                type="button"
-                aria-label="Смотреть видео о производстве"
-                data-home-video-open
-            >
-                <span></span>
-            </button>
+                <ul class="mb-8 space-y-3">
+                    <li class="flex items-center gap-3 text-primary-foreground/90" data-reveal data-reveal-x="-20" data-reveal-y="0" data-reveal-delay="300">
+                        <span class="h-2 w-2 rounded-full bg-accent" aria-hidden="true"></span>
+                        Собственная лаборатория контроля качества
+                    </li>
+                    <li class="flex items-center gap-3 text-primary-foreground/90" data-reveal data-reveal-x="-20" data-reveal-y="0" data-reveal-delay="400">
+                        <span class="h-2 w-2 rounded-full bg-accent" aria-hidden="true"></span>
+                        Полный цикл производства
+                    </li>
+                    <li class="flex items-center gap-3 text-primary-foreground/90" data-reveal data-reveal-x="-20" data-reveal-y="0" data-reveal-delay="500">
+                        <span class="h-2 w-2 rounded-full bg-accent" aria-hidden="true"></span>
+                        Сертификация и документация на партии
+                    </li>
+                    <li class="flex items-center gap-3 text-primary-foreground/90" data-reveal data-reveal-x="-20" data-reveal-y="0" data-reveal-delay="600">
+                        <span class="h-2 w-2 rounded-full bg-accent" aria-hidden="true"></span>
+                        Гибкие условия сотрудничества
+                    </li>
+                </ul>
+            </div>
+
+            <div class="relative aspect-video overflow-hidden rounded-2xl shadow-2xl" data-reveal data-reveal-x="30" data-reveal-y="0" data-reveal-duration="800" data-reveal-delay="200">
+                <img
+                    class="h-full w-full object-cover"
+                    src="https://biofarm.store/uploads/images/index/poster.webp"
+                    alt="Производство БИОФАРМ"
+                    loading="lazy"
+                    decoding="async"
+                >
+                <div class="absolute inset-0 flex items-center justify-center bg-black/30">
+                    <button
+                        class="flex h-20 w-20 items-center justify-center rounded-full bg-white/90 shadow-lg transition-all hover:scale-110 hover:bg-white"
+                        type="button"
+                        aria-label="Смотреть видео о производстве"
+                        data-home-video-open
+                    >
+                        <svg class="ml-1 h-8 w-8 text-primary" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                            <path d="M8 5v14l11-7z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -48,8 +73,9 @@
         title: 'От сырья до готового продукта',
     } only %}
         {% block body %}
-            <div class="production-video__frame">
+            <div class="aspect-video overflow-hidden rounded-lg bg-black">
                 <iframe
+                    class="h-full w-full"
                     title="О производстве БИОФАРМ"
                     data-home-video-frame
                     data-src="https://www.youtube.com/embed/O6zCel2mbfM?autoplay=1"

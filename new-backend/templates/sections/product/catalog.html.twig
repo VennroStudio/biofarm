@@ -1,0 +1,225 @@
+{% set path = basePath|default('/') %}
+{% set variant = variant|default('home') %}
+{% set isCatalogPage = variant == 'page' %}
+{% set shouldShowAllLink = showAllLink is defined ? showAllLink : true %}
+{% set activeCategory = selectedCategory|default(null) %}
+{% set hasActiveCategory = activeCategory is not empty and activeCategory != 'all' %}
+{% set currentSort = sortBy|default('default') %}
+{% set currentView = viewMode|default('grid') %}
+
+{% if isCatalogPage %}
+    <section class="bg-gradient-to-b from-primary/10 to-background pb-16 pt-32">
+        <div class="container mx-auto px-4 text-center">
+            <span class="mb-4 inline-block font-medium text-accent" data-reveal data-reveal-delay="0">Натуральные продукты</span>
+            <h1 class="mb-6 font-display text-4xl font-bold text-foreground md:text-5xl" data-reveal data-reveal-delay="100">Каталог товаров</h1>
+            <p class="mx-auto max-w-2xl text-muted-foreground" data-reveal data-reveal-delay="200">
+                Экологически чистые продукты с собственных ферм.
+                Без пестицидов, без ГМО — только природа.
+            </p>
+        </div>
+    </section>
+{% endif %}
+
+<section id="catalog" class="scroll-mt-24 {% if isCatalogPage %}py-12{% else %}py-20 lg:py-32{% endif %}">
+    <div class="container mx-auto px-4">
+        {% if not isCatalogPage %}
+            <div class="mx-auto mb-12 max-w-2xl text-center" data-reveal data-reveal-duration="600">
+                <span class="mb-4 inline-block font-medium text-accent">Наша продукция</span>
+                <h2 class="mb-6 font-display text-4xl font-bold text-foreground md:text-5xl">Каталог товаров</h2>
+                <p class="text-lg text-muted-foreground">
+                    Натуральные продукты из собственной лаборатории. Каждый товар проходит строгий
+                    контроль качества перед отправкой.
+                </p>
+            </div>
+        {% endif %}
+
+        {% if isCatalogPage %}
+            <div class="mb-8 rounded-2xl bg-card p-6 shadow-premium" data-reveal data-reveal-delay="300">
+                <div class="flex flex-col items-center justify-between gap-4 lg:flex-row">
+                    <nav class="flex flex-wrap gap-2" aria-label="Категории товаров">
+                        <a
+                            class="inline-flex min-h-9 items-center justify-center rounded-lg border px-4 text-sm font-bold transition-colors {% if not hasActiveCategory %}gradient-primary border-transparent text-primary-foreground{% else %}border-border bg-background text-foreground hover:bg-secondary{% endif %}"
+                            href="{{ allCategoryUrl }}"
+                            {% if not hasActiveCategory %}aria-current="true"{% endif %}
+                        >
+                            Все товары
+                        </a>
+                        {% for category in categories %}
+                            <a
+                                class="inline-flex min-h-9 items-center justify-center rounded-lg border px-4 text-sm font-bold transition-colors {% if hasActiveCategory and activeCategory == category.id %}gradient-primary border-transparent text-primary-foreground{% else %}border-border bg-background text-foreground hover:bg-secondary{% endif %}"
+                                href="{{ categoryUrls[category.id] }}"
+                                {% if hasActiveCategory and activeCategory == category.id %}aria-current="true"{% endif %}
+                            >
+                                {{ category.name }}
+                            </a>
+                        {% endfor %}
+                    </nav>
+
+                    <div class="flex flex-wrap items-center gap-3 max-lg:w-full max-lg:flex-col max-lg:items-stretch">
+                        <form class="max-lg:w-full" method="get" action="/catalog#catalog">
+                            {% if hasActiveCategory %}
+                                <input type="hidden" name="category" value="{{ activeCategory }}">
+                            {% endif %}
+                            {% if currentSort != 'default' %}
+                                <input type="hidden" name="sort" value="{{ currentSort }}">
+                            {% endif %}
+                            {% if currentView != 'grid' %}
+                                <input type="hidden" name="view" value="{{ currentView }}">
+                            {% endif %}
+                            <input
+                                class="h-10 w-48 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium text-foreground outline-none transition-shadow placeholder:text-muted-foreground focus:ring-2 focus:ring-ring/30 max-lg:w-full"
+                                type="search"
+                                name="q"
+                                value="{{ searchQuery|default('') }}"
+                                placeholder="Поиск товаров..."
+                                aria-label="Поиск товаров"
+                            >
+                        </form>
+
+                        <form class="relative max-lg:w-full" method="get" action="/catalog#catalog">
+                            {% if hasActiveCategory %}
+                                <input type="hidden" name="category" value="{{ activeCategory }}">
+                            {% endif %}
+                            {% if searchQuery|default('') is not empty %}
+                                <input type="hidden" name="q" value="{{ searchQuery }}">
+                            {% endif %}
+                            {% if currentView != 'grid' %}
+                                <input type="hidden" name="view" value="{{ currentView }}">
+                            {% endif %}
+                            <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <path d="M4 7h16M7 12h10M10 17h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+                            </svg>
+                            <select
+                                class="h-10 w-44 cursor-pointer appearance-none rounded-md border border-input bg-background py-2 pl-10 pr-8 text-sm font-medium text-foreground outline-none transition-shadow focus:ring-2 focus:ring-ring/30 max-lg:w-full"
+                                name="sort"
+                                aria-label="Сортировка товаров"
+                                onchange="this.form.submit()"
+                            >
+                                <option value="default" {% if currentSort == 'default' %}selected{% endif %}>По умолчанию</option>
+                                <option value="price-asc" {% if currentSort == 'price-asc' %}selected{% endif %}>Сначала дешёвые</option>
+                                <option value="price-desc" {% if currentSort == 'price-desc' %}selected{% endif %}>Сначала дорогие</option>
+                                <option value="name" {% if currentSort == 'name' %}selected{% endif %}>По названию</option>
+                            </select>
+                            <button class="sr-only" type="submit">Применить сортировку</button>
+                        </form>
+
+                        <div class="flex gap-1 max-lg:justify-end" aria-label="Вид каталога">
+                            <a
+                                class="inline-grid h-10 w-10 place-items-center rounded-lg border transition-colors {% if currentView == 'grid' %}border-primary bg-primary text-primary-foreground{% else %}border-border bg-background text-foreground hover:bg-secondary{% endif %}"
+                                href="{{ viewUrls.grid }}"
+                                aria-label="Показать сеткой"
+                                {% if currentView == 'grid' %}aria-current="true"{% endif %}
+                            >
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                    <path d="M4 4h6v6H4V4Zm10 0h6v6h-6V4ZM4 14h6v6H4v-6Zm10 0h6v6h-6v-6Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"></path>
+                                </svg>
+                            </a>
+                            <a
+                                class="inline-grid h-10 w-10 place-items-center rounded-lg border transition-colors {% if currentView == 'list' %}border-primary bg-primary text-primary-foreground{% else %}border-border bg-background text-foreground hover:bg-secondary{% endif %}"
+                                href="{{ viewUrls.list }}"
+                                aria-label="Показать списком"
+                                {% if currentView == 'list' %}aria-current="true"{% endif %}
+                            >
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                    <path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p class="mb-6 text-muted-foreground">
+                Найдено товаров: <strong class="font-semibold text-foreground">{{ productsTotal }}</strong>
+            </p>
+        {% else %}
+            <nav class="mb-12 flex flex-wrap justify-center gap-3" aria-label="Категории товаров" data-reveal data-reveal-y="0" data-reveal-delay="300">
+                <a
+                    class="inline-flex min-h-11 items-center justify-center rounded-lg border px-5 text-sm font-bold transition-colors {% if not hasActiveCategory %}gradient-primary border-transparent text-primary-foreground{% else %}border-border bg-card text-foreground hover:bg-secondary{% endif %}"
+                    href="{{ path }}#catalog"
+                    {% if not hasActiveCategory %}aria-current="true"{% endif %}
+                >
+                    Все товары
+                </a>
+                {% for category in categories %}
+                    <a
+                        class="inline-flex min-h-11 items-center justify-center rounded-lg border px-5 text-sm font-bold transition-colors {% if hasActiveCategory and activeCategory == category.id %}gradient-primary border-transparent text-primary-foreground{% else %}border-border bg-card text-foreground hover:bg-secondary{% endif %}"
+                        href="{{ path }}?category={{ category.id|url_encode }}#catalog"
+                        {% if hasActiveCategory and activeCategory == category.id %}aria-current="true"{% endif %}
+                    >
+                        {{ category.name }}
+                    </a>
+                {% endfor %}
+            </nav>
+        {% endif %}
+
+        <div class="{% if isCatalogPage and currentView == 'list' %}flex flex-col gap-4{% elseif isCatalogPage %}grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4{% else %}grid gap-8 sm:grid-cols-2 lg:grid-cols-3{% endif %}">
+            {% for product in products %}
+                {% include 'components/product/card.html.twig' with { product: product, viewMode: currentView, revealDelay: loop.index0 * 100 } only %}
+            {% else %}
+                {% include 'components/ui/empty-state.html.twig' with {
+                    title: isCatalogPage ? 'Товары не найдены' : 'Товары пока не добавлены',
+                    message: isCatalogPage
+                        ? 'Попробуйте изменить категорию или поисковый запрос.'
+                        : (
+                            hasActiveCategory
+                                ? 'В выбранной категории пока нет товаров.'
+                                : 'Каталог наполнится после миграции базы данных.'
+                        ),
+                } only %}
+                {% if isCatalogPage %}
+                    <div class="col-span-full flex justify-center">
+                        <a class="inline-flex min-h-11 items-center justify-center rounded-lg border border-border bg-card px-5 text-sm font-bold text-foreground transition-colors hover:bg-secondary" href="{{ resetUrl }}">Сбросить фильтры</a>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        {% if isCatalogPage and totalPages > 1 %}
+            <nav class="mt-8 flex items-center justify-center gap-2" aria-label="Страницы каталога">
+                {% if previousPageUrl %}
+                    <a class="inline-flex min-h-10 items-center justify-center gap-1 rounded-md px-3 text-sm font-medium text-foreground transition-colors hover:bg-card" href="{{ previousPageUrl }}">
+                        <span aria-hidden="true">‹</span>
+                        Previous
+                    </a>
+                {% else %}
+                    <span class="inline-flex min-h-10 items-center justify-center gap-1 rounded-md px-3 text-sm font-medium text-muted-foreground opacity-50" aria-disabled="true">
+                        <span aria-hidden="true">‹</span>
+                        Previous
+                    </span>
+                {% endif %}
+
+                {% for pageNumber in pageNumbers %}
+                    {% if not loop.first and pageNumber > pageNumbers[loop.index0 - 1] + 1 %}
+                        <span class="inline-flex min-h-10 min-w-10 items-center justify-center px-2 text-sm text-muted-foreground">...</span>
+                    {% endif %}
+                    <a
+                        class="inline-flex min-h-10 min-w-10 items-center justify-center rounded-md border text-sm font-medium transition-colors {% if pageNumber == currentPage %}border-border bg-card text-foreground{% else %}border-transparent text-foreground hover:border-border hover:bg-card{% endif %}"
+                        href="{{ pageUrls[pageNumber] }}"
+                        {% if pageNumber == currentPage %}aria-current="page"{% endif %}
+                    >
+                        {{ pageNumber }}
+                    </a>
+                {% endfor %}
+
+                {% if nextPageUrl %}
+                    <a class="inline-flex min-h-10 items-center justify-center gap-1 rounded-md px-3 text-sm font-medium text-foreground transition-colors hover:bg-card" href="{{ nextPageUrl }}">
+                        Next
+                        <span aria-hidden="true">›</span>
+                    </a>
+                {% else %}
+                    <span class="inline-flex min-h-10 items-center justify-center gap-1 rounded-md px-3 text-sm font-medium text-muted-foreground opacity-50" aria-disabled="true">
+                        Next
+                        <span aria-hidden="true">›</span>
+                    </span>
+                {% endif %}
+            </nav>
+        {% endif %}
+
+        {% if shouldShowAllLink %}
+            <div class="mt-12 flex justify-center" data-reveal data-reveal-y="0" data-reveal-delay="800">
+                <a class="inline-flex min-h-11 items-center justify-center rounded-lg border border-border bg-transparent px-6 text-sm font-bold text-primary transition-colors hover:bg-secondary" href="/catalog">Смотреть все товары</a>
+            </div>
+        {% endif %}
+    </div>
+</section>

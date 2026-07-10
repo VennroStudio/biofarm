@@ -8,6 +8,8 @@ use App\Http\Web\Blog\BlogPostPageController;
 use App\Http\Web\Catalog\CatalogPageController;
 use App\Http\Web\Feedback\FeedbackController;
 use App\Http\Web\Home\HomePageController;
+use App\Http\Web\Legal\PrivacyPolicyPageController;
+use App\Http\Web\Legal\PublicOfferPageController;
 use App\Http\Web\Product\CreateProductController;
 use App\Http\Web\Product\DeleteProductController;
 use App\Http\Web\Product\ProductPageController;
@@ -24,8 +26,11 @@ return static function (App $app): void {
         $group->get('/', HomePageController::class);
         $group->get('/catalog', CatalogPageController::class);
         $group->get('/catalog/{slug}', ProductPageController::class);
+        $group->get('/product/{slug}', ProductPageController::class);
         $group->get('/blog', BlogPageController::class);
         $group->get('/blog/{slug}', BlogPostPageController::class);
+        $group->get('/privacy', PrivacyPolicyPageController::class);
+        $group->get('/oferta', PublicOfferPageController::class);
 
         $group->post('/feedback', FeedbackController::class);
         $group->post('/products/create', CreateProductController::class);

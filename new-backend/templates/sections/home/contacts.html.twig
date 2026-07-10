@@ -1,0 +1,92 @@
+{% set contactInfo = [
+    {
+        icon: 'map-pin',
+        title: 'Адрес',
+        lines: ['634045, Россия, Томская область, г. Томск, особая экономическая зона микрорайон Академгородок, проспект Развитие 3Е'],
+    },
+    {
+        icon: 'clock',
+        title: 'Время работы',
+        lines: ['Пн-Пт: 10:00 - 19:00', 'Сб: 10:00 - 17:00', 'Вс: Выходной'],
+    },
+    {
+        icon: 'mail',
+        title: 'Связаться с нами',
+        lines: ['bio.active@bk.ru'],
+        buttons: [
+            { label: 'Email', icon: 'mail', href: 'mailto:bio.active@bk.ru' },
+        ],
+    },
+] %}
+
+<section id="contacts" class="py-20 lg:py-32">
+    <div class="container mx-auto px-4">
+        <div class="mb-12 text-center" data-reveal data-reveal-duration="600">
+            <span class="mb-4 inline-block font-medium text-accent">
+                Контакты
+            </span>
+            <h2 class="mb-6 font-display text-3xl font-bold text-foreground md:text-4xl">
+                Свяжитесь с нами
+            </h2>
+            <p class="mx-auto max-w-2xl text-muted-foreground">
+                Остались вопросы? Мы всегда на связи и готовы помочь вам с выбором продукции.
+            </p>
+        </div>
+
+        <div class="grid gap-8 md:grid-cols-3">
+            {% for item in contactInfo %}
+                <div class="rounded-2xl bg-card p-8 text-center shadow-premium transition-all hover:shadow-premium-lg" data-reveal data-reveal-duration="600" data-reveal-delay="{{ loop.index0 * 150 }}">
+                    <div class="gradient-primary mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-full">
+                        {% if item.icon == 'map-pin' %}
+                            <svg class="h-6 w-6 text-primary-foreground" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"></path>
+                                <circle cx="12" cy="10" r="3"></circle>
+                            </svg>
+                        {% elseif item.icon == 'clock' %}
+                            <svg class="h-6 w-6 text-primary-foreground" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="M12 6v6l4 2"></path>
+                            </svg>
+                        {% else %}
+                            <svg class="h-6 w-6 text-primary-foreground" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect width="20" height="16" x="2" y="4" rx="2"></rect>
+                                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                            </svg>
+                        {% endif %}
+                    </div>
+
+                    <h3 class="mb-4 text-lg font-bold text-foreground">
+                        {{ item.title }}
+                    </h3>
+
+                    <div class="mb-6 space-y-2">
+                        {% for line in item.lines %}
+                            <p class="text-muted-foreground">
+                                {{ line }}
+                            </p>
+                        {% endfor %}
+                    </div>
+
+                    {% if item.buttons is defined %}
+                        <div class="flex flex-col justify-center gap-3 sm:flex-row">
+                            {% for button in item.buttons %}
+                                <a
+                                    href="{{ button.href }}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-input bg-background px-3 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                                >
+                                    <svg class="mr-2 h-4 w-4" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect width="20" height="16" x="2" y="4" rx="2"></rect>
+                                        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                                    </svg>
+                                    {{ button.label }}
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>

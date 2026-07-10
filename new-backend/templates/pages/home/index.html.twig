@@ -7,20 +7,22 @@
 {% block content %}
     {% include 'sections/home/hero.html.twig' only %}
     {% include 'sections/home/features.html.twig' only %}
-    {% include 'sections/home/metrics.html.twig' with { metrics: page.metrics } only %}
-    {% include 'sections/product/featured-product.html.twig' with { product: page.featuredProduct } only %}
-    {% include 'sections/product/category-strip.html.twig' with {
+    {% include 'sections/product/catalog.html.twig' with {
+        products: page.products,
         categories: page.categories,
         categoriesTotal: page.categoriesTotal,
         selectedCategory: page.selectedCategory,
-    } only %}
-    {% include 'sections/product/product-grid.html.twig' with {
-        products: page.products,
-        selectedCategory: page.selectedCategory,
+        basePath: '/',
+        showAllLink: true,
     } only %}
     {% include 'sections/home/video.html.twig' only %}
-    {% include 'widgets/product/command-panel.html.twig' only %}
-    {% include 'sections/review/review-list.html.twig' with { reviews: page.reviews } only %}
-    {% include 'sections/order/order-list.html.twig' with { orders: page.orders } only %}
-    {% include 'sections/system/architecture.html.twig' only %}
+    {% include 'sections/home/blog.html.twig' with {
+        posts: page.blogPosts,
+    } only %}
+    {% include 'sections/home/about.html.twig' only %}
+    {% include 'sections/home/marketplaces.html.twig' only %}
+    {% include 'sections/home/reviews.html.twig' with {
+        reviews: page.reviews,
+    } only %}
+    {% include 'sections/home/contacts.html.twig' only %}
 {% endblock %}

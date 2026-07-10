@@ -1,0 +1,30 @@
+<section id="blog" class="bg-secondary/30 py-20 lg:py-32">
+    <div class="container mx-auto px-4">
+        <div class="mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-end" data-reveal data-reveal-duration="600">
+            <div>
+                <span class="mb-4 inline-block font-medium text-accent">
+                    Полезное
+                </span>
+                <h2 class="font-display text-3xl font-bold text-foreground md:text-4xl">
+                    Наш блог
+                </h2>
+            </div>
+            <a
+                href="/blog"
+                class="inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-input bg-background px-4 py-2 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+            >
+                Все статьи
+                <svg class="ml-2 h-4 w-4" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 12h14"></path>
+                    <path d="m12 5 7 7-7 7"></path>
+                </svg>
+            </a>
+        </div>
+
+        <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+            {% for post in posts %}
+                {% include 'components/blog/home-card.html.twig' with { post: post, revealDelay: loop.index0 * 150 } only %}
+            {% endfor %}
+        </div>
+    </div>
+</section>

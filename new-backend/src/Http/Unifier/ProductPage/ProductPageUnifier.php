@@ -6,20 +6,27 @@ namespace App\Http\Unifier\ProductPage;
 
 use App\Http\View\PageMetaView;
 use App\Http\View\Product\ProductPageView;
+use App\Http\Unifier\Product\ProductCatalogDataProvider;
 
 final readonly class ProductPageUnifier
 {
+    public function __construct(
+        private ProductCatalogDataProvider $products,
+    ) {}
+
     public function unify(string $slug): ProductPageView
     {
-        unset($slug);
+        $product = $this->products->pageProductBySlug($slug);
 
         return new ProductPageView(
             meta: new PageMetaView(
-                title: 'Товар — БИОФАРМ',
-                description: 'Карточка товара БИОФАРМ.',
+                title: $product !== null ? $product->title . ' — БИОФАРМ' : 'Товар — БИОФАРМ',
+                description: $product?->shortDescription ?? $product?->description ?? 'Карточка товара БИОФАРМ.',
             ),
-            product: null,
-            reviews: [],
+            product: $product,
+            relatedProducts: $product !== null
+                ? $this->products->relatedProducts($product->categoryId, $product->id)
+                : [],
         );
     }
 }

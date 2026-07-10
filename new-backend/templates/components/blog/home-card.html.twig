@@ -1,0 +1,44 @@
+{% set revealDelay = revealDelay|default(0) %}
+
+<article class="group" data-reveal data-reveal-duration="600" data-reveal-delay="{{ revealDelay }}">
+    <a href="/blog/{{ post.slug }}" class="block">
+        <div class="overflow-hidden rounded-2xl bg-card shadow-premium transition-all duration-300 hover:shadow-premium-lg">
+            <div class="relative aspect-[4/3] overflow-hidden">
+                <img
+                    src="{{ post.image }}"
+                    alt="{{ post.title }}"
+                    class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    loading="lazy"
+                    decoding="async"
+                >
+                <span class="absolute left-4 top-4 rounded-full bg-accent px-3 py-1 text-sm font-medium text-accent-foreground">
+                    {{ post.category }}
+                </span>
+            </div>
+            <div class="p-6">
+                <div class="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
+                    <svg class="h-4 w-4" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M8 2v4"></path>
+                        <path d="M16 2v4"></path>
+                        <rect width="18" height="18" x="3" y="4" rx="2"></rect>
+                        <path d="M3 10h18"></path>
+                    </svg>
+                    {{ post.date }}
+                </div>
+                <h3 class="mb-3 line-clamp-2 text-lg font-bold text-foreground transition-colors group-hover:text-primary">
+                    {{ post.title }}
+                </h3>
+                <p class="mb-4 line-clamp-2 text-sm text-muted-foreground">
+                    {{ post.excerpt }}
+                </p>
+                <span class="inline-flex items-center font-medium text-primary">
+                    Читать далее
+                    <svg class="ml-1 h-4 w-4" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M5 12h14"></path>
+                        <path d="m12 5 7 7-7 7"></path>
+                    </svg>
+                </span>
+            </div>
+        </div>
+    </a>
+</article>
