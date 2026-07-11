@@ -1,7 +1,7 @@
 import { Upload } from 'lucide-react';
 import { useState } from 'react';
-import { uploadImage } from '../api/client';
-import { Button } from './ui';
+import { uploadImage } from '../../../api/client';
+import { Button } from '../../../shared/ui';
 
 type Props = {
   scope: string;

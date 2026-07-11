@@ -2,7 +2,7 @@ import { Lock, Mail, Shield } from 'lucide-react';
 import { FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login } from '../api/client';
-import { Button, Card, Field, inputClass } from '../components/ui';
+import { Button, Card, Field, inputClass } from '../shared/ui';
 
 export function AdminLogin() {
   const navigate = useNavigate();

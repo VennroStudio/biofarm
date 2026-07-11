@@ -1,25 +1,22 @@
-import { Edit, Plus, Trash2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { FormEvent, useMemo, useState } from 'react';
 import { categoriesApi, productsApi } from '../api/resources';
-import { Badge, Button, Card, EmptyState, Field, inputClass, Modal, PageHeader } from '../components/ui';
+import {
+  categoryFormFromCategory,
+  categoryPayloadFromForm,
+  emptyCategoryForm,
+  type CategoryForm,
+} from '../features/categories/model/categoryForm';
+import { CategoryCards } from '../features/categories/ui/CategoryCards';
+import { CategoryFormModal } from '../features/categories/ui/CategoryFormModal';
 import { useLoadOnMount } from '../hooks/useLoadOnMount';
+import { Button, PageHeader } from '../shared/ui';
 import type { Category, Product } from '../types';
-
-type CategoryForm = {
-  id?: number;
-  name: string;
-  slug: string;
-};
-
-const emptyForm: CategoryForm = {
-  name: '',
-  slug: '',
-};
 
 export function AdminCategories() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
-  const [form, setForm] = useState<CategoryForm>(emptyForm);
+  const [form, setForm] = useState<CategoryForm>(emptyCategoryForm);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -38,12 +35,12 @@ export function AdminCategories() {
   useLoadOnMount(load);
 
   function openCreate() {
-    setForm(emptyForm);
+    setForm(emptyCategoryForm);
     setDialogOpen(true);
   }
 
   function openEdit(category: Category) {
-    setForm({ id: category.id, name: category.name, slug: category.slug });
+    setForm(categoryFormFromCategory(category));
     setDialogOpen(true);
   }
 
@@ -51,11 +48,10 @@ export function AdminCategories() {
     event.preventDefault();
     setSaving(true);
     try {
-      const payload = { name: form.name, slug: form.slug || null };
       if (form.id) {
-        await categoriesApi.update(form.id, payload);
+        await categoriesApi.update(form.id, categoryPayloadFromForm(form));
       } else {
-        await categoriesApi.create(payload);
+        await categoriesApi.create(categoryPayloadFromForm(form));
       }
       setDialogOpen(false);
       await load();
@@ -85,54 +81,21 @@ export function AdminCategories() {
         actions={<Button onClick={openCreate}><Plus className="h-4 w-4" />Добавить категорию</Button>}
       />
 
-      {categories.length === 0 ? (
-        <EmptyState>Категории не найдены</EmptyState>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {categories.map((category) => (
-            <Card key={category.id} className="group p-6">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-[#26382d]">{category.name}</h3>
-                  <Badge tone="gray" className="mt-3">{productCounts.get(String(category.id)) ?? 0} товаров</Badge>
-                </div>
-                <div className="flex gap-1 opacity-0 transition group-hover:opacity-100">
-                  <Button variant="ghost" size="icon" onClick={() => openEdit(category)} title="Изменить">
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="text-[#ef4444]" onClick={() => void remove(category)} title="Удалить">
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
-      )}
+      <CategoryCards
+        categories={categories}
+        productCounts={productCounts}
+        onEdit={openEdit}
+        onRemove={(category) => void remove(category)}
+      />
 
-      <Modal
+      <CategoryFormModal
+        form={form}
         open={dialogOpen}
-        title={form.id ? 'Редактировать категорию' : 'Новая категория'}
+        saving={saving}
+        setForm={setForm}
         onClose={() => setDialogOpen(false)}
-        maxWidth="max-w-md"
-        footer={(
-          <>
-            <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Отмена</Button>
-            <Button type="submit" form="admin-category-form" disabled={saving || !form.name}>
-              {saving ? 'Сохранение...' : (form.id ? 'Сохранить' : 'Добавить')}
-            </Button>
-          </>
-        )}
-      >
-        <form id="admin-category-form" className="grid gap-4" onSubmit={(event) => void submit(event)}>
-          <Field label="Название *">
-            <input className={inputClass} value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} />
-          </Field>
-          <Field label="Slug">
-            <input className={inputClass} value={form.slug} onChange={(event) => setForm({ ...form, slug: event.target.value })} />
-          </Field>
-        </form>
-      </Modal>
+        onSubmit={(event) => void submit(event)}
+      />
     </>
   );
 }
