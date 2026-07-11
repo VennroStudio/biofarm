@@ -17,8 +17,8 @@ final readonly class ImageCompressor
 
     public function compress(string $sourcePath, string $sourceMime): CompressedImage
     {
-        $image   = $this->load($sourcePath, $sourceMime);
-        $image   = $this->resizeIfNeeded($image);
+        $image = $this->load($sourcePath, $sourceMime);
+        $image = $this->resizeIfNeeded($image);
         $tmpPath = tempnam(sys_get_temp_dir(), 'img_') . '.avif';
 
         try {
@@ -46,7 +46,7 @@ final readonly class ImageCompressor
             throw new RuntimeException("Cannot load image: {$path}");
         }
 
-        if ($mime === 'image/jpeg' && function_exists('exif_read_data')) {
+        if ($mime === 'image/jpeg' && \function_exists('exif_read_data')) {
             $image = $this->autoRotate($image, $path);
         }
 
@@ -62,9 +62,9 @@ final readonly class ImageCompressor
             return $image;
         }
 
-        $ratio   = min($this->maxWidth / $w, $this->maxHeight / $h);
-        $newW    = (int) round($w * $ratio);
-        $newH    = (int) round($h * $ratio);
+        $ratio = min($this->maxWidth / $w, $this->maxHeight / $h);
+        $newW = (int)round($w * $ratio);
+        $newH = (int)round($h * $ratio);
         $resized = imagecreatetruecolor($newW, $newH);
 
         imagealphablending($resized, false);
@@ -77,7 +77,7 @@ final readonly class ImageCompressor
 
     private function autoRotate(GdImage $image, string $path): GdImage
     {
-        $exif        = @exif_read_data($path);
+        $exif = @exif_read_data($path);
         $orientation = $exif['Orientation'] ?? 1;
 
         $rotated = match ($orientation) {

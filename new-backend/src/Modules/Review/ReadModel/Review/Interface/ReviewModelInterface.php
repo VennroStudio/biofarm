@@ -6,6 +6,4 @@ namespace App\Modules\Review\ReadModel\Review\Interface;
 
 use App\Components\ReadModel\ReadModelInterface;
 
-interface ReviewModelInterface extends ReadModelInterface
-{
-}
+interface ReviewModelInterface extends ReadModelInterface {}

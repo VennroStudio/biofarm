@@ -4,26 +4,27 @@ declare(strict_types=1);
 
 namespace App\Http\Unifier\Home;
 
+use App\Http\Unifier\Product\ProductCatalogDataProvider;
 use App\Http\View\Blog\BlogPostView;
 use App\Http\View\Home\HomeCategoryView;
 use App\Http\View\Home\HomePageView;
 use App\Http\View\Home\HomeReviewView;
 use App\Http\View\PageMetaView;
-use App\Http\Unifier\Product\ProductCatalogDataProvider;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Exception;
 
 final readonly class HomePageUnifier
 {
     private const array MONTHS = [
-        1 => 'января',
-        2 => 'февраля',
-        3 => 'марта',
-        4 => 'апреля',
-        5 => 'мая',
-        6 => 'июня',
-        7 => 'июля',
-        8 => 'августа',
-        9 => 'сентября',
+        1  => 'января',
+        2  => 'февраля',
+        3  => 'марта',
+        4  => 'апреля',
+        5  => 'мая',
+        6  => 'июня',
+        7  => 'июля',
+        8  => 'августа',
+        9  => 'сентября',
         10 => 'октября',
         11 => 'ноября',
         12 => 'декабря',
@@ -59,7 +60,7 @@ final readonly class HomePageUnifier
 
     /**
      * @return list<BlogPostView>
-     * @throws \Doctrine\DBAL\Exception
+     * @throws Exception
      */
     private function blogPosts(): array
     {
@@ -85,7 +86,7 @@ final readonly class HomePageUnifier
             ->executeQuery()
             ->fetchAllAssociative();
 
-        return array_map(fn (array $row): BlogPostView => $this->mapPost($row), $rows);
+        return array_map($this->mapPost(...), $rows);
     }
 
     /**
@@ -110,7 +111,7 @@ final readonly class HomePageUnifier
 
     /**
      * @return list<HomeReviewView>
-     * @throws \Doctrine\DBAL\Exception
+     * @throws Exception
      */
     private function reviews(): array
     {
@@ -134,14 +135,14 @@ final readonly class HomePageUnifier
             ->executeQuery()
             ->fetchAllAssociative();
 
-        $reviews = array_map(fn (array $row): HomeReviewView => $this->mapReview($row), $rows);
+        $reviews = array_map($this->mapReview(...), $rows);
 
         if ($reviews !== [] && \count($reviews) < 3) {
             while (\count($reviews) < 3) {
                 $reviews = [...$reviews, ...$reviews];
             }
 
-            $reviews = array_slice($reviews, 0, 3);
+            $reviews = \array_slice($reviews, 0, 3);
         }
 
         return $reviews;

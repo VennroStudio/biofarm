@@ -8,6 +8,7 @@ use App\Http\View\Blog\BlogPageView;
 use App\Http\View\Blog\BlogPostView;
 use App\Http\View\PageMetaView;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Exception;
 use Doctrine\DBAL\Query\QueryBuilder;
 
 final readonly class BlogPageUnifier
@@ -15,15 +16,15 @@ final readonly class BlogPageUnifier
     private const int POSTS_PER_PAGE = 9;
     private const array CATEGORIES = ['Все', 'Советы', 'Здоровье', 'О нас', 'Рецепты'];
     private const array MONTHS = [
-        1 => 'января',
-        2 => 'февраля',
-        3 => 'марта',
-        4 => 'апреля',
-        5 => 'мая',
-        6 => 'июня',
-        7 => 'июля',
-        8 => 'августа',
-        9 => 'сентября',
+        1  => 'января',
+        2  => 'февраля',
+        3  => 'марта',
+        4  => 'апреля',
+        5  => 'мая',
+        6  => 'июня',
+        7  => 'июля',
+        8  => 'августа',
+        9  => 'сентября',
         10 => 'октября',
         11 => 'ноября',
         12 => 'декабря',
@@ -34,7 +35,7 @@ final readonly class BlogPageUnifier
     ) {}
 
     /**
-     * @throws \Doctrine\DBAL\Exception
+     * @throws Exception
      */
     public function unify(?string $selectedCategory = null, ?string $searchQuery = null, int $page = 1): BlogPageView
     {
@@ -53,7 +54,7 @@ final readonly class BlogPageUnifier
             ),
             posts: $posts,
             featuredPost: $featuredPost,
-            otherPosts: $currentPage === 1 ? array_slice($posts, 1) : $posts,
+            otherPosts: $currentPage === 1 ? \array_slice($posts, 1) : $posts,
             categories: self::CATEGORIES,
             categoryUrls: $this->categoryUrls($searchQuery),
             selectedCategory: $selectedCategory,
@@ -69,7 +70,7 @@ final readonly class BlogPageUnifier
 
     /**
      * @return list<BlogPostView>
-     * @throws \Doctrine\DBAL\Exception
+     * @throws Exception
      */
     private function posts(string $selectedCategory, string $searchQuery, int $currentPage): array
     {
@@ -93,11 +94,11 @@ final readonly class BlogPageUnifier
             ->executeQuery()
             ->fetchAllAssociative();
 
-        return array_map(fn (array $row): BlogPostView => $this->mapPost($row), $rows);
+        return array_map($this->mapPost(...), $rows);
     }
 
     /**
-     * @throws \Doctrine\DBAL\Exception
+     * @throws Exception
      */
     private function countPosts(string $selectedCategory, string $searchQuery): int
     {
@@ -133,7 +134,7 @@ final readonly class BlogPageUnifier
     {
         $category = trim((string)$category);
 
-        return in_array($category, self::CATEGORIES, true) ? $category : 'Все';
+        return \in_array($category, self::CATEGORIES, true) ? $category : 'Все';
     }
 
     /**
@@ -192,7 +193,7 @@ final readonly class BlogPageUnifier
 
         $visiblePages = [];
 
-        for ($page = 1; $page <= $totalPages; $page++) {
+        for ($page = 1; $page <= $totalPages; ++$page) {
             if ($page === 1 || $page === $totalPages || abs($page - $currentPage) <= 2) {
                 $visiblePages[] = $page;
             }
@@ -207,9 +208,9 @@ final readonly class BlogPageUnifier
             }
 
             $items[] = [
-                'type' => 'page',
-                'page' => $page,
-                'url' => $this->pageUrl($page, $selectedCategory, $searchQuery),
+                'type'    => 'page',
+                'page'    => $page,
+                'url'     => $this->pageUrl($page, $selectedCategory, $searchQuery),
                 'current' => $page === $currentPage,
             ];
 

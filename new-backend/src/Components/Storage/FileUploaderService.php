@@ -25,16 +25,33 @@ final readonly class FileUploaderService
         FileValidator $validator,
         ?string $oldFilePath = null,
     ): string {
+        return $this->uploadWithMetadata(
+            tmpFilePath: $tmpFilePath,
+            destinationDir: $destinationDir,
+            validator: $validator,
+            oldFilePath: $oldFilePath,
+        )->path;
+    }
+
+    /**
+     * @throws RandomException
+     */
+    public function uploadWithMetadata(
+        string $tmpFilePath,
+        string $destinationDir,
+        FileValidator $validator,
+        ?string $oldFilePath = null,
+    ): UploadedFileResult {
         $mimeType = $this->detectMimeType($tmpFilePath);
-        $fileSize = (int) filesize($tmpFilePath);
+        $fileSize = (int)filesize($tmpFilePath);
 
         $validator->validate($mimeType, $fileSize);
 
         $compressed = null;
         if ($this->compressor !== null && $validator instanceof ImageFileValidator) {
-            $compressed  = $this->compressor->compress($tmpFilePath, $mimeType);
+            $compressed = $this->compressor->compress($tmpFilePath, $mimeType);
             $tmpFilePath = $compressed->path;
-            $mimeType    = $compressed->mime;
+            $mimeType = $compressed->mime;
         }
 
         try {
@@ -47,13 +64,23 @@ final readonly class FileUploaderService
             $stream = $this->openStream($tmpFilePath);
             $this->storage->upload($finalPath, $stream, $mimeType);
             $stream->close();
+
+            $finalSize = (int)filesize($tmpFilePath);
+            $dimensions = $this->detectImageDimensions($tmpFilePath);
         } finally {
             if ($compressed !== null) {
                 @unlink($compressed->path);
             }
         }
 
-        return $finalPath;
+        return new UploadedFileResult(
+            path: $finalPath,
+            url: $this->storage->url($finalPath),
+            mimeType: $mimeType,
+            size: $finalSize,
+            width: $dimensions['width'],
+            height: $dimensions['height'],
+        );
     }
 
     private function detectMimeType(string $filePath): string
@@ -74,7 +101,7 @@ final readonly class FileUploaderService
     {
         $uuid = bin2hex(random_bytes(16));
 
-        return sprintf('%s/%s.%s', rtrim($destinationDir, '/'), $uuid, $extension);
+        return \sprintf('%s/%s.%s', rtrim($destinationDir, '/'), $uuid, $extension);
     }
 
     private function openStream(string $filePath): Stream
@@ -86,5 +113,25 @@ final readonly class FileUploaderService
         }
 
         return new Stream($resource);
+    }
+
+    /**
+     * @return array{width: int|null, height: int|null}
+     */
+    private function detectImageDimensions(string $filePath): array
+    {
+        $size = @getimagesize($filePath);
+
+        if ($size === false) {
+            return [
+                'width'  => null,
+                'height' => null,
+            ];
+        }
+
+        return [
+            'width'  => $size[0],
+            'height' => $size[1],
+        ];
     }
 }

@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <title>{{ meta.title|default('Админка БИОФАРМ') }}</title>
+    <link rel="stylesheet" href="{{ vite_asset('assets/styles/app.css') }}">
+</head>
+<body class="bg-[#f6f5ee] font-sans text-[#1f3328] antialiased">
+    <main id="admin-root" class="min-h-screen"></main>
+    <script type="module" src="{{ vite_asset('assets/react/admin/main.tsx') }}"></script>
+</body>
+</html>

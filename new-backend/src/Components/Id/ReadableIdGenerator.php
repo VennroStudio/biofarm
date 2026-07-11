@@ -16,7 +16,7 @@ final readonly class ReadableIdGenerator
      */
     public function generate(string $prefix): string
     {
-        return sprintf(
+        return \sprintf(
             '%s-%s-%04d',
             $prefix,
             UtcClock::now()->format('YmdHis'),

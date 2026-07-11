@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Unifier\ProductPage;
 
+use App\Http\Unifier\Product\ProductCatalogDataProvider;
 use App\Http\View\PageMetaView;
 use App\Http\View\Product\ProductPageView;
-use App\Http\Unifier\Product\ProductCatalogDataProvider;
 
 final readonly class ProductPageUnifier
 {

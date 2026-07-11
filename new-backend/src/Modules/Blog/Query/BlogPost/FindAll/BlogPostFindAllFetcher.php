@@ -65,7 +65,7 @@ final readonly class BlogPostFindAllFetcher
 
     private function cacheKey(BlogPostFindAllQuery $query): string
     {
-        return sprintf(
+        return \sprintf(
             'blog_posts_find_all_%s_%d_%d',
             $query->onlyPublished ? 'published' : 'any',
             $query->page,

@@ -54,12 +54,12 @@ final readonly class OrderDetailsHydrator
         }
 
         $itemsByOrderId = $this->itemsByOrderId(array_values(array_map(
-            static fn(array $row): string => $row['id'],
+            static fn (array $row): string => $row['id'],
             $rows,
         )));
 
         return array_map(
-            static fn(array $row): OrderDetails => OrderDetails::fromRowWithItems(
+            static fn (array $row): OrderDetails => OrderDetails::fromRowWithItems(
                 $row,
                 $itemsByOrderId[$row['id']] ?? [],
             ),

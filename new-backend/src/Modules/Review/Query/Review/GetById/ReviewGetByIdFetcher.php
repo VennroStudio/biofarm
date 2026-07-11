@@ -52,7 +52,7 @@ final readonly class ReviewGetByIdFetcher
             );
         }
 
-        /** @var array{id: string, product_id: int|string, user_id: string|null, user_name: string, rating: int|string, text: string, images: list<string>|string|null, source: string, is_approved: int|string|bool, created_at: string, updated_at: string|null} $row */
+        /** @var array{id: string, product_id: int|string, user_id: string|null, user_name: string, rating: int|string, text: string, images: list<string>|string|null, source: string, is_approved: bool|int|string, created_at: string, updated_at: string|null} $row */
         $review = ReviewDetails::fromRow($row);
         $this->cacher->set($key, $review, self::CACHE_TTL);
 

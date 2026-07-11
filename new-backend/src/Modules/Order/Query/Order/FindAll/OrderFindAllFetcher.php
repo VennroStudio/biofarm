@@ -29,7 +29,7 @@ final readonly class OrderFindAllFetcher
      */
     public function fetch(OrderFindAllQuery $query): ModelCountItemsResult
     {
-        $key = sprintf('orders_find_all_%d_%d', $query->page, $query->perPage);
+        $key = \sprintf('orders_find_all_%d_%d', $query->page, $query->perPage);
 
         /** @var ModelCountItemsResult<OrderDetails>|null $cached */
         $cached = $this->cacher->get($key);

@@ -56,7 +56,7 @@ final readonly class BlogPostGetByIdFetcher
             );
         }
 
-        /** @var array{id: int|string, slug: string, title: string, excerpt: string, content: string, image: string, category_id: string, author_name: string, read_time: int|string, is_published: int|string|bool, created_at: string, updated_at: string|null} $row */
+        /** @var array{id: int|string, slug: string, title: string, excerpt: string, content: string, image: string, category_id: string, author_name: string, read_time: int|string, is_published: bool|int|string, created_at: string, updated_at: string|null} $row */
         $post = BlogPostDetails::fromRow($row);
         $this->cacher->setTagged($key, $post, self::CACHE_TTL, ['blog_posts']);
 

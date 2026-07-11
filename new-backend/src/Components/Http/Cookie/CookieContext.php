@@ -22,7 +22,7 @@ final readonly class CookieContext
                 'ttl'      => 2592000,
                 'httpOnly' => true,
             ],
-            'loggedIn'     => [
+            'loggedIn' => [
                 'name'     => 'logged_in',
                 'ttl'      => 2592000,
                 'httpOnly' => false,

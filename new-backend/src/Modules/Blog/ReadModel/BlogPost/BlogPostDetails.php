@@ -56,7 +56,7 @@ final readonly class BlogPostDetails implements BlogPostModelInterface
      *     category_id: string,
      *     author_name: string,
      *     read_time: int,
-     *     is_published: int|string|bool,
+     *     is_published: bool|int|string,
      *     created_at: string,
      *     updated_at: string|null
      * } $row

@@ -12,6 +12,7 @@ export default defineConfig({
       input: {
         app: 'assets/styles/app.css',
         mount: 'assets/react/mount.tsx',
+        admin: 'assets/react/admin/main.tsx',
       },
     },
   },

@@ -6,6 +6,4 @@ namespace App\Modules\Product\ReadModel\ProductCategory\Interface;
 
 use App\Components\ReadModel\ReadModelInterface;
 
-interface ProductCategoryModelInterface extends ReadModelInterface
-{
-}
+interface ProductCategoryModelInterface extends ReadModelInterface {}

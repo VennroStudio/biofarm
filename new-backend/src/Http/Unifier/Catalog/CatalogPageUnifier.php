@@ -25,8 +25,7 @@ final readonly class CatalogPageUnifier
         ?string $sortBy = null,
         ?string $viewMode = null,
         ?int $page = null,
-    ): CatalogPageView
-    {
+    ): CatalogPageView {
         $category = $this->normalizeCategory($selectedCategory);
         $query = $this->normalizeSearch($searchQuery);
         $sort = $this->normalizeSort($sortBy);
@@ -114,7 +113,7 @@ final readonly class CatalogPageUnifier
     private function pageNumbers(int $currentPage, int $totalPages): array
     {
         $pages = [];
-        for ($page = 1; $page <= $totalPages; $page++) {
+        for ($page = 1; $page <= $totalPages; ++$page) {
             if ($page === 1 || $page === $totalPages || abs($page - $currentPage) <= 2) {
                 $pages[] = $page;
             }
@@ -160,10 +159,10 @@ final readonly class CatalogPageUnifier
     ): string {
         $params = [
             'category' => $category,
-            'q' => $query,
-            'sort' => $sort !== 'default' ? $sort : null,
-            'view' => $view !== 'grid' ? $view : null,
-            'page' => $page > 1 ? $page : null,
+            'q'        => $query,
+            'sort'     => $sort !== 'default' ? $sort : null,
+            'view'     => $view !== 'grid' ? $view : null,
+            'page'     => $page > 1 ? $page : null,
         ];
 
         $params = array_filter(

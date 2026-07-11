@@ -21,8 +21,8 @@ final class FileDownloadResponse extends Response
         parent::__construct(
             $status,
             new Headers([
-                'Content-Type' => $contentType,
-                'Content-Disposition' => sprintf(
+                'Content-Type'        => $contentType,
+                'Content-Disposition' => \sprintf(
                     'attachment; filename="%s"; filename*=UTF-8\'\'%s',
                     $fileName,
                     rawurlencode($fileName),

@@ -6,6 +6,4 @@ namespace App\Modules\Blog\ReadModel\BlogPost\Interface;
 
 use App\Components\ReadModel\ReadModelInterface;
 
-interface BlogPostModelInterface extends ReadModelInterface
-{
-}
+interface BlogPostModelInterface extends ReadModelInterface {}

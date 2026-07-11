@@ -52,7 +52,7 @@ final readonly class ProductGetByIdFetcher
             );
         }
 
-        /** @var array{id: int|string, slug: string, name: string, category_id: string, price: int|string, old_price: int|string|null, image: string, images: list<string>|string|null, badge: string|null, weight: string, description: string, short_description: string|null, ingredients: string|null, features: list<string>|string|null, wb_link: string|null, ozon_link: string|null, is_active: int|string|bool, created_at: string, updated_at: string|null} $row */
+        /** @var array{id: int|string, slug: string, name: string, category_id: string, price: int|string, old_price: int|string|null, image: string, images: list<string>|string|null, badge: string|null, weight: string, description: string, short_description: string|null, ingredients: string|null, features: list<string>|string|null, wb_link: string|null, ozon_link: string|null, is_active: bool|int|string, created_at: string, updated_at: string|null} $row */
         $product = ProductDetails::fromRow($row);
         $this->cacher->setTagged($key, $product, self::CACHE_TTL, ['products']);
 

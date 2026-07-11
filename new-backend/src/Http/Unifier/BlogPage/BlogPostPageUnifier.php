@@ -8,19 +8,20 @@ use App\Http\View\Blog\BlogPostPageView;
 use App\Http\View\Blog\BlogPostView;
 use App\Http\View\PageMetaView;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Exception;
 
 final readonly class BlogPostPageUnifier
 {
     private const array MONTHS = [
-        1 => 'января',
-        2 => 'февраля',
-        3 => 'марта',
-        4 => 'апреля',
-        5 => 'мая',
-        6 => 'июня',
-        7 => 'июля',
-        8 => 'августа',
-        9 => 'сентября',
+        1  => 'января',
+        2  => 'февраля',
+        3  => 'марта',
+        4  => 'апреля',
+        5  => 'мая',
+        6  => 'июня',
+        7  => 'июля',
+        8  => 'августа',
+        9  => 'сентября',
         10 => 'октября',
         11 => 'ноября',
         12 => 'декабря',
@@ -31,7 +32,7 @@ final readonly class BlogPostPageUnifier
     ) {}
 
     /**
-     * @throws \Doctrine\DBAL\Exception
+     * @throws Exception
      */
     public function unify(string $slug): BlogPostPageView
     {
@@ -48,7 +49,7 @@ final readonly class BlogPostPageUnifier
     }
 
     /**
-     * @throws \Doctrine\DBAL\Exception
+     * @throws Exception
      */
     private function post(string $slug): ?BlogPostView
     {
@@ -83,7 +84,7 @@ final readonly class BlogPostPageUnifier
 
     /**
      * @return list<BlogPostView>
-     * @throws \Doctrine\DBAL\Exception
+     * @throws Exception
      */
     private function relatedPosts(BlogPostView $post): array
     {

@@ -75,7 +75,7 @@ final readonly class ProductFindAllFetcher
 
     private function cacheKey(ProductFindAllQuery $query): string
     {
-        return sprintf(
+        return \sprintf(
             'products_find_all_%s_%s_%s_%d_%d',
             $query->category !== null && $query->category !== '' ? $query->category : 'all',
             $query->includeInactive ? 'with_inactive' : 'active',

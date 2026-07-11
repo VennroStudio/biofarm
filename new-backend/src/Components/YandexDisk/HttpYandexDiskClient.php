@@ -22,12 +22,12 @@ final readonly class HttpYandexDiskClient implements YandexDiskClient
     #[Override]
     public function upload(string $tmpFilePath, string $folder, string $fileName): string
     {
-        $diskPath  = $folder . '/' . $fileName;
+        $diskPath = $folder . '/' . $fileName;
         $this->ensureDirectoryExists($folder, 'upload_link_failed');
 
         $uploadUrl = $this->getHref('/upload', ['path' => $diskPath, 'overwrite' => 'true'], 'upload_link_failed');
 
-        $fp = fopen($tmpFilePath, 'r');
+        $fp = fopen($tmpFilePath, 'rb');
         if ($fp === false) {
             throw new DomainExceptionModule(
                 module: 'yandex_disk',
@@ -42,7 +42,7 @@ final readonly class HttpYandexDiskClient implements YandexDiskClient
                 'http_errors' => false,
             ]);
         } finally {
-            if (is_resource($fp)) {
+            if (\is_resource($fp)) {
                 fclose($fp);
             }
         }
@@ -98,7 +98,7 @@ final readonly class HttpYandexDiskClient implements YandexDiskClient
 
     private function ensureDirectoryExists(string $folder, string $errorKey): void
     {
-        $parts = array_values(array_filter(explode('/', $folder), static fn(string $part): bool => $part !== ''));
+        $parts = array_values(array_filter(explode('/', $folder), static fn (string $part): bool => $part !== ''));
         $path = '';
 
         foreach ($parts as $part) {

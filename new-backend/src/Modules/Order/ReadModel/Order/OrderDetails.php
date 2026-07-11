@@ -194,7 +194,7 @@ final readonly class OrderDetails implements OrderModelInterface
             'paid_at'          => $this->paidAt,
             'updated_at'       => $this->updatedAt,
             'items'            => array_map(
-                static fn(OrderItemDetails $item): array => $item->toArray(),
+                static fn (OrderItemDetails $item): array => $item->toArray(),
                 $this->items,
             ),
         ];

@@ -20,7 +20,7 @@
 | `ReadModel` | Общие DTO | `ModelCountItemsResult`, `FromRowsTrait` |
 | `Router` | Маршрутизация | `Route`, `StaticRouteGroup` |
 | `Serializer` | Денормализация | `Denormalizer` — `denormalize()` / `denormalizeStrict()` |
-| `Storage` | Файлы | `S3Storage`, `FileUploaderService`, `PhotoFileValidator`, `S3Transformer` |
+| `Storage` | Файлы | `LocalStorage`, `FileUploaderService`, `ImageFileValidator` |
 | `Translation` | Переводы компонентов | `errors.{locale}.php` |
 | `Translator` | Переводы в Twig | `TranslatorTwigExtension` — функция `trans()` |
 | `Validator` | Валидация | `Validator`, `ValidationException` |

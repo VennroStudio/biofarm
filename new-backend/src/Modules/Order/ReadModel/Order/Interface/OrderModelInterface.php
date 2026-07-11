@@ -6,6 +6,4 @@ namespace App\Modules\Order\ReadModel\Order\Interface;
 
 use App\Components\ReadModel\ReadModelInterface;
 
-interface OrderModelInterface extends ReadModelInterface
-{
-}
+interface OrderModelInterface extends ReadModelInterface {}

@@ -81,7 +81,7 @@ final readonly class ProductDetails implements ProductModelInterface
      *     features: list<string>|string|null,
      *     wb_link: string|null,
      *     ozon_link: string|null,
-     *     is_active: int|string|bool,
+     *     is_active: bool|int|string,
      *     created_at: string,
      *     updated_at: string|null
      * } $row

@@ -15,12 +15,15 @@
     },
     "require": {
         "php": ">=8.4",
+        "ext-exif": "*",
         "ext-fileinfo": "*",
-        "aws/aws-sdk-php": "^3.372",
+        "ext-gd": "*",
+        "ext-redis": "*",
         "doctrine/data-fixtures": "^2.2",
         "doctrine/migrations": "^3.9",
         "doctrine/orm": "^3.6",
         "firebase/php-jwt": "^7.0",
+        "guzzlehttp/guzzle": "^7.14",
         "laminas/laminas-config-aggregator": "^1.19",
         "monolog/monolog": "^3.10",
         "php-di/php-di": "^7.1",
@@ -38,10 +41,7 @@
         "symfony/validator": "^8.0",
         "twig/twig": "^3.23",
         "vlucas/phpdotenv": "^5.6",
-        "zircote/swagger-php": "^6.0",
-        "ext-redis": "*",
-        "ext-gd": "*",
-        "ext-exif": "*"
+        "zircote/swagger-php": "^6.0"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.93",

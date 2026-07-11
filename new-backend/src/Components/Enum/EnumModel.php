@@ -16,8 +16,6 @@ final readonly class EnumModel
 
     /**
      * @template T of BackedEnum&EnumInterface
-     * @param EnumInterface&BackedEnum $enum
-     * @return EnumModel
      */
     public static function fromEnum(BackedEnum&EnumInterface $enum): self
     {
@@ -35,7 +33,7 @@ final readonly class EnumModel
     public static function fromEnumClass(string $enumClass): array
     {
         return array_map(
-            static fn($case) => self::fromEnum($case),
+            self::fromEnum(...),
             $enumClass::cases(),
         );
     }
@@ -48,7 +46,7 @@ final readonly class EnumModel
     public static function fromEnumClassForRole(string $enumClass, UserRole $role): array
     {
         return array_map(
-            static fn($case) => self::fromEnum($case),
+            self::fromEnum(...),
             $enumClass::casesForRole($role),
         );
     }

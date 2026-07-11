@@ -78,18 +78,6 @@ class RedisCacher implements Cacher
         $this->redis?->del($key);
     }
 
-    private function addTag(string $tag, string $key, int $ttl): void
-    {
-        if (!$this->isConnected()) {
-            $this->connect();
-        }
-
-        $tagKey = $this->tagKey($tag);
-
-        $this->redis?->sAdd($tagKey, $key);
-        $this->redis?->expire($tagKey, $ttl);
-    }
-
     #[Override]
     public function deleteTag(string $tag): void
     {
@@ -256,8 +244,20 @@ class RedisCacher implements Cacher
 
         return array_values(array_filter(
             $result,
-            static fn($value): bool => \is_string($value),
+            \is_string(...),
         ));
+    }
+
+    private function addTag(string $tag, string $key, int $ttl): void
+    {
+        if (!$this->isConnected()) {
+            $this->connect();
+        }
+
+        $tagKey = $this->tagKey($tag);
+
+        $this->redis?->sAdd($tagKey, $key);
+        $this->redis?->expire($tagKey, $ttl);
     }
 
     private function connect(): void

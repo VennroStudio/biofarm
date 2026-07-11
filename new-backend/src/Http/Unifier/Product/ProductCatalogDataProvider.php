@@ -32,8 +32,7 @@ final readonly class ProductCatalogDataProvider
         ?string $search = null,
         string $sort = 'default',
         int $offset = 0,
-    ): array
-    {
+    ): array {
         $category = $this->normalizeCategory($selectedCategory);
         $query = $this->normalizeSearch($search);
 
@@ -388,10 +387,10 @@ final readonly class ProductCatalogDataProvider
     private function applySort(QueryBuilder $qb, string $sort): void
     {
         match ($sort) {
-            'price-asc' => $qb->orderBy('p.price', 'ASC')->addOrderBy('p.id', 'ASC'),
+            'price-asc'  => $qb->orderBy('p.price', 'ASC')->addOrderBy('p.id', 'ASC'),
             'price-desc' => $qb->orderBy('p.price', 'DESC')->addOrderBy('p.id', 'ASC'),
-            'name' => $qb->orderBy('p.name', 'ASC')->addOrderBy('p.id', 'ASC'),
-            default => $qb->orderBy('p.created_at', 'DESC')->addOrderBy('p.id', 'ASC'),
+            'name'       => $qb->orderBy('p.name', 'ASC')->addOrderBy('p.id', 'ASC'),
+            default      => $qb->orderBy('p.created_at', 'DESC')->addOrderBy('p.id', 'ASC'),
         };
     }
 

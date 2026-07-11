@@ -19,7 +19,7 @@ final readonly class PermissionModel
         $permissions = [];
 
         foreach ($permissionClass::cases() as $permission) {
-            $permissions[(string) $permission->value] = $resolver($permission);
+            $permissions[(string)$permission->value] = $resolver($permission);
         }
 
         return $permissions;

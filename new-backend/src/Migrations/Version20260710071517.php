@@ -6,12 +6,14 @@ namespace App\Migrations;
 
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
+use Override;
 
 /**
  * Auto-generated Migration: Please modify to your needs!
  */
 final class Version20260710071517 extends AbstractMigration
 {
+    #[Override]
     public function getDescription(): string
     {
         return '';
@@ -30,6 +32,7 @@ final class Version20260710071517 extends AbstractMigration
         $this->addSql('CREATE TABLE users (id INT AUTO_INCREMENT NOT NULL, role INT NOT NULL, avatar VARCHAR(512) DEFAULT NULL, last_name VARCHAR(60) NOT NULL, first_name VARCHAR(60) NOT NULL, email VARCHAR(255) NOT NULL, password VARCHAR(255) NOT NULL, status INT NOT NULL, created_at DATETIME NOT NULL, updated_at DATETIME DEFAULT NULL, deleted_at DATETIME DEFAULT NULL, UNIQUE INDEX UNIQ_1483A5E9E7927C74 (email), PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4');
     }
 
+    #[Override]
     public function down(Schema $schema): void
     {
         // this down() migration is auto-generated, please modify it to your needs

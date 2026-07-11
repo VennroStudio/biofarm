@@ -50,7 +50,7 @@ final readonly class RequestFile
     public static function extractList(ServerRequestInterface $request, string $name): array
     {
         $files = $request->getUploadedFiles()[$name] ?? [];
-        $files = is_array($files) ? $files : [$files];
+        $files = \is_array($files) ? $files : [$files];
 
         $result = [];
         foreach ($files as $file) {
@@ -65,7 +65,7 @@ final readonly class RequestFile
     /**
      * @template T of RequestFileItemInterface
      * @param class-string<T> $itemClass
-     * @param array<string, bool|int|string|null|array<array-key, bool|int|string|null>> $body
+     * @param array<string, array<array-key, bool|int|string|null>|bool|int|string|null> $body
      * @return T[]
      */
     public static function extractItems(
@@ -87,14 +87,14 @@ final readonly class RequestFile
     }
 
     /**
-     * @param array<string, bool|int|string|null|array<array-key, bool|int|string|null>> $body
+     * @param array<string, array<array-key, bool|int|string|null>|bool|int|string|null> $body
      * @return int[]
      */
     public static function extractIds(string $key, array $body): array
     {
         $ids = $body[$key] ?? [];
 
-        return array_map('intval', (array)$ids);
+        return array_map(intval(...), (array)$ids);
     }
 
     public function getPath(): string

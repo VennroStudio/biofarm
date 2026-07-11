@@ -20,13 +20,13 @@ use Random\RandomException;
 final readonly class UploadAvatarHandler
 {
     public function __construct(
-        private UserRepository        $userRepository,
+        private UserRepository $userRepository,
         private UserPermissionService $userPermissionService,
-        private FileUploaderService   $uploader,
-        private StorageInterface      $storage,
-        private FlusherInterface      $flusher,
-        private ImageFileValidator    $fileValidator,
-        private Cacher                $cacher,
+        private FileUploaderService $uploader,
+        private StorageInterface $storage,
+        private FlusherInterface $flusher,
+        private ImageFileValidator $fileValidator,
+        private Cacher $cacher,
     ) {}
 
     /**

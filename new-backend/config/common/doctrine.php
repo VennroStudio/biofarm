@@ -20,7 +20,7 @@ use function App\Components\env;
 return [
     EntityManagerInterface::class => static function (ContainerInterface $container): EntityManagerInterface {
         $configRoot = $container->get('config');
-        \assert(\is_array($configRoot));
+        assert(is_array($configRoot));
 
         /**
          * @var array{

@@ -56,7 +56,7 @@ final readonly class ReviewDetails implements ReviewModelInterface
      *     text: string,
      *     images: list<string>|string|null,
      *     source: string,
-     *     is_approved: int|string|bool,
+     *     is_approved: bool|int|string,
      *     created_at: string,
      *     updated_at: string|null
      * } $row

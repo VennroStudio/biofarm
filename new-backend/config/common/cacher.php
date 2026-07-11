@@ -12,7 +12,7 @@ use function App\Components\env_int;
 return [
     Cacher::class => static function (ContainerInterface $container): RedisCacher {
         $configRoot = $container->get('config');
-        \assert(\is_array($configRoot));
+        assert(is_array($configRoot));
 
         /**
          * @var array{
