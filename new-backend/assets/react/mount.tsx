@@ -1,13 +1,27 @@
 import { mountSiteHeader } from './components/layout/header';
+import { mountProductCart } from './components/product/cart';
 import { mountProductCounter } from './components/product/counter-island';
 import { mountProductGallery } from './components/product/gallery';
 import { mountRevealEffects } from './components/ui/reveal';
+import { mountLoginPage } from './pages/auth/LoginPage';
+import { mountCartPage } from './pages/cart/CartPage';
+import { mountCheckoutPage } from './pages/checkout/CheckoutPage';
+import { mountOrderSuccessPage } from './pages/order-success/OrderSuccessPage';
+import { mountProfilePage } from './pages/profile/ProfilePage';
 import { mountHomeReviews } from './sections/home/reviews';
 import { mountHomeVideo } from './sections/home/video';
+import { mountReferralHandler } from './site/referral';
 
+mountReferralHandler();
 mountSiteHeader();
 mountProductCounter();
 mountProductGallery();
+mountProductCart();
 mountRevealEffects();
 mountHomeVideo();
 mountHomeReviews();
+mountCartPage();
+mountCheckoutPage();
+mountOrderSuccessPage();
+mountLoginPage();
+mountProfilePage();

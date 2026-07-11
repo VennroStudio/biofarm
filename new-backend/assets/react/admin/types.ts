@@ -118,6 +118,8 @@ export type Withdrawal = {
 
 export type Settings = {
   referral_percent: number;
+  registration_enabled: boolean;
+  cart_enabled: boolean;
   order_bonus_enabled: boolean;
   order_bonus_percent: number;
 };

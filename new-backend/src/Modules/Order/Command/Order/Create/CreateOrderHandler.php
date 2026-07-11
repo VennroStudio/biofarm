@@ -14,6 +14,7 @@ use App\Modules\Order\Entity\OrderItem\OrderItemRepository;
 use App\Modules\Order\Permission\OrderPermission;
 use App\Modules\Order\Service\OrderPermissionService;
 use App\Modules\User\Entity\User\Fields\Enums\UserRole;
+use App\Modules\User\Entity\UserProfile\UserProfileRepository;
 use DateMalformedStringException;
 use Random\RandomException;
 
@@ -24,6 +25,7 @@ final readonly class CreateOrderHandler
         private OrderItemRepository $orderItemRepository,
         private ReadableIdGenerator $idGenerator,
         private OrderPermissionService $permissionService,
+        private UserProfileRepository $profileRepository,
         private Cacher $cacher,
         private FlusherInterface $flusher,
     ) {}
@@ -52,7 +54,7 @@ final readonly class CreateOrderHandler
             bonusUsed: $command->bonusUsed,
             status: $command->status,
             paymentStatus: $command->paymentStatus,
-            referredBy: $command->referredBy,
+            referredBy: $this->resolveReferredBy($command),
         );
 
         $this->orderRepository->add($order);
@@ -71,5 +73,20 @@ final readonly class CreateOrderHandler
         $this->flusher->flush();
 
         return $orderId;
+    }
+
+    private function resolveReferredBy(CreateOrderCommand $command): ?string
+    {
+        $referredBy = trim((string)$command->referredBy);
+        if ($referredBy !== '') {
+            return $referredBy;
+        }
+
+        $profile = $this->profileRepository->findByUserId($command->userId);
+        if ($profile?->referredByUserId === null) {
+            return null;
+        }
+
+        return (string)$profile->referredByUserId;
     }
 }

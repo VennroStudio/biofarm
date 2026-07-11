@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Components\Asset\ViteManifest;
 use App\Components\Frontend\FrontendUrlTwigExtension;
 use App\Components\Security\CsrfToken;
+use App\Components\Setting\SiteSettingsTwigExtension;
 use App\Components\Translator\TranslatorTwigExtension;
 use App\Components\Twig\FormattingExtension;
 use Psr\Container\ContainerInterface;
@@ -75,6 +76,7 @@ return [
             'cache_dir'  => __DIR__ . '/../../var/cache/twig',
             'extensions' => [
                 FrontendUrlTwigExtension::class,
+                SiteSettingsTwigExtension::class,
                 TranslatorTwigExtension::class,
                 FormattingExtension::class,
             ],

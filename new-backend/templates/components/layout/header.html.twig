@@ -37,6 +37,24 @@
         </nav>
 
         <div class="hidden items-center gap-4 lg:flex">
+            {% if site_feature('cart_enabled') %}
+                <a
+                    href="/cart"
+                    class="relative inline-flex h-11 w-11 items-center justify-center rounded-lg text-white transition-colors hover:text-accent"
+                    data-cart-link
+                    aria-label="Корзина"
+                >
+                    <svg class="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="8" cy="21" r="1"></circle>
+                        <circle cx="19" cy="21" r="1"></circle>
+                        <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
+                    </svg>
+                    <span
+                        class="absolute -right-1 -top-1 hidden h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-xs font-bold text-destructive-foreground"
+                        data-cart-count
+                    ></span>
+                </a>
+            {% endif %}
             <a class="gradient-primary inline-flex min-h-11 items-center justify-center rounded-lg px-5 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-95" href="/catalog">
                 Заказать
             </a>
@@ -68,6 +86,23 @@
                             external: item.external|default(false),
                         } only %}
                     {% endfor %}
+                    {% if site_feature('cart_enabled') %}
+                        <div class="border-t border-border pt-4">
+                            <a
+                                href="/cart"
+                                class="gradient-primary inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg px-5 text-sm font-bold text-primary-foreground"
+                                data-cart-link
+                            >
+                                <svg class="h-4 w-4" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="8" cy="21" r="1"></circle>
+                                    <circle cx="19" cy="21" r="1"></circle>
+                                    <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
+                                </svg>
+                                <span>Корзина</span>
+                                <span data-cart-count></span>
+                            </a>
+                        </div>
+                    {% endif %}
                 </div>
             </nav>
         </details>

@@ -1,6 +1,7 @@
 import { Save } from 'lucide-react';
 import { FormEvent, useState } from 'react';
 import { settingsApi } from '../api/resources';
+import { FeatureSettingsCard } from '../features/settings/ui/FeatureSettingsCard';
 import { OrderBonusSettingsCard } from '../features/settings/ui/OrderBonusSettingsCard';
 import { PasswordSettingsCard, type PasswordForm } from '../features/settings/ui/PasswordSettingsCard';
 import { ReferralSettingsCard } from '../features/settings/ui/ReferralSettingsCard';
@@ -10,6 +11,8 @@ import type { Settings } from '../types';
 
 const defaults: Settings = {
   referral_percent: 5,
+  registration_enabled: false,
+  cart_enabled: false,
   order_bonus_enabled: true,
   order_bonus_percent: 5,
 };
@@ -47,6 +50,7 @@ export function AdminSettings() {
       <PageHeader title="Настройки" subtitle="Конфигурация магазина и бонусной программы" />
 
       <form className="space-y-6" onSubmit={(event) => void submit(event)}>
+        <FeatureSettingsCard settings={settings} onChange={setSettings} />
         <ReferralSettingsCard settings={settings} onChange={setSettings} />
         <OrderBonusSettingsCard settings={settings} onChange={setSettings} />
         <PasswordSettingsCard password={password} setPassword={setPassword} />

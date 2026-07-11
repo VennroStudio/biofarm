@@ -40,11 +40,17 @@ use App\Http\Action\v1\Review\UpdateReviewAction;
 use App\Http\Action\v1\User\CreateUserAction;
 use App\Http\Action\v1\User\DeleteAvatarAction;
 use App\Http\Action\v1\User\DeleteUserAction;
+use App\Http\Action\v1\User\GetMeAction;
+use App\Http\Action\v1\User\GetReferralInfoAction;
+use App\Http\Action\v1\User\GetReferralOrdersAction;
 use App\Http\Action\v1\User\GetUserByIdAction;
 use App\Http\Action\v1\User\GetUserRolesAction;
 use App\Http\Action\v1\User\GetUsersAction;
+use App\Http\Action\v1\User\UpdateMeAction;
 use App\Http\Action\v1\User\UploadAvatarAction;
 use App\Http\Action\v1\User\UserUpdateAction;
+use App\Http\Action\v1\Withdrawal\CreateWithdrawalAction;
+use App\Http\Action\v1\Withdrawal\GetWithdrawalsAction;
 use Psr\Container\ContainerInterface;
 use Slim\App;
 use Slim\Routing\RouteCollectorProxy;
@@ -57,6 +63,10 @@ return static function (App $app): void {
         $group->group('/users', new Group(static function (RouteCollectorProxy $group): void {
             $group->get('', GetUsersAction::class)->add(Authenticate::class);
             $group->post('/create', CreateUserAction::class);
+            $group->get('/me', GetMeAction::class)->add(Authenticate::class);
+            $group->patch('/me', UpdateMeAction::class)->add(Authenticate::class);
+            $group->get('/me/referral-info', GetReferralInfoAction::class)->add(Authenticate::class);
+            $group->get('/me/referral-orders', GetReferralOrdersAction::class)->add(Authenticate::class);
             $group->get('/roles', GetUserRolesAction::class)->add(Authenticate::class);
             $group->get('/{id}', GetUserByIdAction::class)->add(Authenticate::class);
             $group->patch('/update/{id}', UserUpdateAction::class)->add(Authenticate::class);
@@ -112,6 +122,11 @@ return static function (App $app): void {
             $group->get('/{id}', GetOrderByIdAction::class)->add(Authenticate::class);
             $group->patch('/update/{id}', UpdateOrderAction::class)->add(Authenticate::class);
             $group->delete('/delete/{id}', DeleteOrderAction::class)->add(Authenticate::class);
+        }));
+
+        $group->group('/withdrawals', new Group(static function (RouteCollectorProxy $group): void {
+            $group->get('', GetWithdrawalsAction::class)->add(Authenticate::class);
+            $group->post('/create', CreateWithdrawalAction::class)->add(Authenticate::class);
         }));
     }));
 };

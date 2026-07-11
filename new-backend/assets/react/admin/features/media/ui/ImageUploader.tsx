@@ -1,5 +1,5 @@
 import { Upload } from 'lucide-react';
-import { useState } from 'react';
+import { type ChangeEvent, useRef, useState } from 'react';
 import { uploadImage } from '../../../api/client';
 import { Button } from '../../../shared/ui';
 
@@ -9,6 +9,7 @@ type Props = {
 };
 
 export function ImageUploader({ scope, onUploaded }: Props) {
+  const inputRef = useRef<HTMLInputElement | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function upload(file: File) {
@@ -21,24 +22,28 @@ export function ImageUploader({ scope, onUploaded }: Props) {
     }
   }
 
+  function handleChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.currentTarget.files?.[0];
+    if (file) {
+      void upload(file);
+    }
+    event.currentTarget.value = '';
+  }
+
   return (
-    <label className="inline-flex cursor-pointer items-center">
+    <span className="inline-flex items-center">
       <input
+        ref={inputRef}
         type="file"
         accept="image/*"
         className="sr-only"
-        onChange={(event) => {
-          const file = event.currentTarget.files?.[0];
-          if (file) {
-            void upload(file);
-          }
-          event.currentTarget.value = '';
-        }}
+        disabled={loading}
+        onChange={handleChange}
       />
-      <Button type="button" variant="ghost" disabled={loading}>
+      <Button type="button" variant="ghost" disabled={loading} onClick={() => inputRef.current?.click()}>
         <Upload className="mr-2 h-4 w-4" />
         {loading ? 'Загрузка...' : 'Загрузить'}
       </Button>
-    </label>
+    </span>
   );
 }

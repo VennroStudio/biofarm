@@ -13,6 +13,8 @@ use App\Modules\User\Command\UserToken\Create\CreateUserTokenCommand;
 use App\Modules\User\Command\UserToken\Create\CreateUserTokenHandler;
 use App\Modules\User\Entity\User\User;
 use App\Modules\User\Entity\User\UserRepository;
+use App\Modules\User\Entity\UserProfile\UserProfile;
+use App\Modules\User\Entity\UserProfile\UserProfileRepository;
 use App\Modules\User\Entity\UserToken\Fields\Enums\UserTokenType;
 use App\Modules\User\Query\User\FindByEmail\UserFindByEmailFetcher;
 use App\Modules\User\Query\User\FindByEmail\UserFindByEmailQuery;
@@ -37,6 +39,7 @@ final readonly class CreateUserHandler
         private TokenHasherService $tokenHasher,
         private FlusherInterface $flusher,
         private EmailVerificationHandler $emailVerificationHandler,
+        private UserProfileRepository $profileRepository,
     ) {}
 
     /**
@@ -55,6 +58,7 @@ final readonly class CreateUserHandler
         $this->assertEmailNotRegistered($email);
 
         $user = $this->createUser($command, $email);
+        $this->createUserProfile((int)$user->id, $command->referredBy);
 
         $plainToken = $this->createEmailVerificationToken((int)$user->id);
         $this->sendVerificationEmail($user, $plainToken, $command->locale);
@@ -94,6 +98,37 @@ final readonly class CreateUserHandler
         }
 
         return $user;
+    }
+
+    /**
+     * @throws DateMalformedStringException
+     */
+    private function createUserProfile(int $userId, ?string $referredBy): void
+    {
+        $profile = UserProfile::create(
+            userId: $userId,
+            referralCode: 'bf-' . $userId,
+            referredByUserId: $this->resolveReferredByUserId($referredBy),
+        );
+
+        $this->profileRepository->add($profile);
+        $this->flusher->flush();
+    }
+
+    private function resolveReferredByUserId(?string $referredBy): ?int
+    {
+        $referredBy = trim((string)$referredBy);
+        if ($referredBy === '') {
+            return null;
+        }
+
+        if (ctype_digit($referredBy)) {
+            $userId = (int)$referredBy;
+
+            return $userId > 0 ? $userId : null;
+        }
+
+        return $this->profileRepository->findByReferralCode($referredBy)?->userId;
     }
 
     /**

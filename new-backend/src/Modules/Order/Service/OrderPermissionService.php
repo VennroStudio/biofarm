@@ -26,7 +26,11 @@ final readonly class OrderPermissionService
     private function getAllowedRolesForAction(OrderPermission $action): array
     {
         return match ($action) {
-            OrderPermission::CREATE,
+            OrderPermission::CREATE => [
+                UserRole::ADMIN,
+                UserRole::EDITOR,
+                UserRole::USER,
+            ],
             OrderPermission::UPDATE,
             OrderPermission::DELETE => [
                 UserRole::ADMIN,

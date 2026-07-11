@@ -29,7 +29,13 @@ final readonly class OrderFindAllFetcher
      */
     public function fetch(OrderFindAllQuery $query): ModelCountItemsResult
     {
-        $key = \sprintf('orders_find_all_%d_%d', $query->page, $query->perPage);
+        $key = \sprintf(
+            'orders_find_all_%d_%d_%s_%s',
+            $query->page,
+            $query->perPage,
+            $query->userId !== null ? (string)$query->userId : 'all',
+            $query->referredBy !== null ? md5($query->referredBy) : 'none',
+        );
 
         /** @var ModelCountItemsResult<OrderDetails>|null $cached */
         $cached = $this->cacher->get($key);
@@ -38,6 +44,17 @@ final readonly class OrderFindAllFetcher
         }
 
         $qb = $this->connection->createQueryBuilder()->from(self::TABLE, 'o');
+
+        if ($query->userId !== null) {
+            $qb->andWhere('o.user_id = :userId')
+                ->setParameter('userId', $query->userId);
+        }
+
+        if ($query->referredBy !== null && trim($query->referredBy) !== '') {
+            $qb->andWhere('o.referred_by = :referredBy')
+                ->setParameter('referredBy', trim($query->referredBy));
+        }
+
         $countQb = clone $qb;
         $total = (int)$countQb->select('COUNT(o.id)')->executeQuery()->fetchOne();
 

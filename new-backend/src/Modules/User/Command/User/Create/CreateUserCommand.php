@@ -63,5 +63,7 @@ final readonly class CreateUserCommand
         )]
         public string $password,
         public string $locale = 'en',
+        #[Assert\Length(max: 100)]
+        public ?string $referredBy = null,
     ) {}
 }

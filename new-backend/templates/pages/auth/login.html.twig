@@ -1,0 +1,12 @@
+{% extends 'layouts/main.html.twig' %}
+
+{% block title %}Личный кабинет — БИОФАРМ{% endblock %}
+
+{% block description %}Вход в личный кабинет БИОФАРМ.{% endblock %}
+
+{% block content %}
+    <div
+        data-react-island="login-page"
+        data-registration-enabled="{{ site_feature('registration_enabled') ? 'true' : 'false' }}"
+    ></div>
+{% endblock %}

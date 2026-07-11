@@ -16,6 +16,8 @@ final readonly class GetSettingsAction implements RequestHandlerInterface
 {
     private const array DEFAULTS = [
         'referral_percent'    => 5,
+        'registration_enabled' => false,
+        'cart_enabled'         => false,
         'order_bonus_enabled' => true,
         'order_bonus_percent' => 5,
     ];

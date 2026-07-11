@@ -17,6 +17,8 @@ final readonly class UpdateSettingsAction implements RequestHandlerInterface
 {
     private const array ALLOWED_KEYS = [
         'referral_percent',
+        'registration_enabled',
+        'cart_enabled',
         'order_bonus_enabled',
         'order_bonus_percent',
     ];

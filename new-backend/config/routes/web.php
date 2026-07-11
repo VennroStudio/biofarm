@@ -3,13 +3,18 @@
 declare(strict_types=1);
 
 use App\Components\Router\StaticRouteGroup as Group;
+use App\Http\Web\Auth\LoginPageController;
 use App\Http\Web\Blog\BlogPageController;
 use App\Http\Web\Blog\BlogPostPageController;
+use App\Http\Web\Cart\CartPageController;
+use App\Http\Web\Cart\CheckoutPageController;
+use App\Http\Web\Cart\OrderSuccessPageController;
 use App\Http\Web\Catalog\CatalogPageController;
 use App\Http\Web\Feedback\FeedbackController;
 use App\Http\Web\Home\HomePageController;
 use App\Http\Web\Legal\PrivacyPolicyPageController;
 use App\Http\Web\Legal\PublicOfferPageController;
+use App\Http\Web\Profile\ProfilePageController;
 use App\Http\Web\Product\CreateProductController;
 use App\Http\Web\Product\DeleteProductController;
 use App\Http\Web\Product\ProductPageController;
@@ -29,6 +34,11 @@ return static function (App $app): void {
         $group->get('/product/{slug}', ProductPageController::class);
         $group->get('/blog', BlogPageController::class);
         $group->get('/blog/{slug}', BlogPostPageController::class);
+        $group->get('/cart', CartPageController::class);
+        $group->get('/checkout', CheckoutPageController::class);
+        $group->get('/order-success', OrderSuccessPageController::class);
+        $group->get('/login', LoginPageController::class);
+        $group->get('/profile', ProfilePageController::class);
         $group->get('/privacy', PrivacyPolicyPageController::class);
         $group->get('/oferta', PublicOfferPageController::class);
 
