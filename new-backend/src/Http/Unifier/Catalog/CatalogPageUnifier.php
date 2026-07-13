@@ -59,8 +59,8 @@ final readonly class CatalogPageUnifier
             componentSlug: $componentSlug,
             purposeSlug: $purposeSlug,
         );
-        $componentFilters = $category !== null ? $this->catalogData->componentFilters($category) : [];
-        $purposeFilters = $category !== null ? $this->catalogData->purposeFilters($category) : [];
+        $componentFilters = $this->catalogData->componentFilters($category);
+        $purposeFilters = $this->catalogData->purposeFilters($category);
         $isFacetWithoutCategory = $category === null && ($componentContext !== null || $purposeContext !== null);
         $hasUnknownContext = ($category !== null && $categoryContext === null)
             || (trim((string)$componentSlug) !== '' && $componentContext === null)
@@ -126,8 +126,8 @@ final readonly class CatalogPageUnifier
             nextPageUrl: $currentPage < $totalPages ? $this->catalogUrl($catalogPath, $query, $sort, $view, $currentPage + 1) : null,
             allCategoryUrl: $this->catalogUrl('/catalog', $query, $sort, $view, 1),
             categoryUrls: $this->categoryUrls($categories, $query, $sort, $view),
-            componentFilterUrls: $this->facetUrls($componentFilters, $categoryPath, 'sostav'),
-            purposeFilterUrls: $this->facetUrls($purposeFilters, $categoryPath, 'dlya'),
+            componentFilterUrls: $this->facetUrls($componentFilters, $categoryPath, 'sostav', $query, $sort, $view),
+            purposeFilterUrls: $this->facetUrls($purposeFilters, $categoryPath, 'dlya', $query, $sort, $view),
             viewUrls: [
                 'grid' => $this->catalogUrl($catalogPath, $query, $sort, 'grid', 1),
                 'list' => $this->catalogUrl($catalogPath, $query, $sort, 'list', 1),
@@ -140,11 +140,18 @@ final readonly class CatalogPageUnifier
      * @param list<CatalogFacetView> $facets
      * @return array<string, string>
      */
-    private function facetUrls(array $facets, string $categoryPath, string $segment): array
+    private function facetUrls(
+        array $facets,
+        string $categoryPath,
+        string $segment,
+        ?string $query,
+        string $sort,
+        string $view,
+    ): array
     {
         $urls = [];
         foreach ($facets as $facet) {
-            $urls[$facet->slug] = $categoryPath . '/' . $segment . '/' . rawurlencode($facet->slug) . '#catalog';
+            $urls[$facet->slug] = $this->catalogUrl($categoryPath . '/' . $segment . '/' . rawurlencode($facet->slug), $query, $sort, $view, 1);
         }
 
         return $urls;

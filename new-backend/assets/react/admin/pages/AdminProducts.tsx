@@ -36,7 +36,6 @@ export function AdminProducts() {
   const [groupForm, setGroupForm] = useState<ProductGroupForm>(emptyProductGroupForm);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [groupDialogOpen, setGroupDialogOpen] = useState(false);
-  const [imageUrl, setImageUrl] = useState('');
   const [saving, setSaving] = useState(false);
   const [groupSaving, setGroupSaving] = useState(false);
 
@@ -63,13 +62,11 @@ export function AdminProducts() {
 
   function openCreate() {
     setForm({ ...emptyProductForm, category_id: String(categories[0]?.id ?? '') });
-    setImageUrl('');
     setDialogOpen(true);
   }
 
   function openEdit(product: Product) {
     setForm(productFormFromProduct(product));
-    setImageUrl('');
     setDialogOpen(true);
   }
 
@@ -214,11 +211,9 @@ export function AdminProducts() {
         attributes={attributes}
         productGroups={productGroups}
         form={form}
-        imageUrl={imageUrl}
         open={dialogOpen}
         saving={saving}
         setForm={setForm}
-        setImageUrl={setImageUrl}
         onAddImage={addImage}
         onClose={() => setDialogOpen(false)}
         onSubmit={(event) => void submit(event)}

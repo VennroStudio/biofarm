@@ -39,138 +39,258 @@
         {% endif %}
 
         {% if isCatalogPage %}
-            <div class="mb-8 rounded-2xl bg-card p-6 shadow-premium" data-reveal data-reveal-delay="300">
-                <div class="flex flex-col items-center justify-between gap-4 lg:flex-row">
-                    <nav class="flex flex-wrap gap-2" aria-label="Категории товаров">
-                        <a
-                            class="inline-flex min-h-9 items-center justify-center rounded-lg border px-4 text-sm font-bold transition-colors {% if not hasActiveCategory %}gradient-primary border-transparent text-primary-foreground{% else %}border-border bg-background text-foreground hover:bg-secondary{% endif %}"
-                            href="{{ allCategoryUrl }}"
-                            {% if not hasActiveCategory %}aria-current="true"{% endif %}
-                        >
-                            Все товары
-                        </a>
-                        {% for category in categories %}
+            {% set filterResetUrl = hasActiveCategory ? categoryUrls[activeCategory] : allCategoryUrl %}
+            <div class="grid gap-8 lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start">
+                <aside class="space-y-5 lg:sticky lg:top-28" data-reveal data-reveal-delay="300">
+                    <div class="rounded-2xl bg-card p-5 shadow-premium">
+                        <h2 class="mb-4 font-display text-2xl font-bold text-foreground">Категории</h2>
+                        <nav class="space-y-1" aria-label="Категории товаров">
                             <a
-                                class="inline-flex min-h-9 items-center justify-center rounded-lg border px-4 text-sm font-bold transition-colors {% if hasActiveCategory and activeCategory == category.id %}gradient-primary border-transparent text-primary-foreground{% else %}border-border bg-background text-foreground hover:bg-secondary{% endif %}"
-                                href="{{ categoryUrls[category.id] }}"
-                                {% if hasActiveCategory and activeCategory == category.id %}aria-current="true"{% endif %}
+                                class="flex min-h-11 items-center justify-between gap-3 rounded-lg px-3 text-sm font-bold transition-colors {% if not hasActiveCategory %}bg-primary text-primary-foreground{% else %}text-foreground hover:bg-secondary{% endif %}"
+                                href="{{ allCategoryUrl }}"
+                                {% if not hasActiveCategory %}aria-current="true"{% endif %}
                             >
-                                {{ category.name }}
+                                <span>Все товары</span>
+                                <span class="text-xs {% if not hasActiveCategory %}text-primary-foreground/80{% else %}text-muted-foreground{% endif %}">{{ categoriesTotal }}</span>
                             </a>
-                        {% endfor %}
-                    </nav>
+                            {% for category in categories %}
+                                {% set isActiveCategory = hasActiveCategory and activeCategory == category.id %}
+                                <a
+                                    class="flex min-h-11 items-center justify-between gap-3 rounded-lg px-3 text-sm font-bold transition-colors {% if category.parentSlug is not empty %}ml-4 border-l border-border pl-4{% endif %} {% if isActiveCategory %}bg-primary text-primary-foreground{% else %}text-foreground hover:bg-secondary{% endif %}"
+                                    href="{{ categoryUrls[category.id] }}"
+                                    {% if isActiveCategory %}aria-current="true"{% endif %}
+                                >
+                                    <span>{{ category.name }}</span>
+                                    <span class="text-xs {% if isActiveCategory %}text-primary-foreground/80{% else %}text-muted-foreground{% endif %}">{{ category.productsCount }}</span>
+                                </a>
+                            {% endfor %}
+                        </nav>
+                    </div>
 
-                    <div class="flex flex-wrap items-center gap-3 max-lg:w-full max-lg:flex-col max-lg:items-stretch">
-                        <form class="max-lg:w-full" method="get" action="{{ currentCatalogPath }}#catalog">
-                            {% if currentSort != 'default' %}
-                                <input type="hidden" name="sort" value="{{ currentSort }}">
-                            {% endif %}
-                            {% if currentView != 'grid' %}
-                                <input type="hidden" name="view" value="{{ currentView }}">
-                            {% endif %}
-                            <input
-                                class="h-10 w-48 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium text-foreground outline-none transition-shadow placeholder:text-muted-foreground focus:ring-2 focus:ring-ring/30 max-lg:w-full"
-                                type="search"
-                                name="q"
-                                value="{{ searchQuery|default('') }}"
-                                placeholder="Поиск товаров..."
-                                aria-label="Поиск товаров"
-                            >
-                        </form>
+                    {% if componentFilters|default([]) is not empty or purposeFilters|default([]) is not empty %}
+                        <div class="rounded-2xl bg-card p-5 shadow-premium">
+                            <div class="mb-4 flex items-center justify-between gap-3">
+                                <h2 class="font-display text-2xl font-bold text-foreground">Фильтры</h2>
+                                {% if activeComponentSlug is not empty or activePurposeSlug is not empty or searchQuery|default('') is not empty %}
+                                    <a class="text-xs font-bold text-primary transition-colors hover:text-primary-glow" href="{{ filterResetUrl }}">Сбросить</a>
+                                {% endif %}
+                            </div>
 
-                        <form class="relative max-lg:w-full" method="get" action="{{ currentCatalogPath }}#catalog">
-                            {% if searchQuery|default('') is not empty %}
-                                <input type="hidden" name="q" value="{{ searchQuery }}">
-                            {% endif %}
-                            {% if currentView != 'grid' %}
-                                <input type="hidden" name="view" value="{{ currentView }}">
-                            {% endif %}
-                            <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                <path d="M4 7h16M7 12h10M10 17h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
-                            </svg>
-                            <select
-                                class="h-10 w-44 cursor-pointer appearance-none rounded-md border border-input bg-background py-2 pl-10 pr-8 text-sm font-medium text-foreground outline-none transition-shadow focus:ring-2 focus:ring-ring/30 max-lg:w-full"
-                                name="sort"
-                                aria-label="Сортировка товаров"
-                                onchange="this.form.submit()"
-                            >
-                                <option value="default" {% if currentSort == 'default' %}selected{% endif %}>По умолчанию</option>
-                                <option value="price-asc" {% if currentSort == 'price-asc' %}selected{% endif %}>Сначала дешёвые</option>
-                                <option value="price-desc" {% if currentSort == 'price-desc' %}selected{% endif %}>Сначала дорогие</option>
-                                <option value="name" {% if currentSort == 'name' %}selected{% endif %}>По названию</option>
-                            </select>
-                            <button class="sr-only" type="submit">Применить сортировку</button>
-                        </form>
+                            <div class="space-y-3">
+                                {% if componentFilters|default([]) is not empty %}
+                                    <details class="group rounded-xl border border-border bg-background px-4 py-3" open>
+                                        <summary class="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-bold text-foreground">
+                                            Состав
+                                            <svg class="h-4 w-4 transition-transform group-open:rotate-180" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                                <path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                                            </svg>
+                                        </summary>
+                                        <div class="mt-3 space-y-2">
+                                            {% for component in componentFilters %}
+                                                {% set isActiveFacet = activeComponentSlug == component.slug %}
+                                                <a
+                                                    class="flex min-h-9 items-center gap-3 rounded-lg px-2 text-sm transition-colors {% if isActiveFacet %}bg-primary/10 text-foreground{% else %}text-muted-foreground hover:bg-secondary hover:text-foreground{% endif %}"
+                                                    href="{{ isActiveFacet ? filterResetUrl : componentFilterUrls[component.slug] }}"
+                                                    role="checkbox"
+                                                    aria-checked="{{ isActiveFacet ? 'true' : 'false' }}"
+                                                >
+                                                    <span class="grid h-5 w-5 shrink-0 place-items-center rounded border {% if isActiveFacet %}border-primary bg-primary text-primary-foreground{% else %}border-border bg-card{% endif %}">
+                                                        {% if isActiveFacet %}
+                                                            <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                                                <path d="M5 12.5 9.5 17 19 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
+                                                            </svg>
+                                                        {% endif %}
+                                                    </span>
+                                                    <span class="min-w-0 flex-1">{{ component.name }}</span>
+                                                    <span class="text-xs text-muted-foreground">{{ component.productsCount }}</span>
+                                                </a>
+                                            {% endfor %}
+                                        </div>
+                                    </details>
+                                {% endif %}
 
-                        <div class="flex gap-1 max-lg:justify-end" aria-label="Вид каталога">
-                            <a
-                                class="inline-grid h-10 w-10 place-items-center rounded-lg border transition-colors {% if currentView == 'grid' %}border-primary bg-primary text-primary-foreground{% else %}border-border bg-background text-foreground hover:bg-secondary{% endif %}"
-                                href="{{ viewUrls.grid }}"
-                                aria-label="Показать сеткой"
-                                {% if currentView == 'grid' %}aria-current="true"{% endif %}
-                            >
-                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                    <path d="M4 4h6v6H4V4Zm10 0h6v6h-6V4ZM4 14h6v6H4v-6Zm10 0h6v6h-6v-6Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"></path>
+                                {% if purposeFilters|default([]) is not empty %}
+                                    <details class="group rounded-xl border border-border bg-background px-4 py-3" open>
+                                        <summary class="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-bold text-foreground">
+                                            Для чего
+                                            <svg class="h-4 w-4 transition-transform group-open:rotate-180" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                                <path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                                            </svg>
+                                        </summary>
+                                        <div class="mt-3 space-y-2">
+                                            {% for purpose in purposeFilters %}
+                                                {% set isActiveFacet = activePurposeSlug == purpose.slug %}
+                                                <a
+                                                    class="flex min-h-9 items-center gap-3 rounded-lg px-2 text-sm transition-colors {% if isActiveFacet %}bg-primary/10 text-foreground{% else %}text-muted-foreground hover:bg-secondary hover:text-foreground{% endif %}"
+                                                    href="{{ isActiveFacet ? filterResetUrl : purposeFilterUrls[purpose.slug] }}"
+                                                    role="checkbox"
+                                                    aria-checked="{{ isActiveFacet ? 'true' : 'false' }}"
+                                                >
+                                                    <span class="grid h-5 w-5 shrink-0 place-items-center rounded border {% if isActiveFacet %}border-primary bg-primary text-primary-foreground{% else %}border-border bg-card{% endif %}">
+                                                        {% if isActiveFacet %}
+                                                            <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                                                <path d="M5 12.5 9.5 17 19 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
+                                                            </svg>
+                                                        {% endif %}
+                                                    </span>
+                                                    <span class="min-w-0 flex-1">{{ purpose.name }}</span>
+                                                    <span class="text-xs text-muted-foreground">{{ purpose.productsCount }}</span>
+                                                </a>
+                                            {% endfor %}
+                                        </div>
+                                    </details>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endif %}
+                </aside>
+
+                <div class="min-w-0">
+                    <div class="mb-6 rounded-2xl bg-card p-5 shadow-premium" data-reveal data-reveal-delay="350">
+                        <div class="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+                            <form class="relative w-full xl:max-w-md" method="get" action="{{ currentCatalogPath }}#catalog">
+                                {% if currentSort != 'default' %}
+                                    <input type="hidden" name="sort" value="{{ currentSort }}">
+                                {% endif %}
+                                {% if currentView != 'grid' %}
+                                    <input type="hidden" name="view" value="{{ currentView }}">
+                                {% endif %}
+                                <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                    <path d="m21 21-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
                                 </svg>
-                            </a>
-                            <a
-                                class="inline-grid h-10 w-10 place-items-center rounded-lg border transition-colors {% if currentView == 'list' %}border-primary bg-primary text-primary-foreground{% else %}border-border bg-background text-foreground hover:bg-secondary{% endif %}"
-                                href="{{ viewUrls.list }}"
-                                aria-label="Показать списком"
-                                {% if currentView == 'list' %}aria-current="true"{% endif %}
-                            >
-                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                    <path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
-                                </svg>
-                            </a>
+                                <input
+                                    class="h-10 w-full rounded-md border border-input bg-background px-3 py-2 pl-10 text-sm font-medium text-foreground outline-none transition-shadow placeholder:text-muted-foreground focus:ring-2 focus:ring-ring/30"
+                                    type="search"
+                                    name="q"
+                                    value="{{ searchQuery|default('') }}"
+                                    placeholder="Поиск товаров..."
+                                    aria-label="Поиск товаров"
+                                >
+                            </form>
+
+                            <div class="flex flex-wrap items-center gap-3">
+                                <form class="relative" method="get" action="{{ currentCatalogPath }}#catalog">
+                                    {% if searchQuery|default('') is not empty %}
+                                        <input type="hidden" name="q" value="{{ searchQuery }}">
+                                    {% endif %}
+                                    {% if currentView != 'grid' %}
+                                        <input type="hidden" name="view" value="{{ currentView }}">
+                                    {% endif %}
+                                    <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                        <path d="M4 7h16M7 12h10M10 17h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+                                    </svg>
+                                    <select
+                                        class="h-10 w-48 cursor-pointer appearance-none rounded-md border border-input bg-background py-2 pl-10 pr-8 text-sm font-medium text-foreground outline-none transition-shadow focus:ring-2 focus:ring-ring/30"
+                                        name="sort"
+                                        aria-label="Сортировка товаров"
+                                        onchange="this.form.submit()"
+                                    >
+                                        <option value="default" {% if currentSort == 'default' %}selected{% endif %}>По умолчанию</option>
+                                        <option value="price-asc" {% if currentSort == 'price-asc' %}selected{% endif %}>Сначала дешёвые</option>
+                                        <option value="price-desc" {% if currentSort == 'price-desc' %}selected{% endif %}>Сначала дорогие</option>
+                                        <option value="name" {% if currentSort == 'name' %}selected{% endif %}>По названию</option>
+                                    </select>
+                                    <button class="sr-only" type="submit">Применить сортировку</button>
+                                </form>
+
+                                <div class="flex gap-1" aria-label="Вид каталога">
+                                    <a
+                                        class="inline-grid h-10 w-10 place-items-center rounded-lg border transition-colors {% if currentView == 'grid' %}border-primary bg-primary text-primary-foreground{% else %}border-border bg-background text-foreground hover:bg-secondary{% endif %}"
+                                        href="{{ viewUrls.grid }}"
+                                        aria-label="Показать сеткой"
+                                        {% if currentView == 'grid' %}aria-current="true"{% endif %}
+                                    >
+                                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                            <path d="M4 4h6v6H4V4Zm10 0h6v6h-6V4ZM4 14h6v6H4v-6Zm10 0h6v6h-6v-6Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"></path>
+                                        </svg>
+                                    </a>
+                                    <a
+                                        class="inline-grid h-10 w-10 place-items-center rounded-lg border transition-colors {% if currentView == 'list' %}border-primary bg-primary text-primary-foreground{% else %}border-border bg-background text-foreground hover:bg-secondary{% endif %}"
+                                        href="{{ viewUrls.list }}"
+                                        aria-label="Показать списком"
+                                        {% if currentView == 'list' %}aria-current="true"{% endif %}
+                                    >
+                                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                            <path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+                                        </svg>
+                                    </a>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                {% if componentFilters|default([]) is not empty or purposeFilters|default([]) is not empty %}
-                    <div class="mt-5 grid gap-4 border-t border-border pt-5">
-                        {% if componentFilters|default([]) is not empty %}
-                            <nav class="flex flex-wrap items-center gap-2" aria-label="Фильтр по составу">
-                                <span class="mr-1 text-sm font-bold text-foreground">Состав:</span>
-                                {% for component in componentFilters %}
-                                    <a
-                                        class="inline-flex min-h-8 items-center justify-center rounded-full border px-3 text-xs font-bold transition-colors {% if activeComponentSlug == component.slug %}border-primary bg-primary text-primary-foreground{% else %}border-border bg-background text-foreground hover:bg-secondary{% endif %}"
-                                        href="{{ componentFilterUrls[component.slug] }}"
-                                        {% if activeComponentSlug == component.slug %}aria-current="true"{% endif %}
-                                    >
-                                        {{ component.name }}
-                                    </a>
-                                {% endfor %}
-                            </nav>
-                        {% endif %}
+                    <p class="mb-6 text-muted-foreground">
+                        Найдено товаров: <strong class="font-semibold text-foreground">{{ productsTotal }}</strong>
+                    </p>
 
-                        {% if purposeFilters|default([]) is not empty %}
-                            <nav class="flex flex-wrap items-center gap-2" aria-label="Фильтр по назначению">
-                                <span class="mr-1 text-sm font-bold text-foreground">Для чего:</span>
-                                {% for purpose in purposeFilters %}
-                                    <a
-                                        class="inline-flex min-h-8 items-center justify-center rounded-full border px-3 text-xs font-bold transition-colors {% if activePurposeSlug == purpose.slug %}border-primary bg-primary text-primary-foreground{% else %}border-border bg-background text-foreground hover:bg-secondary{% endif %}"
-                                        href="{{ purposeFilterUrls[purpose.slug] }}"
-                                        {% if activePurposeSlug == purpose.slug %}aria-current="true"{% endif %}
-                                    >
-                                        {{ purpose.name }}
-                                    </a>
-                                {% endfor %}
-                            </nav>
-                        {% endif %}
+                    {% if introText|default(null) is not empty %}
+                        <div class="prose prose-sm mb-8 max-w-none text-muted-foreground prose-p:my-2 prose-strong:text-foreground" data-reveal data-reveal-delay="350">
+                            {{ introText|raw }}
+                        </div>
+                    {% endif %}
+
+                    <div class="{% if currentView == 'list' %}flex flex-col gap-4{% else %}grid gap-6 sm:grid-cols-2 xl:grid-cols-3{% endif %}">
+                        {% for product in products %}
+                            {% include 'components/product/card.html.twig' with { product: product, viewMode: currentView, revealDelay: loop.index0 * 100 } only %}
+                        {% else %}
+                            {% include 'components/ui/empty-state.html.twig' with {
+                                title: 'Товары не найдены',
+                                message: 'Попробуйте изменить категорию или поисковый запрос.',
+                            } only %}
+                            <div class="col-span-full flex justify-center">
+                                <a class="inline-flex min-h-11 items-center justify-center rounded-lg border border-border bg-card px-5 text-sm font-bold text-foreground transition-colors hover:bg-secondary" href="{{ resetUrl }}">Сбросить фильтры</a>
+                            </div>
+                        {% endfor %}
                     </div>
-                {% endif %}
-            </div>
 
-            <p class="mb-6 text-muted-foreground">
-                Найдено товаров: <strong class="font-semibold text-foreground">{{ productsTotal }}</strong>
-            </p>
+                    {% if totalPages > 1 %}
+                        <nav class="mt-8 flex items-center justify-center gap-2" aria-label="Страницы каталога">
+                            {% if previousPageUrl %}
+                                <a class="inline-flex min-h-10 items-center justify-center gap-1 rounded-md px-3 text-sm font-medium text-foreground transition-colors hover:bg-card" href="{{ previousPageUrl }}">
+                                    <span aria-hidden="true">‹</span>
+                                    Previous
+                                </a>
+                            {% else %}
+                                <span class="inline-flex min-h-10 items-center justify-center gap-1 rounded-md px-3 text-sm font-medium text-muted-foreground opacity-50" aria-disabled="true">
+                                    <span aria-hidden="true">‹</span>
+                                    Previous
+                                </span>
+                            {% endif %}
 
-            {% if introText|default(null) is not empty %}
-                <div class="prose prose-sm mb-8 max-w-none text-muted-foreground prose-p:my-2 prose-strong:text-foreground" data-reveal data-reveal-delay="350">
-                    {{ introText|raw }}
+                            {% for pageNumber in pageNumbers %}
+                                {% if not loop.first and pageNumber > pageNumbers[loop.index0 - 1] + 1 %}
+                                    <span class="inline-flex min-h-10 min-w-10 items-center justify-center px-2 text-sm text-muted-foreground">...</span>
+                                {% endif %}
+                                <a
+                                    class="inline-flex min-h-10 min-w-10 items-center justify-center rounded-md border text-sm font-medium transition-colors {% if pageNumber == currentPage %}border-border bg-card text-foreground{% else %}border-transparent text-foreground hover:border-border hover:bg-card{% endif %}"
+                                    href="{{ pageUrls[pageNumber] }}"
+                                    {% if pageNumber == currentPage %}aria-current="page"{% endif %}
+                                >
+                                    {{ pageNumber }}
+                                </a>
+                            {% endfor %}
+
+                            {% if nextPageUrl %}
+                                <a class="inline-flex min-h-10 items-center justify-center gap-1 rounded-md px-3 text-sm font-medium text-foreground transition-colors hover:bg-card" href="{{ nextPageUrl }}">
+                                    Next
+                                    <span aria-hidden="true">›</span>
+                                </a>
+                            {% else %}
+                                <span class="inline-flex min-h-10 items-center justify-center gap-1 rounded-md px-3 text-sm font-medium text-muted-foreground opacity-50" aria-disabled="true">
+                                    Next
+                                    <span aria-hidden="true">›</span>
+                                </span>
+                            {% endif %}
+                        </nav>
+                    {% endif %}
+
+                    {% if bottomText|default(null) is not empty %}
+                        <div class="prose prose-sm mx-auto mt-12 max-w-4xl text-muted-foreground prose-p:my-2 prose-strong:text-foreground" data-reveal data-reveal-delay="200">
+                            {{ bottomText|raw }}
+                        </div>
+                    {% endif %}
                 </div>
-            {% endif %}
+            </div>
         {% else %}
             <nav class="mb-12 flex flex-wrap justify-center gap-3" aria-label="Категории товаров" data-reveal data-reveal-y="0" data-reveal-delay="300">
                 <a
@@ -190,74 +310,18 @@
                     </a>
                 {% endfor %}
             </nav>
-        {% endif %}
 
-        <div class="{% if isCatalogPage and currentView == 'list' %}flex flex-col gap-4{% elseif isCatalogPage %}grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4{% else %}grid gap-8 sm:grid-cols-2 lg:grid-cols-3{% endif %}">
-            {% for product in products %}
-                {% include 'components/product/card.html.twig' with { product: product, viewMode: currentView, revealDelay: loop.index0 * 100 } only %}
-            {% else %}
-                {% include 'components/ui/empty-state.html.twig' with {
-                    title: isCatalogPage ? 'Товары не найдены' : 'Товары пока не добавлены',
-                    message: isCatalogPage
-                        ? 'Попробуйте изменить категорию или поисковый запрос.'
-                        : (
-                            hasActiveCategory
-                                ? 'В выбранной категории пока нет товаров.'
-                                : 'Каталог наполнится после миграции базы данных.'
-                        ),
-                } only %}
-                {% if isCatalogPage %}
-                    <div class="col-span-full flex justify-center">
-                        <a class="inline-flex min-h-11 items-center justify-center rounded-lg border border-border bg-card px-5 text-sm font-bold text-foreground transition-colors hover:bg-secondary" href="{{ resetUrl }}">Сбросить фильтры</a>
-                    </div>
-                {% endif %}
-            {% endfor %}
-        </div>
-
-        {% if isCatalogPage and totalPages > 1 %}
-            <nav class="mt-8 flex items-center justify-center gap-2" aria-label="Страницы каталога">
-                {% if previousPageUrl %}
-                    <a class="inline-flex min-h-10 items-center justify-center gap-1 rounded-md px-3 text-sm font-medium text-foreground transition-colors hover:bg-card" href="{{ previousPageUrl }}">
-                        <span aria-hidden="true">‹</span>
-                        Previous
-                    </a>
+            <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                {% for product in products %}
+                    {% include 'components/product/card.html.twig' with { product: product, viewMode: currentView, revealDelay: loop.index0 * 100 } only %}
                 {% else %}
-                    <span class="inline-flex min-h-10 items-center justify-center gap-1 rounded-md px-3 text-sm font-medium text-muted-foreground opacity-50" aria-disabled="true">
-                        <span aria-hidden="true">‹</span>
-                        Previous
-                    </span>
-                {% endif %}
-
-                {% for pageNumber in pageNumbers %}
-                    {% if not loop.first and pageNumber > pageNumbers[loop.index0 - 1] + 1 %}
-                        <span class="inline-flex min-h-10 min-w-10 items-center justify-center px-2 text-sm text-muted-foreground">...</span>
-                    {% endif %}
-                    <a
-                        class="inline-flex min-h-10 min-w-10 items-center justify-center rounded-md border text-sm font-medium transition-colors {% if pageNumber == currentPage %}border-border bg-card text-foreground{% else %}border-transparent text-foreground hover:border-border hover:bg-card{% endif %}"
-                        href="{{ pageUrls[pageNumber] }}"
-                        {% if pageNumber == currentPage %}aria-current="page"{% endif %}
-                    >
-                        {{ pageNumber }}
-                    </a>
+                    {% include 'components/ui/empty-state.html.twig' with {
+                        title: 'Товары пока не добавлены',
+                        message: hasActiveCategory
+                            ? 'В выбранной категории пока нет товаров.'
+                            : 'Каталог наполнится после миграции базы данных.',
+                    } only %}
                 {% endfor %}
-
-                {% if nextPageUrl %}
-                    <a class="inline-flex min-h-10 items-center justify-center gap-1 rounded-md px-3 text-sm font-medium text-foreground transition-colors hover:bg-card" href="{{ nextPageUrl }}">
-                        Next
-                        <span aria-hidden="true">›</span>
-                    </a>
-                {% else %}
-                    <span class="inline-flex min-h-10 items-center justify-center gap-1 rounded-md px-3 text-sm font-medium text-muted-foreground opacity-50" aria-disabled="true">
-                        Next
-                        <span aria-hidden="true">›</span>
-                    </span>
-                {% endif %}
-            </nav>
-        {% endif %}
-
-        {% if isCatalogPage and bottomText|default(null) is not empty %}
-            <div class="prose prose-sm mx-auto mt-12 max-w-4xl text-muted-foreground prose-p:my-2 prose-strong:text-foreground" data-reveal data-reveal-delay="200">
-                {{ bottomText|raw }}
             </div>
         {% endif %}
 

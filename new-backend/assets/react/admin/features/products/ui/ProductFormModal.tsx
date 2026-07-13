@@ -9,11 +9,9 @@ type Props = {
   attributes: ProductAttribute[];
   productGroups: ProductGroup[];
   form: ProductForm;
-  imageUrl: string;
   open: boolean;
   saving: boolean;
   setForm: Dispatch<SetStateAction<ProductForm>>;
-  setImageUrl: Dispatch<SetStateAction<string>>;
   onAddImage: (url: string) => void;
   onClose: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
@@ -24,11 +22,9 @@ export function ProductFormModal({
   attributes,
   productGroups,
   form,
-  imageUrl,
   open,
   saving,
   setForm,
-  setImageUrl,
   onAddImage,
   onClose,
   onSubmit,
@@ -177,20 +173,6 @@ export function ProductFormModal({
         <div className="space-y-2">
           <p className="text-sm font-semibold text-[#26382d]">Изображения товара *</p>
           <div className="flex flex-wrap gap-2">
-            <input className={`${inputClass} flex-1`} value={imageUrl} onChange={(event) => setImageUrl(event.target.value)} placeholder="URL изображения" />
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                const url = imageUrl.trim();
-                if (url) {
-                  onAddImage(url);
-                  setImageUrl('');
-                }
-              }}
-            >
-              Добавить
-            </Button>
             <ImageUploader scope="products" onUploaded={onAddImage} />
           </div>
           {form.image_items.length > 0 && (
@@ -200,12 +182,9 @@ export function ProductFormModal({
                   <img src={image.path} alt={image.alt} className="h-16 w-16 rounded object-cover" />
                   <div className="grid gap-3">
                     <div className="grid gap-3 md:grid-cols-[1fr_auto]">
-                      <input
-                        className={inputClass}
-                        value={image.path}
-                        onChange={(event) => updateImage(index, { path: event.target.value })}
-                        placeholder="URL изображения"
-                      />
+                      <p className="min-h-10 break-all rounded-md border border-[#e4e5da] bg-[#fbfaf4] px-3 py-2 text-xs font-semibold text-[#789083]">
+                        {image.path}
+                      </p>
                       <label className="flex items-center gap-2 whitespace-nowrap text-sm font-semibold text-[#26382d]">
                         <input
                           type="radio"
