@@ -12,7 +12,7 @@ final readonly class HomeReviewView
     public function __construct(
         public string $id,
         public string $name,
-        public string $avatar,
+        public string $initials,
         public int $rating,
         public string $text,
         public string $date,

@@ -2,13 +2,11 @@
     <a href="/blog/{{ post.slug }}" class="group block h-full">
         <div class="flex h-full flex-col overflow-hidden rounded-2xl bg-card shadow-premium transition-all duration-300 hover:shadow-premium-lg">
             <div class="relative aspect-[4/3] overflow-hidden">
-                <img
-                    src="{{ post.image }}"
-                    alt="{{ post.title }}"
-                    class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    loading="lazy"
-                    decoding="async"
-                >
+                {{ optimized_image(post.image, post.imageAlt ?: post.title, {
+                    class: 'h-full w-full object-cover transition-transform duration-500 group-hover:scale-105',
+                    loading: 'lazy',
+                    decoding: 'async'
+                }) }}
                 <span class="absolute left-4 top-4 rounded-full bg-accent px-3 py-1 text-sm font-medium text-accent-foreground">
                     {{ post.category }}
                 </span>
@@ -41,13 +39,11 @@
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2">
                         {% if post.authorAvatar %}
-                            <img
-                                src="{{ post.authorAvatar }}"
-                                alt="{{ post.authorName }}"
-                                class="h-8 w-8 rounded-full object-cover"
-                                loading="lazy"
-                                decoding="async"
-                            >
+                            {{ optimized_image(post.authorAvatar, post.authorName, {
+                                class: 'h-8 w-8 rounded-full object-cover',
+                                loading: 'lazy',
+                                decoding: 'async'
+                            }) }}
                         {% else %}
                             <span class="h-8 w-8 rounded-full bg-muted" aria-hidden="true"></span>
                         {% endif %}

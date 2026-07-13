@@ -36,7 +36,10 @@
                     <div>
                         <p class="mb-2 font-semibold text-primary-foreground/90">Юридический адрес:</p>
                         <p class="leading-relaxed text-primary-foreground/70">
-                            634045, РОССИЯ, ТОМСКАЯ ОБЛАСТЬ, Г.О. ГОРОД ТОМСК, Г ТОМСК, ОСОБАЯ ЭКОНОМИЧЕСКАЯ ЗОНА МИКРОРАЙОН АКАДЕМГОРОДОК, ПРОСПЕКТ РАЗВИТИЕ 3Е
+                            634045, {{ site_setting('site_address_country', 'РОССИЯ') }},
+                            {{ site_setting('site_address_region', 'ТОМСКАЯ ОБЛАСТЬ') }},
+                            {{ site_setting('site_address_locality', 'Томск') }},
+                            {{ site_setting('site_address_street', 'особая экономическая зона микрорайон Академгородок, проспект Развитие 3Е') }}
                         </p>
                     </div>
                 </div>

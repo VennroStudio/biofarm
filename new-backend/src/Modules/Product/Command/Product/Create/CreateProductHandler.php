@@ -12,6 +12,8 @@ use App\Modules\Product\Entity\Product\Product;
 use App\Modules\Product\Entity\Product\ProductRepository;
 use App\Modules\Product\Entity\ProductCategory\ProductCategoryRepository;
 use App\Modules\Product\Permission\ProductPermission;
+use App\Modules\Product\Service\ProductFacetSyncer;
+use App\Modules\Product\Service\ProductImageSyncer;
 use App\Modules\Product\Service\ProductPermissionService;
 use App\Modules\User\Entity\User\Fields\Enums\UserRole;
 use DateMalformedStringException;
@@ -22,6 +24,8 @@ final readonly class CreateProductHandler
         private ProductRepository $productRepository,
         private ProductCategoryRepository $categoryRepository,
         private ProductPermissionService $permissionService,
+        private ProductImageSyncer $productImageSyncer,
+        private ProductFacetSyncer $productFacetSyncer,
         private SlugGenerator $slugGenerator,
         private Cacher $cacher,
         private FlusherInterface $flusher,
@@ -59,10 +63,16 @@ final readonly class CreateProductHandler
             wbLink: $command->wbLink,
             ozonLink: $command->ozonLink,
             isActive: $command->isActive,
+            h1: $command->h1,
+            seoTitle: $command->seoTitle,
+            seoDescription: $command->seoDescription,
+            imageAlt: $command->imageAlt,
+            sku: $command->sku,
+            gtin: $command->gtin,
+            availability: $command->availability,
         );
 
         $this->productRepository->add($product);
-        $this->deleteCache();
         $this->flusher->flush();
 
         if ($product->id === null) {
@@ -72,6 +82,23 @@ final readonly class CreateProductHandler
                 code: 13,
             );
         }
+
+        $this->productImageSyncer->sync(
+            productId: $product->id,
+            mainImage: $product->image,
+            alt: $product->imageAlt,
+            title: $product->name,
+            images: $product->images,
+            productImages: $command->productImages,
+        );
+        $this->productFacetSyncer->sync(
+            productId: $product->id,
+            attributeValueIds: $command->attributeValueIds,
+            componentIds: $command->componentIds,
+            purposeIds: $command->purposeIds,
+            productGroupId: $command->productGroupId,
+        );
+        $this->deleteCache();
 
         return $product->id;
     }

@@ -49,9 +49,13 @@ final readonly class FileUploaderService
 
         $compressed = null;
         if ($this->compressor !== null && $validator instanceof ImageFileValidator) {
-            $compressed = $this->compressor->compress($tmpFilePath, $mimeType);
-            $tmpFilePath = $compressed->path;
-            $mimeType = $compressed->mime;
+            try {
+                $compressed = $this->compressor->compress($tmpFilePath, $mimeType);
+                $tmpFilePath = $compressed->path;
+                $mimeType = $compressed->mime;
+            } catch (RuntimeException) {
+                $compressed = null;
+            }
         }
 
         try {

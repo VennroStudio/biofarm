@@ -10,6 +10,7 @@ use Override;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Slim\Routing\RouteContext;
 
 final readonly class CatalogPageController implements RequestHandlerInterface
 {
@@ -22,14 +23,18 @@ final readonly class CatalogPageController implements RequestHandlerInterface
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
         $query = $request->getQueryParams();
+        $categorySlug = $this->routeArgument($request, 'categorySlug');
+        $subcategorySlug = $this->routeArgument($request, 'subcategorySlug');
 
         return $this->html->render('pages/catalog/index.html.twig', [
             'page' => $this->catalogPage->unify(
-                selectedCategory: $this->queryString($query, 'category'),
+                selectedCategory: $subcategorySlug ?? $categorySlug ?? $this->queryString($query, 'category'),
                 searchQuery: $this->queryString($query, 'q'),
                 sortBy: $this->queryString($query, 'sort'),
                 viewMode: $this->queryString($query, 'view'),
                 page: $this->queryInt($query, 'page'),
+                componentSlug: $this->routeArgument($request, 'componentSlug'),
+                purposeSlug: $this->routeArgument($request, 'purposeSlug'),
             ),
         ]);
     }
@@ -62,5 +67,20 @@ final readonly class CatalogPageController implements RequestHandlerInterface
         $number = (int)$value;
 
         return $number > 0 ? $number : null;
+    }
+
+    private function routeArgument(ServerRequestInterface $request, string $key): ?string
+    {
+        $value = RouteContext::fromRequest($request)
+            ->getRoute()
+            ?->getArgument($key);
+
+        if (!\is_string($value)) {
+            return null;
+        }
+
+        $value = trim($value);
+
+        return $value === '' ? null : $value;
     }
 }

@@ -19,6 +19,8 @@ use App\Http\Web\Product\CreateProductController;
 use App\Http\Web\Product\DeleteProductController;
 use App\Http\Web\Product\ProductPageController;
 use App\Http\Web\Product\UpdateProductController;
+use App\Http\Web\Seo\RobotsController;
+use App\Http\Web\Seo\SitemapController;
 use App\Http\Web\System\HealthController;
 use App\Http\Web\System\ReadinessController;
 use Psr\Container\ContainerInterface;
@@ -29,8 +31,15 @@ use Slim\Routing\RouteCollectorProxy;
 return static function (App $app): void {
     $app->group('', new Group(static function (RouteCollectorProxy $group): void {
         $group->get('/', HomePageController::class);
+        $group->get('/robots.txt', RobotsController::class);
+        $group->get('/sitemap.xml', SitemapController::class);
         $group->get('/catalog', CatalogPageController::class);
-        $group->get('/catalog/{slug}', ProductPageController::class);
+        $group->get('/catalog/{categorySlug}/{subcategorySlug}/sostav/{componentSlug}', CatalogPageController::class);
+        $group->get('/catalog/{categorySlug}/{subcategorySlug}/dlya/{purposeSlug}', CatalogPageController::class);
+        $group->get('/catalog/{categorySlug}/sostav/{componentSlug}', CatalogPageController::class);
+        $group->get('/catalog/{categorySlug}/dlya/{purposeSlug}', CatalogPageController::class);
+        $group->get('/catalog/{categorySlug}/{subcategorySlug}', CatalogPageController::class);
+        $group->get('/catalog/{categorySlug}', CatalogPageController::class);
         $group->get('/product/{slug}', ProductPageController::class);
         $group->get('/blog', BlogPageController::class);
         $group->get('/blog/{slug}', BlogPostPageController::class);

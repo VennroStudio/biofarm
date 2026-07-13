@@ -21,6 +21,17 @@ final readonly class UpdateSettingsAction implements RequestHandlerInterface
         'cart_enabled',
         'order_bonus_enabled',
         'order_bonus_percent',
+        'site_name',
+        'site_phone',
+        'site_email',
+        'site_logo_url',
+        'site_default_og_image',
+        'site_address_country',
+        'site_address_region',
+        'site_address_locality',
+        'site_address_street',
+        'robots_extra_disallow',
+        'sitemap_include_legal_pages',
     ];
 
     public function __construct(

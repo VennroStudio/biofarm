@@ -2,6 +2,7 @@ import type { AdminUser, ApiItems, MediaAsset } from '../types';
 
 const tokenKey = 'biofarm_admin_access_token';
 const adminKey = 'biofarm_admin_user';
+export const sessionClearedEvent = 'biofarm-admin-session-cleared';
 
 type RequestOptions = Omit<RequestInit, 'body'> & {
   body?: BodyInit | Record<string, unknown> | null;
@@ -37,6 +38,7 @@ export function getStoredAdmin(): AdminUser | null {
 export function clearSession() {
   localStorage.removeItem(tokenKey);
   localStorage.removeItem(adminKey);
+  window.dispatchEvent(new Event(sessionClearedEvent));
 }
 
 export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {

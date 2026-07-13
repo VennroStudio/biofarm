@@ -6,15 +6,20 @@
 {% set hasActiveCategory = activeCategory is not empty and activeCategory != 'all' %}
 {% set currentSort = sortBy|default('default') %}
 {% set currentView = viewMode|default('grid') %}
+{% set currentCatalogPath = catalogPath|default('/catalog') %}
+{% set catalogEyebrow = catalogEyebrow|default('Натуральные продукты') %}
+{% set catalogH1 = catalogH1|default('Каталог товаров') %}
+{% set catalogLead = catalogLead|default('Экологически чистые продукты с собственных ферм. Без пестицидов, без ГМО — только природа.') %}
+{% set activeComponentSlug = activeComponentSlug|default(null) %}
+{% set activePurposeSlug = activePurposeSlug|default(null) %}
 
 {% if isCatalogPage %}
     <section class="bg-gradient-to-b from-primary/10 to-background pb-16 pt-32">
         <div class="container mx-auto px-4 text-center">
-            <span class="mb-4 inline-block font-medium text-accent" data-reveal data-reveal-delay="0">Натуральные продукты</span>
-            <h1 class="mb-6 font-display text-4xl font-bold text-foreground md:text-5xl" data-reveal data-reveal-delay="100">Каталог товаров</h1>
+            <span class="mb-4 inline-block font-medium text-accent" data-reveal data-reveal-delay="0">{{ catalogEyebrow }}</span>
+            <h1 class="mb-6 font-display text-4xl font-bold text-foreground md:text-5xl" data-reveal data-reveal-delay="100">{{ catalogH1 }}</h1>
             <p class="mx-auto max-w-2xl text-muted-foreground" data-reveal data-reveal-delay="200">
-                Экологически чистые продукты с собственных ферм.
-                Без пестицидов, без ГМО — только природа.
+                {{ catalogLead }}
             </p>
         </div>
     </section>
@@ -56,10 +61,7 @@
                     </nav>
 
                     <div class="flex flex-wrap items-center gap-3 max-lg:w-full max-lg:flex-col max-lg:items-stretch">
-                        <form class="max-lg:w-full" method="get" action="/catalog#catalog">
-                            {% if hasActiveCategory %}
-                                <input type="hidden" name="category" value="{{ activeCategory }}">
-                            {% endif %}
+                        <form class="max-lg:w-full" method="get" action="{{ currentCatalogPath }}#catalog">
                             {% if currentSort != 'default' %}
                                 <input type="hidden" name="sort" value="{{ currentSort }}">
                             {% endif %}
@@ -76,10 +78,7 @@
                             >
                         </form>
 
-                        <form class="relative max-lg:w-full" method="get" action="/catalog#catalog">
-                            {% if hasActiveCategory %}
-                                <input type="hidden" name="category" value="{{ activeCategory }}">
-                            {% endif %}
+                        <form class="relative max-lg:w-full" method="get" action="{{ currentCatalogPath }}#catalog">
                             {% if searchQuery|default('') is not empty %}
                                 <input type="hidden" name="q" value="{{ searchQuery }}">
                             {% endif %}
@@ -127,11 +126,51 @@
                         </div>
                     </div>
                 </div>
+
+                {% if componentFilters|default([]) is not empty or purposeFilters|default([]) is not empty %}
+                    <div class="mt-5 grid gap-4 border-t border-border pt-5">
+                        {% if componentFilters|default([]) is not empty %}
+                            <nav class="flex flex-wrap items-center gap-2" aria-label="Фильтр по составу">
+                                <span class="mr-1 text-sm font-bold text-foreground">Состав:</span>
+                                {% for component in componentFilters %}
+                                    <a
+                                        class="inline-flex min-h-8 items-center justify-center rounded-full border px-3 text-xs font-bold transition-colors {% if activeComponentSlug == component.slug %}border-primary bg-primary text-primary-foreground{% else %}border-border bg-background text-foreground hover:bg-secondary{% endif %}"
+                                        href="{{ componentFilterUrls[component.slug] }}"
+                                        {% if activeComponentSlug == component.slug %}aria-current="true"{% endif %}
+                                    >
+                                        {{ component.name }}
+                                    </a>
+                                {% endfor %}
+                            </nav>
+                        {% endif %}
+
+                        {% if purposeFilters|default([]) is not empty %}
+                            <nav class="flex flex-wrap items-center gap-2" aria-label="Фильтр по назначению">
+                                <span class="mr-1 text-sm font-bold text-foreground">Для чего:</span>
+                                {% for purpose in purposeFilters %}
+                                    <a
+                                        class="inline-flex min-h-8 items-center justify-center rounded-full border px-3 text-xs font-bold transition-colors {% if activePurposeSlug == purpose.slug %}border-primary bg-primary text-primary-foreground{% else %}border-border bg-background text-foreground hover:bg-secondary{% endif %}"
+                                        href="{{ purposeFilterUrls[purpose.slug] }}"
+                                        {% if activePurposeSlug == purpose.slug %}aria-current="true"{% endif %}
+                                    >
+                                        {{ purpose.name }}
+                                    </a>
+                                {% endfor %}
+                            </nav>
+                        {% endif %}
+                    </div>
+                {% endif %}
             </div>
 
             <p class="mb-6 text-muted-foreground">
                 Найдено товаров: <strong class="font-semibold text-foreground">{{ productsTotal }}</strong>
             </p>
+
+            {% if introText|default(null) is not empty %}
+                <div class="prose prose-sm mb-8 max-w-none text-muted-foreground prose-p:my-2 prose-strong:text-foreground" data-reveal data-reveal-delay="350">
+                    {{ introText|raw }}
+                </div>
+            {% endif %}
         {% else %}
             <nav class="mb-12 flex flex-wrap justify-center gap-3" aria-label="Категории товаров" data-reveal data-reveal-y="0" data-reveal-delay="300">
                 <a
@@ -214,6 +253,12 @@
                     </span>
                 {% endif %}
             </nav>
+        {% endif %}
+
+        {% if isCatalogPage and bottomText|default(null) is not empty %}
+            <div class="prose prose-sm mx-auto mt-12 max-w-4xl text-muted-foreground prose-p:my-2 prose-strong:text-foreground" data-reveal data-reveal-delay="200">
+                {{ bottomText|raw }}
+            </div>
         {% endif %}
 
         {% if shouldShowAllLink %}

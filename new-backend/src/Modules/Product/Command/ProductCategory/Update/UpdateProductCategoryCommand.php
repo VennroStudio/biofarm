@@ -29,5 +29,14 @@ final readonly class UpdateProductCategoryCommand
         #[Assert\NotBlank]
         public int $currentUserRole,
         public ?string $slug = null,
+        public ?int $parentId = null,
+        public ?string $h1 = null,
+        public ?string $seoTitle = null,
+        public ?string $seoDescription = null,
+        public ?string $introText = null,
+        public ?string $bottomText = null,
+        public ?string $image = null,
+        public bool $isIndexable = true,
+        public int $sortOrder = 0,
     ) {}
 }

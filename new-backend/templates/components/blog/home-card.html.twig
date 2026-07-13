@@ -4,13 +4,11 @@
     <a href="/blog/{{ post.slug }}" class="block">
         <div class="overflow-hidden rounded-2xl bg-card shadow-premium transition-all duration-300 hover:shadow-premium-lg">
             <div class="relative aspect-[4/3] overflow-hidden">
-                <img
-                    src="{{ post.image }}"
-                    alt="{{ post.title }}"
-                    class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    loading="lazy"
-                    decoding="async"
-                >
+                {{ optimized_image(post.image, post.imageAlt ?: post.title, {
+                    class: 'h-full w-full object-cover transition-transform duration-500 group-hover:scale-105',
+                    loading: 'lazy',
+                    decoding: 'async'
+                }) }}
                 <span class="absolute left-4 top-4 rounded-full bg-accent px-3 py-1 text-sm font-medium text-accent-foreground">
                     {{ post.category }}
                 </span>

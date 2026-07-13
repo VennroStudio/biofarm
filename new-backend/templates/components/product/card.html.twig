@@ -5,13 +5,11 @@
     <article class="group overflow-hidden rounded-2xl bg-card shadow-premium transition-all duration-300 hover:shadow-premium-lg" data-reveal data-reveal-duration="500" data-reveal-delay="{{ revealDelay }}">
         <a href="/product/{{ product.slug }}" class="flex gap-4 p-4 max-sm:flex-col">
             <div class="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-lg bg-white max-sm:h-auto max-sm:w-full max-sm:aspect-square">
-                <img
-                    class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    src="{{ product.image }}"
-                    alt="{{ product.title }}"
-                    loading="lazy"
-                    decoding="async"
-                >
+                {{ optimized_image(product.image, product.imageAlt ?: product.title, {
+                    class: 'h-full w-full object-cover transition-transform duration-500 group-hover:scale-105',
+                    loading: 'lazy',
+                    decoding: 'async'
+                }) }}
                 {% if product.badge %}
                     <span class="absolute left-1 top-1 rounded-full bg-accent px-1.5 py-0.5 text-xs font-bold text-accent-foreground">
                         {{ product.badge }}
@@ -70,13 +68,11 @@
     <article class="group overflow-hidden rounded-2xl bg-card shadow-premium transition-all duration-300 hover:shadow-premium-lg" data-reveal data-reveal-duration="500" data-reveal-delay="{{ revealDelay }}">
         <a href="/product/{{ product.slug }}">
             <div class="relative aspect-square overflow-hidden bg-white">
-                <img
-                    class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    src="{{ product.image }}"
-                    alt="{{ product.title }}"
-                    loading="lazy"
-                    decoding="async"
-                >
+                {{ optimized_image(product.image, product.imageAlt ?: product.title, {
+                    class: 'h-full w-full object-cover transition-transform duration-500 group-hover:scale-105',
+                    loading: 'lazy',
+                    decoding: 'async'
+                }) }}
                 {% if product.badge %}
                     <span class="absolute left-4 top-4 rounded-full bg-accent px-3 py-1 text-xs font-bold text-accent-foreground">
                         {{ product.badge }}

@@ -1,5 +1,5 @@
 <div class="flex gap-4" data-product-gallery>
-    {% if product.images|length > 1 %}
+    {% if product.imageItems|length > 1 %}
         <div class="flex h-full w-20 flex-shrink-0 flex-col gap-2">
             <button
                 class="inline-flex h-8 w-full items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
@@ -13,7 +13,7 @@
             </button>
 
             <div class="flex min-h-0 flex-1 flex-col justify-start gap-2">
-                {% for image in product.images|slice(0, 4) %}
+                {% for image in product.imageItems|slice(0, 4) %}
                     <button
                         class="{{ loop.first ? 'border-primary ring-2 ring-primary/20' : 'border-transparent hover:border-muted-foreground/30' }} min-h-0 w-full flex-1 flex-shrink-0 overflow-hidden rounded-lg border-2 transition-all duration-200"
                         type="button"
@@ -22,8 +22,11 @@
                         data-gallery-index="{{ loop.index0 }}"
                     >
                         <img
-                            src="{{ image }}"
-                            alt="{{ product.title }} - фото {{ loop.index }}"
+                            src="{{ image.path }}"
+                            alt="{{ image.alt }}"
+                            title="{{ image.title ?: product.title }}"
+                            {% if image.width %}width="{{ image.width }}"{% endif %}
+                            {% if image.height %}height="{{ image.height }}"{% endif %}
                             class="h-full w-full object-cover"
                             loading="{{ loop.first ? 'eager' : 'lazy' }}"
                             decoding="async"
@@ -54,8 +57,11 @@
         >
             <img
                 class="h-full w-full object-contain"
-                src="{{ product.images[0] }}"
-                alt="{{ product.title }}"
+                src="{{ product.imageItems[0].path }}"
+                alt="{{ product.imageItems[0].alt }}"
+                title="{{ product.imageItems[0].title ?: product.title }}"
+                {% if product.imageItems[0].width %}width="{{ product.imageItems[0].width }}"{% endif %}
+                {% if product.imageItems[0].height %}height="{{ product.imageItems[0].height }}"{% endif %}
                 loading="eager"
                 fetchpriority="high"
                 decoding="async"
@@ -100,7 +106,7 @@
             </svg>
         </button>
 
-        {% if product.images|length > 1 %}
+        {% if product.imageItems|length > 1 %}
             <button
                 class="absolute left-4 top-1/2 inline-flex h-12 w-12 -translate-y-1/2 items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium text-white ring-offset-background transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
                 type="button"
@@ -124,15 +130,16 @@
         {% endif %}
 
         <img
-            src="{{ product.images[0] }}"
-            alt="{{ product.title }}"
+            src="{{ product.imageItems[0].path }}"
+            alt="{{ product.imageItems[0].alt }}"
+            title="{{ product.imageItems[0].title ?: product.title }}"
             class="max-h-[90vh] max-w-[90vw] object-contain"
             data-product-gallery-lightbox-image
         >
 
-        {% if product.images|length > 1 %}
+        {% if product.imageItems|length > 1 %}
             <div class="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
-                {% for image in product.images %}
+                {% for image in product.imageItems %}
                     <button
                         class="{{ loop.first ? 'border-white opacity-100' : 'border-transparent opacity-60 hover:opacity-100' }} h-16 w-16 overflow-hidden rounded-lg border-2 transition-all"
                         type="button"
@@ -140,7 +147,7 @@
                         data-product-gallery-lightbox-thumb
                         data-gallery-index="{{ loop.index0 }}"
                     >
-                        <img src="{{ image }}" alt="" class="h-full w-full object-cover" loading="lazy" decoding="async">
+                        <img src="{{ image.path }}" alt="{{ image.alt }}" class="h-full w-full object-cover" loading="lazy" decoding="async">
                     </button>
                 {% endfor %}
             </div>

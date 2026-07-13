@@ -22,7 +22,8 @@ final readonly class ImageCompressor
         $tmpPath = tempnam(sys_get_temp_dir(), 'img_') . '.avif';
 
         try {
-            if (imageavif($image, $tmpPath, $this->quality) === false) {
+            if (@imageavif($image, $tmpPath, $this->quality) === false || !is_file($tmpPath) || filesize($tmpPath) === 0) {
+                @unlink($tmpPath);
                 throw new RuntimeException("Cannot encode avif: {$tmpPath}");
             }
         } finally {

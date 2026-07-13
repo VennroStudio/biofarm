@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Unifier\Home;
 
+use App\Components\Seo\JsonLdFactory;
+use App\Components\Seo\SeoUrlGenerator;
 use App\Http\Unifier\Product\ProductCatalogDataProvider;
 use App\Http\View\Blog\BlogPostView;
 use App\Http\View\Home\HomeCategoryView;
@@ -33,6 +35,8 @@ final readonly class HomePageUnifier
     public function __construct(
         private ProductCatalogDataProvider $catalogData,
         private Connection $connection,
+        private SeoUrlGenerator $urls,
+        private JsonLdFactory $jsonLd,
     ) {}
 
     public function unify(?string $selectedCategory = null): HomePageView
@@ -44,6 +48,15 @@ final readonly class HomePageUnifier
             meta: new PageMetaView(
                 title: 'БИОФАРМ — натуральные продукты',
                 description: 'Экологически чистые продукты БИОФАРМ напрямую из собственных лабораторий.',
+                canonicalUrl: $this->urls->absolute('/'),
+                ogTitle: 'БИОФАРМ — натуральные продукты',
+                ogDescription: 'Экологически чистые продукты БИОФАРМ напрямую из собственных лабораторий.',
+                ogImage: $this->urls->absolute('/assets/images/og/default.jpg'),
+                ogImageAlt: 'БИОФАРМ',
+                jsonLd: [
+                    $this->jsonLd->organization(),
+                    $this->jsonLd->website(),
+                ],
             ),
             products: $products,
             selectedCategory: $selectedCategory,
@@ -69,15 +82,22 @@ final readonly class HomePageUnifier
                 'bp.id',
                 'bp.slug',
                 'bp.title',
+                'bp.h1',
+                'bp.seo_title',
+                'bp.seo_description',
                 'bp.excerpt',
                 'bp.content',
                 'bp.image',
+                'bp.image_alt',
                 'bp.category_id',
-                'bp.created_at',
+                'COALESCE(bp.published_at, bp.created_at) AS published_at',
+                'COALESCE(bc.name, bp.category_id) AS category_name',
+                'bc.slug AS category_slug',
                 'bp.author_name',
                 'bp.read_time',
             )
             ->from('blog_posts', 'bp')
+            ->leftJoin('bp', 'blog_categories', 'bc', 'bc.slug = bp.category_id AND bc.deleted_at IS NULL')
             ->where('bp.deleted_at IS NULL')
             ->andWhere('bp.is_published = 1')
             ->orderBy('bp.created_at', 'DESC')
@@ -98,11 +118,17 @@ final readonly class HomePageUnifier
             id: (int)$row['id'],
             slug: (string)$row['slug'],
             title: (string)$row['title'],
+            h1: $row['h1'] !== null && trim((string)$row['h1']) !== '' ? (string)$row['h1'] : null,
+            seoTitle: $row['seo_title'] !== null && trim((string)$row['seo_title']) !== '' ? (string)$row['seo_title'] : null,
+            seoDescription: $row['seo_description'] !== null && trim((string)$row['seo_description']) !== '' ? (string)$row['seo_description'] : null,
             excerpt: (string)$row['excerpt'],
             content: (string)$row['content'],
             image: (string)$row['image'],
-            category: (string)$row['category_id'],
-            date: $this->formatDate((string)$row['created_at']),
+            imageAlt: $row['image_alt'] !== null && trim((string)$row['image_alt']) !== '' ? (string)$row['image_alt'] : (string)$row['title'],
+            category: (string)$row['category_name'],
+            categorySlug: $row['category_slug'] !== null && trim((string)$row['category_slug']) !== '' ? (string)$row['category_slug'] : (string)$row['category_id'],
+            date: $this->formatDate((string)$row['published_at']),
+            publishedAt: (string)$row['published_at'],
             authorName: (string)($row['author_name'] ?: 'Автор'),
             authorAvatar: '',
             readTime: (int)$row['read_time'],
@@ -158,13 +184,32 @@ final readonly class HomePageUnifier
         return new HomeReviewView(
             id: (string)$row['id'],
             name: $name,
-            avatar: 'https://ui-avatars.com/api/?name=' . rawurlencode($name) . '&background=random',
+            initials: $this->reviewInitials($name),
             rating: (int)$row['rating'],
             text: (string)$row['text'],
             date: $this->formatDate((string)$row['created_at']),
             product: (string)$row['product_name'],
             images: $this->jsonList($row['images']),
         );
+    }
+
+    private function reviewInitials(string $name): string
+    {
+        $parts = preg_split('/\s+/u', trim($name)) ?: [];
+        $letters = [];
+
+        foreach ($parts as $part) {
+            if ($part === '') {
+                continue;
+            }
+
+            $letters[] = mb_substr($part, 0, 1);
+            if (\count($letters) === 2) {
+                break;
+            }
+        }
+
+        return mb_strtoupper(implode('', $letters) ?: mb_substr($name, 0, 1));
     }
 
     /**

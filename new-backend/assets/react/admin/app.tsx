@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { getToken } from './api/client';
 import { AdminLayout } from './layout/AdminLayout';
+import { AdminAttributes } from './pages/AdminAttributes';
 import { AdminBlog } from './pages/AdminBlog';
 import { AdminCategories } from './pages/AdminCategories';
 import { AdminDashboard } from './pages/AdminDashboard';
@@ -37,6 +38,10 @@ export function AdminApp() {
           <Route index element={<AdminDashboard />} />
           <Route path="products" element={<AdminProducts />} />
           <Route path="categories" element={<AdminCategories />} />
+          <Route path="attributes" element={<AdminAttributes />} />
+          <Route path="product-groups" element={<Navigate to="/admin/products" replace />} />
+          <Route path="components" element={<Navigate to="/admin/attributes" replace />} />
+          <Route path="purposes" element={<Navigate to="/admin/attributes" replace />} />
           <Route path="orders" element={<AdminOrders />} />
           <Route path="blog" element={<AdminBlog />} />
           <Route path="reviews" element={<AdminReviews />} />

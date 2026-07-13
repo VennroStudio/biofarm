@@ -15,6 +15,17 @@ final class SiteSettings
         'cart_enabled'         => false,
         'order_bonus_enabled'  => true,
         'order_bonus_percent'  => 5,
+        'site_name'            => 'БИОФАРМ',
+        'site_phone'           => '+7 (999) 123-45-67',
+        'site_email'           => 'bio.active@bk.ru',
+        'site_logo_url'        => '/uploads/images/logo.png',
+        'site_default_og_image' => '/assets/images/og/default.jpg',
+        'site_address_country' => 'RU',
+        'site_address_region'  => 'Томская область',
+        'site_address_locality' => 'Томск',
+        'site_address_street'  => 'особая экономическая зона микрорайон Академгородок, проспект Развитие 3Е',
+        'robots_extra_disallow' => '',
+        'sitemap_include_legal_pages' => false,
     ];
 
     /** @var array<string, bool|float|int|string|null>|null */

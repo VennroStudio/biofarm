@@ -7,6 +7,8 @@ use App\Components\Storage\ImageCompressor;
 use App\Components\Storage\ImageCompressorConfig;
 use App\Components\Storage\LocalStorage;
 use App\Components\Storage\StorageInterface;
+use App\Components\Image\ImageVariantGenerator;
+use App\Components\Image\ImageVariantLocator;
 use Psr\Container\ContainerInterface;
 
 use function App\Components\env;
@@ -35,4 +37,19 @@ return [
             return $compressor;
         })($container->get(ImageCompressor::class)),
     ),
+
+    ImageVariantLocator::class => static fn (): ImageVariantLocator => new ImageVariantLocator(
+        publicRoot: \dirname(env('UPLOADS_STORAGE_PATH', __DIR__ . '/../../public/uploads')),
+    ),
+
+    ImageVariantGenerator::class => static fn (ContainerInterface $container): ImageVariantGenerator => new ImageVariantGenerator(
+        locator: (static function (mixed $locator): ImageVariantLocator {
+            assert($locator instanceof ImageVariantLocator);
+
+            return $locator;
+        })($container->get(ImageVariantLocator::class)),
+    ),
+
+    'image.uploads_path' => static fn (): string => env('UPLOADS_STORAGE_PATH', __DIR__ . '/../../public/uploads'),
+    'image.public_root' => static fn (): string => \dirname(env('UPLOADS_STORAGE_PATH', __DIR__ . '/../../public/uploads')),
 ];

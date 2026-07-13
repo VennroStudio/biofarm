@@ -5,6 +5,7 @@ import { FeatureSettingsCard } from '../features/settings/ui/FeatureSettingsCard
 import { OrderBonusSettingsCard } from '../features/settings/ui/OrderBonusSettingsCard';
 import { PasswordSettingsCard, type PasswordForm } from '../features/settings/ui/PasswordSettingsCard';
 import { ReferralSettingsCard } from '../features/settings/ui/ReferralSettingsCard';
+import { SeoSettingsCard } from '../features/settings/ui/SeoSettingsCard';
 import { useLoadOnMount } from '../hooks/useLoadOnMount';
 import { Button, PageHeader } from '../shared/ui';
 import type { Settings } from '../types';
@@ -15,6 +16,17 @@ const defaults: Settings = {
   cart_enabled: false,
   order_bonus_enabled: true,
   order_bonus_percent: 5,
+  site_name: 'БИОФАРМ',
+  site_phone: '+7 (999) 123-45-67',
+  site_email: 'bio.active@bk.ru',
+  site_logo_url: '/uploads/images/logo.png',
+  site_default_og_image: '/assets/images/og/default.jpg',
+  site_address_country: 'RU',
+  site_address_region: 'Томская область',
+  site_address_locality: 'Томск',
+  site_address_street: 'особая экономическая зона микрорайон Академгородок, проспект Развитие 3Е',
+  robots_extra_disallow: '',
+  sitemap_include_legal_pages: false,
 };
 
 const emptyPassword: PasswordForm = {
@@ -51,6 +63,7 @@ export function AdminSettings() {
 
       <form className="space-y-6" onSubmit={(event) => void submit(event)}>
         <FeatureSettingsCard settings={settings} onChange={setSettings} />
+        <SeoSettingsCard settings={settings} onChange={setSettings} />
         <ReferralSettingsCard settings={settings} onChange={setSettings} />
         <OrderBonusSettingsCard settings={settings} onChange={setSettings} />
         <PasswordSettingsCard password={password} setPassword={setPassword} />

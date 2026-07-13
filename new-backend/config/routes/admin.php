@@ -13,6 +13,20 @@ use App\Http\Action\Admin\Media\DeleteMediaAction;
 use App\Http\Action\Admin\Media\UploadMediaAction;
 use App\Http\Action\Admin\Order\UpdateOrderPaymentStatusAction;
 use App\Http\Action\Admin\Order\UpdateOrderStatusAction;
+use App\Http\Action\Admin\ProductTaxonomy\DeleteAttributeAction;
+use App\Http\Action\Admin\ProductTaxonomy\DeleteAttributeValueAction;
+use App\Http\Action\Admin\ProductTaxonomy\DeleteComponentAction;
+use App\Http\Action\Admin\ProductTaxonomy\DeletePurposeAction;
+use App\Http\Action\Admin\ProductTaxonomy\DeleteProductGroupAction;
+use App\Http\Action\Admin\ProductTaxonomy\GetAttributesAction;
+use App\Http\Action\Admin\ProductTaxonomy\GetComponentsAction;
+use App\Http\Action\Admin\ProductTaxonomy\GetPurposesAction;
+use App\Http\Action\Admin\ProductTaxonomy\GetProductGroupsAction;
+use App\Http\Action\Admin\ProductTaxonomy\SaveAttributeAction;
+use App\Http\Action\Admin\ProductTaxonomy\SaveAttributeValueAction;
+use App\Http\Action\Admin\ProductTaxonomy\SaveComponentAction;
+use App\Http\Action\Admin\ProductTaxonomy\SavePurposeAction;
+use App\Http\Action\Admin\ProductTaxonomy\SaveProductGroupAction;
 use App\Http\Action\Admin\Review\ApproveReviewAction;
 use App\Http\Action\Admin\Setting\GetSettingsAction;
 use App\Http\Action\Admin\Setting\UpdateSettingsAction;
@@ -42,6 +56,29 @@ return static function (App $app): void {
 
                 $group->post('/media', UploadMediaAction::class);
                 $group->delete('/media/{id}', DeleteMediaAction::class);
+
+                $group->get('/components', GetComponentsAction::class);
+                $group->post('/components', SaveComponentAction::class);
+                $group->patch('/components/{id}', SaveComponentAction::class);
+                $group->delete('/components/{id}', DeleteComponentAction::class);
+
+                $group->get('/product-purposes', GetPurposesAction::class);
+                $group->post('/product-purposes', SavePurposeAction::class);
+                $group->patch('/product-purposes/{id}', SavePurposeAction::class);
+                $group->delete('/product-purposes/{id}', DeletePurposeAction::class);
+
+                $group->get('/attributes', GetAttributesAction::class);
+                $group->post('/attributes', SaveAttributeAction::class);
+                $group->patch('/attributes/{id}', SaveAttributeAction::class);
+                $group->delete('/attributes/{id}', DeleteAttributeAction::class);
+                $group->post('/attributes/{attributeId}/values', SaveAttributeValueAction::class);
+                $group->patch('/attribute-values/{id}', SaveAttributeValueAction::class);
+                $group->delete('/attribute-values/{id}', DeleteAttributeValueAction::class);
+
+                $group->get('/product-groups', GetProductGroupsAction::class);
+                $group->post('/product-groups', SaveProductGroupAction::class);
+                $group->patch('/product-groups/{id}', SaveProductGroupAction::class);
+                $group->delete('/product-groups/{id}', DeleteProductGroupAction::class);
 
                 $group->get('/users', AdminGetUsersAction::class);
                 $group->patch('/users/{id}', UpdateUserProfileAction::class);

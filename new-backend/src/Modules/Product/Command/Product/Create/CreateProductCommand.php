@@ -28,12 +28,28 @@ final readonly class CreateProductCommand
         #[Assert\NotBlank]
         public int $currentUserRole,
         public ?string $slug = null,
+        public ?string $h1 = null,
+        public ?string $seoTitle = null,
+        public ?string $seoDescription = null,
         public ?string $shortDescription = null,
         public ?int $oldPrice = null,
+        public ?string $imageAlt = null,
         /** @var list<string>|null */
         public ?array $images = null,
+        /** @var list<array{path?: string, alt?: string|null, title?: string|null, sortOrder?: int|null, sort_order?: int|null, isMain?: bool|null, is_main?: bool|null}>|null */
+        public ?array $productImages = null,
         public ?string $badge = null,
+        public ?string $sku = null,
+        public ?string $gtin = null,
+        public string $availability = 'in_stock',
         public ?string $ingredients = null,
+        /** @var list<int>|null */
+        public ?array $attributeValueIds = null,
+        /** @var list<int>|null */
+        public ?array $componentIds = null,
+        /** @var list<int>|null */
+        public ?array $purposeIds = null,
+        public ?int $productGroupId = null,
         /** @var list<string>|null */
         public ?array $features = null,
         public ?string $wbLink = null,

@@ -13,9 +13,13 @@ final readonly class CatalogPageView
     /**
      * @param list<ProductCardView> $products
      * @param list<HomeCategoryView> $categories
+     * @param list<CatalogFacetView> $componentFilters
+     * @param list<CatalogFacetView> $purposeFilters
      * @param list<int> $pageNumbers
      * @param array<int, string> $pageUrls
      * @param array<string, string> $categoryUrls
+     * @param array<string, string> $componentFilterUrls
+     * @param array<string, string> $purposeFilterUrls
      * @param array<string, string> $viewUrls
      */
     public function __construct(
@@ -23,6 +27,16 @@ final readonly class CatalogPageView
         public array $products,
         public array $categories,
         public int $categoriesTotal,
+        public string $catalogPath,
+        public string $catalogEyebrow,
+        public string $catalogH1,
+        public string $catalogLead,
+        public ?string $introText,
+        public ?string $bottomText,
+        public array $componentFilters,
+        public array $purposeFilters,
+        public ?string $activeComponentSlug,
+        public ?string $activePurposeSlug,
         public ?string $selectedCategory,
         public int $productsTotal,
         public string $searchQuery,
@@ -38,6 +52,8 @@ final readonly class CatalogPageView
         public ?string $nextPageUrl,
         public string $allCategoryUrl,
         public array $categoryUrls,
+        public array $componentFilterUrls,
+        public array $purposeFilterUrls,
         public array $viewUrls,
         public string $resetUrl,
     ) {}

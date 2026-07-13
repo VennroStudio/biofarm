@@ -14,7 +14,7 @@ return [
             'image/webp' => 'webp',
             'image/avif' => 'avif',
         ],
-        maxFileSize: 2 * 1024 * 1024,
+        maxFileSize: 20 * 1024 * 1024,
     ),
 
     VideoFileValidator::class => static fn (): VideoFileValidator => new VideoFileValidator(

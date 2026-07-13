@@ -29,6 +29,15 @@ class Product
     #[ORM\Column(type: Types::STRING, length: 255)]
     private(set) string $name;
 
+    #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
+    private(set) ?string $h1;
+
+    #[ORM\Column(name: 'seo_title', type: Types::STRING, length: 255, nullable: true)]
+    private(set) ?string $seoTitle;
+
+    #[ORM\Column(name: 'seo_description', type: Types::STRING, length: 500, nullable: true)]
+    private(set) ?string $seoDescription;
+
     #[ORM\Column(type: Types::STRING, length: 50)]
     private(set) string $categoryId;
 
@@ -41,6 +50,9 @@ class Product
     #[ORM\Column(type: Types::STRING, length: 500)]
     private(set) string $image;
 
+    #[ORM\Column(name: 'image_alt', type: Types::STRING, length: 500, nullable: true)]
+    private(set) ?string $imageAlt;
+
     /** @var list<string>|null */
     #[ORM\Column(type: Types::JSON, nullable: true)]
     private(set) ?array $images;
@@ -50,6 +62,15 @@ class Product
 
     #[ORM\Column(type: Types::STRING, length: 50)]
     private(set) string $weight;
+
+    #[ORM\Column(type: Types::STRING, length: 100, nullable: true)]
+    private(set) ?string $sku;
+
+    #[ORM\Column(type: Types::STRING, length: 100, nullable: true)]
+    private(set) ?string $gtin;
+
+    #[ORM\Column(type: Types::STRING, length: 50, options: ['default' => 'in_stock'])]
+    private(set) string $availability;
 
     #[ORM\Column(type: Types::TEXT)]
     private(set) string $description;
@@ -75,6 +96,9 @@ class Product
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private(set) DateTimeImmutable $createdAt;
+
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    private(set) ?DateTimeImmutable $publishedAt;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
     private(set) ?DateTimeImmutable $updatedAt = null;
@@ -104,16 +128,31 @@ class Product
         ?string $wbLink,
         ?string $ozonLink,
         bool $isActive,
+        ?string $h1,
+        ?string $seoTitle,
+        ?string $seoDescription,
+        ?string $imageAlt,
+        ?string $sku,
+        ?string $gtin,
+        string $availability,
+        ?DateTimeImmutable $publishedAt,
     ) {
         $this->slug = $slug;
         $this->name = $name;
+        $this->h1 = $h1;
+        $this->seoTitle = $seoTitle;
+        $this->seoDescription = $seoDescription;
         $this->categoryId = $categoryId;
         $this->price = $price;
         $this->oldPrice = $oldPrice;
         $this->image = $image;
+        $this->imageAlt = $imageAlt;
         $this->images = $images;
         $this->badge = $badge;
         $this->weight = $weight;
+        $this->sku = $sku;
+        $this->gtin = $gtin;
+        $this->availability = $availability;
         $this->description = $description;
         $this->shortDescription = $shortDescription;
         $this->ingredients = $ingredients;
@@ -122,6 +161,7 @@ class Product
         $this->ozonLink = $ozonLink;
         $this->isActive = $isActive;
         $this->createdAt = UtcClock::now();
+        $this->publishedAt = $publishedAt;
     }
 
     /**
@@ -146,6 +186,14 @@ class Product
         ?string $wbLink = null,
         ?string $ozonLink = null,
         bool $isActive = true,
+        ?string $h1 = null,
+        ?string $seoTitle = null,
+        ?string $seoDescription = null,
+        ?string $imageAlt = null,
+        ?string $sku = null,
+        ?string $gtin = null,
+        string $availability = 'in_stock',
+        ?DateTimeImmutable $publishedAt = null,
     ): self {
         return new self(
             slug: $slug,
@@ -164,6 +212,14 @@ class Product
             wbLink: $wbLink,
             ozonLink: $ozonLink,
             isActive: $isActive,
+            h1: $h1,
+            seoTitle: $seoTitle,
+            seoDescription: $seoDescription,
+            imageAlt: $imageAlt,
+            sku: $sku,
+            gtin: $gtin,
+            availability: $availability,
+            publishedAt: $publishedAt,
         );
     }
 
@@ -189,14 +245,29 @@ class Product
         ?string $wbLink,
         ?string $ozonLink,
         bool $isActive,
+        ?string $h1 = null,
+        ?string $seoTitle = null,
+        ?string $seoDescription = null,
+        ?string $imageAlt = null,
+        ?string $sku = null,
+        ?string $gtin = null,
+        string $availability = 'in_stock',
+        ?DateTimeImmutable $publishedAt = null,
     ): void {
         $this->assertNotDeleted();
         $this->slug = $slug;
         $this->name = $name;
+        $this->h1 = $h1;
+        $this->seoTitle = $seoTitle;
+        $this->seoDescription = $seoDescription;
         $this->categoryId = $categoryId;
         $this->price = $price;
         $this->image = $image;
+        $this->imageAlt = $imageAlt;
         $this->weight = $weight;
+        $this->sku = $sku;
+        $this->gtin = $gtin;
+        $this->availability = $availability;
         $this->description = $description;
         $this->shortDescription = $shortDescription;
         $this->oldPrice = $oldPrice;
@@ -207,6 +278,7 @@ class Product
         $this->wbLink = $wbLink;
         $this->ozonLink = $ozonLink;
         $this->isActive = $isActive;
+        $this->publishedAt = $publishedAt;
         $this->touch();
     }
 

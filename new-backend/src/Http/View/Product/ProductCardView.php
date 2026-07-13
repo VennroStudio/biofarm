@@ -23,5 +23,7 @@ final readonly class ProductCardView
         public string $weight,
         public float $ratingRate = 0.0,
         public int $ratingCount = 0,
+        public ?string $imageAlt = null,
+        public ?string $categorySlug = null,
     ) {}
 }

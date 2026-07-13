@@ -7,8 +7,8 @@ import {
   emptyCategoryForm,
   type CategoryForm,
 } from '../features/categories/model/categoryForm';
-import { CategoryCards } from '../features/categories/ui/CategoryCards';
 import { CategoryFormModal } from '../features/categories/ui/CategoryFormModal';
+import { CategoryList } from '../features/categories/ui/CategoryList';
 import { useLoadOnMount } from '../hooks/useLoadOnMount';
 import { Button, PageHeader } from '../shared/ui';
 import type { Category, Product } from '../types';
@@ -25,6 +25,17 @@ export function AdminCategories() {
     products.forEach((product) => counts.set(product.category_id, (counts.get(product.category_id) ?? 0) + 1));
     return counts;
   }, [products]);
+
+  const childCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    categories.forEach((category) => {
+      if (category.parent_id) {
+        const parentId = String(category.parent_id);
+        counts.set(parentId, (counts.get(parentId) ?? 0) + 1);
+      }
+    });
+    return counts;
+  }, [categories]);
 
   async function load() {
     const [categoryResult, productResult] = await Promise.all([categoriesApi.list(), productsApi.list()]);
@@ -62,6 +73,11 @@ export function AdminCategories() {
 
   async function remove(category: Category) {
     const count = productCounts.get(String(category.id)) ?? 0;
+    const children = childCounts.get(String(category.id)) ?? 0;
+    if (children > 0) {
+      alert('Нельзя удалить категорию, у которой есть подкатегории.');
+      return;
+    }
     if (count > 0) {
       alert('Нельзя удалить категорию, в которой есть товары.');
       return;
@@ -81,7 +97,7 @@ export function AdminCategories() {
         actions={<Button onClick={openCreate}><Plus className="h-4 w-4" />Добавить категорию</Button>}
       />
 
-      <CategoryCards
+      <CategoryList
         categories={categories}
         productCounts={productCounts}
         onEdit={openEdit}
@@ -89,6 +105,7 @@ export function AdminCategories() {
       />
 
       <CategoryFormModal
+        categories={categories}
         form={form}
         open={dialogOpen}
         saving={saving}

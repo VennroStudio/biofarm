@@ -29,6 +29,11 @@ final readonly class CreateBlogPostCommand
         #[Assert\NotBlank]
         public int $currentUserRole,
         public ?string $slug = null,
+        public ?string $h1 = null,
+        public ?string $seoTitle = null,
+        public ?string $seoDescription = null,
+        public ?string $imageAlt = null,
+        public ?string $publishedAt = null,
         public bool $isPublished = false,
     ) {}
 }

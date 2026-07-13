@@ -14,6 +14,7 @@ use App\Modules\Blog\Permission\BlogPermission;
 use App\Modules\Blog\Service\BlogPermissionService;
 use App\Modules\User\Entity\User\Fields\Enums\UserRole;
 use DateMalformedStringException;
+use DateTimeImmutable;
 
 final readonly class CreateBlogPostHandler
 {
@@ -48,6 +49,11 @@ final readonly class CreateBlogPostHandler
             authorName: trim($command->authorName),
             readTime: $command->readTime,
             isPublished: $command->isPublished,
+            h1: $command->h1,
+            seoTitle: $command->seoTitle,
+            seoDescription: $command->seoDescription,
+            imageAlt: $command->imageAlt,
+            publishedAt: $this->publishedAt($command->publishedAt),
         );
 
         $this->blogPostRepository->add($post);
@@ -75,6 +81,15 @@ final readonly class CreateBlogPostHandler
                 code: 2,
             );
         }
+    }
+
+    private function publishedAt(?string $publishedAt): ?DateTimeImmutable
+    {
+        if ($publishedAt === null || trim($publishedAt) === '') {
+            return null;
+        }
+
+        return new DateTimeImmutable($publishedAt);
     }
 
     private function deleteListCache(): void

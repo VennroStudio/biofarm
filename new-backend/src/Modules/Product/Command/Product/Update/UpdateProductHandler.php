@@ -11,6 +11,8 @@ use App\Components\String\SlugGenerator;
 use App\Modules\Product\Entity\Product\ProductRepository;
 use App\Modules\Product\Entity\ProductCategory\ProductCategoryRepository;
 use App\Modules\Product\Permission\ProductPermission;
+use App\Modules\Product\Service\ProductFacetSyncer;
+use App\Modules\Product\Service\ProductImageSyncer;
 use App\Modules\Product\Service\ProductPermissionService;
 use App\Modules\User\Entity\User\Fields\Enums\UserRole;
 use DateMalformedStringException;
@@ -21,6 +23,8 @@ final readonly class UpdateProductHandler
         private ProductRepository $productRepository,
         private ProductCategoryRepository $categoryRepository,
         private ProductPermissionService $permissionService,
+        private ProductImageSyncer $productImageSyncer,
+        private ProductFacetSyncer $productFacetSyncer,
         private SlugGenerator $slugGenerator,
         private Cacher $cacher,
         private FlusherInterface $flusher,
@@ -67,8 +71,30 @@ final readonly class UpdateProductHandler
             wbLink: $command->wbLink,
             ozonLink: $command->ozonLink,
             isActive: $command->isActive,
+            h1: $command->h1,
+            seoTitle: $command->seoTitle,
+            seoDescription: $command->seoDescription,
+            imageAlt: $command->imageAlt,
+            sku: $command->sku,
+            gtin: $command->gtin,
+            availability: $command->availability,
         );
 
+        $this->productImageSyncer->sync(
+            productId: $command->productId,
+            mainImage: $product->image,
+            alt: $product->imageAlt,
+            title: $product->name,
+            images: $product->images,
+            productImages: $command->productImages,
+        );
+        $this->productFacetSyncer->sync(
+            productId: $command->productId,
+            attributeValueIds: $command->attributeValueIds,
+            componentIds: $command->componentIds,
+            purposeIds: $command->purposeIds,
+            productGroupId: $command->productGroupId,
+        );
         $this->deleteCache();
         $this->flusher->flush();
 

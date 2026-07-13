@@ -10,13 +10,12 @@
     </svg>
 
     <div class="mb-4 flex items-center gap-4">
-        <img
-            src="{{ review.avatar }}"
-            alt="{{ review.name }}"
-            class="h-12 w-12 rounded-full object-cover"
-            loading="lazy"
-            decoding="async"
+        <div
+            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/15 text-lg font-bold text-primary"
+            aria-hidden="true"
         >
+            {{ review.initials }}
+        </div>
         <div>
             <h4 class="font-bold text-foreground">{{ review.name }}</h4>
             <p class="text-sm text-muted-foreground">{{ review.product }}</p>
@@ -54,13 +53,11 @@
                     data-review-image
                     data-lightbox-image="{{ image }}"
                 >
-                    <img
-                        src="{{ image }}"
-                        alt="Фото к отзыву {{ loop.index }}"
-                        class="h-16 w-16 rounded-lg object-cover"
-                        loading="lazy"
-                        decoding="async"
-                    >
+                    {{ optimized_image(image, 'Фото к отзыву ' ~ loop.index, {
+                        class: 'h-16 w-16 rounded-lg object-cover',
+                        loading: 'lazy',
+                        decoding: 'async'
+                    }) }}
                 </button>
             {% endfor %}
         </div>

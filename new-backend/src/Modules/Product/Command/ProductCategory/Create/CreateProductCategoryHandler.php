@@ -37,10 +37,20 @@ final readonly class CreateProductCategoryHandler
 
         $slug = $this->slug($command->slug, $command->name);
         $this->assertSlugFree($slug);
+        $this->assertParentExists($command->parentId);
 
         $category = ProductCategory::create(
             slug: $slug,
             name: trim($command->name),
+            parentId: $command->parentId,
+            h1: $command->h1,
+            seoTitle: $command->seoTitle,
+            seoDescription: $command->seoDescription,
+            introText: $command->introText,
+            bottomText: $command->bottomText,
+            image: $command->image,
+            isIndexable: $command->isIndexable,
+            sortOrder: $command->sortOrder,
         );
 
         $this->categoryRepository->add($category);
@@ -64,6 +74,21 @@ final readonly class CreateProductCategoryHandler
                 module: 'product',
                 message: 'error.category_slug_already_exists',
                 code: 2,
+            );
+        }
+    }
+
+    private function assertParentExists(?int $parentId): void
+    {
+        if ($parentId === null) {
+            return;
+        }
+
+        if ($this->categoryRepository->findById($parentId) === null) {
+            throw new DomainExceptionModule(
+                module: 'product',
+                message: 'error.category_parent_not_found',
+                code: 3,
             );
         }
     }

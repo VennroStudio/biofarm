@@ -17,39 +17,114 @@ export type Product = {
   id: number;
   slug: string;
   name: string;
+  h1: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
   category_id: string;
   price: number;
   old_price: number | null;
   image: string;
+  image_alt: string | null;
   images: string[] | null;
+  product_images: ProductImage[] | null;
   badge: string | null;
   weight: string;
+  sku: string | null;
+  gtin: string | null;
+  availability: string;
   description: string;
   short_description: string | null;
   ingredients: string | null;
+  attribute_value_ids: number[] | null;
+  component_ids: number[] | null;
+  purpose_ids: number[] | null;
+  product_group_id: number | null;
   features: string[] | null;
   wb_link: string | null;
   ozon_link: string | null;
   is_active: boolean;
+  published_at: string | null;
+};
+
+export type ProductImage = {
+  id: number;
+  path: string;
+  alt: string | null;
+  title: string | null;
+  sort_order: number;
+  is_main: boolean;
+  width: number | null;
+  height: number | null;
+};
+
+export type AttributeValue = {
+  id: number;
+  attribute_id: number;
+  slug: string;
+  name: string;
+  h1: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
+  intro_text: string | null;
+  bottom_text: string | null;
+  short_description: string | null;
+  synonyms: string[];
+  is_indexable: boolean;
+  sort_order: number;
+  products_count: number;
+};
+
+export type ProductAttribute = {
+  id: number;
+  slug: string;
+  name: string;
+  filter_prefix: string | null;
+  is_filterable: boolean;
+  is_indexable: boolean;
+  show_on_product: boolean;
+  sort_order: number;
+  values_count: number;
+  products_count: number;
+  values: AttributeValue[];
+};
+
+export type ProductGroup = {
+  id: number;
+  name: string;
+  products_count: number;
 };
 
 export type Category = {
   id: number;
   slug: string;
   name: string;
+  parent_id: number | null;
+  h1: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
+  intro_text: string | null;
+  bottom_text: string | null;
+  image: string | null;
+  is_indexable: boolean;
+  sort_order: number;
 };
 
 export type BlogPost = {
   id: number;
   slug: string;
   title: string;
+  h1: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
   excerpt: string;
   content: string;
   image: string;
+  image_alt: string | null;
   category_id: string;
   author_name: string;
   read_time: number;
   is_published: boolean;
+  published_at: string | null;
   created_at: string;
 };
 
@@ -122,6 +197,17 @@ export type Settings = {
   cart_enabled: boolean;
   order_bonus_enabled: boolean;
   order_bonus_percent: number;
+  site_name: string;
+  site_phone: string;
+  site_email: string;
+  site_logo_url: string;
+  site_default_og_image: string;
+  site_address_country: string;
+  site_address_region: string;
+  site_address_locality: string;
+  site_address_street: string;
+  robots_extra_disallow: string;
+  sitemap_include_legal_pages: boolean;
 };
 
 export type DashboardStats = {

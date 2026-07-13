@@ -6,20 +6,22 @@ import {
   Menu,
   Package,
   Settings,
+  SlidersHorizontal,
   Star,
   ShoppingCart,
   Users,
   Wallet,
   X,
 } from 'lucide-react';
-import { useState } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { getStoredAdmin, logout } from '../api/client';
+import { useEffect, useState } from 'react';
+import { Navigate, NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { getStoredAdmin, getToken, logout, sessionClearedEvent } from '../api/client';
 
 const links = [
   { to: '/admin', label: 'Дашборд', icon: LayoutDashboard },
   { to: '/admin/products', label: 'Товары', icon: Package },
   { to: '/admin/categories', label: 'Категории', icon: FolderTree },
+  { to: '/admin/attributes', label: 'Атрибуты', icon: SlidersHorizontal },
   { to: '/admin/orders', label: 'Заказы', icon: ShoppingCart },
   { to: '/admin/blog', label: 'Блог', icon: FileText },
   { to: '/admin/reviews', label: 'Отзывы', icon: Star },
@@ -30,8 +32,23 @@ const links = [
 
 export function AdminLayout() {
   const navigate = useNavigate();
-  const admin = getStoredAdmin();
+  const [admin, setAdmin] = useState(() => getStoredAdmin());
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    const handleSessionCleared = () => {
+      setAdmin(null);
+      navigate('/admin/login', { replace: true });
+    };
+
+    window.addEventListener(sessionClearedEvent, handleSessionCleared);
+
+    return () => window.removeEventListener(sessionClearedEvent, handleSessionCleared);
+  }, [navigate]);
+
+  if (!admin || !getToken()) {
+    return <Navigate to="/admin/login" replace />;
+  }
 
   const adminName = admin?.first_name || 'Администратор';
   const adminEmail = admin?.email || 'admin@biofarm.local';

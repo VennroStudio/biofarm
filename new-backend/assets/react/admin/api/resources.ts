@@ -1,11 +1,14 @@
 import type {
   AdminCustomer,
   ApiItems,
+  AttributeValue,
   BlogPost,
   Category,
   DashboardStats,
   Order,
   Product,
+  ProductAttribute,
+  ProductGroup,
   Review,
   Settings,
   Withdrawal,
@@ -36,6 +39,25 @@ export const categoriesApi = {
   create: (payload: Record<string, unknown>) => request('/v1/product-categories/create', { method: 'POST', body: payload }),
   update: (id: number, payload: Record<string, unknown>) => request(`/v1/product-categories/update/${id}`, { method: 'PATCH', body: payload }),
   delete: (id: number) => request(`/v1/product-categories/delete/${id}`, { method: 'DELETE' }),
+};
+
+export const attributesApi = {
+  list: () => requestItems<ProductAttribute>('/admin/api/attributes'),
+  create: (payload: Record<string, unknown>) => request('/admin/api/attributes', { method: 'POST', body: payload }),
+  update: (id: number, payload: Record<string, unknown>) => request(`/admin/api/attributes/${id}`, { method: 'PATCH', body: payload }),
+  delete: (id: number) => request(`/admin/api/attributes/${id}`, { method: 'DELETE' }),
+  createValue: (attributeId: number, payload: Record<string, unknown>) =>
+    request<AttributeValue>(`/admin/api/attributes/${attributeId}/values`, { method: 'POST', body: payload }),
+  updateValue: (id: number, payload: Record<string, unknown>) =>
+    request<AttributeValue>(`/admin/api/attribute-values/${id}`, { method: 'PATCH', body: payload }),
+  deleteValue: (id: number) => request(`/admin/api/attribute-values/${id}`, { method: 'DELETE' }),
+};
+
+export const productGroupsApi = {
+  list: () => requestItems<ProductGroup>('/admin/api/product-groups'),
+  create: (payload: Record<string, unknown>) => request('/admin/api/product-groups', { method: 'POST', body: payload }),
+  update: (id: number, payload: Record<string, unknown>) => request(`/admin/api/product-groups/${id}`, { method: 'PATCH', body: payload }),
+  delete: (id: number) => request(`/admin/api/product-groups/${id}`, { method: 'DELETE' }),
 };
 
 export const blogApi = {

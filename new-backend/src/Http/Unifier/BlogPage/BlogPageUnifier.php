@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Unifier\BlogPage;
 
+use App\Components\Seo\JsonLdFactory;
+use App\Components\Seo\SeoUrlGenerator;
 use App\Http\View\Blog\BlogPageView;
 use App\Http\View\Blog\BlogPostView;
 use App\Http\View\PageMetaView;
@@ -14,7 +16,13 @@ use Doctrine\DBAL\Query\QueryBuilder;
 final readonly class BlogPageUnifier
 {
     private const int POSTS_PER_PAGE = 9;
-    private const array CATEGORIES = ['Все', 'Советы', 'Здоровье', 'О нас', 'Рецепты'];
+    private const array CATEGORIES = [
+        'Все'      => null,
+        'Советы'  => 'tips',
+        'Здоровье' => 'health',
+        'О нас'   => 'about',
+        'Рецепты' => 'recipes',
+    ];
     private const array MONTHS = [
         1  => 'января',
         2  => 'февраля',
@@ -32,6 +40,8 @@ final readonly class BlogPageUnifier
 
     public function __construct(
         private Connection $connection,
+        private SeoUrlGenerator $urls,
+        private JsonLdFactory $jsonLd,
     ) {}
 
     /**
@@ -46,16 +56,30 @@ final readonly class BlogPageUnifier
         $currentPage = min(max(1, $page), $totalPages);
         $posts = $this->posts($selectedCategory, $searchQuery, $currentPage);
         $featuredPost = $currentPage === 1 ? ($posts[0] ?? null) : null;
+        $canonicalUrl = $this->urls->absolute('/blog');
+        $isFiltered = $selectedCategory !== 'Все' || $searchQuery !== '' || $currentPage > 1;
 
         return new BlogPageView(
             meta: new PageMetaView(
                 title: 'Блог — БИОФАРМ',
                 description: 'Статьи и новости БИОФАРМ.',
+                canonicalUrl: $canonicalUrl,
+                robots: $isFiltered ? 'noindex, follow' : 'index, follow',
+                ogTitle: 'Блог — БИОФАРМ',
+                ogDescription: 'Статьи и новости БИОФАРМ.',
+                ogImage: $this->urls->absolute('/assets/images/og/default.jpg'),
+                ogImageAlt: 'Блог БИОФАРМ',
+                jsonLd: [
+                    $this->jsonLd->breadcrumbs([
+                        ['name' => 'Главная', 'url' => '/'],
+                        ['name' => 'Блог', 'url' => '/blog'],
+                    ]),
+                ],
             ),
             posts: $posts,
             featuredPost: $featuredPost,
             otherPosts: $currentPage === 1 ? \array_slice($posts, 1) : $posts,
-            categories: self::CATEGORIES,
+            categories: array_keys(self::CATEGORIES),
             categoryUrls: $this->categoryUrls($searchQuery),
             selectedCategory: $selectedCategory,
             searchQuery: $searchQuery,
@@ -79,11 +103,17 @@ final readonly class BlogPageUnifier
                 'bp.id',
                 'bp.slug',
                 'bp.title',
+                'bp.h1',
+                'bp.seo_title',
+                'bp.seo_description',
                 'bp.excerpt',
                 'bp.content',
                 'bp.image',
+                'bp.image_alt',
                 'bp.category_id',
-                'bp.created_at',
+                'COALESCE(bp.published_at, bp.created_at) AS published_at',
+                'COALESCE(bc.name, bp.category_id) AS category_name',
+                'bc.slug AS category_slug',
                 'bp.author_name',
                 'bp.read_time',
             )
@@ -112,13 +142,14 @@ final readonly class BlogPageUnifier
     {
         $query = $this->connection->createQueryBuilder()
             ->from('blog_posts', 'bp')
+            ->leftJoin('bp', 'blog_categories', 'bc', 'bc.slug = bp.category_id AND bc.deleted_at IS NULL')
             ->where('bp.deleted_at IS NULL')
             ->andWhere('bp.is_published = 1');
 
         if ($selectedCategory !== 'Все') {
             $query
                 ->andWhere('bp.category_id = :category')
-                ->setParameter('category', $selectedCategory);
+                ->setParameter('category', self::CATEGORIES[$selectedCategory]);
         }
 
         if ($searchQuery !== '') {
@@ -134,7 +165,7 @@ final readonly class BlogPageUnifier
     {
         $category = trim((string)$category);
 
-        return \in_array($category, self::CATEGORIES, true) ? $category : 'Все';
+        return \array_key_exists($category, self::CATEGORIES) ? $category : 'Все';
     }
 
     /**
@@ -146,11 +177,17 @@ final readonly class BlogPageUnifier
             id: (int)$row['id'],
             slug: (string)$row['slug'],
             title: (string)$row['title'],
+            h1: $row['h1'] !== null && trim((string)$row['h1']) !== '' ? (string)$row['h1'] : null,
+            seoTitle: $row['seo_title'] !== null && trim((string)$row['seo_title']) !== '' ? (string)$row['seo_title'] : null,
+            seoDescription: $row['seo_description'] !== null && trim((string)$row['seo_description']) !== '' ? (string)$row['seo_description'] : null,
             excerpt: (string)$row['excerpt'],
             content: (string)$row['content'],
             image: (string)$row['image'],
-            category: (string)$row['category_id'],
-            date: $this->formatDate((string)$row['created_at']),
+            imageAlt: $row['image_alt'] !== null && trim((string)$row['image_alt']) !== '' ? (string)$row['image_alt'] : (string)$row['title'],
+            category: (string)$row['category_name'],
+            categorySlug: $row['category_slug'] !== null && trim((string)$row['category_slug']) !== '' ? (string)$row['category_slug'] : (string)$row['category_id'],
+            date: $this->formatDate((string)$row['published_at']),
+            publishedAt: (string)$row['published_at'],
             authorName: (string)($row['author_name'] ?: 'Автор'),
             authorAvatar: '',
             readTime: (int)$row['read_time'],
@@ -175,7 +212,7 @@ final readonly class BlogPageUnifier
     {
         $urls = [];
 
-        foreach (self::CATEGORIES as $category) {
+        foreach (array_keys(self::CATEGORIES) as $category) {
             $urls[$category] = $this->pageUrl(1, $category, $searchQuery);
         }
 

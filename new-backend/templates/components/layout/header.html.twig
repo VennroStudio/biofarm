@@ -6,16 +6,14 @@
         <div class="flex h-20 items-center justify-between">
         <a class="flex items-center gap-2" href="/" aria-label="{{ site.brand.title }}">
             {% if site.brand.logoUrl is defined and site.brand.logoUrl %}
-                <img
-                    class="h-12 w-auto object-contain transition-[filter] duration-300"
-                    src="{{ site.brand.logoUrl }}"
-                    alt="{{ site.brand.title }}"
-                    width="172"
-                    height="64"
-                    loading="eager"
-                    fetchpriority="high"
-                    decoding="async"
-                >
+                {{ optimized_image(site.brand.logoUrl, site.brand.title, {
+                    class: 'h-12 w-auto object-contain transition-[filter] duration-300',
+                    width: 172,
+                    height: 64,
+                    loading: 'eager',
+                    fetchpriority: 'high',
+                    decoding: 'async'
+                }) }}
             {% else %}
                 <span class="grid h-11 w-11 place-items-center rounded-lg bg-primary-foreground text-primary font-black">{{ site.brand.mark }}</span>
                 <span class="block text-primary-foreground">
