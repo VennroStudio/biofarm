@@ -59,7 +59,7 @@ use Random\RandomException;
             description: 'Аватар загружен',
             content: new OA\JsonContent(
                 properties: [
-                    new OA\Property(property: 'avatar', type: 'string', example: 'https://s3.example.com/user/1/avatar/a1b2c3d4.jpg'),
+                    new OA\Property(property: 'avatar', type: 'string', example: '/uploads/avatars/2026/07/a1b2c3d4.jpg'),
                 ],
             )
         ),

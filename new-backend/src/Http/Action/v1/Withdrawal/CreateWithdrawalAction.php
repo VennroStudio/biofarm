@@ -7,6 +7,7 @@ namespace App\Http\Action\v1\Withdrawal;
 use App\Components\Flusher\FlusherInterface;
 use App\Components\Http\Middleware\Identity\RequestIdentity;
 use App\Components\Http\Response\JsonDataResponse;
+use App\Components\Http\Response\JsonErrorResponse;
 use App\Components\Id\ReadableIdGenerator;
 use App\Modules\User\Entity\UserProfile\UserProfile;
 use App\Modules\User\Entity\UserProfile\UserProfileRepository;
@@ -49,7 +50,7 @@ final readonly class CreateWithdrawalAction implements RequestHandlerInterface
         }
 
         if ($amount <= 0 || $amount > $profile->bonusBalance) {
-            return new JsonDataResponse(['error' => 'invalid_withdrawal_amount'], 422);
+            return new JsonErrorResponse(1, 'invalid_withdrawal_amount', status: 422);
         }
 
         $withdrawal = WithdrawalRequest::create(

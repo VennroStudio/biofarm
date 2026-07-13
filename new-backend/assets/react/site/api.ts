@@ -11,6 +11,12 @@ type ApiEnvelope<T> = {
   data: T;
 };
 
+type ApiErrorEnvelope = {
+  error?: string | {
+    message?: string;
+  };
+};
+
 export type SiteUser = {
   id: string;
   email: string;
@@ -115,16 +121,15 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   const response = await fetch(path, { ...options, body, headers });
   const contentType = response.headers.get('content-type') || '';
   const payload = contentType.includes('application/json')
-    ? ((await response.json()) as ApiEnvelope<T> | { data?: unknown; error?: string })
+    ? ((await response.json()) as ApiEnvelope<T> | ApiErrorEnvelope)
     : null;
 
-  if (response.status === 401 || response.status === 403) {
+  if (response.status === 401) {
     clearAuth();
   }
 
   if (!response.ok) {
-    const message = payload && 'error' in payload && payload.error ? payload.error : `HTTP ${response.status}`;
-    throw new Error(message);
+    throw new Error(errorMessage(payload, `HTTP ${response.status}`));
   }
 
   if (payload && 'data' in payload) {
@@ -150,6 +155,18 @@ function numberValue(value: unknown, fallback = 0) {
 
 function boolValue(value: unknown) {
   return value === true || value === 1 || value === '1';
+}
+
+function errorMessage(payload: ApiEnvelope<unknown> | ApiErrorEnvelope | null, fallback: string) {
+  if (!payload || !('error' in payload) || !payload.error) {
+    return fallback;
+  }
+
+  if (typeof payload.error === 'string') {
+    return payload.error;
+  }
+
+  return payload.error.message || fallback;
 }
 
 function mapUser(value: unknown): SiteUser | null {

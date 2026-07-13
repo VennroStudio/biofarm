@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Action\v1\User;
 
 use App\Components\Http\Response\JsonDataSuccessResponse;
+use App\Components\Http\Response\JsonErrorResponse;
 use App\Components\Serializer\Denormalizer;
+use App\Components\Setting\SiteSettings;
 use App\Components\Validator\Validator;
 use App\Modules\User\Command\User\Create\CreateUserCommand;
 use App\Modules\User\Command\User\Create\CreateUserHandler;
@@ -36,6 +38,7 @@ use Symfony\Component\Translation\Translator;
     tags: ['Users'],
     responses: [
         new OA\Response(response: 201, description: 'Пользователь создан'),
+        new OA\Response(response: 403, description: 'Регистрация отключена'),
         new OA\Response(response: 409, description: 'Email уже зарегистрирован'),
         new OA\Response(response: 422, description: 'Ошибка валидации'),
     ]
@@ -47,6 +50,7 @@ final readonly class CreateUserAction implements RequestHandlerInterface
         private Validator $validator,
         private CreateUserHandler $handler,
         private Translator $translator,
+        private SiteSettings $settings,
     ) {}
 
     /**
@@ -55,6 +59,10 @@ final readonly class CreateUserAction implements RequestHandlerInterface
     #[Override]
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
+        if (!$this->settings->bool('registration_enabled')) {
+            return new JsonErrorResponse(1, 'registration_disabled', status: 403);
+        }
+
         $command = $this->denormalizer->denormalize(
             array_merge(
                 (array)$request->getParsedBody(),

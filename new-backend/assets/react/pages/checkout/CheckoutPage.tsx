@@ -1,10 +1,12 @@
-import { ArrowRight, CheckCircle, CreditCard, Mail, MapPin, Phone, Truck, User } from 'lucide-react';
+import { CreditCard, Mail, MapPin, Phone, Truck, User } from 'lucide-react';
 import { createRoot } from 'react-dom/client';
-import { type FormEvent, type ReactNode, useEffect, useMemo, useState } from 'react';
+import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { cartTotal, clearCart, readCart, type CartItem } from '../../site/cart';
 import { createOrder, getStoredUser, getToken, refreshUser, type ShippingAddress, type SiteUser } from '../../site/api';
 import { formatMoney } from '../../site/format';
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label, Separator, Textarea } from '../../site/ui';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label, Textarea } from '../../site/ui';
+import { CheckoutSummary } from './components/CheckoutSummary';
+import { RadioOption } from './components/RadioOption';
 
 function emptyAddress(user: SiteUser | null): ShippingAddress {
   return {
@@ -22,34 +24,6 @@ function numberDataset(value: string | undefined, fallback: number) {
   const numberValue = Number(value);
 
   return Number.isFinite(numberValue) ? numberValue : fallback;
-}
-
-function RadioOption({
-  children,
-  checked,
-  name,
-  onChange,
-  value,
-}: {
-  children: ReactNode;
-  checked: boolean;
-  name: string;
-  onChange: (value: string) => void;
-  value: string;
-}) {
-  return (
-    <label className="flex cursor-pointer items-center space-x-3 rounded-lg border p-3 transition-colors hover:bg-muted/50">
-      <input
-        checked={checked}
-        className="h-4 w-4 accent-primary"
-        name={name}
-        type="radio"
-        value={value}
-        onChange={() => onChange(value)}
-      />
-      {children}
-    </label>
-  );
 }
 
 type CheckoutPageProps = {
@@ -285,80 +259,19 @@ function CheckoutPage({ orderBonusEnabled, orderBonusPercent }: CheckoutPageProp
             </div>
 
             <div>
-              <Card className="sticky top-24 border-0 shadow-premium-lg">
-                <CardHeader>
-                  <CardTitle>Ваш заказ</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {cart.map((item) => (
-                    <div className="flex gap-3" key={item.product.id}>
-                      <img alt={item.product.name} className="h-12 w-12 rounded object-cover" src={item.product.image} />
-                      <div className="min-w-0 flex-1">
-                        <p className="line-clamp-1 text-sm font-medium">{item.product.name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {item.quantity} x {formatMoney(item.product.price)}
-                        </p>
-                      </div>
-                      <p className="font-medium">{formatMoney(item.product.price * item.quantity)}</p>
-                    </div>
-                  ))}
-
-                  <Separator />
-
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Товары</span>
-                      <span>{formatMoney(total)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Доставка</span>
-                      <span className={deliveryCost === 0 ? 'text-green-600' : ''}>
-                        {deliveryCost === 0 ? 'Бесплатно' : formatMoney(deliveryCost)}
-                      </span>
-                    </div>
-
-                    {user && user.bonusBalance > 0 && (
-                      <label className="flex cursor-pointer items-center gap-2 rounded bg-muted/50 p-2">
-                        <input
-                          checked={useBonuses}
-                          className="h-4 w-4 accent-primary"
-                          type="checkbox"
-                          onChange={(event) => setUseBonuses(event.target.checked)}
-                        />
-                        <span className="flex-1 text-sm">Использовать бонусы ({formatMoney(user.bonusBalance)})</span>
-                      </label>
-                    )}
-
-                    {bonusDiscount > 0 && (
-                      <div className="flex justify-between text-green-600">
-                        <span>Скидка бонусами</span>
-                        <span>-{formatMoney(bonusDiscount)}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <Separator />
-
-                  <div className="flex justify-between text-lg font-bold">
-                    <span>Итого</span>
-                    <span>{formatMoney(finalTotal)}</span>
-                  </div>
-
-                  {orderBonus > 0 && (
-                    <div className="flex items-center gap-2 rounded bg-green-50 p-2 text-sm text-green-600">
-                      <CheckCircle className="h-4 w-4" />
-                      + {orderBonus} бонусов за заказ
-                    </div>
-                  )}
-
-                  {error && <p className="rounded bg-destructive/10 p-2 text-sm text-destructive">{error}</p>}
-
-                  <Button className="w-full" disabled={isLoading} size="lg" type="submit">
-                    {isLoading ? 'Оформление...' : 'Подтвердить заказ'}
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </CardContent>
-              </Card>
+              <CheckoutSummary
+                bonusDiscount={bonusDiscount}
+                cart={cart}
+                deliveryCost={deliveryCost}
+                error={error}
+                finalTotal={finalTotal}
+                isLoading={isLoading}
+                orderBonus={orderBonus}
+                setUseBonuses={setUseBonuses}
+                total={total}
+                useBonuses={useBonuses}
+                user={user}
+              />
             </div>
           </div>
         </form>

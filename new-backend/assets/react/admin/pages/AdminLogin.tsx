@@ -42,10 +42,13 @@ export function AdminLogin() {
               <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#789083]" />
               <input
                 className={`${inputClass} pl-10`}
+                name="email"
+                type="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 autoComplete="email"
                 placeholder="admin@biofarm.ru"
+                required
               />
             </div>
           </Field>
@@ -54,11 +57,13 @@ export function AdminLogin() {
               <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#789083]" />
               <input
                 className={`${inputClass} pl-10`}
+                name="password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 type="password"
                 autoComplete="current-password"
                 placeholder="••••••••"
+                required
               />
             </div>
           </Field>

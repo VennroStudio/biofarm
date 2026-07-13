@@ -1,5 +1,5 @@
 <!doctype html>
-<html class="scroll-smooth" lang="{{ site.locale|default('ru') }}">
+<html class="scroll-smooth overflow-x-hidden" lang="{{ site.locale|default('ru') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,7 +9,7 @@
         <link rel="stylesheet" href="{{ vite_asset('assets/styles/app.css') }}">
     {% endblock %}
 </head>
-<body class="bg-background font-sans text-foreground antialiased">
+<body class="overflow-x-hidden bg-background font-sans text-foreground antialiased">
     {% include 'components/layout/header.html.twig' with { site: site } only %}
 
     <main class="min-h-screen">
