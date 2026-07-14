@@ -74,7 +74,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
     : null;
 
   if (!response.ok) {
-    throw new Error(errorMessage(payload, `HTTP ${response.status}`));
+    throw new Error(errorMessage(payload, errorFallback(response.status)));
   }
 
   if (payload && 'data' in payload) {
@@ -98,6 +98,14 @@ function errorMessage(payload: ApiEnvelope<unknown> | ApiErrorEnvelope | null, f
   }
 
   return payload.error.message || fallback;
+}
+
+function errorFallback(status: number) {
+  if (status === 413) {
+    return 'Файл слишком большой для загрузки. Проверьте лимит nginx/client_max_body_size и размер изображения.';
+  }
+
+  return `HTTP ${status}`;
 }
 
 export async function login(email: string, password: string): Promise<AdminUser> {

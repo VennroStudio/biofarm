@@ -1,4 +1,5 @@
 import type { Dispatch, FormEvent, SetStateAction } from 'react';
+import { ImageUploader } from '../../media/ui/ImageUploader';
 import { Button, Field, inputClass, Modal, textareaClass } from '../../../shared/ui';
 import type { Category } from '../../../types';
 import type { CategoryForm } from '../model/categoryForm';
@@ -62,9 +63,25 @@ export function CategoryFormModal({ categories, form, open, saving, setForm, onC
             <textarea className={textareaClass} value={form.seo_description} onChange={(event) => setForm({ ...form, seo_description: event.target.value })} />
           </Field>
         </div>
-        <Field label="Изображение">
-          <input className={inputClass} value={form.image} onChange={(event) => setForm({ ...form, image: event.target.value })} />
-        </Field>
+        <div className="space-y-2">
+          <p className="text-sm font-semibold text-[#26382d]">Изображение</p>
+          <ImageUploader scope="categories" onUploaded={(url) => setForm({ ...form, image: url })} />
+          {form.image ? (
+            <div className="grid gap-3 rounded-lg border border-[#e4e5da] bg-white p-3 md:grid-cols-[88px_1fr]">
+              <img src={form.image} alt={form.name || 'Изображение категории'} className="h-20 w-20 rounded object-cover" />
+              <div className="grid gap-2">
+                <p className="break-all rounded-md border border-[#e4e5da] bg-[#fbfaf4] px-3 py-2 text-xs font-semibold text-[#789083]">
+                  {form.image}
+                </p>
+                <div className="flex justify-end">
+                  <Button type="button" variant="danger" onClick={() => setForm({ ...form, image: '' })}>
+                    Удалить изображение
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </div>
         <Field label="Вступительный текст">
           <textarea className={textareaClass} value={form.intro_text} onChange={(event) => setForm({ ...form, intro_text: event.target.value })} />
         </Field>
