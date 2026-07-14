@@ -14,6 +14,7 @@ use App\Http\Web\Feedback\FeedbackController;
 use App\Http\Web\Home\HomePageController;
 use App\Http\Web\Legal\PrivacyPolicyPageController;
 use App\Http\Web\Legal\PublicOfferPageController;
+use App\Http\Web\Page\CmsPageController;
 use App\Http\Web\Profile\ProfilePageController;
 use App\Http\Web\Product\CreateProductController;
 use App\Http\Web\Product\DeleteProductController;
@@ -58,5 +59,7 @@ return static function (App $app): void {
 
         $group->get('/healthz', HealthController::class);
         $group->get('/readyz', ReadinessController::class);
+
+        $group->get('/{slugPath:(?!admin(?:/|$)|api(?:/|$)|v1(?:/|$)|assets(?:/|$)|uploads(?:/|$)).*}', CmsPageController::class);
     }));
 };

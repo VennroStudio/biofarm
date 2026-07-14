@@ -1,0 +1,16 @@
+{% set cms = page.page %}
+{% set title = cms.h1|default(cms.title) %}
+{% set lead = cms.excerpt|default(page.meta.description) %}
+
+<section class="bg-background px-4 pt-28 md:pt-32">
+    <div class="mx-auto max-w-3xl text-center">
+        <a class="mb-8 inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground transition hover:text-primary" href="/">
+            <span aria-hidden="true">←</span>
+            На главную
+        </a>
+        <h1 class="font-display text-4xl font-bold leading-tight text-foreground md:text-5xl">{{ title }}</h1>
+        {% if lead %}
+            <p class="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-muted-foreground">{{ lead }}</p>
+        {% endif %}
+    </div>
+</section>

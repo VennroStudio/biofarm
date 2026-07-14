@@ -13,6 +13,11 @@ use App\Http\Action\Admin\Media\DeleteMediaAction;
 use App\Http\Action\Admin\Media\UploadMediaAction;
 use App\Http\Action\Admin\Order\UpdateOrderPaymentStatusAction;
 use App\Http\Action\Admin\Order\UpdateOrderStatusAction;
+use App\Http\Action\Admin\Page\CreatePageAction;
+use App\Http\Action\Admin\Page\DeletePageAction;
+use App\Http\Action\Admin\Page\GetPagesAction;
+use App\Http\Action\Admin\Page\GetPageTemplatesAction;
+use App\Http\Action\Admin\Page\UpdatePageAction;
 use App\Http\Action\Admin\ProductTaxonomy\DeleteAttributeAction;
 use App\Http\Action\Admin\ProductTaxonomy\DeleteAttributeValueAction;
 use App\Http\Action\Admin\ProductTaxonomy\DeleteComponentAction;
@@ -56,6 +61,12 @@ return static function (App $app): void {
 
                 $group->post('/media', UploadMediaAction::class);
                 $group->delete('/media/{id}', DeleteMediaAction::class);
+
+                $group->get('/page-templates', GetPageTemplatesAction::class);
+                $group->get('/pages', GetPagesAction::class);
+                $group->post('/pages', CreatePageAction::class);
+                $group->patch('/pages/{id}', UpdatePageAction::class);
+                $group->delete('/pages/{id}', DeletePageAction::class);
 
                 $group->get('/components', GetComponentsAction::class);
                 $group->post('/components', SaveComponentAction::class);

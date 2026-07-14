@@ -87,7 +87,7 @@ export function SeoSettingsCard({ settings, onChange }: Props) {
         </Field>
       </div>
 
-      <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-2">
+      <div className="mt-6">
         <Field label={<span className="flex items-center gap-2"><FileText className="h-4 w-4" />Дополнительные Disallow в robots.txt</span>}>
           <textarea
             className={`${textareaClass} min-h-32`}
@@ -96,20 +96,6 @@ export function SeoSettingsCard({ settings, onChange }: Props) {
             placeholder="/example&#10;/private"
           />
         </Field>
-        <label className="flex min-h-32 items-start gap-3 rounded-lg border border-[#e4e5da] bg-[#fbfaf4] p-4 text-sm font-semibold text-[#26382d]">
-          <input
-            className="mt-1"
-            type="checkbox"
-            checked={settings.sitemap_include_legal_pages}
-            onChange={(event) => set('sitemap_include_legal_pages', event.target.checked)}
-          />
-          <span>
-            Добавлять юридические страницы в sitemap
-            <span className="mt-1 block font-normal text-[#789083]">
-              Включайте только если страницы политики и оферты должны индексироваться.
-            </span>
-          </span>
-        </label>
       </div>
     </Card>
   );

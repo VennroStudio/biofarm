@@ -6,6 +6,9 @@ namespace App\Http\Web\Cart;
 
 use App\Components\Setting\SiteSettings;
 use App\Components\Twig\HtmlResponder;
+use App\Http\View\StaticPageView;
+use App\Modules\Page\Service\PageSeoProvider;
+use Doctrine\DBAL\Exception;
 use Override;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -18,8 +21,12 @@ final readonly class CheckoutPageController implements RequestHandlerInterface
         private HtmlResponder $html,
         private SiteSettings $settings,
         private ResponseFactoryInterface $responseFactory,
+        private PageSeoProvider $seo,
     ) {}
 
+    /**
+     * @throws Exception
+     */
     #[Override]
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
@@ -27,6 +34,14 @@ final readonly class CheckoutPageController implements RequestHandlerInterface
             return $this->responseFactory->createResponse(303)->withHeader('Location', '/catalog');
         }
 
-        return $this->html->render('pages/cart/checkout.html.twig');
+        return $this->html->render('pages/cart/checkout.html.twig', [
+            'page' => new StaticPageView($this->seo->systemMeta(
+                'checkout',
+                '/checkout',
+                'Оформление заказа — БИОФАРМ',
+                'Оформление заказа БИОФАРМ.',
+                robots: 'noindex, follow',
+            )),
+        ]);
     }
 }

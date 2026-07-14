@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Http\Web\Seo;
 
 use App\Components\Seo\SeoUrlGenerator;
-use App\Components\Setting\SiteSettings;
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
@@ -17,10 +16,22 @@ use Psr\Http\Server\RequestHandlerInterface;
 
 final readonly class SitemapController implements RequestHandlerInterface
 {
+    private const array SYSTEM_PAGE_PATHS = [
+        'home'          => '/',
+        'catalog'       => '/catalog',
+        'blog'          => '/blog',
+        'privacy'       => '/privacy',
+        'oferta'        => '/oferta',
+        'cart'          => '/cart',
+        'checkout'      => '/checkout',
+        'order_success' => '/order-success',
+        'login'         => '/login',
+        'profile'       => '/profile',
+    ];
+
     public function __construct(
         private Connection $connection,
         private SeoUrlGenerator $urls,
-        private SiteSettings $settings,
         private ResponseFactoryInterface $responseFactory,
     ) {}
 
@@ -45,23 +56,74 @@ final readonly class SitemapController implements RequestHandlerInterface
      */
     private function items(): array
     {
-        $items = [
-            ['loc' => '/', 'lastmod' => $this->today(), 'priority' => '1.0'],
-            ['loc' => '/catalog', 'lastmod' => $this->today(), 'priority' => '0.9'],
+        return [
+            ...$this->pageItems(),
             ...$this->categoryItems(),
             ...$this->componentItems(),
             ...$this->purposeItems(),
             ...$this->productItems(),
-            ['loc' => '/blog', 'lastmod' => $this->today(), 'priority' => '0.7'],
             ...$this->blogItems(),
         ];
+    }
 
-        if ($this->settings->bool('sitemap_include_legal_pages', false)) {
-            $items[] = ['loc' => '/privacy', 'lastmod' => null, 'priority' => '0.2'];
-            $items[] = ['loc' => '/oferta', 'lastmod' => null, 'priority' => '0.2'];
+    /**
+     * @return list<array{loc: string, lastmod: string|null, priority: string}>
+     * @throws Exception
+     */
+    private function pageItems(): array
+    {
+        $rows = $this->connection->fetchAllAssociative(
+            'SELECT page_type, system_key, slug_path, updated_at, published_at, created_at
+             FROM pages
+             WHERE deleted_at IS NULL
+               AND is_published = 1
+               AND is_indexable = 1
+               AND show_in_sitemap = 1
+             ORDER BY sort_order ASC, title ASC'
+        );
+
+        $items = [];
+        foreach ($rows as $row) {
+            $loc = $this->pageLocation($row);
+            if ($loc === null) {
+                continue;
+            }
+
+            $items[] = [
+                'loc'      => $loc,
+                'lastmod'  => self::lastmod((string)($row['updated_at'] ?? $row['published_at'] ?? $row['created_at'] ?? '')) ?? $this->today(),
+                'priority' => $this->pagePriority($loc, (string)$row['page_type']),
+            ];
         }
 
         return $items;
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     */
+    private function pageLocation(array $row): ?string
+    {
+        if ((string)$row['page_type'] === 'system') {
+            $systemKey = (string)($row['system_key'] ?? '');
+
+            return self::SYSTEM_PAGE_PATHS[$systemKey] ?? null;
+        }
+
+        $slugPath = trim((string)($row['slug_path'] ?? ''), '/');
+
+        return $slugPath !== '' ? '/' . $slugPath : null;
+    }
+
+    private function pagePriority(string $loc, string $pageType): string
+    {
+        return match (true) {
+            $loc === '/' => '1.0',
+            $loc === '/catalog' => '0.9',
+            $loc === '/blog' => '0.7',
+            $pageType === 'custom' => '0.5',
+            default => '0.3',
+        };
     }
 
     /**

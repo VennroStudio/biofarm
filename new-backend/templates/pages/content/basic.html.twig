@@ -1,0 +1,6 @@
+{% extends 'layouts/main.html.twig' %}
+
+{% block content %}
+    {% include 'sections/content/page-hero.html.twig' with { page: page } only %}
+    {% include 'sections/content/rich-text.html.twig' with { content: page.page.content|default(null) } only %}
+{% endblock %}

@@ -4,7 +4,7 @@
     { label: 'Возврат', href: '#' },
     { label: 'Публичная оферта', href: '/oferta' },
     { label: 'Политика конфиденциальности', href: '/privacy' },
-] %}
+] | merge(cms_footer_pages()) %}
 
 <footer class="bg-primary text-primary-foreground">
     <div class="container mx-auto px-4 py-6">

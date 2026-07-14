@@ -23,8 +23,10 @@
             {% endif %}
         </a>
 
+        {% set navigationItems = site.navigation|merge(cms_header_pages()) %}
+
         <nav class="hidden items-center gap-8 lg:flex" aria-label="Основная навигация">
-            {% for item in site.navigation %}
+            {% for item in navigationItems %}
                 {% include 'components/ui/link.html.twig' with {
                     class: 'text-sm font-medium text-white/90 transition-colors hover:text-accent',
                     href: item.href,
@@ -76,7 +78,7 @@
                 aria-label="Мобильная навигация"
             >
                 <div class="container mx-auto flex flex-col gap-4 px-4 py-6">
-                    {% for item in site.navigation %}
+                    {% for item in navigationItems %}
                         {% include 'components/ui/link.html.twig' with {
                             class: 'py-2 text-lg font-medium text-foreground transition-colors hover:text-primary',
                             href: item.href,

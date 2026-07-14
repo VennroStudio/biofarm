@@ -31,7 +31,6 @@ final readonly class UpdateSettingsAction implements RequestHandlerInterface
         'site_address_locality',
         'site_address_street',
         'robots_extra_disallow',
-        'sitemap_include_legal_pages',
     ];
 
     public function __construct(

@@ -4,6 +4,8 @@ import type {
   AttributeValue,
   BlogPost,
   Category,
+  CmsPage,
+  CmsPageTemplate,
   DashboardStats,
   Order,
   Product,
@@ -58,6 +60,14 @@ export const productGroupsApi = {
   create: (payload: Record<string, unknown>) => request('/admin/api/product-groups', { method: 'POST', body: payload }),
   update: (id: number, payload: Record<string, unknown>) => request(`/admin/api/product-groups/${id}`, { method: 'PATCH', body: payload }),
   delete: (id: number) => request(`/admin/api/product-groups/${id}`, { method: 'DELETE' }),
+};
+
+export const pagesApi = {
+  list: () => requestItems<CmsPage>('/admin/api/pages'),
+  templates: () => request<CmsPageTemplate[]>('/admin/api/page-templates'),
+  create: (payload: Record<string, unknown>) => request('/admin/api/pages', { method: 'POST', body: payload }),
+  update: (id: number, payload: Record<string, unknown>) => request(`/admin/api/pages/${id}`, { method: 'PATCH', body: payload }),
+  delete: (id: number) => request(`/admin/api/pages/${id}`, { method: 'DELETE' }),
 };
 
 export const blogApi = {

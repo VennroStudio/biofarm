@@ -11,6 +11,7 @@ use App\Http\View\Catalog\CatalogFacetView;
 use App\Http\View\Catalog\CatalogPageView;
 use App\Http\View\Home\HomeCategoryView;
 use App\Http\View\PageMetaView;
+use App\Modules\Page\Service\PageSeoProvider;
 
 final readonly class CatalogPageUnifier
 {
@@ -22,6 +23,7 @@ final readonly class CatalogPageUnifier
         private ProductCatalogDataProvider $catalogData,
         private SeoUrlGenerator $urls,
         private JsonLdFactory $jsonLd,
+        private PageSeoProvider $pages,
     ) {}
 
     public function unify(
@@ -78,7 +80,7 @@ final readonly class CatalogPageUnifier
             || $isFacetWithoutCategory;
 
         return new CatalogPageView(
-            meta: new PageMetaView(
+            meta: $this->pages->applySystem('catalog', new PageMetaView(
                 title: $copy['title'],
                 description: $copy['description'],
                 canonicalUrl: $this->urls->absolute($catalogPath),
@@ -94,7 +96,7 @@ final readonly class CatalogPageUnifier
                     ]),
                     $this->jsonLd->itemList($products, $catalogPath),
                 ],
-            ),
+            )),
             products: $products,
             categories: $categories,
             categoriesTotal: array_sum(array_map(

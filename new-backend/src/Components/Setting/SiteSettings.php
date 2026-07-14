@@ -25,7 +25,6 @@ final class SiteSettings
         'site_address_locality' => 'Томск',
         'site_address_street'  => 'особая экономическая зона микрорайон Академгородок, проспект Развитие 3Е',
         'robots_extra_disallow' => '',
-        'sitemap_include_legal_pages' => false,
     ];
 
     /** @var array<string, bool|float|int|string|null>|null */

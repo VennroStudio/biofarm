@@ -8,6 +8,7 @@ import { AdminCategories } from './pages/AdminCategories';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { AdminLogin } from './pages/AdminLogin';
 import { AdminOrders } from './pages/AdminOrders';
+import { AdminPages } from './pages/AdminPages';
 import { AdminProducts } from './pages/AdminProducts';
 import { AdminReviews } from './pages/AdminReviews';
 import { AdminSettings } from './pages/AdminSettings';
@@ -39,6 +40,7 @@ export function AdminApp() {
           <Route path="products" element={<AdminProducts />} />
           <Route path="categories" element={<AdminCategories />} />
           <Route path="attributes" element={<AdminAttributes />} />
+          <Route path="pages" element={<AdminPages />} />
           <Route path="product-groups" element={<Navigate to="/admin/products" replace />} />
           <Route path="components" element={<Navigate to="/admin/attributes" replace />} />
           <Route path="purposes" element={<Navigate to="/admin/attributes" replace />} />

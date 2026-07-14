@@ -72,6 +72,26 @@ final readonly class JsonLdFactory
     }
 
     /**
+     * @return array<string, mixed>
+     */
+    public function webPage(string $name, string $description, string $url): array
+    {
+        return [
+            '@context'    => 'https://schema.org',
+            '@type'       => 'WebPage',
+            'name'        => $name,
+            'description' => $description,
+            'url'         => $this->urls->absolute($url),
+            'inLanguage'  => 'ru-RU',
+            'isPartOf'    => [
+                '@type' => 'WebSite',
+                'name'  => $this->stringSetting('site_name', 'БИОФАРМ'),
+                'url'   => $this->urls->baseUrl(),
+            ],
+        ];
+    }
+
+    /**
      * @param list<array{name: string, url: string}> $items
      * @return array<string, mixed>
      */

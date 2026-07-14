@@ -9,6 +9,7 @@ use App\Components\Seo\SeoUrlGenerator;
 use App\Http\View\Blog\BlogPageView;
 use App\Http\View\Blog\BlogPostView;
 use App\Http\View\PageMetaView;
+use App\Modules\Page\Service\PageSeoProvider;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 use Doctrine\DBAL\Query\QueryBuilder;
@@ -42,6 +43,7 @@ final readonly class BlogPageUnifier
         private Connection $connection,
         private SeoUrlGenerator $urls,
         private JsonLdFactory $jsonLd,
+        private PageSeoProvider $pages,
     ) {}
 
     /**
@@ -60,7 +62,7 @@ final readonly class BlogPageUnifier
         $isFiltered = $selectedCategory !== 'Все' || $searchQuery !== '' || $currentPage > 1;
 
         return new BlogPageView(
-            meta: new PageMetaView(
+            meta: $this->pages->applySystem('blog', new PageMetaView(
                 title: 'Блог — БИОФАРМ',
                 description: 'Статьи и новости БИОФАРМ.',
                 canonicalUrl: $canonicalUrl,
@@ -75,7 +77,7 @@ final readonly class BlogPageUnifier
                         ['name' => 'Блог', 'url' => '/blog'],
                     ]),
                 ],
-            ),
+            )),
             posts: $posts,
             featuredPost: $featuredPost,
             otherPosts: $currentPage === 1 ? \array_slice($posts, 1) : $posts,

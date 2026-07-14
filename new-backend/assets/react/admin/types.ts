@@ -94,6 +94,39 @@ export type ProductGroup = {
   products_count: number;
 };
 
+export type CmsPage = {
+  id: number;
+  page_type: 'system' | 'custom';
+  system_key: string | null;
+  slug_path: string | null;
+  template: string | null;
+  title: string;
+  h1: string | null;
+  content: string | null;
+  excerpt: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
+  og_title: string | null;
+  og_description: string | null;
+  og_image: string | null;
+  og_image_alt: string | null;
+  is_published: boolean;
+  is_indexable: boolean;
+  show_in_sitemap: boolean;
+  show_in_header: boolean;
+  show_in_footer: boolean;
+  sort_order: number;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string | null;
+};
+
+export type CmsPageTemplate = {
+  key: string;
+  label: string;
+  description: string;
+};
+
 export type Category = {
   id: number;
   slug: string;
@@ -207,7 +240,6 @@ export type Settings = {
   site_address_locality: string;
   site_address_street: string;
   robots_extra_disallow: string;
-  sitemap_include_legal_pages: boolean;
 };
 
 export type DashboardStats = {

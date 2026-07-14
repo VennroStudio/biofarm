@@ -12,6 +12,8 @@ use App\Modules\Order\Entity\Order\OrderRepository;
 use App\Modules\Order\Entity\Order\Persistence\Doctrine\DoctrineOrderRepository;
 use App\Modules\Order\Entity\OrderItem\OrderItemRepository;
 use App\Modules\Order\Entity\OrderItem\Persistence\Doctrine\DoctrineOrderItemRepository;
+use App\Modules\Page\Entity\Page\PageRepository;
+use App\Modules\Page\Entity\Page\Persistence\Doctrine\DoctrinePageRepository;
 use App\Modules\Product\Entity\Product\Persistence\Doctrine\DoctrineProductRepository;
 use App\Modules\Product\Entity\Product\ProductRepository;
 use App\Modules\Product\Entity\ProductCategory\Persistence\Doctrine\DoctrineProductCategoryRepository;
@@ -37,6 +39,7 @@ return [
     MediaAssetRepository::class        => get(DoctrineMediaAssetRepository::class),
     OrderRepository::class             => get(DoctrineOrderRepository::class),
     OrderItemRepository::class         => get(DoctrineOrderItemRepository::class),
+    PageRepository::class              => get(DoctrinePageRepository::class),
     ProductRepository::class           => get(DoctrineProductRepository::class),
     ProductCategoryRepository::class   => get(DoctrineProductCategoryRepository::class),
     ReviewRepository::class            => get(DoctrineReviewRepository::class),

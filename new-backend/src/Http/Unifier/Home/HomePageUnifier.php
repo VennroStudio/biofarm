@@ -12,6 +12,7 @@ use App\Http\View\Home\HomeCategoryView;
 use App\Http\View\Home\HomePageView;
 use App\Http\View\Home\HomeReviewView;
 use App\Http\View\PageMetaView;
+use App\Modules\Page\Service\PageSeoProvider;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 
@@ -37,6 +38,7 @@ final readonly class HomePageUnifier
         private Connection $connection,
         private SeoUrlGenerator $urls,
         private JsonLdFactory $jsonLd,
+        private PageSeoProvider $pages,
     ) {}
 
     public function unify(?string $selectedCategory = null): HomePageView
@@ -45,7 +47,7 @@ final readonly class HomePageUnifier
         $categories = $this->catalogData->categories();
 
         return new HomePageView(
-            meta: new PageMetaView(
+            meta: $this->pages->applySystem('home', new PageMetaView(
                 title: 'БИОФАРМ — натуральные продукты',
                 description: 'Экологически чистые продукты БИОФАРМ напрямую из собственных лабораторий.',
                 canonicalUrl: $this->urls->absolute('/'),
@@ -57,7 +59,7 @@ final readonly class HomePageUnifier
                     $this->jsonLd->organization(),
                     $this->jsonLd->website(),
                 ],
-            ),
+            )),
             products: $products,
             selectedCategory: $selectedCategory,
             featuredProduct: $products[0] ?? null,
