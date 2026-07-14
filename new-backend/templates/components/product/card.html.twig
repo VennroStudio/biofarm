@@ -65,7 +65,7 @@
         </a>
     </article>
 {% else %}
-    <article class="group overflow-hidden rounded-2xl bg-card shadow-premium transition-all duration-300 hover:shadow-premium-lg" data-reveal data-reveal-duration="500" data-reveal-delay="{{ revealDelay }}">
+    <article class="group flex h-full flex-col overflow-hidden rounded-2xl bg-card shadow-premium transition-all duration-300 hover:shadow-premium-lg" data-reveal data-reveal-duration="500" data-reveal-delay="{{ revealDelay }}">
         <a href="/product/{{ product.slug }}">
             <div class="relative aspect-square overflow-hidden bg-white">
                 {{ optimized_image(product.image, product.imageAlt ?: product.title, {
@@ -86,7 +86,7 @@
             </div>
         </a>
 
-        <div class="p-6">
+        <div class="flex flex-1 flex-col p-6">
             <div class="mb-2 flex items-start justify-between gap-3">
                 <a href="/product/{{ product.slug }}">
                     <h3 class="text-lg font-bold leading-snug text-foreground transition-colors group-hover:text-primary">
@@ -100,38 +100,40 @@
                 <p class="mb-4 line-clamp-2 min-h-[42px] text-sm leading-6 text-muted-foreground">{{ product.shortDescription }}</p>
             {% endif %}
 
-            <div class="flex items-center gap-2">
-                <span class="text-2xl font-bold text-primary">{{ product.price|number_format(0, '.', ' ') }} ₽</span>
-                {% if product.oldPrice %}
-                    <span class="text-muted-foreground line-through">{{ product.oldPrice|number_format(0, '.', ' ') }} ₽</span>
+            <div class="mt-auto">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl font-bold text-primary">{{ product.price|number_format(0, '.', ' ') }} ₽</span>
+                    {% if product.oldPrice %}
+                        <span class="text-muted-foreground line-through">{{ product.oldPrice|number_format(0, '.', ' ') }} ₽</span>
+                    {% endif %}
+                </div>
+
+                {% if site_feature('cart_enabled') %}
+                    <div class="mt-4 flex gap-2">
+                        <button
+                            class="gradient-primary inline-flex h-10 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium text-primary-foreground ring-offset-background transition-opacity hover:opacity-95"
+                            type="button"
+                            data-catalog-cart-add
+                            data-product="{{ {
+                                id: product.id,
+                                slug: product.slug,
+                                name: product.title,
+                                title: product.title,
+                                image: product.image,
+                                price: product.price,
+                                weight: product.weight
+                            }|json_encode|e('html_attr') }}"
+                        >
+                            <svg class="h-4 w-4" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="8" cy="21" r="1"></circle>
+                                <circle cx="19" cy="21" r="1"></circle>
+                                <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
+                            </svg>
+                            <span data-cart-add-label>В корзину</span>
+                        </button>
+                    </div>
                 {% endif %}
             </div>
-
-            {% if site_feature('cart_enabled') %}
-                <div class="mt-4 flex gap-2">
-                    <button
-                        class="gradient-primary inline-flex h-10 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium text-primary-foreground ring-offset-background transition-opacity hover:opacity-95"
-                        type="button"
-                        data-catalog-cart-add
-                        data-product="{{ {
-                            id: product.id,
-                            slug: product.slug,
-                            name: product.title,
-                            title: product.title,
-                            image: product.image,
-                            price: product.price,
-                            weight: product.weight
-                        }|json_encode|e('html_attr') }}"
-                    >
-                        <svg class="h-4 w-4" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="8" cy="21" r="1"></circle>
-                            <circle cx="19" cy="21" r="1"></circle>
-                            <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
-                        </svg>
-                        <span data-cart-add-label>В корзину</span>
-                    </button>
-                </div>
-            {% endif %}
         </div>
     </article>
 {% endif %}
