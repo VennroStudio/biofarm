@@ -35,6 +35,8 @@ return static function (App $app): void {
         $group->get('/robots.txt', RobotsController::class);
         $group->get('/sitemap.xml', SitemapController::class);
         $group->get('/catalog', CatalogPageController::class);
+        $group->get('/catalog/sostav/{componentSlug}', CatalogPageController::class);
+        $group->get('/catalog/dlya/{purposeSlug}', CatalogPageController::class);
         $group->get('/catalog/{categorySlug}/{subcategorySlug}/sostav/{componentSlug}', CatalogPageController::class);
         $group->get('/catalog/{categorySlug}/{subcategorySlug}/dlya/{purposeSlug}', CatalogPageController::class);
         $group->get('/catalog/{categorySlug}/sostav/{componentSlug}', CatalogPageController::class);

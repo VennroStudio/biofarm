@@ -43,10 +43,18 @@ export function BlogFormModal({ form, open, saving, setForm, onClose, onSubmit }
             <input className={inputClass} value={form.author_name} onChange={(event) => setForm({ ...form, author_name: event.target.value })} />
           </Field>
         </div>
-        <Field label="URL изображения">
-          <input className={inputClass} value={form.image} onChange={(event) => setForm({ ...form, image: event.target.value })} />
-        </Field>
-        <ImageUploader scope="blog" onUploaded={(url) => setForm({ ...form, image: url })} />
+        <div className="space-y-2">
+          <p className="text-sm font-semibold text-[#26382d]">Изображение</p>
+          <ImageUploader scope="blog" onUploaded={(url) => setForm({ ...form, image: url })} />
+          {form.image ? (
+            <div className="grid gap-3 rounded-lg border border-[#e4e5da] bg-white p-3 md:grid-cols-[88px_1fr]">
+              <img src={form.image} alt={form.image_alt || form.title} className="h-20 w-20 rounded object-cover" />
+              <p className="break-all rounded-md border border-[#e4e5da] bg-[#fbfaf4] px-3 py-2 text-xs font-semibold text-[#789083]">
+                {form.image}
+              </p>
+            </div>
+          ) : null}
+        </div>
         <Field label="Alt изображения">
           <input className={inputClass} value={form.image_alt} onChange={(event) => setForm({ ...form, image_alt: event.target.value })} />
         </Field>

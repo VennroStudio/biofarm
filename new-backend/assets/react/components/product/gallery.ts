@@ -153,11 +153,17 @@ export function mountProductGallery() {
         return;
       }
 
+      if (lightbox.parentElement !== document.body) {
+        document.body.appendChild(lightbox);
+      }
+
       lightboxImage.src = images[selectedIndex];
       lightboxImage.alt = productName || `Фото товара ${selectedIndex + 1}`;
       lightbox.classList.remove('hidden');
       lightbox.classList.add('flex');
       lightbox.setAttribute('aria-hidden', 'false');
+      document.documentElement.classList.add('overflow-hidden');
+      document.body.classList.add('overflow-hidden');
       lightbox.focus();
 
       if (reduceMotion) {
@@ -187,6 +193,8 @@ export function mountProductGallery() {
       lightbox.style.transition = '';
       lightboxImage.style.transform = '';
       lightboxImage.style.transition = '';
+      document.documentElement.classList.remove('overflow-hidden');
+      document.body.classList.remove('overflow-hidden');
       openButton?.focus();
     };
 

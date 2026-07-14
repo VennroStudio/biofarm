@@ -10,6 +10,7 @@ use App\Http\View\Product\ProductCardView;
 use App\Http\View\Product\ProductImageView;
 use App\Http\View\Product\ProductPageProductView;
 use App\Http\View\Product\ProductVariantView;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 use Doctrine\DBAL\Query\QueryBuilder;
@@ -256,7 +257,9 @@ final readonly class ProductCatalogDataProvider
             ->from('categories', 'c')
             ->leftJoin('c', 'categories', 'p', 'p.id = c.parent_id AND p.deleted_at IS NULL')
             ->where('c.deleted_at IS NULL')
-            ->orderBy('c.sort_order', 'ASC')
+            ->orderBy('COALESCE(c.parent_id, c.id)', 'ASC')
+            ->addOrderBy('c.parent_id IS NOT NULL', 'ASC')
+            ->addOrderBy('c.sort_order', 'ASC')
             ->addOrderBy('c.id', 'ASC')
             ->executeQuery()
             ->fetchAllAssociative();
@@ -403,9 +406,19 @@ final readonly class ProductCatalogDataProvider
             ->executeQuery()
             ->fetchAllAssociative();
 
+        $parents = $this->categoryParentMap();
         $counts = [];
         foreach ($rows as $row) {
-            $counts[(string)$row['category_id']] = (int)$row['products_count'];
+            $id = (string)$row['category_id'];
+            $count = (int)$row['products_count'];
+            $counts[$id] = ($counts[$id] ?? 0) + $count;
+
+            $parentId = $parents[$id] ?? null;
+            while ($parentId !== null && $parentId !== '' && $parentId !== $id) {
+                $counts[$parentId] = ($counts[$parentId] ?? 0) + $count;
+                $id = $parentId;
+                $parentId = $parents[$id] ?? null;
+            }
         }
 
         return $counts;
@@ -504,10 +517,12 @@ final readonly class ProductCatalogDataProvider
      * @return array{
      *     slug: string,
      *     name: string,
+     *     h1: string|null,
      *     short_description: string|null,
      *     seo_title: string|null,
      *     seo_description: string|null,
      *     intro_text: string|null,
+     *     bottom_text: string|null,
      *     is_indexable: bool
      * }|null
      * @throws Exception
@@ -522,10 +537,12 @@ final readonly class ProductCatalogDataProvider
         return [
             'slug'              => (string)$row['slug'],
             'name'              => (string)$row['name'],
+            'h1'                => $row['h1'],
             'short_description' => $row['short_description'],
             'seo_title'         => $row['seo_title'],
             'seo_description'   => $row['seo_description'],
             'intro_text'        => $row['intro_text'],
+            'bottom_text'       => $row['bottom_text'],
             'is_indexable'      => $row['is_indexable'],
         ];
     }
@@ -582,8 +599,13 @@ final readonly class ProductCatalogDataProvider
             ->setParameter('attributeSlug', $attributeSlug);
 
         if ($category !== null) {
-            $qb->andWhere('p.category_id = :category')
-                ->setParameter('category', $category);
+            $categoryIds = $this->categoryFilterIds($category);
+            if ($categoryIds === []) {
+                $qb->andWhere('1 = 0');
+            } else {
+                $qb->andWhere('p.category_id IN (:categoryIds)')
+                    ->setParameter('categoryIds', $categoryIds, ArrayParameterType::STRING);
+            }
         }
 
         /** @var list<array{slug: string, name: string, products_count: int|string}> $rows */
@@ -704,8 +726,13 @@ final readonly class ProductCatalogDataProvider
     ): void
     {
         if ($category !== null) {
-            $qb->andWhere('p.category_id = :category')
-                ->setParameter('category', $category);
+            $categoryIds = $this->categoryFilterIds($category);
+            if ($categoryIds === []) {
+                $qb->andWhere('1 = 0');
+            } else {
+                $qb->andWhere('p.category_id IN (:categoryIds)')
+                    ->setParameter('categoryIds', $categoryIds, ArrayParameterType::STRING);
+            }
         }
 
         if ($search !== null) {
@@ -767,6 +794,63 @@ final readonly class ProductCatalogDataProvider
         }
 
         return self::FALLBACK_CATEGORY_NAMES[$categoryId] ?? $categoryId;
+    }
+
+    /**
+     * @return array<string, string|null>
+     * @throws Exception
+     */
+    private function categoryParentMap(): array
+    {
+        /** @var list<array{id: int|string, parent_id: int|string|null}> $rows */
+        $rows = $this->connection->createQueryBuilder()
+            ->select('CAST(c.id AS CHAR) AS id', 'CAST(c.parent_id AS CHAR) AS parent_id')
+            ->from('categories', 'c')
+            ->where('c.deleted_at IS NULL')
+            ->executeQuery()
+            ->fetchAllAssociative();
+
+        $parents = [];
+        foreach ($rows as $row) {
+            $parents[(string)$row['id']] = $row['parent_id'] !== null && trim((string)$row['parent_id']) !== ''
+                ? (string)$row['parent_id']
+                : null;
+        }
+
+        return $parents;
+    }
+
+    /**
+     * @return list<string>
+     * @throws Exception
+     */
+    private function categoryFilterIds(string $categoryId): array
+    {
+        if (!ctype_digit($categoryId)) {
+            return [];
+        }
+
+        $parents = $this->categoryParentMap();
+        if (!array_key_exists($categoryId, $parents)) {
+            return [];
+        }
+
+        $ids = [$categoryId => $categoryId];
+        $queue = [$categoryId];
+
+        while ($queue !== []) {
+            $parentId = array_shift($queue);
+            foreach ($parents as $id => $currentParentId) {
+                if ($currentParentId !== $parentId || isset($ids[$id])) {
+                    continue;
+                }
+
+                $ids[$id] = $id;
+                $queue[] = $id;
+            }
+        }
+
+        return array_values($ids);
     }
 
     private function plainText(string $html): string

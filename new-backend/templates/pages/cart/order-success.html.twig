@@ -1,5 +1,12 @@
 {% extends 'layouts/main.html.twig' %}
 
 {% block content %}
-    <div data-react-island="order-success-page"></div>
+    <div data-react-island="order-success-page">
+        <section class="container mx-auto px-4 py-24">
+            <h1 class="font-display text-4xl font-bold text-foreground md:text-5xl">Заказ оформлен</h1>
+            <p class="mt-4 max-w-2xl text-lg text-muted-foreground">
+                Спасибо за заказ. Мы свяжемся с вами для подтверждения деталей.
+            </p>
+        </section>
+    </div>
 {% endblock %}

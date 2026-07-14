@@ -56,14 +56,14 @@ final readonly class SitemapController implements RequestHandlerInterface
      */
     private function items(): array
     {
-        return [
+        return $this->uniqueItems([
             ...$this->pageItems(),
             ...$this->categoryItems(),
             ...$this->componentItems(),
             ...$this->purposeItems(),
             ...$this->productItems(),
             ...$this->blogItems(),
-        ];
+        ]);
     }
 
     /**
@@ -173,7 +173,19 @@ final readonly class SitemapController implements RequestHandlerInterface
      */
     private function attributeItems(string $filterPrefix): array
     {
-        $rows = $this->connection->fetchAllAssociative(
+        $rootRows = $this->connection->fetchAllAssociative(
+            'SELECT av.slug AS value_slug, av.updated_at, av.created_at
+             FROM attribute_values av
+             INNER JOIN attributes a ON a.id = av.attribute_id AND a.deleted_at IS NULL
+             INNER JOIN product_attribute_values pav ON pav.attribute_value_id = av.id
+             INNER JOIN products p ON p.id = pav.product_id AND p.deleted_at IS NULL AND p.is_active = 1
+             WHERE a.filter_prefix = :filterPrefix AND av.is_indexable = 1 AND av.deleted_at IS NULL
+             GROUP BY av.id, av.slug, av.sort_order, av.name, av.updated_at, av.created_at
+             ORDER BY av.sort_order ASC, av.name ASC',
+            ['filterPrefix' => $filterPrefix],
+        );
+
+        $categoryRows = $this->connection->fetchAllAssociative(
             'SELECT DISTINCT c.slug AS category_slug, parent.slug AS parent_slug, a.filter_prefix, av.slug AS value_slug, av.updated_at, av.created_at
              FROM attribute_values av
              INNER JOIN attributes a ON a.id = av.attribute_id AND a.deleted_at IS NULL
@@ -186,7 +198,13 @@ final readonly class SitemapController implements RequestHandlerInterface
             ['filterPrefix' => $filterPrefix],
         );
 
-        return array_map(static fn (array $row): array => [
+        $rootItems = array_map(static fn (array $row): array => [
+            'loc'      => '/catalog/' . $filterPrefix . '/' . $row['value_slug'],
+            'lastmod'  => self::lastmod((string)($row['updated_at'] ?? $row['created_at'] ?? '')),
+            'priority' => '0.7',
+        ], $rootRows);
+
+        $categoryItems = array_map(static fn (array $row): array => [
             'loc'      => '/catalog/'
                 . ($row['parent_slug'] !== null ? $row['parent_slug'] . '/' : '')
                 . $row['category_slug']
@@ -196,7 +214,23 @@ final readonly class SitemapController implements RequestHandlerInterface
                 . $row['value_slug'],
             'lastmod'  => self::lastmod((string)($row['updated_at'] ?? $row['created_at'] ?? '')),
             'priority' => '0.6',
-        ], $rows);
+        ], $categoryRows);
+
+        return [...$rootItems, ...$categoryItems];
+    }
+
+    /**
+     * @param list<array{loc: string, lastmod: string|null, priority: string}> $items
+     * @return list<array{loc: string, lastmod: string|null, priority: string}>
+     */
+    private function uniqueItems(array $items): array
+    {
+        $unique = [];
+        foreach ($items as $item) {
+            $unique[$item['loc']] = $item;
+        }
+
+        return array_values($unique);
     }
 
     /**

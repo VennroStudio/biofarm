@@ -8,7 +8,6 @@ use App\Components\Seo\JsonLdFactory;
 use App\Components\Seo\SeoUrlGenerator;
 use App\Http\Unifier\Product\ProductCatalogDataProvider;
 use App\Http\View\Blog\BlogPostView;
-use App\Http\View\Home\HomeCategoryView;
 use App\Http\View\Home\HomePageView;
 use App\Http\View\Home\HomeReviewView;
 use App\Http\View\PageMetaView;
@@ -64,10 +63,7 @@ final readonly class HomePageUnifier
             selectedCategory: $selectedCategory,
             featuredProduct: $products[0] ?? null,
             categories: $categories,
-            categoriesTotal: array_sum(array_map(
-                static fn (HomeCategoryView $category): int => $category->productsCount,
-                $categories,
-            )),
+            categoriesTotal: $this->catalogData->countProducts(),
             blogPosts: $this->blogPosts(),
             reviews: $this->reviews(),
         );

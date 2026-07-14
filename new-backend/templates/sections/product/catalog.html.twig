@@ -39,7 +39,7 @@
         {% endif %}
 
         {% if isCatalogPage %}
-            {% set filterResetUrl = hasActiveCategory ? categoryUrls[activeCategory] : allCategoryUrl %}
+            {% set filterResetUrl = hasActiveCategory and categoryUrls[activeCategory] is defined ? categoryUrls[activeCategory] : allCategoryUrl %}
             <div class="grid gap-8 lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start">
                 <aside class="space-y-5 lg:sticky lg:top-28" data-reveal data-reveal-delay="300">
                     <div class="rounded-2xl bg-card p-5 shadow-premium">
@@ -90,7 +90,7 @@
                                                 {% set isActiveFacet = activeComponentSlug == component.slug %}
                                                 <a
                                                     class="flex min-h-9 items-center gap-3 rounded-lg px-2 text-sm transition-colors {% if isActiveFacet %}bg-primary/10 text-foreground{% else %}text-muted-foreground hover:bg-secondary hover:text-foreground{% endif %}"
-                                                    href="{{ isActiveFacet ? filterResetUrl : componentFilterUrls[component.slug] }}"
+                                                    href="{{ componentFilterUrls[component.slug] }}"
                                                     role="checkbox"
                                                     aria-checked="{{ isActiveFacet ? 'true' : 'false' }}"
                                                 >
@@ -122,7 +122,7 @@
                                                 {% set isActiveFacet = activePurposeSlug == purpose.slug %}
                                                 <a
                                                     class="flex min-h-9 items-center gap-3 rounded-lg px-2 text-sm transition-colors {% if isActiveFacet %}bg-primary/10 text-foreground{% else %}text-muted-foreground hover:bg-secondary hover:text-foreground{% endif %}"
-                                                    href="{{ isActiveFacet ? filterResetUrl : purposeFilterUrls[purpose.slug] }}"
+                                                    href="{{ purposeFilterUrls[purpose.slug] }}"
                                                     role="checkbox"
                                                     aria-checked="{{ isActiveFacet ? 'true' : 'false' }}"
                                                 >
@@ -155,6 +155,12 @@
                                 {% if currentView != 'grid' %}
                                     <input type="hidden" name="view" value="{{ currentView }}">
                                 {% endif %}
+                                {% if activeComponentSlug is not empty %}
+                                    <input type="hidden" name="sostav" value="{{ activeComponentSlug }}">
+                                {% endif %}
+                                {% if activePurposeSlug is not empty %}
+                                    <input type="hidden" name="dlya" value="{{ activePurposeSlug }}">
+                                {% endif %}
                                 <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                     <path d="m21 21-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
                                 </svg>
@@ -175,6 +181,12 @@
                                     {% endif %}
                                     {% if currentView != 'grid' %}
                                         <input type="hidden" name="view" value="{{ currentView }}">
+                                    {% endif %}
+                                    {% if activeComponentSlug is not empty %}
+                                        <input type="hidden" name="sostav" value="{{ activeComponentSlug }}">
+                                    {% endif %}
+                                    {% if activePurposeSlug is not empty %}
+                                        <input type="hidden" name="dlya" value="{{ activePurposeSlug }}">
                                     {% endif %}
                                     <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                         <path d="M4 7h16M7 12h10M10 17h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>

@@ -18,7 +18,6 @@ export function AdminReviews() {
   const [products, setProducts] = useState<Product[]>([]);
   const [form, setForm] = useState<ReviewForm>(emptyReviewForm);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [imageUrl, setImageUrl] = useState('');
   const [saving, setSaving] = useState(false);
 
   const productById = useMemo(() => new Map(products.map((product) => [product.id, product.name])), [products]);
@@ -33,13 +32,11 @@ export function AdminReviews() {
 
   function openCreate() {
     setForm({ ...emptyReviewForm, product_id: String(products[0]?.id ?? '') });
-    setImageUrl('');
     setDialogOpen(true);
   }
 
   function openEdit(review: Review) {
     setForm(reviewFormFromReview(review));
-    setImageUrl('');
     setDialogOpen(true);
   }
 
@@ -99,12 +96,10 @@ export function AdminReviews() {
 
       <ReviewFormModal
         form={form}
-        imageUrl={imageUrl}
         open={dialogOpen}
         products={products}
         saving={saving}
         setForm={setForm}
-        setImageUrl={setImageUrl}
         onAddImage={addImage}
         onClose={() => setDialogOpen(false)}
         onSubmit={(event) => void submit(event)}

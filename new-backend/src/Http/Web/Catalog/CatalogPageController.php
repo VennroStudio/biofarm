@@ -25,6 +25,8 @@ final readonly class CatalogPageController implements RequestHandlerInterface
         $query = $request->getQueryParams();
         $categorySlug = $this->routeArgument($request, 'categorySlug');
         $subcategorySlug = $this->routeArgument($request, 'subcategorySlug');
+        $routeComponentSlug = $this->routeArgument($request, 'componentSlug');
+        $routePurposeSlug = $this->routeArgument($request, 'purposeSlug');
 
         return $this->html->render('pages/catalog/index.html.twig', [
             'page' => $this->catalogPage->unify(
@@ -33,8 +35,9 @@ final readonly class CatalogPageController implements RequestHandlerInterface
                 sortBy: $this->queryString($query, 'sort'),
                 viewMode: $this->queryString($query, 'view'),
                 page: $this->queryInt($query, 'page'),
-                componentSlug: $this->routeArgument($request, 'componentSlug'),
-                purposeSlug: $this->routeArgument($request, 'purposeSlug'),
+                componentSlug: $routeComponentSlug ?? $this->queryString($query, 'sostav'),
+                purposeSlug: $routePurposeSlug ?? $this->queryString($query, 'dlya'),
+                useFacetSeo: $routeComponentSlug !== null || $routePurposeSlug !== null,
             ),
         ]);
     }

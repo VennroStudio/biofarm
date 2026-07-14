@@ -47,7 +47,10 @@ final readonly class ProductCategoryFindAllFetcher
 
         $rows = $qb
             ->select(...ReadModelFields::select(ProductCategoryDetails::fields(), 'c'))
-            ->orderBy('c.name', 'ASC')
+            ->orderBy('COALESCE(c.parent_id, c.id)', 'ASC')
+            ->addOrderBy('c.parent_id IS NOT NULL', 'ASC')
+            ->addOrderBy('c.sort_order', 'ASC')
+            ->addOrderBy('c.name', 'ASC')
             ->setFirstResult($query->getOffset())
             ->setMaxResults($query->perPage)
             ->executeQuery()

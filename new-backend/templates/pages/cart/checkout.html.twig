@@ -5,5 +5,12 @@
         data-react-island="checkout-page"
         data-order-bonus-enabled="{{ site_feature('order_bonus_enabled') ? 'true' : 'false' }}"
         data-order-bonus-percent="{{ site_setting('order_bonus_percent', 5) }}"
-    ></div>
+    >
+        <section class="container mx-auto px-4 py-24">
+            <h1 class="font-display text-4xl font-bold text-foreground md:text-5xl">Оформление заказа</h1>
+            <p class="mt-4 max-w-2xl text-lg text-muted-foreground">
+                Укажите контактные данные и способ доставки для заказа продукции БИОФАРМ.
+            </p>
+        </section>
+    </div>
 {% endblock %}

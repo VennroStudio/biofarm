@@ -1,4 +1,4 @@
-import { Image as ImageIcon, Save, Star, X } from 'lucide-react';
+import { Save, Star, X } from 'lucide-react';
 import type { Dispatch, FormEvent, SetStateAction } from 'react';
 import { ImageUploader } from '../../media/ui/ImageUploader';
 import { Button, Field, inputClass, Modal, textareaClass } from '../../../shared/ui';
@@ -7,12 +7,10 @@ import type { ReviewForm } from '../model/reviewForm';
 
 type Props = {
   form: ReviewForm;
-  imageUrl: string;
   open: boolean;
   products: Product[];
   saving: boolean;
   setForm: Dispatch<SetStateAction<ReviewForm>>;
-  setImageUrl: Dispatch<SetStateAction<string>>;
   onAddImage: (url: string) => void;
   onClose: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
@@ -20,12 +18,10 @@ type Props = {
 
 export function ReviewFormModal({
   form,
-  imageUrl,
   open,
   products,
   saving,
   setForm,
-  setImageUrl,
   onAddImage,
   onClose,
   onSubmit,
@@ -79,20 +75,6 @@ export function ReviewFormModal({
         <div className="space-y-2">
           <p className="text-sm font-semibold text-[#26382d]">Фотографии</p>
           <div className="flex flex-wrap gap-2">
-            <input className={`${inputClass} flex-1`} value={imageUrl} onChange={(event) => setImageUrl(event.target.value)} placeholder="URL изображения" />
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                const url = imageUrl.trim();
-                if (url) {
-                  onAddImage(url);
-                  setImageUrl('');
-                }
-              }}
-            >
-              <ImageIcon className="h-4 w-4" />
-            </Button>
             <ImageUploader scope="reviews" onUploaded={onAddImage} />
           </div>
           {form.images.length > 0 && (

@@ -34,6 +34,7 @@ final readonly class CatalogPageUnifier
         ?int $page = null,
         ?string $componentSlug = null,
         ?string $purposeSlug = null,
+        bool $useFacetSeo = false,
     ): CatalogPageView {
         $category = $this->catalogData->categoryId($selectedCategory);
         $query = $this->normalizeSearch($searchQuery);
@@ -43,11 +44,23 @@ final readonly class CatalogPageUnifier
         $categoryContext = $this->catalogData->categoryContext($category);
         $componentContext = $this->catalogData->componentContext($componentSlug);
         $purposeContext = $this->catalogData->purposeContext($purposeSlug);
-        $catalogPath = $this->catalogPath($categories, $category, $componentSlug, $purposeSlug);
+        $activeComponentSlug = $componentContext['slug'] ?? null;
+        $activePurposeSlug = $purposeContext['slug'] ?? null;
+        $catalogPath = $this->catalogPath(
+            $categories,
+            $category,
+            $useFacetSeo ? $activeComponentSlug : null,
+            $useFacetSeo ? $activePurposeSlug : null,
+        );
         $categoryPath = $this->catalogPath($categories, $category, null, null);
-        $copy = $this->pageCopy($categoryContext, $componentContext, $purposeContext);
+        $copy = $this->pageCopy(
+            $categoryContext,
+            $useFacetSeo ? $componentContext : null,
+            $useFacetSeo ? $purposeContext : null,
+        );
 
         $productsTotal = $this->catalogData->countProducts($category, $query, $componentSlug, $purposeSlug);
+        $categoriesTotal = $this->catalogData->countProducts();
         $totalPages = max(1, (int)ceil($productsTotal / self::PRODUCTS_PER_PAGE));
         $currentPage = min(max(1, $page ?? 1), $totalPages);
         $offset = ($currentPage - 1) * self::PRODUCTS_PER_PAGE;
@@ -63,7 +76,8 @@ final readonly class CatalogPageUnifier
         );
         $componentFilters = $this->catalogData->componentFilters($category);
         $purposeFilters = $this->catalogData->purposeFilters($category);
-        $isFacetWithoutCategory = $category === null && ($componentContext !== null || $purposeContext !== null);
+        $hasQueryFacet = !$useFacetSeo && ($this->hasSlug($componentSlug) || $this->hasSlug($purposeSlug));
+        $hasMultipleFacets = $this->hasSlug($componentSlug) && $this->hasSlug($purposeSlug);
         $hasUnknownContext = ($category !== null && $categoryContext === null)
             || (trim((string)$componentSlug) !== '' && $componentContext === null)
             || (trim((string)$purposeSlug) !== '' && $purposeContext === null);
@@ -77,10 +91,12 @@ final readonly class CatalogPageUnifier
             || $productsTotal === 0
             || $hasUnknownContext
             || !$isContextIndexable
-            || $isFacetWithoutCategory;
+            || $hasQueryFacet
+            || $hasMultipleFacets;
+        $queryComponentSlug = $useFacetSeo ? null : $activeComponentSlug;
+        $queryPurposeSlug = $useFacetSeo ? null : $activePurposeSlug;
 
-        return new CatalogPageView(
-            meta: $this->pages->applySystem('catalog', new PageMetaView(
+        $meta = new PageMetaView(
                 title: $copy['title'],
                 description: $copy['description'],
                 canonicalUrl: $this->urls->absolute($catalogPath),
@@ -96,13 +112,17 @@ final readonly class CatalogPageUnifier
                     ]),
                     $this->jsonLd->itemList($products, $catalogPath),
                 ],
-            )),
+            );
+
+        if ($category === null && !$useFacetSeo) {
+            $meta = $this->pages->applySystem('catalog', $meta);
+        }
+
+        return new CatalogPageView(
+            meta: $meta,
             products: $products,
             categories: $categories,
-            categoriesTotal: array_sum(array_map(
-                static fn (HomeCategoryView $category): int => $category->productsCount,
-                $categories,
-            )),
+            categoriesTotal: $categoriesTotal,
             catalogPath: $catalogPath,
             catalogEyebrow: $copy['eyebrow'],
             catalogH1: $copy['h1'],
@@ -111,8 +131,8 @@ final readonly class CatalogPageUnifier
             bottomText: $copy['bottomText'],
             componentFilters: $componentFilters,
             purposeFilters: $purposeFilters,
-            activeComponentSlug: $componentContext['slug'] ?? null,
-            activePurposeSlug: $purposeContext['slug'] ?? null,
+            activeComponentSlug: $activeComponentSlug,
+            activePurposeSlug: $activePurposeSlug,
             selectedCategory: $category,
             productsTotal: $productsTotal,
             searchQuery: $query ?? '',
@@ -123,16 +143,16 @@ final readonly class CatalogPageUnifier
             previousPage: $currentPage > 1 ? $currentPage - 1 : null,
             nextPage: $currentPage < $totalPages ? $currentPage + 1 : null,
             pageNumbers: $this->pageNumbers($currentPage, $totalPages),
-            pageUrls: $this->pageUrls($this->pageNumbers($currentPage, $totalPages), $catalogPath, $query, $sort, $view),
-            previousPageUrl: $currentPage > 1 ? $this->catalogUrl($catalogPath, $query, $sort, $view, $currentPage - 1) : null,
-            nextPageUrl: $currentPage < $totalPages ? $this->catalogUrl($catalogPath, $query, $sort, $view, $currentPage + 1) : null,
+            pageUrls: $this->pageUrls($this->pageNumbers($currentPage, $totalPages), $catalogPath, $query, $sort, $view, $queryComponentSlug, $queryPurposeSlug),
+            previousPageUrl: $currentPage > 1 ? $this->catalogUrl($catalogPath, $query, $sort, $view, $currentPage - 1, $queryComponentSlug, $queryPurposeSlug) : null,
+            nextPageUrl: $currentPage < $totalPages ? $this->catalogUrl($catalogPath, $query, $sort, $view, $currentPage + 1, $queryComponentSlug, $queryPurposeSlug) : null,
             allCategoryUrl: $this->catalogUrl('/catalog', $query, $sort, $view, 1),
             categoryUrls: $this->categoryUrls($categories, $query, $sort, $view),
-            componentFilterUrls: $this->facetUrls($componentFilters, $categoryPath, 'sostav', $query, $sort, $view),
-            purposeFilterUrls: $this->facetUrls($purposeFilters, $categoryPath, 'dlya', $query, $sort, $view),
+            componentFilterUrls: $this->filterUrls($componentFilters, $categoryPath, $query, $sort, $view, $activeComponentSlug, $activePurposeSlug, 'sostav'),
+            purposeFilterUrls: $this->filterUrls($purposeFilters, $categoryPath, $query, $sort, $view, $activeComponentSlug, $activePurposeSlug, 'dlya'),
             viewUrls: [
-                'grid' => $this->catalogUrl($catalogPath, $query, $sort, 'grid', 1),
-                'list' => $this->catalogUrl($catalogPath, $query, $sort, 'list', 1),
+                'grid' => $this->catalogUrl($catalogPath, $query, $sort, 'grid', 1, $queryComponentSlug, $queryPurposeSlug),
+                'list' => $this->catalogUrl($catalogPath, $query, $sort, 'list', 1, $queryComponentSlug, $queryPurposeSlug),
             ],
             resetUrl: '/catalog#catalog',
         );
@@ -142,18 +162,29 @@ final readonly class CatalogPageUnifier
      * @param list<CatalogFacetView> $facets
      * @return array<string, string>
      */
-    private function facetUrls(
+    private function filterUrls(
         array $facets,
         string $categoryPath,
-        string $segment,
         ?string $query,
         string $sort,
         string $view,
+        ?string $activeComponentSlug,
+        ?string $activePurposeSlug,
+        string $filterKey,
     ): array
     {
         $urls = [];
         foreach ($facets as $facet) {
-            $urls[$facet->slug] = $this->catalogUrl($categoryPath . '/' . $segment . '/' . rawurlencode($facet->slug), $query, $sort, $view, 1);
+            $componentSlug = $activeComponentSlug;
+            $purposeSlug = $activePurposeSlug;
+
+            if ($filterKey === 'sostav') {
+                $componentSlug = $activeComponentSlug === $facet->slug ? null : $facet->slug;
+            } else {
+                $purposeSlug = $activePurposeSlug === $facet->slug ? null : $facet->slug;
+            }
+
+            $urls[$facet->slug] = $this->catalogUrl($categoryPath, $query, $sort, $view, 1, $componentSlug, $purposeSlug);
         }
 
         return $urls;
@@ -199,11 +230,19 @@ final readonly class CatalogPageUnifier
      * @param list<int> $pages
      * @return array<int, string>
      */
-    private function pageUrls(array $pages, string $path, ?string $query, string $sort, string $view): array
+    private function pageUrls(
+        array $pages,
+        string $path,
+        ?string $query,
+        string $sort,
+        string $view,
+        ?string $componentSlug,
+        ?string $purposeSlug,
+    ): array
     {
         $urls = [];
         foreach ($pages as $page) {
-            $urls[$page] = $this->catalogUrl($path, $query, $sort, $view, $page);
+            $urls[$page] = $this->catalogUrl($path, $query, $sort, $view, $page, $componentSlug, $purposeSlug);
         }
 
         return $urls;
@@ -229,12 +268,16 @@ final readonly class CatalogPageUnifier
         string $sort,
         string $view,
         int $page,
+        ?string $componentSlug = null,
+        ?string $purposeSlug = null,
     ): string {
         $params = [
-            'q'    => $query,
-            'sort' => $sort !== 'default' ? $sort : null,
-            'view' => $view !== 'grid' ? $view : null,
-            'page' => $page > 1 ? $page : null,
+            'q'      => $query,
+            'sostav' => $componentSlug,
+            'dlya'   => $purposeSlug,
+            'sort'   => $sort !== 'default' ? $sort : null,
+            'view'   => $view !== 'grid' ? $view : null,
+            'page'   => $page > 1 ? $page : null,
         ];
 
         $params = array_filter(
@@ -243,6 +286,11 @@ final readonly class CatalogPageUnifier
         );
 
         return $path . ($params !== [] ? '?' . http_build_query($params) : '') . '#catalog';
+    }
+
+    private function hasSlug(?string $slug): bool
+    {
+        return trim((string)$slug) !== '';
     }
 
     /**
@@ -307,10 +355,12 @@ final readonly class CatalogPageUnifier
      * @param array{
      *     slug: string,
      *     name: string,
+     *     h1: string|null,
      *     short_description: string|null,
      *     seo_title: string|null,
      *     seo_description: string|null,
      *     intro_text: string|null,
+     *     bottom_text: string|null,
      *     is_indexable: bool
      * }|null $component
      * @param array{
@@ -335,22 +385,25 @@ final readonly class CatalogPageUnifier
      */
     private function pageCopy(?array $category, ?array $component, ?array $purpose): array
     {
-        $categoryName = $category !== null
+        $categoryHeading = $category !== null
             ? ($category['h1'] ?? $category['name'])
             : null;
+        $categoryName = $category['name'] ?? null;
 
         if ($purpose !== null) {
+            $purposePhrase = $this->facetPhrase($purpose['h1'], $this->lowerFirst($purpose['name']));
             $h1 = $categoryName !== null
-                ? $categoryName . ' ' . $purpose['name']
+                ? $categoryName . ' ' . $purposePhrase
                 : ($purpose['h1'] ?? 'БАДы ' . $purpose['name']);
-            $description = $purpose['seo_description']
-                ?? ('Натуральная продукция БИОФАРМ ' . $purpose['name'] . '.');
+            $description = $categoryName !== null
+                ? ('Подборка товаров БИОФАРМ в категории «' . $categoryName . '» ' . $purposePhrase . '. Натуральные растительные экстракты и БАДы с доставкой по России.')
+                : ($purpose['seo_description'] ?? ('Натуральная продукция БИОФАРМ ' . $purpose['name'] . '.'));
 
             return [
                 'eyebrow'     => 'Для здоровья',
                 'h1'          => $h1,
                 'lead'        => $description,
-                'title'       => $purpose['seo_title'] ?? ($h1 . ' — БИОФАРМ'),
+                'title'       => $categoryName !== null ? ($h1 . ' — БИОФАРМ') : ($purpose['seo_title'] ?? ($h1 . ' — БИОФАРМ')),
                 'description' => $description,
                 'introText'   => $purpose['intro_text'] ?? $category['intro_text'] ?? null,
                 'bottomText'  => $purpose['bottom_text'] ?? $category['bottom_text'] ?? null,
@@ -359,25 +412,27 @@ final readonly class CatalogPageUnifier
 
         if ($component !== null) {
             $componentName = mb_strtolower($component['name']);
+            $componentPhrase = $this->facetPhrase($component['h1'], 'с компонентом ' . $componentName);
             $h1 = $categoryName !== null
-                ? $categoryName . ' с ' . $componentName
-                : 'БАДы с ' . $componentName;
-            $description = $component['seo_description']
-                ?? ('Каталог продукции БИОФАРМ с компонентом ' . $componentName . '.');
+                ? $categoryName . ' ' . $componentPhrase
+                : ($component['h1'] ?? 'БАДы с ' . $componentName);
+            $description = $categoryName !== null
+                ? ('Подборка товаров БИОФАРМ в категории «' . $categoryName . '» ' . $componentPhrase . '. Натуральная продукция с понятным составом.')
+                : ($component['seo_description'] ?? ('Каталог продукции БИОФАРМ с компонентом ' . $componentName . '.'));
 
             return [
                 'eyebrow'     => 'Состав',
                 'h1'          => $h1,
                 'lead'        => $description,
-                'title'       => $component['seo_title'] ?? ($h1 . ' — БИОФАРМ'),
+                'title'       => $categoryName !== null ? ($h1 . ' — БИОФАРМ') : ($component['seo_title'] ?? ($h1 . ' — БИОФАРМ')),
                 'description' => $description,
                 'introText'   => $component['intro_text'] ?? $component['short_description'] ?? $category['intro_text'] ?? null,
-                'bottomText'  => $category['bottom_text'] ?? null,
+                'bottomText'  => $component['bottom_text'] ?? $category['bottom_text'] ?? null,
             ];
         }
 
         if ($category !== null) {
-            $h1 = $category['h1'] ?? $category['name'];
+            $h1 = $categoryHeading ?? $category['name'];
             $description = $category['seo_description']
                 ?? ('Каталог продукции БИОФАРМ в категории ' . $category['name'] . '.');
 
@@ -401,5 +456,32 @@ final readonly class CatalogPageUnifier
             'introText'   => null,
             'bottomText'  => null,
         ];
+    }
+
+    private function facetPhrase(?string $h1, string $fallback): string
+    {
+        $heading = trim((string)$h1);
+        if ($heading === '') {
+            return $fallback;
+        }
+
+        $lowerHeading = mb_strtolower($heading);
+        foreach (['бады ', 'товары '] as $prefix) {
+            if (str_starts_with($lowerHeading, $prefix)) {
+                return trim(mb_substr($heading, mb_strlen($prefix)));
+            }
+        }
+
+        return $fallback;
+    }
+
+    private function lowerFirst(string $value): string
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return $value;
+        }
+
+        return mb_strtolower(mb_substr($value, 0, 1)) . mb_substr($value, 1);
     }
 }
