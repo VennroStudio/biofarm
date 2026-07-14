@@ -37,6 +37,28 @@ final readonly class CatalogPageUnifier
         bool $useFacetSeo = false,
     ): CatalogPageView {
         $category = $this->catalogData->categoryId($selectedCategory);
+        if (
+            $category !== null
+            && !ctype_digit($category)
+            && $componentSlug === null
+            && $purposeSlug === null
+        ) {
+            $facetRoute = $this->catalogData->facetRouteByValueSlug($category);
+            if ($facetRoute !== null) {
+                $category = null;
+                $selectedCategory = null;
+                $useFacetSeo = true;
+
+                if ($facetRoute['filter_prefix'] === 'sostav') {
+                    $componentSlug = $facetRoute['slug'];
+                }
+
+                if ($facetRoute['filter_prefix'] === 'dlya') {
+                    $purposeSlug = $facetRoute['slug'];
+                }
+            }
+        }
+
         $query = $this->normalizeSearch($searchQuery);
         $sort = $this->normalizeSort($sortBy);
         $view = $this->normalizeView($viewMode);
@@ -74,8 +96,8 @@ final readonly class CatalogPageUnifier
             componentSlug: $componentSlug,
             purposeSlug: $purposeSlug,
         );
-        $componentFilters = $this->catalogData->componentFilters($category);
-        $purposeFilters = $this->catalogData->purposeFilters($category);
+        $componentFilters = $this->catalogData->componentFilters($category, $query, $activePurposeSlug);
+        $purposeFilters = $this->catalogData->purposeFilters($category, $query, $activeComponentSlug);
         $hasQueryFacet = !$useFacetSeo && ($this->hasSlug($componentSlug) || $this->hasSlug($purposeSlug));
         $hasMultipleFacets = $this->hasSlug($componentSlug) && $this->hasSlug($purposeSlug);
         $hasUnknownContext = ($category !== null && $categoryContext === null)

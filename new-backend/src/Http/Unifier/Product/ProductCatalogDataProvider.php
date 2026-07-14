@@ -436,18 +436,50 @@ final readonly class ProductCatalogDataProvider
      * @return list<CatalogFacetView>
      * @throws Exception
      */
-    public function componentFilters(?string $selectedCategory): array
+    public function componentFilters(?string $selectedCategory, ?string $search = null, ?string $purposeSlug = null): array
     {
-        return $this->attributeFilters($selectedCategory, 'sostav');
+        return $this->attributeFilters($selectedCategory, 'sostav', $search, null, $purposeSlug);
     }
 
     /**
      * @return list<CatalogFacetView>
      * @throws Exception
      */
-    public function purposeFilters(?string $selectedCategory): array
+    public function purposeFilters(?string $selectedCategory, ?string $search = null, ?string $componentSlug = null): array
     {
-        return $this->attributeFilters($selectedCategory, 'dlya');
+        return $this->attributeFilters($selectedCategory, 'dlya', $search, $componentSlug, null);
+    }
+
+    /**
+     * @return array{filter_prefix: string, slug: string}|null
+     * @throws Exception
+     */
+    public function facetRouteByValueSlug(?string $valueSlug): ?array
+    {
+        $valueSlug = trim((string)$valueSlug);
+        if ($valueSlug === '') {
+            return null;
+        }
+
+        /** @var list<array{filter_prefix: string, slug: string}> $rows */
+        $rows = $this->connection->createQueryBuilder()
+            ->select('a.filter_prefix', 'av.slug')
+            ->from('attribute_values', 'av')
+            ->innerJoin(
+                'av',
+                'attributes',
+                'a',
+                "a.id = av.attribute_id AND a.deleted_at IS NULL AND a.is_filterable = 1 AND a.filter_prefix IN ('sostav', 'dlya')",
+            )
+            ->where('av.slug = :slug')
+            ->andWhere('av.deleted_at IS NULL')
+            ->setParameter('slug', $valueSlug)
+            ->executeQuery()
+            ->fetchAllAssociative();
+
+        return \count($rows) === 1
+            ? ['filter_prefix' => (string)$rows[0]['filter_prefix'], 'slug' => (string)$rows[0]['slug']]
+            : null;
     }
 
     /**
@@ -583,13 +615,20 @@ final readonly class ProductCatalogDataProvider
      * @return list<CatalogFacetView>
      * @throws Exception
      */
-    private function attributeFilters(?string $selectedCategory, string $attributeSlug): array
+    private function attributeFilters(
+        ?string $selectedCategory,
+        string $attributeSlug,
+        ?string $search,
+        ?string $componentSlug,
+        ?string $purposeSlug,
+    ): array
     {
         $category = $this->normalizeCategory($selectedCategory);
+        $query = $this->normalizeSearch($search);
         $qb = $this->connection->createQueryBuilder()
             ->select('av.slug', 'av.name', 'COUNT(DISTINCT p.id) AS products_count')
             ->from('attribute_values', 'av')
-            ->innerJoin('av', 'attributes', 'a', 'a.id = av.attribute_id AND a.slug = :attributeSlug AND a.deleted_at IS NULL AND a.is_filterable = 1')
+            ->innerJoin('av', 'attributes', 'a', 'a.id = av.attribute_id AND a.filter_prefix = :attributeSlug AND a.deleted_at IS NULL AND a.is_filterable = 1')
             ->innerJoin('av', 'product_attribute_values', 'pav', 'pav.attribute_value_id = av.id')
             ->innerJoin('pav', 'products', 'p', 'p.id = pav.product_id AND p.deleted_at IS NULL AND p.is_active = 1')
             ->where('av.deleted_at IS NULL')
@@ -606,6 +645,21 @@ final readonly class ProductCatalogDataProvider
                 $qb->andWhere('p.category_id IN (:categoryIds)')
                     ->setParameter('categoryIds', $categoryIds, ArrayParameterType::STRING);
             }
+        }
+
+        if ($query !== null) {
+            $like = '%' . $this->escapeLike($query) . '%';
+            $qb->andWhere(
+                '(p.name LIKE :filterSearch ESCAPE \'!\' OR p.description LIKE :filterSearch ESCAPE \'!\' OR p.short_description LIKE :filterSearch ESCAPE \'!\')',
+            )->setParameter('filterSearch', $like);
+        }
+
+        if ($attributeSlug !== 'sostav') {
+            $this->applyAttributeFilter($qb, 'facet_component', 'sostav', trim((string)$componentSlug));
+        }
+
+        if ($attributeSlug !== 'dlya') {
+            $this->applyAttributeFilter($qb, 'facet_purpose', 'dlya', trim((string)$purposeSlug));
         }
 
         /** @var list<array{slug: string, name: string, products_count: int|string}> $rows */
@@ -656,7 +710,7 @@ final readonly class ProductCatalogDataProvider
                 'av.is_indexable',
             )
             ->from('attribute_values', 'av')
-            ->innerJoin('av', 'attributes', 'a', 'a.id = av.attribute_id AND a.slug = :attributeSlug AND a.deleted_at IS NULL')
+            ->innerJoin('av', 'attributes', 'a', 'a.id = av.attribute_id AND a.filter_prefix = :attributeSlug AND a.deleted_at IS NULL')
             ->where('av.slug = :slug')
             ->andWhere('av.deleted_at IS NULL')
             ->setParameter('attributeSlug', $attributeSlug)
@@ -765,7 +819,7 @@ final readonly class ProductCatalogDataProvider
 
         $qb->innerJoin('p', 'product_attribute_values', $pavAlias, "{$pavAlias}.product_id = p.id")
             ->innerJoin($pavAlias, 'attribute_values', $valueAlias, "{$valueAlias}.id = {$pavAlias}.attribute_value_id AND {$valueAlias}.deleted_at IS NULL")
-            ->innerJoin($valueAlias, 'attributes', $attributeAlias, "{$attributeAlias}.id = {$valueAlias}.attribute_id AND {$attributeAlias}.slug = :{$name}AttributeSlug AND {$attributeAlias}.deleted_at IS NULL")
+            ->innerJoin($valueAlias, 'attributes', $attributeAlias, "{$attributeAlias}.id = {$valueAlias}.attribute_id AND {$attributeAlias}.filter_prefix = :{$name}AttributeSlug AND {$attributeAlias}.deleted_at IS NULL")
             ->andWhere("{$valueAlias}.slug = :{$name}ValueSlug")
             ->setParameter($name . 'AttributeSlug', $attributeSlug)
             ->setParameter($name . 'ValueSlug', $valueSlug);
