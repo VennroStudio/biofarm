@@ -18,6 +18,7 @@ return [
          * @var array{
          *     host:string,
          *     port:int,
+         *     user:string,
          *     password:string
          * } $config
          */
@@ -26,6 +27,7 @@ return [
         return new RedisCacher(
             host: $config['host'],
             port: $config['port'],
+            user: $config['user'],
             password: $config['password'],
             timeout: 2
         );
@@ -35,6 +37,7 @@ return [
         'cacher-redis' => [
             'host'     => env('REDIS_HOST'),
             'port'     => env_int('REDIS_PORT'),
+            'user'     => env('REDIS_USER', ''),
             'password' => env('REDIS_PASSWORD'),
         ],
     ],

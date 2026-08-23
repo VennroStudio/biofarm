@@ -13,6 +13,7 @@ class RedisCacher implements Cacher
 
     private readonly string $host;
     private readonly int $port;
+    private readonly string $user;
     private readonly string $password;
     private readonly int $timeout;
 
@@ -21,11 +22,13 @@ class RedisCacher implements Cacher
     public function __construct(
         string $host,
         int $port,
+        string $user,
         string $password,
         int $timeout = 0
     ) {
         $this->host = $host;
         $this->port = $port;
+        $this->user = $user;
         $this->password = $password;
         $this->timeout = $timeout;
     }
@@ -266,7 +269,11 @@ class RedisCacher implements Cacher
         $this->redis->connect($this->host, $this->port, $this->timeout);
 
         if ($this->password !== '') {
-            $this->redis->auth($this->password);
+            $auth = $this->user !== ''
+                ? [$this->user, $this->password]
+                : $this->password;
+
+            $this->redis->auth($auth);
         }
 
         $this->redis->setOption(Redis::OPT_SERIALIZER, Redis::SERIALIZER_PHP);

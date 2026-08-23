@@ -16,6 +16,7 @@ use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 
 use function App\Components\env;
+use function App\Components\env_int;
 
 return [
     EntityManagerInterface::class => static function (ContainerInterface $container): EntityManagerInterface {
@@ -98,6 +99,7 @@ return [
             'connection'    => [
                 'driver'   => 'pdo_mysql',
                 'host'     => env('DB_HOST'),
+                'port'     => env_int('DB_PORT', 3306),
                 'user'     => env('DB_USER'),
                 'password' => env('DB_PASSWORD'),
                 'dbname'   => env('DB_NAME'),
