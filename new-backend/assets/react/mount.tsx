@@ -1,6 +1,7 @@
 import { mountSiteHeader } from './components/layout/header';
 import { mountProductCart } from './components/product/cart';
 import { mountProductCounter } from './components/product/counter-island';
+import { mountProductFavorites } from './components/product/favorites';
 import { mountProductGallery } from './components/product/gallery';
 import { mountRevealEffects } from './components/ui/reveal';
 import { mountLoginPage } from './pages/auth/LoginPage';
@@ -15,6 +16,7 @@ import { mountReferralHandler } from './site/referral';
 mountReferralHandler();
 mountSiteHeader();
 mountProductCounter();
+mountProductFavorites();
 mountProductGallery();
 mountProductCart();
 mountRevealEffects();

@@ -13,6 +13,7 @@ final readonly class PageNavigationProvider
         'home'          => '/',
         'catalog'       => '/catalog',
         'blog'          => '/blog',
+        'certificates'  => '/certificates',
         'privacy'       => '/privacy',
         'oferta'        => '/oferta',
         'cart'          => '/cart',

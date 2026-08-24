@@ -111,8 +111,7 @@ class ProductCategory
         ?string $image = null,
         bool $isIndexable = true,
         int $sortOrder = 0,
-    ): self
-    {
+    ): self {
         return new self(
             slug: $slug,
             name: $name,
@@ -143,8 +142,7 @@ class ProductCategory
         ?string $image = null,
         bool $isIndexable = true,
         int $sortOrder = 0,
-    ): void
-    {
+    ): void {
         $this->assertNotDeleted();
         $this->slug = $slug;
         $this->name = $name;

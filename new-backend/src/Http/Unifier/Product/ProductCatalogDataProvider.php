@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Unifier\Product;
 
+use App\Http\View\Blog\BlogPostView;
 use App\Http\View\Catalog\CatalogFacetView;
 use App\Http\View\Home\HomeCategoryView;
 use App\Http\View\Product\ProductCardView;
+use App\Http\View\Product\ProductCertificateView;
 use App\Http\View\Product\ProductImageView;
 use App\Http\View\Product\ProductPageProductView;
 use App\Http\View\Product\ProductVariantView;
@@ -20,6 +22,20 @@ final readonly class ProductCatalogDataProvider
     private const array FALLBACK_CATEGORY_NAMES = [
         '1' => 'Готовая оздоровительная продукция',
         '2' => 'Сырье для изготовления оздоровительной продукции',
+    ];
+    private const array MONTHS = [
+        1  => 'января',
+        2  => 'февраля',
+        3  => 'марта',
+        4  => 'апреля',
+        5  => 'мая',
+        6  => 'июня',
+        7  => 'июля',
+        8  => 'августа',
+        9  => 'сентября',
+        10 => 'октября',
+        11 => 'ноября',
+        12 => 'декабря',
     ];
 
     public function __construct(
@@ -90,8 +106,7 @@ final readonly class ProductCatalogDataProvider
         ?string $search = null,
         ?string $componentSlug = null,
         ?string $purposeSlug = null,
-    ): int
-    {
+    ): int {
         $category = $this->normalizeCategory($selectedCategory);
         $query = $this->normalizeSearch($search);
 
@@ -160,35 +175,46 @@ final readonly class ProductCatalogDataProvider
             return null;
         }
 
-        /** @var array{id: int|string, slug: string, name: string, category_id: string, price: int|string, old_price: int|string|null, image: string, images: list<string>|string|null, badge: string|null, weight: string, description: string, short_description: string|null, ingredients: string|null, features: list<string>|string|null, wb_link: string|null, ozon_link: string|null, category_name: string|null}|false $row */
+        $select = [
+            'p.id',
+            'p.slug',
+            'p.name',
+            'p.h1',
+            'p.seo_title',
+            'p.seo_description',
+            'p.category_id',
+            'p.price',
+            'p.old_price',
+            'COALESCE(pi.path, p.image) AS image',
+            'COALESCE(pi.alt, p.image_alt, p.name) AS image_alt',
+            'p.images',
+            'p.badge',
+            'p.weight',
+            'p.sku',
+            'p.gtin',
+            'p.availability',
+            'p.description',
+            'p.short_description',
+            'p.ingredients',
+            ...$this->optionalProductColumns([
+                'usage_text',
+                'contraindications',
+                'country',
+                'shelf_life',
+                'storage_conditions',
+                'bad_disclaimer',
+                'active_components_text',
+            ]),
+            'p.features',
+            'p.wb_link',
+            'p.ozon_link',
+            'c.name AS category_name',
+            'c.slug AS category_slug',
+        ];
+
+        /** @var array{id: int|string, slug: string, name: string, category_id: string, price: int|string, old_price: int|string|null, image: string, images: list<string>|string|null, badge: string|null, weight: string, description: string, short_description: string|null, ingredients: string|null, usage_text: string|null, contraindications: string|null, country: string|null, shelf_life: string|null, storage_conditions: string|null, bad_disclaimer: string|null, active_components_text: string|null, features: list<string>|string|null, wb_link: string|null, ozon_link: string|null, category_name: string|null}|false $row */
         $row = $this->connection->createQueryBuilder()
-            ->select(
-                'p.id',
-                'p.slug',
-                'p.name',
-                'p.h1',
-                'p.seo_title',
-                'p.seo_description',
-                'p.category_id',
-                'p.price',
-                'p.old_price',
-                'COALESCE(pi.path, p.image) AS image',
-                'COALESCE(pi.alt, p.image_alt, p.name) AS image_alt',
-                'p.images',
-                'p.badge',
-                'p.weight',
-                'p.sku',
-                'p.gtin',
-                'p.availability',
-                'p.description',
-                'p.short_description',
-                'p.ingredients',
-                'p.features',
-                'p.wb_link',
-                'p.ozon_link',
-                'c.name AS category_name',
-                'c.slug AS category_slug',
-            )
+            ->select(...$select)
             ->from('products', 'p')
             ->leftJoin('p', 'categories', 'c', 'c.id = CAST(p.category_id AS UNSIGNED) AND c.deleted_at IS NULL')
             ->leftJoin('p', 'product_images', 'pi', 'pi.product_id = p.id AND pi.is_main = 1')
@@ -243,6 +269,84 @@ final readonly class ProductCatalogDataProvider
             ->fetchAllAssociative();
 
         return array_map($this->mapProduct(...), $rows);
+    }
+
+    /**
+     * @return list<ProductCertificateView>
+     * @throws Exception
+     */
+    public function certificatesForProduct(int $productId): array
+    {
+        if (!$this->hasTable('certificates')) {
+            return [];
+        }
+
+        /** @var list<array{id: int|string, title: string, file_path: string, document_type: string, description: string|null}> $rows */
+        $rows = $this->connection->createQueryBuilder()
+            ->select('c.id', 'c.title', 'c.file_path', 'c.document_type', 'c.description')
+            ->from('certificates', 'c')
+            ->where('c.product_id = :productId')
+            ->andWhere('c.is_active = 1')
+            ->setParameter('productId', $productId)
+            ->orderBy('c.sort_order', 'ASC')
+            ->addOrderBy('c.id', 'DESC')
+            ->executeQuery()
+            ->fetchAllAssociative();
+
+        return array_map(
+            fn (array $row): ProductCertificateView => new ProductCertificateView(
+                id: (int)$row['id'],
+                title: (string)$row['title'],
+                filePath: (string)$row['file_path'],
+                documentType: (string)$row['document_type'],
+                description: $this->nullableText($row['description']),
+            ),
+            $rows,
+        );
+    }
+
+    /**
+     * @return list<BlogPostView>
+     * @throws Exception
+     */
+    public function relatedBlogPosts(int $productId, int $limit = 3): array
+    {
+        if (!$this->hasTable('product_blog_posts')) {
+            return [];
+        }
+
+        /** @var list<array{id: int|string, slug: string, title: string, h1: string|null, seo_title: string|null, seo_description: string|null, excerpt: string, content: string, image: string, image_alt: string|null, category_id: string, published_at: string, category_name: string|null, category_slug: string|null, author_name: string|null, read_time: int|string}> $rows */
+        $rows = $this->connection->createQueryBuilder()
+            ->select(
+                'bp.id',
+                'bp.slug',
+                'bp.title',
+                'bp.h1',
+                'bp.seo_title',
+                'bp.seo_description',
+                'bp.excerpt',
+                'bp.content',
+                'bp.image',
+                'bp.image_alt',
+                'bp.category_id',
+                'COALESCE(bp.published_at, bp.created_at) AS published_at',
+                'COALESCE(bc.name, bp.category_id) AS category_name',
+                'bc.slug AS category_slug',
+                'bp.author_name',
+                'bp.read_time',
+            )
+            ->from('product_blog_posts', 'pbp')
+            ->innerJoin('pbp', 'blog_posts', 'bp', 'bp.id = pbp.blog_post_id AND bp.deleted_at IS NULL AND bp.is_published = 1')
+            ->leftJoin('bp', 'blog_categories', 'bc', 'bc.slug = bp.category_id AND bc.deleted_at IS NULL')
+            ->where('pbp.product_id = :productId')
+            ->setParameter('productId', $productId)
+            ->orderBy('pbp.sort_order', 'ASC')
+            ->addOrderBy('bp.created_at', 'DESC')
+            ->setMaxResults($limit)
+            ->executeQuery()
+            ->fetchAllAssociative();
+
+        return array_map($this->mapBlogPost(...), $rows);
     }
 
     /**
@@ -301,127 +405,6 @@ final readonly class ProductCatalogDataProvider
         }
 
         return array_values($categories);
-    }
-
-    /**
-     * @param array{id: int|string, slug: string, name: string, category_id: string, price: int|string, old_price: int|string|null, image: string, badge: string|null, weight: string, description: string, short_description: string|null, category_name: string|null} $row
-     */
-    private function mapProduct(array $row): ProductCardView
-    {
-        $description = $this->plainText((string)$row['description']);
-        $shortDescription = $row['short_description'] !== null
-            ? $this->plainText((string)$row['short_description'])
-            : null;
-        $categoryId = (string)$row['category_id'];
-
-        return new ProductCardView(
-            id: (int)$row['id'],
-            slug: (string)$row['slug'],
-            title: (string)$row['name'],
-            price: (float)$row['price'],
-            oldPrice: $row['old_price'] !== null ? (float)$row['old_price'] : null,
-            description: $description,
-            shortDescription: $shortDescription,
-            categoryId: $categoryId,
-            category: $this->categoryName($categoryId, $row['category_name']),
-            brand: 'БИОФАРМ',
-            stock: 0,
-            image: (string)$row['image'],
-            badge: $row['badge'] !== null && trim((string)$row['badge']) !== '' ? (string)$row['badge'] : null,
-            weight: (string)$row['weight'],
-            imageAlt: $row['image_alt'] !== null && trim((string)$row['image_alt']) !== '' ? (string)$row['image_alt'] : (string)$row['name'],
-            categorySlug: $row['category_slug'] !== null && trim((string)$row['category_slug']) !== '' ? (string)$row['category_slug'] : null,
-        );
-    }
-
-    /**
-     * @param array{id: int|string, slug: string, name: string, category_id: string, price: int|string, old_price: int|string|null, image: string, images: list<string>|string|null, badge: string|null, weight: string, description: string, short_description: string|null, ingredients: string|null, features: list<string>|string|null, wb_link: string|null, ozon_link: string|null, category_name: string|null} $row
-     */
-    private function mapPageProduct(array $row): ProductPageProductView
-    {
-        $categoryId = (string)$row['category_id'];
-        $image = (string)$row['image'];
-        $descriptionHtml = trim((string)$row['description']);
-        $description = $this->plainText($descriptionHtml);
-        $shortDescription = $row['short_description'] !== null
-            ? $this->plainText((string)$row['short_description'])
-            : null;
-        $rating = $this->rating((int)$row['id']);
-        $imageItems = $this->productImageItems(
-            productId: (int)$row['id'],
-            mainImage: $image,
-            mainAlt: $row['image_alt'] !== null && trim((string)$row['image_alt']) !== '' ? (string)$row['image_alt'] : (string)$row['name'],
-            title: (string)$row['name'],
-            fallbackImages: $this->jsonList($row['images']),
-        );
-
-        return new ProductPageProductView(
-            id: (int)$row['id'],
-            slug: (string)$row['slug'],
-            title: (string)$row['name'],
-            h1: $row['h1'] !== null && trim((string)$row['h1']) !== '' ? (string)$row['h1'] : null,
-            seoTitle: $row['seo_title'] !== null && trim((string)$row['seo_title']) !== '' ? (string)$row['seo_title'] : null,
-            seoDescription: $row['seo_description'] !== null && trim((string)$row['seo_description']) !== '' ? (string)$row['seo_description'] : null,
-            price: (float)$row['price'],
-            oldPrice: $row['old_price'] !== null ? (float)$row['old_price'] : null,
-            description: $description,
-            descriptionHtml: $descriptionHtml,
-            shortDescription: $shortDescription,
-            categoryId: $categoryId,
-            category: $this->categoryName($categoryId, $row['category_name']),
-            categorySlug: $row['category_slug'] !== null && trim((string)$row['category_slug']) !== '' ? (string)$row['category_slug'] : null,
-            image: $image,
-            imageAlt: $row['image_alt'] !== null && trim((string)$row['image_alt']) !== '' ? (string)$row['image_alt'] : (string)$row['name'],
-            images: array_map(static fn (ProductImageView $image): string => $image->path, $imageItems),
-            imageItems: $imageItems,
-            badge: $row['badge'] !== null && trim((string)$row['badge']) !== '' ? (string)$row['badge'] : null,
-            weight: (string)$row['weight'],
-            sku: $row['sku'] !== null && trim((string)$row['sku']) !== '' ? (string)$row['sku'] : null,
-            gtin: $row['gtin'] !== null && trim((string)$row['gtin']) !== '' ? (string)$row['gtin'] : null,
-            availability: $row['availability'] !== null && trim((string)$row['availability']) !== '' ? (string)$row['availability'] : 'in_stock',
-            ingredients: $row['ingredients'] !== null && trim((string)$row['ingredients']) !== '' ? (string)$row['ingredients'] : null,
-            features: $this->jsonList($row['features']),
-            wbLink: $row['wb_link'] !== null && trim((string)$row['wb_link']) !== '' ? (string)$row['wb_link'] : null,
-            ozonLink: $row['ozon_link'] !== null && trim((string)$row['ozon_link']) !== '' ? (string)$row['ozon_link'] : null,
-            variants: $this->productVariants((int)$row['id']),
-            ratingRate: $rating['rate'],
-            ratingCount: $rating['count'],
-        );
-    }
-
-    /**
-     * @return array<string, int>
-     * @throws Exception
-     */
-    private function categoryCounts(): array
-    {
-        /** @var list<array{category_id: string, products_count: int|string}> $rows */
-        $rows = $this->connection->createQueryBuilder()
-            ->select('p.category_id', 'COUNT(p.id) AS products_count')
-            ->from('products', 'p')
-            ->where('p.deleted_at IS NULL')
-            ->andWhere('p.is_active = 1')
-            ->groupBy('p.category_id')
-            ->orderBy('p.category_id', 'ASC')
-            ->executeQuery()
-            ->fetchAllAssociative();
-
-        $parents = $this->categoryParentMap();
-        $counts = [];
-        foreach ($rows as $row) {
-            $id = (string)$row['category_id'];
-            $count = (int)$row['products_count'];
-            $counts[$id] = ($counts[$id] ?? 0) + $count;
-
-            $parentId = $parents[$id] ?? null;
-            while ($parentId !== null && $parentId !== '' && $parentId !== $id) {
-                $counts[$parentId] = ($counts[$parentId] ?? 0) + $count;
-                $id = $parentId;
-                $parentId = $parents[$id] ?? null;
-            }
-        }
-
-        return $counts;
     }
 
     /**
@@ -504,7 +487,7 @@ final readonly class ProductCatalogDataProvider
             return null;
         }
 
-        /** @var array{id: int|string, slug: string, parent_slug: string|null, name: string, h1: string|null, seo_title: string|null, seo_description: string|null, intro_text: string|null, bottom_text: string|null, is_indexable: int|string|bool}|false $row */
+        /** @var array{id: int|string, slug: string, parent_slug: string|null, name: string, h1: string|null, seo_title: string|null, seo_description: string|null, intro_text: string|null, bottom_text: string|null, is_indexable: bool|int|string}|false $row */
         $row = $this->connection->createQueryBuilder()
             ->select(
                 'CAST(c.id AS CHAR) AS id',
@@ -612,6 +595,162 @@ final readonly class ProductCatalogDataProvider
     }
 
     /**
+     * @param array{id: int|string, slug: string, name: string, category_id: string, price: int|string, old_price: int|string|null, image: string, badge: string|null, weight: string, description: string, short_description: string|null, category_name: string|null} $row
+     */
+    private function mapProduct(array $row): ProductCardView
+    {
+        $description = $this->plainText((string)$row['description']);
+        $shortDescription = $row['short_description'] !== null
+            ? $this->plainText((string)$row['short_description'])
+            : null;
+        $categoryId = (string)$row['category_id'];
+
+        return new ProductCardView(
+            id: (int)$row['id'],
+            slug: (string)$row['slug'],
+            title: (string)$row['name'],
+            price: (float)$row['price'],
+            oldPrice: $row['old_price'] !== null ? (float)$row['old_price'] : null,
+            description: $description,
+            shortDescription: $shortDescription,
+            categoryId: $categoryId,
+            category: $this->categoryName($categoryId, $row['category_name']),
+            brand: 'БИОФАРМ',
+            stock: 0,
+            image: (string)$row['image'],
+            badge: $row['badge'] !== null && trim((string)$row['badge']) !== '' ? (string)$row['badge'] : null,
+            weight: (string)$row['weight'],
+            imageAlt: $row['image_alt'] !== null && trim((string)$row['image_alt']) !== '' ? (string)$row['image_alt'] : (string)$row['name'],
+            categorySlug: $row['category_slug'] !== null && trim((string)$row['category_slug']) !== '' ? (string)$row['category_slug'] : null,
+        );
+    }
+
+    /**
+     * @param array{id: int|string, slug: string, name: string, category_id: string, price: int|string, old_price: int|string|null, image: string, images: list<string>|string|null, badge: string|null, weight: string, description: string, short_description: string|null, ingredients: string|null, usage_text: string|null, contraindications: string|null, country: string|null, shelf_life: string|null, storage_conditions: string|null, bad_disclaimer: string|null, active_components_text: string|null, features: list<string>|string|null, wb_link: string|null, ozon_link: string|null, category_name: string|null} $row
+     */
+    private function mapPageProduct(array $row): ProductPageProductView
+    {
+        $categoryId = (string)$row['category_id'];
+        $image = (string)$row['image'];
+        $descriptionHtml = trim((string)$row['description']);
+        $description = $this->plainText($descriptionHtml);
+        $shortDescription = $row['short_description'] !== null
+            ? $this->plainText((string)$row['short_description'])
+            : null;
+        $rating = $this->rating((int)$row['id']);
+        $imageItems = $this->productImageItems(
+            productId: (int)$row['id'],
+            mainImage: $image,
+            mainAlt: $row['image_alt'] !== null && trim((string)$row['image_alt']) !== '' ? (string)$row['image_alt'] : (string)$row['name'],
+            title: (string)$row['name'],
+            fallbackImages: $this->jsonList($row['images']),
+        );
+
+        return new ProductPageProductView(
+            id: (int)$row['id'],
+            slug: (string)$row['slug'],
+            title: (string)$row['name'],
+            h1: $row['h1'] !== null && trim((string)$row['h1']) !== '' ? (string)$row['h1'] : null,
+            seoTitle: $row['seo_title'] !== null && trim((string)$row['seo_title']) !== '' ? (string)$row['seo_title'] : null,
+            seoDescription: $row['seo_description'] !== null && trim((string)$row['seo_description']) !== '' ? (string)$row['seo_description'] : null,
+            price: (float)$row['price'],
+            oldPrice: $row['old_price'] !== null ? (float)$row['old_price'] : null,
+            description: $description,
+            descriptionHtml: $descriptionHtml,
+            shortDescription: $shortDescription,
+            categoryId: $categoryId,
+            category: $this->categoryName($categoryId, $row['category_name']),
+            categorySlug: $row['category_slug'] !== null && trim((string)$row['category_slug']) !== '' ? (string)$row['category_slug'] : null,
+            image: $image,
+            imageAlt: $row['image_alt'] !== null && trim((string)$row['image_alt']) !== '' ? (string)$row['image_alt'] : (string)$row['name'],
+            images: array_map(static fn (ProductImageView $image): string => $image->path, $imageItems),
+            imageItems: $imageItems,
+            badge: $row['badge'] !== null && trim((string)$row['badge']) !== '' ? (string)$row['badge'] : null,
+            weight: (string)$row['weight'],
+            sku: $row['sku'] !== null && trim((string)$row['sku']) !== '' ? (string)$row['sku'] : null,
+            gtin: $row['gtin'] !== null && trim((string)$row['gtin']) !== '' ? (string)$row['gtin'] : null,
+            availability: $row['availability'] !== null && trim((string)$row['availability']) !== '' ? (string)$row['availability'] : 'in_stock',
+            ingredients: $row['ingredients'] !== null && trim((string)$row['ingredients']) !== '' ? (string)$row['ingredients'] : null,
+            usageText: $row['usage_text'] !== null && trim((string)$row['usage_text']) !== '' ? (string)$row['usage_text'] : null,
+            contraindications: $row['contraindications'] !== null && trim((string)$row['contraindications']) !== '' ? (string)$row['contraindications'] : null,
+            country: $row['country'] !== null && trim((string)$row['country']) !== '' ? (string)$row['country'] : null,
+            shelfLife: $row['shelf_life'] !== null && trim((string)$row['shelf_life']) !== '' ? (string)$row['shelf_life'] : null,
+            storageConditions: $row['storage_conditions'] !== null && trim((string)$row['storage_conditions']) !== '' ? (string)$row['storage_conditions'] : null,
+            badDisclaimer: $row['bad_disclaimer'] !== null && trim((string)$row['bad_disclaimer']) !== '' ? (string)$row['bad_disclaimer'] : null,
+            activeComponentsText: $row['active_components_text'] !== null && trim((string)$row['active_components_text']) !== '' ? (string)$row['active_components_text'] : null,
+            features: $this->jsonList($row['features']),
+            wbLink: $row['wb_link'] !== null && trim((string)$row['wb_link']) !== '' ? (string)$row['wb_link'] : null,
+            ozonLink: $row['ozon_link'] !== null && trim((string)$row['ozon_link']) !== '' ? (string)$row['ozon_link'] : null,
+            variants: $this->productVariants((int)$row['id']),
+            ratingRate: $rating['rate'],
+            ratingCount: $rating['count'],
+        );
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     */
+    private function mapBlogPost(array $row): BlogPostView
+    {
+        return new BlogPostView(
+            id: (int)$row['id'],
+            slug: (string)$row['slug'],
+            title: (string)$row['title'],
+            h1: $this->nullableText($row['h1']),
+            seoTitle: $this->nullableText($row['seo_title']),
+            seoDescription: $this->nullableText($row['seo_description']),
+            excerpt: (string)$row['excerpt'],
+            content: (string)$row['content'],
+            image: (string)$row['image'],
+            imageAlt: $this->nullableText($row['image_alt']) ?? (string)$row['title'],
+            category: (string)$row['category_name'],
+            categorySlug: $this->nullableText($row['category_slug']) ?? (string)$row['category_id'],
+            date: $this->formatDate((string)$row['published_at']),
+            publishedAt: (string)$row['published_at'],
+            authorName: (string)($row['author_name'] ?: 'Автор'),
+            authorAvatar: '',
+            readTime: (int)$row['read_time'],
+        );
+    }
+
+    /**
+     * @return array<string, int>
+     * @throws Exception
+     */
+    private function categoryCounts(): array
+    {
+        /** @var list<array{category_id: string, products_count: int|string}> $rows */
+        $rows = $this->connection->createQueryBuilder()
+            ->select('p.category_id', 'COUNT(p.id) AS products_count')
+            ->from('products', 'p')
+            ->where('p.deleted_at IS NULL')
+            ->andWhere('p.is_active = 1')
+            ->groupBy('p.category_id')
+            ->orderBy('p.category_id', 'ASC')
+            ->executeQuery()
+            ->fetchAllAssociative();
+
+        $parents = $this->categoryParentMap();
+        $counts = [];
+        foreach ($rows as $row) {
+            $id = (string)$row['category_id'];
+            $count = (int)$row['products_count'];
+            $counts[$id] = ($counts[$id] ?? 0) + $count;
+
+            $visited = [$id => true];
+            $parentId = $parents[$id] ?? null;
+            while ($parentId !== null && $parentId !== '' && !isset($visited[$parentId])) {
+                $counts[$parentId] = ($counts[$parentId] ?? 0) + $count;
+                $visited[$parentId] = true;
+                $id = $parentId;
+                $parentId = $parents[$id] ?? null;
+            }
+        }
+
+        return $counts;
+    }
+
+    /**
      * @return list<CatalogFacetView>
      * @throws Exception
      */
@@ -621,8 +760,7 @@ final readonly class ProductCatalogDataProvider
         ?string $search,
         ?string $componentSlug,
         ?string $purposeSlug,
-    ): array
-    {
+    ): array {
         $category = $this->normalizeCategory($selectedCategory);
         $query = $this->normalizeSearch($search);
         $qb = $this->connection->createQueryBuilder()
@@ -696,7 +834,7 @@ final readonly class ProductCatalogDataProvider
             return null;
         }
 
-        /** @var array{slug: string, name: string, h1: string|null, seo_title: string|null, seo_description: string|null, intro_text: string|null, bottom_text: string|null, short_description: string|null, is_indexable: int|string|bool}|false $row */
+        /** @var array{slug: string, name: string, h1: string|null, seo_title: string|null, seo_description: string|null, intro_text: string|null, bottom_text: string|null, short_description: string|null, is_indexable: bool|int|string}|false $row */
         $row = $this->connection->createQueryBuilder()
             ->select(
                 'av.slug',
@@ -777,8 +915,7 @@ final readonly class ProductCatalogDataProvider
         ?string $search,
         ?string $componentSlug,
         ?string $purposeSlug,
-    ): void
-    {
+    ): void {
         if ($category !== null) {
             $categoryIds = $this->categoryFilterIds($category);
             if ($categoryIds === []) {
@@ -885,7 +1022,7 @@ final readonly class ProductCatalogDataProvider
         }
 
         $parents = $this->categoryParentMap();
-        if (!array_key_exists($categoryId, $parents)) {
+        if (!\array_key_exists($categoryId, $parents)) {
             return [];
         }
 
@@ -921,6 +1058,17 @@ final readonly class ProductCatalogDataProvider
         $value = trim((string)$value);
 
         return $value === '' ? null : $value;
+    }
+
+    private function formatDate(string $date): string
+    {
+        $time = strtotime($date);
+
+        if ($time === false) {
+            return $date;
+        }
+
+        return (int)date('j', $time) . ' ' . self::MONTHS[(int)date('n', $time)] . ' ' . date('Y', $time) . ' г.';
     }
 
     /**
@@ -1114,5 +1262,30 @@ final readonly class ProductCatalogDataProvider
             'rate'  => round((float)$row['rating_rate'], 1),
             'count' => (int)$row['rating_count'],
         ];
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function hasTable(string $name): bool
+    {
+        return $this->connection->createSchemaManager()->tablesExist([$name]);
+    }
+
+    /**
+     * @param list<string> $columns
+     * @return list<string>
+     * @throws Exception
+     */
+    private function optionalProductColumns(array $columns): array
+    {
+        $availableColumns = array_keys($this->connection->createSchemaManager()->listTableColumns('products'));
+
+        return array_map(
+            static fn (string $column): string => \in_array($column, $availableColumns, true)
+                ? 'p.' . $column
+                : 'NULL AS ' . $column,
+            $columns,
+        );
     }
 }

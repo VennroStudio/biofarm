@@ -46,15 +46,17 @@ function CartEmpty() {
 }
 
 type CartPageProps = {
+  cdekDeliveryPrice: number;
+  freeDeliveryThreshold: number;
   orderBonusEnabled: boolean;
   orderBonusPercent: number;
 };
 
-function CartPage({ orderBonusEnabled, orderBonusPercent }: CartPageProps) {
+function CartPage({ cdekDeliveryPrice, freeDeliveryThreshold, orderBonusEnabled, orderBonusPercent }: CartPageProps) {
   const cart = useCartState();
   const user = getStoredUser();
   const total = useMemo(() => cartTotal(cart), [cart]);
-  const deliveryCost = total >= 3000 ? 0 : 350;
+  const deliveryCost = total >= freeDeliveryThreshold ? 0 : cdekDeliveryPrice;
   const finalTotal = total + deliveryCost;
   const orderBonus = orderBonusEnabled ? Math.floor(total * (orderBonusPercent / 100)) : 0;
 
@@ -158,7 +160,7 @@ function CartPage({ orderBonusEnabled, orderBonusPercent }: CartPageProps) {
                 </div>
                 {deliveryCost > 0 && (
                   <p className="rounded bg-muted/50 p-2 text-sm text-muted-foreground">
-                    До бесплатной доставки: {formatMoney(3000 - total)}
+                    До бесплатной доставки: {formatMoney(Math.max(0, freeDeliveryThreshold - total))}
                   </p>
                 )}
                 {user && user.bonusBalance > 0 && (
@@ -203,6 +205,8 @@ export function mountCartPage() {
     root.dataset.mounted = 'true';
     createRoot(root).render((
       <CartPage
+        cdekDeliveryPrice={numberDataset(root.dataset.cdekDeliveryPrice, 350)}
+        freeDeliveryThreshold={numberDataset(root.dataset.freeDeliveryThreshold, 3000)}
         orderBonusEnabled={root.dataset.orderBonusEnabled === 'true'}
         orderBonusPercent={numberDataset(root.dataset.orderBonusPercent, 5)}
       />

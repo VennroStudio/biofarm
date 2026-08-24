@@ -1,0 +1,29 @@
+{% extends 'layouts/main.html.twig' %}
+
+{% block title %}{{ page.meta.title }}{% endblock %}
+
+{% block description %}{{ page.meta.description }}{% endblock %}
+
+{% block content %}
+    <section class="bg-background py-20 lg:py-28">
+        <div class="container mx-auto px-4">
+            <div class="mx-auto mb-14 max-w-3xl text-center">
+                <p class="mb-3 font-medium text-secondary">Документы</p>
+                <h1 class="mb-6 font-display text-4xl font-bold text-foreground md:text-5xl">Сертификаты качества</h1>
+                <p class="text-lg text-muted-foreground">
+                    Документы на продукцию БИОФАРМ: сертификаты, декларации и подтверждения качества.
+                </p>
+            </div>
+
+            {% include 'sections/certificates/list.html.twig' with {
+                certificates: page.certificates,
+            } only %}
+        </div>
+    </section>
+
+    {% include 'sections/faq/list.html.twig' with {
+        items: page.faqItems,
+        eyebrow: 'FAQ',
+        title: 'Вопросы о сертификатах',
+    } only %}
+{% endblock %}

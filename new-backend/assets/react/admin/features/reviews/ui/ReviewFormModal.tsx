@@ -1,7 +1,7 @@
 import { Save, Star, X } from 'lucide-react';
 import type { Dispatch, FormEvent, SetStateAction } from 'react';
 import { ImageUploader } from '../../media/ui/ImageUploader';
-import { Button, Field, inputClass, Modal, textareaClass } from '../../../shared/ui';
+import { Button, ErrorAlert, Field, inputClass, Modal, textareaClass } from '../../../shared/ui';
 import type { Product } from '../../../types';
 import type { ReviewForm } from '../model/reviewForm';
 
@@ -9,6 +9,7 @@ type Props = {
   form: ReviewForm;
   open: boolean;
   products: Product[];
+  error?: string | null;
   saving: boolean;
   setForm: Dispatch<SetStateAction<ReviewForm>>;
   onAddImage: (url: string) => void;
@@ -20,6 +21,7 @@ export function ReviewFormModal({
   form,
   open,
   products,
+  error,
   saving,
   setForm,
   onAddImage,
@@ -43,6 +45,7 @@ export function ReviewFormModal({
       )}
     >
       <form id="admin-review-form" className="grid gap-4" onSubmit={onSubmit}>
+        <ErrorAlert>{error}</ErrorAlert>
         <Field label="Товар *">
           <select className={inputClass} value={form.product_id} onChange={(event) => setForm({ ...form, product_id: event.target.value })}>
             <option value="" disabled>Выберите товар</option>
@@ -85,7 +88,7 @@ export function ReviewFormModal({
                   <button
                     type="button"
                     className="absolute -right-2 -top-2 rounded-full bg-[#b94b4b] p-1 text-white"
-                    onClick={() => setForm({ ...form, images: form.images.filter((_, itemIndex) => itemIndex !== index) })}
+                    onClick={() => setForm((current) => ({ ...current, images: current.images.filter((_, itemIndex) => itemIndex !== index) }))}
                   >
                     <X className="h-3 w-3" />
                   </button>

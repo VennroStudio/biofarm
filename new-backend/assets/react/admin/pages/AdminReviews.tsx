@@ -10,7 +10,8 @@ import {
 import { ReviewFormModal } from '../features/reviews/ui/ReviewFormModal';
 import { ReviewsTable } from '../features/reviews/ui/ReviewsTable';
 import { useLoadOnMount } from '../hooks/useLoadOnMount';
-import { Button, Card, PageHeader } from '../shared/ui';
+import { messageFromError } from '../shared/lib';
+import { Button, Card, ErrorAlert, PageHeader } from '../shared/ui';
 import type { Product, Review } from '../types';
 
 export function AdminReviews() {
@@ -18,6 +19,7 @@ export function AdminReviews() {
   const [products, setProducts] = useState<Product[]>([]);
   const [form, setForm] = useState<ReviewForm>(emptyReviewForm);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const productById = useMemo(() => new Map(products.map((product) => [product.id, product.name])), [products]);
@@ -31,11 +33,13 @@ export function AdminReviews() {
   useLoadOnMount(load);
 
   function openCreate() {
+    setError(null);
     setForm({ ...emptyReviewForm, product_id: String(products[0]?.id ?? '') });
     setDialogOpen(true);
   }
 
   function openEdit(review: Review) {
+    setError(null);
     setForm(reviewFormFromReview(review));
     setDialogOpen(true);
   }
@@ -49,6 +53,7 @@ export function AdminReviews() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setError(null);
     setSaving(true);
     try {
       if (form.id) {
@@ -58,22 +63,34 @@ export function AdminReviews() {
       }
       setDialogOpen(false);
       await load();
+    } catch (submitError) {
+      setError(messageFromError(submitError, 'Не удалось сохранить отзыв'));
     } finally {
       setSaving(false);
     }
   }
 
   async function approve(review: Review) {
-    await reviewsApi.approve(review.id);
-    await load();
+    setError(null);
+    try {
+      await reviewsApi.approve(review.id);
+      await load();
+    } catch (approveError) {
+      setError(messageFromError(approveError, 'Не удалось одобрить отзыв'));
+    }
   }
 
   async function remove(review: Review) {
     if (!confirm(`Удалить отзыв "${review.user_name}"?`)) {
       return;
     }
-    await reviewsApi.delete(review.id);
-    await load();
+    setError(null);
+    try {
+      await reviewsApi.delete(review.id);
+      await load();
+    } catch (removeError) {
+      setError(messageFromError(removeError, 'Не удалось удалить отзыв'));
+    }
   }
 
   return (
@@ -83,6 +100,8 @@ export function AdminReviews() {
         subtitle={`Всего отзывов: ${reviews.length}`}
         actions={<Button onClick={openCreate}><Plus className="h-4 w-4" />Добавить отзыв</Button>}
       />
+
+      <ErrorAlert className="mb-5">{dialogOpen ? null : error}</ErrorAlert>
 
       <Card className="p-0">
         <ReviewsTable
@@ -98,10 +117,14 @@ export function AdminReviews() {
         form={form}
         open={dialogOpen}
         products={products}
+        error={dialogOpen ? error : null}
         saving={saving}
         setForm={setForm}
         onAddImage={addImage}
-        onClose={() => setDialogOpen(false)}
+        onClose={() => {
+          setDialogOpen(false);
+          setError(null);
+        }}
         onSubmit={(event) => void submit(event)}
       />
     </>

@@ -43,6 +43,11 @@ final readonly class UpdateOrderCommand
         #[Assert\NotBlank]
         public int $currentUserRole,
         public ?array $items = null,
+        public ?int $subtotal = null,
+        public ?string $deliveryMethod = null,
+        public int $deliveryCost = 0,
+        public int $discountAmount = 0,
+        public ?string $promoCode = null,
         public int $bonusUsed = 0,
         public int $bonusEarned = 0,
         public ?string $trackingNumber = null,

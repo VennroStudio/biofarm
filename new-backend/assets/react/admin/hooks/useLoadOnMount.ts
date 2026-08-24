@@ -8,7 +8,9 @@ export function useLoadOnMount(load: () => Promise<void> | void) {
 
     queueMicrotask(() => {
       if (!cancelled) {
-        void initialLoad();
+        Promise.resolve(initialLoad()).catch((error: unknown) => {
+          console.error('Failed to load admin data', error);
+        });
       }
     });
 

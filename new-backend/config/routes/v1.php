@@ -16,6 +16,9 @@ use App\Http\Action\v1\Blog\DeleteBlogPostAction;
 use App\Http\Action\v1\Blog\GetBlogPostByIdAction;
 use App\Http\Action\v1\Blog\GetBlogPostsAction;
 use App\Http\Action\v1\Blog\UpdateBlogPostAction;
+use App\Http\Action\v1\Favorite\AddFavoriteAction;
+use App\Http\Action\v1\Favorite\DeleteFavoriteAction;
+use App\Http\Action\v1\Favorite\GetFavoritesAction;
 use App\Http\Action\v1\OpenApiAction;
 use App\Http\Action\v1\Order\CreateOrderAction;
 use App\Http\Action\v1\Order\DeleteOrderAction;
@@ -90,6 +93,12 @@ return static function (App $app): void {
             $group->get('/{id}', GetProductByIdAction::class);
             $group->patch('/update/{id}', UpdateProductAction::class)->add(Authenticate::class);
             $group->delete('/delete/{id}', DeleteProductAction::class)->add(Authenticate::class);
+        }));
+
+        $group->group('/favorites', new Group(static function (RouteCollectorProxy $group): void {
+            $group->get('', GetFavoritesAction::class)->add(Authenticate::class);
+            $group->post('/{productId}', AddFavoriteAction::class)->add(Authenticate::class);
+            $group->delete('/{productId}', DeleteFavoriteAction::class)->add(Authenticate::class);
         }));
 
         $group->group('/product-categories', new Group(static function (RouteCollectorProxy $group): void {

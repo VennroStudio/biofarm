@@ -13,12 +13,12 @@ final readonly class ProductImageSyncer
     public function __construct(
         private Connection $connection,
     ) {
-        $this->publicDir = dirname(__DIR__, 4) . '/public';
+        $this->publicDir = \dirname(__DIR__, 4) . '/public';
     }
 
     /**
      * @param list<string>|null $images
-     * @param list<array{path?: string, alt?: string|null, title?: string|null, sortOrder?: int|null, sort_order?: int|null, isMain?: bool|null, is_main?: bool|null}>|null $productImages
+     * @param list<mixed>|null $productImages
      */
     public function sync(
         int $productId,
@@ -27,8 +27,7 @@ final readonly class ProductImageSyncer
         string $title,
         ?array $images,
         ?array $productImages = null,
-    ): void
-    {
+    ): void {
         $items = $this->items($mainImage, $alt, $title, $images, $productImages);
 
         $this->connection->delete('product_images', ['product_id' => $productId]);
@@ -38,15 +37,15 @@ final readonly class ProductImageSyncer
 
             $this->connection->insert('product_images', [
                 'product_id' => $productId,
-                'path' => $item['path'],
-                'alt' => $item['alt'] ?: ($item['is_main'] ? ($alt ?: $title) : $title),
-                'title' => $item['title'] ?: $title,
+                'path'       => $item['path'],
+                'alt'        => $item['alt'] ?: ($item['is_main'] ? ($alt ?: $title) : $title),
+                'title'      => $item['title'] ?: $title,
                 'sort_order' => $index,
-                'is_main' => $item['is_main'] ? 1 : 0,
-                'width' => $metadata['width'],
-                'height' => $metadata['height'],
-                'mime_type' => $metadata['mime_type'],
-                'size' => $metadata['size'],
+                'is_main'    => $item['is_main'] ? 1 : 0,
+                'width'      => $metadata['width'],
+                'height'     => $metadata['height'],
+                'mime_type'  => $metadata['mime_type'],
+                'size'       => $metadata['size'],
                 'created_at' => gmdate('Y-m-d H:i:s'),
             ]);
         }
@@ -54,8 +53,8 @@ final readonly class ProductImageSyncer
 
     /**
      * @param list<string>|null $images
-     * @param list<array{path?: string, alt?: string|null, title?: string|null, sortOrder?: int|null, sort_order?: int|null, isMain?: bool|null, is_main?: bool|null}>|null $productImages
-     * @return list<array{path: string, alt: string|null, title: string|null, sort_order: int, is_main: bool}>
+     * @param list<mixed>|null $productImages
+     * @return array<int, array{path: string, alt: string|null, title: string|null, sort_order: int, is_main: bool}>
      */
     private function items(string $mainImage, ?string $alt, string $title, ?array $images, ?array $productImages): array
     {
@@ -73,11 +72,11 @@ final readonly class ProductImageSyncer
                 }
 
                 $items[$path] = [
-                    'path' => $path,
-                    'alt' => $this->nullableText($image['alt'] ?? null),
-                    'title' => $this->nullableText($image['title'] ?? null),
+                    'path'       => $path,
+                    'alt'        => $this->nullableText($image['alt'] ?? null),
+                    'title'      => $this->nullableText($image['title'] ?? null),
                     'sort_order' => (int)($image['sort_order'] ?? $image['sortOrder'] ?? $index),
-                    'is_main' => (bool)($image['is_main'] ?? $image['isMain'] ?? false),
+                    'is_main'    => (bool)($image['is_main'] ?? $image['isMain'] ?? false),
                 ];
             }
         }
@@ -85,11 +84,11 @@ final readonly class ProductImageSyncer
         if ($items === []) {
             foreach ($this->paths($mainImage, $images) as $index => $path) {
                 $items[$path] = [
-                    'path' => $path,
-                    'alt' => $index === 0 ? ($alt ?: $title) : $title,
-                    'title' => $title,
+                    'path'       => $path,
+                    'alt'        => $index === 0 ? ($alt ?: $title) : $title,
+                    'title'      => $title,
                     'sort_order' => $index,
-                    'is_main' => $index === 0,
+                    'is_main'    => $index === 0,
                 ];
             }
         }
@@ -99,22 +98,16 @@ final readonly class ProductImageSyncer
         }
 
         uasort($items, static fn (array $left, array $right): int => $left['sort_order'] <=> $right['sort_order']);
-        $items = array_values($items);
+        $orderedItems = array_values($items);
 
-        $mainIndex = null;
-        foreach ($items as $index => $item) {
-            if ($item['is_main']) {
-                $mainIndex = $index;
-                break;
-            }
-        }
+        $mainIndex = array_find_key($orderedItems, static fn ($item) => $item['is_main']);
 
         $mainIndex ??= 0;
-        foreach ($items as $index => $item) {
-            $items[$index]['is_main'] = $index === $mainIndex;
+        foreach (array_keys($orderedItems) as $index) {
+            $orderedItems[$index]['is_main'] = $index === $mainIndex;
         }
 
-        return $items;
+        return $orderedItems;
     }
 
     /**
@@ -126,7 +119,7 @@ final readonly class ProductImageSyncer
         $paths = [];
 
         foreach ([$mainImage, ...($images ?? [])] as $path) {
-            $path = trim((string)$path);
+            $path = trim($path);
 
             if ($path === '' || isset($paths[$path])) {
                 continue;
@@ -146,20 +139,20 @@ final readonly class ProductImageSyncer
         $filePath = $this->localFilePath($path);
         if ($filePath === null || !is_file($filePath)) {
             return [
-                'width' => null,
-                'height' => null,
+                'width'     => null,
+                'height'    => null,
                 'mime_type' => null,
-                'size' => null,
+                'size'      => null,
             ];
         }
 
         $size = @getimagesize($filePath);
 
         return [
-            'width' => \is_array($size) ? (int)$size[0] : null,
-            'height' => \is_array($size) ? (int)$size[1] : null,
-            'mime_type' => \is_array($size) && isset($size['mime']) ? (string)$size['mime'] : null,
-            'size' => (int)filesize($filePath),
+            'width'     => \is_array($size) ? $size[0] : null,
+            'height'    => \is_array($size) ? $size[1] : null,
+            'mime_type' => \is_array($size) && isset($size['mime']) ? $size['mime'] : null,
+            'size'      => $this->fileSize($filePath),
         ];
     }
 
@@ -182,5 +175,12 @@ final readonly class ProductImageSyncer
         $value = trim((string)$value);
 
         return $value === '' ? null : $value;
+    }
+
+    private function fileSize(string $filePath): ?int
+    {
+        $size = filesize($filePath);
+
+        return $size === false ? null : $size;
     }
 }

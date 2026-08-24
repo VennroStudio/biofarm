@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Action\v1\User;
 
+use App\Components\Exception\DomainExceptionModule;
 use App\Components\Http\Response\JsonDataSuccessResponse;
-use App\Components\Http\Response\JsonErrorResponse;
 use App\Components\Serializer\Denormalizer;
 use App\Components\Setting\SiteSettings;
 use App\Components\Validator\Validator;
@@ -60,7 +60,7 @@ final readonly class CreateUserAction implements RequestHandlerInterface
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
         if (!$this->settings->bool('registration_enabled')) {
-            return new JsonErrorResponse(1, 'registration_disabled', status: 403);
+            throw new DomainExceptionModule('user', 'error.registration_disabled', 36, status: 403);
         }
 
         $command = $this->denormalizer->denormalize(

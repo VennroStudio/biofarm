@@ -30,6 +30,7 @@ final readonly class BlogPermissionService
             BlogPermission::UPDATE,
             BlogPermission::DELETE => [
                 UserRole::ADMIN,
+                UserRole::DEVELOPER,
                 UserRole::EDITOR,
             ],
         };

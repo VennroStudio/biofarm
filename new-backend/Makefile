@@ -9,7 +9,7 @@ lint: php-linter frontend-check
 fix: php-linter-fix
 
 docker-up:
-	docker-compose up -d nginx php-fpm php-cli
+	docker-compose up -d nginx php-fpm
 docker-down:
 	docker-compose down --remove-orphans
 docker-clear:

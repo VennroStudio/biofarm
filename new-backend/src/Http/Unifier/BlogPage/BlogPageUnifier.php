@@ -19,10 +19,10 @@ final readonly class BlogPageUnifier
     private const int POSTS_PER_PAGE = 9;
     private const array CATEGORIES = [
         'Все'      => null,
-        'Советы'  => 'tips',
+        'Советы'   => 'tips',
         'Здоровье' => 'health',
-        'О нас'   => 'about',
-        'Рецепты' => 'recipes',
+        'О нас'    => 'about',
+        'Рецепты'  => 'recipes',
     ];
     private const array MONTHS = [
         1  => 'января',
@@ -69,7 +69,7 @@ final readonly class BlogPageUnifier
                 robots: $isFiltered ? 'noindex, follow' : 'index, follow',
                 ogTitle: 'Блог — БИОФАРМ',
                 ogDescription: 'Статьи и новости БИОФАРМ.',
-                ogImage: $this->urls->absolute('/assets/images/og/default.jpg'),
+                ogImage: null,
                 ogImageAlt: 'Блог БИОФАРМ',
                 jsonLd: [
                     $this->jsonLd->breadcrumbs([

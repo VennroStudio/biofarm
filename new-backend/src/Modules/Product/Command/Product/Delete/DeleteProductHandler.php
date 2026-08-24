@@ -11,6 +11,8 @@ use App\Modules\Product\Permission\ProductPermission;
 use App\Modules\Product\Service\ProductPermissionService;
 use App\Modules\User\Entity\User\Fields\Enums\UserRole;
 use DateMalformedStringException;
+use Doctrine\DBAL\Connection;
+use Throwable;
 
 final readonly class DeleteProductHandler
 {
@@ -19,6 +21,7 @@ final readonly class DeleteProductHandler
         private ProductPermissionService $permissionService,
         private Cacher $cacher,
         private FlusherInterface $flusher,
+        private Connection $connection,
     ) {}
 
     /**
@@ -32,9 +35,27 @@ final readonly class DeleteProductHandler
         );
 
         $product = $this->productRepository->getById($command->productId);
-        $product->markDeleted();
+        $now = gmdate('Y-m-d H:i:s');
+
+        $this->connection->beginTransaction();
+        try {
+            $product->markDeleted();
+            $this->connection->delete('product_attribute_values', ['product_id' => $command->productId]);
+            $this->connection->delete('product_group_items', ['product_id' => $command->productId]);
+            $this->connection->delete('product_blog_posts', ['product_id' => $command->productId]);
+            $this->connection->delete('product_images', ['product_id' => $command->productId]);
+            $this->connection->update(
+                'certificates',
+                ['product_id' => null, 'updated_at' => $now],
+                ['product_id' => $command->productId],
+            );
+            $this->flusher->flush();
+            $this->connection->commit();
+        } catch (Throwable $e) {
+            $this->connection->rollBack();
+            throw $e;
+        }
 
         $this->cacher->deleteTag('products');
-        $this->flusher->flush();
     }
 }

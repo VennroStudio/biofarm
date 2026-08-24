@@ -33,6 +33,7 @@ final readonly class UserPermissionService
     {
         $adminRoles = [
             UserRole::ADMIN,
+            UserRole::DEVELOPER,
         ];
 
         return match ($action) {

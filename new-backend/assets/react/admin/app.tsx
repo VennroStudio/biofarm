@@ -5,11 +5,14 @@ import { AdminLayout } from './layout/AdminLayout';
 import { AdminAttributes } from './pages/AdminAttributes';
 import { AdminBlog } from './pages/AdminBlog';
 import { AdminCategories } from './pages/AdminCategories';
+import { AdminCertificates } from './pages/AdminCertificates';
 import { AdminDashboard } from './pages/AdminDashboard';
+import { AdminFaq } from './pages/AdminFaq';
 import { AdminLogin } from './pages/AdminLogin';
 import { AdminOrders } from './pages/AdminOrders';
 import { AdminPages } from './pages/AdminPages';
 import { AdminProducts } from './pages/AdminProducts';
+import { AdminPromoCodes } from './pages/AdminPromoCodes';
 import { AdminReviews } from './pages/AdminReviews';
 import { AdminSettings } from './pages/AdminSettings';
 import { AdminUsers } from './pages/AdminUsers';
@@ -45,6 +48,9 @@ export function AdminApp() {
           <Route path="components" element={<Navigate to="/admin/attributes" replace />} />
           <Route path="purposes" element={<Navigate to="/admin/attributes" replace />} />
           <Route path="orders" element={<AdminOrders />} />
+          <Route path="promo-codes" element={<AdminPromoCodes />} />
+          <Route path="certificates" element={<AdminCertificates />} />
+          <Route path="faq" element={<AdminFaq />} />
           <Route path="blog" element={<AdminBlog />} />
           <Route path="reviews" element={<AdminReviews />} />
           <Route path="users" element={<AdminUsers />} />

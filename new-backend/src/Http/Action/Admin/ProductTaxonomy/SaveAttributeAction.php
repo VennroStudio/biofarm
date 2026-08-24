@@ -35,7 +35,7 @@ final readonly class SaveAttributeAction implements RequestHandlerInterface
         $name = trim((string)($payload['name'] ?? ''));
 
         if ($name === '') {
-            throw new DomainExceptionModule('product', 'error.attribute_name_required', 34);
+            throw new DomainExceptionModule('product', 'error.attribute_name_required', 34, status: 422);
         }
 
         $slug = $this->slugGenerator->generate(trim((string)($payload['slug'] ?? '')) ?: $name);
@@ -56,6 +56,7 @@ final readonly class SaveAttributeAction implements RequestHandlerInterface
 
         $isCreate = $id === null;
         if ($id !== null) {
+            $this->assertAttributeExists($id);
             $this->connection->update('attributes', $data, ['id' => $id]);
         } else {
             $data['created_at'] = gmdate('Y-m-d H:i:s');
@@ -83,12 +84,12 @@ final readonly class SaveAttributeAction implements RequestHandlerInterface
     private function assertSlugFree(string $slug, ?int $id): void
     {
         $existingId = $this->connection->fetchOne(
-            'SELECT id FROM attributes WHERE slug = :slug AND deleted_at IS NULL LIMIT 1',
+            'SELECT id FROM attributes WHERE slug = :slug LIMIT 1',
             ['slug' => $slug],
         );
 
         if ($existingId !== false && (int)$existingId !== $id) {
-            throw new DomainExceptionModule('product', 'error.attribute_slug_already_exists', 35);
+            throw new DomainExceptionModule('product', 'error.attribute_slug_already_exists', 35, status: 422);
         }
     }
 
@@ -102,12 +103,27 @@ final readonly class SaveAttributeAction implements RequestHandlerInterface
         }
 
         $existingId = $this->connection->fetchOne(
-            'SELECT id FROM attributes WHERE filter_prefix = :filterPrefix AND deleted_at IS NULL LIMIT 1',
+            'SELECT id FROM attributes WHERE filter_prefix = :filterPrefix LIMIT 1',
             ['filterPrefix' => $filterPrefix],
         );
 
         if ($existingId !== false && (int)$existingId !== $id) {
-            throw new DomainExceptionModule('product', 'error.attribute_filter_prefix_already_exists', 36);
+            throw new DomainExceptionModule('product', 'error.attribute_filter_prefix_already_exists', 36, status: 422);
+        }
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function assertAttributeExists(int $id): void
+    {
+        $exists = $this->connection->fetchOne(
+            'SELECT id FROM attributes WHERE id = :id AND deleted_at IS NULL LIMIT 1',
+            ['id' => $id],
+        );
+
+        if ($exists === false) {
+            throw new DomainExceptionModule('product', 'error.attribute_not_found', 40, status: 404);
         }
     }
 

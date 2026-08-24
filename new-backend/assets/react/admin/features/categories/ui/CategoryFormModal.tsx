@@ -1,6 +1,6 @@
 import type { Dispatch, FormEvent, SetStateAction } from 'react';
 import { ImageUploader } from '../../media/ui/ImageUploader';
-import { Button, Field, inputClass, Modal, textareaClass } from '../../../shared/ui';
+import { Button, ErrorAlert, Field, inputClass, Modal, textareaClass } from '../../../shared/ui';
 import type { Category } from '../../../types';
 import type { CategoryForm } from '../model/categoryForm';
 
@@ -8,13 +8,19 @@ type Props = {
   categories: Category[];
   form: CategoryForm;
   open: boolean;
+  error?: string | null;
   saving: boolean;
   setForm: Dispatch<SetStateAction<CategoryForm>>;
   onClose: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 };
 
-export function CategoryFormModal({ categories, form, open, saving, setForm, onClose, onSubmit }: Props) {
+export function CategoryFormModal({ categories, form, open, error, saving, setForm, onClose, onSubmit }: Props) {
+  const editingCategoryId = form.id;
+  const availableParents = typeof editingCategoryId === 'number'
+    ? categories.filter((category) => category.id !== editingCategoryId && !isDescendant(category.id, editingCategoryId, categories))
+    : categories;
+
   return (
     <Modal
       open={open}
@@ -31,6 +37,7 @@ export function CategoryFormModal({ categories, form, open, saving, setForm, onC
       )}
     >
       <form id="admin-category-form" className="grid gap-4" onSubmit={onSubmit}>
+        <ErrorAlert>{error}</ErrorAlert>
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="Название *">
             <input className={inputClass} value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} />
@@ -43,9 +50,7 @@ export function CategoryFormModal({ categories, form, open, saving, setForm, onC
           <Field label="Родительская категория">
             <select className={inputClass} value={form.parent_id} onChange={(event) => setForm({ ...form, parent_id: event.target.value })}>
               <option value="">Без родителя</option>
-              {categories
-                .filter((category) => category.id !== form.id)
-                .map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+              {availableParents.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
             </select>
           </Field>
           <Field label="Порядок">
@@ -65,7 +70,7 @@ export function CategoryFormModal({ categories, form, open, saving, setForm, onC
         </div>
         <div className="space-y-2">
           <p className="text-sm font-semibold text-[#26382d]">Изображение</p>
-          <ImageUploader scope="categories" onUploaded={(url) => setForm({ ...form, image: url })} />
+          <ImageUploader scope="categories" onUploaded={(url) => setForm((current) => ({ ...current, image: url }))} />
           {form.image ? (
             <div className="grid gap-3 rounded-lg border border-[#e4e5da] bg-white p-3 md:grid-cols-[88px_1fr]">
               <img src={form.image} alt={form.name || 'Изображение категории'} className="h-20 w-20 rounded object-cover" />
@@ -74,7 +79,7 @@ export function CategoryFormModal({ categories, form, open, saving, setForm, onC
                   {form.image}
                 </p>
                 <div className="flex justify-end">
-                  <Button type="button" variant="danger" onClick={() => setForm({ ...form, image: '' })}>
+                  <Button type="button" variant="danger" onClick={() => setForm((current) => ({ ...current, image: '' }))}>
                     Удалить изображение
                   </Button>
                 </div>
@@ -95,4 +100,25 @@ export function CategoryFormModal({ categories, form, open, saving, setForm, onC
       </form>
     </Modal>
   );
+}
+
+function isDescendant(categoryId: number, parentId: number, categories: Category[]) {
+  const categoryById = new Map(categories.map((category) => [category.id, category]));
+  let current = categoryById.get(categoryId);
+  const visited = new Set<number>();
+
+  while (current?.parent_id) {
+    if (current.parent_id === parentId) {
+      return true;
+    }
+
+    if (visited.has(current.parent_id)) {
+      return false;
+    }
+
+    visited.add(current.parent_id);
+    current = categoryById.get(current.parent_id);
+  }
+
+  return false;
 }

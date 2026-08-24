@@ -5,7 +5,8 @@ import { emptyPageForm, pageFormFromPage, pagePayloadFromForm, type PageForm } f
 import { PageFormModal } from '../features/pages/ui/PageFormModal';
 import { pagePath, PagesTable } from '../features/pages/ui/PagesTable';
 import { useLoadOnMount } from '../hooks/useLoadOnMount';
-import { Badge, Button, Card, PageHeader, SearchField } from '../shared/ui';
+import { messageFromError } from '../shared/lib';
+import { Badge, Button, Card, ErrorAlert, PageHeader, SearchField } from '../shared/ui';
 import type { CmsPage, CmsPageTemplate } from '../types';
 
 export function AdminPages() {
@@ -14,6 +15,7 @@ export function AdminPages() {
   const [search, setSearch] = useState('');
   const [form, setForm] = useState<PageForm>(emptyPageForm);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const filteredPages = useMemo(() => {
@@ -39,17 +41,20 @@ export function AdminPages() {
   useLoadOnMount(load);
 
   function openCreate() {
+    setError(null);
     setForm(emptyPageForm);
     setDialogOpen(true);
   }
 
   function openEdit(page: CmsPage) {
+    setError(null);
     setForm(pageFormFromPage(page));
     setDialogOpen(true);
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setError(null);
     setSaving(true);
     try {
       if (form.id) {
@@ -60,6 +65,8 @@ export function AdminPages() {
 
       setDialogOpen(false);
       await load();
+    } catch (submitError) {
+      setError(messageFromError(submitError, 'Не удалось сохранить страницу'));
     } finally {
       setSaving(false);
     }
@@ -67,7 +74,7 @@ export function AdminPages() {
 
   async function remove(page: CmsPage) {
     if (page.page_type === 'system') {
-      alert('Системные страницы нельзя удалить.');
+      setError('Системные страницы нельзя удалить.');
       return;
     }
 
@@ -75,8 +82,13 @@ export function AdminPages() {
       return;
     }
 
-    await pagesApi.delete(page.id);
-    await load();
+    setError(null);
+    try {
+      await pagesApi.delete(page.id);
+      await load();
+    } catch (removeError) {
+      setError(messageFromError(removeError, 'Не удалось удалить страницу'));
+    }
   }
 
   return (
@@ -86,6 +98,8 @@ export function AdminPages() {
         subtitle="SEO системных страниц и простые CMS-страницы"
         actions={<Button onClick={openCreate}><Plus className="h-4 w-4" />Добавить страницу</Button>}
       />
+
+      <ErrorAlert className="mb-5">{dialogOpen ? null : error}</ErrorAlert>
 
       <Card className="p-6">
         <div className="mb-8 flex flex-wrap items-center gap-4">
@@ -99,10 +113,14 @@ export function AdminPages() {
       <PageFormModal
         form={form}
         open={dialogOpen}
+        error={dialogOpen ? error : null}
         saving={saving}
         templates={templates}
         setForm={setForm}
-        onClose={() => setDialogOpen(false)}
+        onClose={() => {
+          setDialogOpen(false);
+          setError(null);
+        }}
         onSubmit={(event) => void submit(event)}
       />
     </>

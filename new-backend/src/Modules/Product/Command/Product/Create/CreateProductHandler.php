@@ -12,11 +12,14 @@ use App\Modules\Product\Entity\Product\Product;
 use App\Modules\Product\Entity\Product\ProductRepository;
 use App\Modules\Product\Entity\ProductCategory\ProductCategoryRepository;
 use App\Modules\Product\Permission\ProductPermission;
+use App\Modules\Product\Service\ProductContentSyncer;
 use App\Modules\Product\Service\ProductFacetSyncer;
 use App\Modules\Product\Service\ProductImageSyncer;
 use App\Modules\Product\Service\ProductPermissionService;
 use App\Modules\User\Entity\User\Fields\Enums\UserRole;
 use DateMalformedStringException;
+use Doctrine\DBAL\Connection;
+use Throwable;
 
 final readonly class CreateProductHandler
 {
@@ -26,7 +29,9 @@ final readonly class CreateProductHandler
         private ProductPermissionService $permissionService,
         private ProductImageSyncer $productImageSyncer,
         private ProductFacetSyncer $productFacetSyncer,
+        private ProductContentSyncer $productContentSyncer,
         private SlugGenerator $slugGenerator,
+        private Connection $connection,
         private Cacher $cacher,
         private FlusherInterface $flusher,
     ) {}
@@ -59,6 +64,13 @@ final readonly class CreateProductHandler
             images: $command->images,
             badge: $command->badge,
             ingredients: $command->ingredients,
+            usageText: $command->usageText,
+            contraindications: $command->contraindications,
+            country: $command->country,
+            shelfLife: $command->shelfLife,
+            storageConditions: $command->storageConditions,
+            badDisclaimer: $command->badDisclaimer,
+            activeComponentsText: $command->activeComponentsText,
             features: $command->features,
             wbLink: $command->wbLink,
             ozonLink: $command->ozonLink,
@@ -72,33 +84,43 @@ final readonly class CreateProductHandler
             availability: $command->availability,
         );
 
-        $this->productRepository->add($product);
-        $this->flusher->flush();
+        $this->connection->beginTransaction();
+        try {
+            $this->productRepository->add($product);
+            $this->flusher->flush();
 
-        if ($product->id === null) {
-            throw new DomainExceptionModule(
-                module: 'product',
-                message: 'error.product_create_failed',
-                code: 13,
+            if ($product->id === null) {
+                throw new DomainExceptionModule(
+                    module: 'product',
+                    message: 'error.product_create_failed',
+                    code: 13,
+                );
+            }
+
+            $this->productImageSyncer->sync(
+                productId: $product->id,
+                mainImage: $product->image,
+                alt: $product->imageAlt,
+                title: $product->name,
+                images: $product->images,
+                productImages: $command->productImages,
             );
+            $this->productFacetSyncer->sync(
+                productId: $product->id,
+                attributeValueIds: $command->attributeValueIds,
+                productGroupId: $command->productGroupId,
+            );
+            $this->productContentSyncer->sync(
+                productId: $product->id,
+                relatedBlogPostIds: $command->relatedBlogPostIds,
+                certificateIds: $command->certificateIds,
+            );
+            $this->deleteCache();
+            $this->connection->commit();
+        } catch (Throwable $e) {
+            $this->connection->rollBack();
+            throw $e;
         }
-
-        $this->productImageSyncer->sync(
-            productId: $product->id,
-            mainImage: $product->image,
-            alt: $product->imageAlt,
-            title: $product->name,
-            images: $product->images,
-            productImages: $command->productImages,
-        );
-        $this->productFacetSyncer->sync(
-            productId: $product->id,
-            attributeValueIds: $command->attributeValueIds,
-            componentIds: $command->componentIds,
-            purposeIds: $command->purposeIds,
-            productGroupId: $command->productGroupId,
-        );
-        $this->deleteCache();
 
         return $product->id;
     }

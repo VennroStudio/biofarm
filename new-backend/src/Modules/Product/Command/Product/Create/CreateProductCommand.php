@@ -43,13 +43,20 @@ final readonly class CreateProductCommand
         public ?string $gtin = null,
         public string $availability = 'in_stock',
         public ?string $ingredients = null,
+        public ?string $usageText = null,
+        public ?string $contraindications = null,
+        public ?string $country = null,
+        public ?string $shelfLife = null,
+        public ?string $storageConditions = null,
+        public ?string $badDisclaimer = null,
+        public ?string $activeComponentsText = null,
         /** @var list<int>|null */
         public ?array $attributeValueIds = null,
-        /** @var list<int>|null */
-        public ?array $componentIds = null,
-        /** @var list<int>|null */
-        public ?array $purposeIds = null,
         public ?int $productGroupId = null,
+        /** @var list<int>|null */
+        public ?array $relatedBlogPostIds = null,
+        /** @var list<int>|null */
+        public ?array $certificateIds = null,
         /** @var list<string>|null */
         public ?array $features = null,
         public ?string $wbLink = null,

@@ -33,7 +33,7 @@ final readonly class SaveProductGroupAction implements RequestHandlerInterface
         $name = trim((string)($payload['name'] ?? ''));
 
         if ($name === '') {
-            throw new DomainExceptionModule('product', 'error.product_group_name_required', 42);
+            throw new DomainExceptionModule('product', 'error.product_group_name_required', 42, status: 422);
         }
 
         $data = [
@@ -43,6 +43,10 @@ final readonly class SaveProductGroupAction implements RequestHandlerInterface
 
         $isCreate = $id === null;
         if ($id !== null) {
+            if (!$this->exists($id)) {
+                throw new DomainExceptionModule('product', 'error.product_group_not_found', 43, status: 404);
+            }
+
             $this->connection->update('product_groups', $data, ['id' => $id]);
         } else {
             $data['created_at'] = gmdate('Y-m-d H:i:s');
@@ -53,6 +57,22 @@ final readonly class SaveProductGroupAction implements RequestHandlerInterface
         $this->cacher->deleteTag('products');
 
         return new JsonDataResponse(['id' => $id], $isCreate ? 201 : 200);
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function exists(int $id): bool
+    {
+        return (bool)$this->connection->createQueryBuilder()
+            ->select('1')
+            ->from('product_groups')
+            ->where('id = :id')
+            ->andWhere('deleted_at IS NULL')
+            ->setParameter('id', $id)
+            ->setMaxResults(1)
+            ->executeQuery()
+            ->fetchOne();
     }
 
     private function routeId(ServerRequestInterface $request): ?int

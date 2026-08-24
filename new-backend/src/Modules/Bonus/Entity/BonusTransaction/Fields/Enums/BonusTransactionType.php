@@ -8,6 +8,7 @@ enum BonusTransactionType: string
 {
     case ORDER_BONUS = 'order_bonus';
     case REFERRAL_BONUS = 'referral_bonus';
+    case WELCOME_BONUS = 'welcome_bonus';
     case WITHDRAWAL = 'withdrawal';
     case MANUAL_ADJUSTMENT = 'manual_adjustment';
 }

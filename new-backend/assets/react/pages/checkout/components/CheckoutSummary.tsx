@@ -12,6 +12,7 @@ type Props = {
   finalTotal: number;
   isLoading: boolean;
   orderBonus: number;
+  orderBonusEnabled: boolean;
   setUseBonuses: (value: boolean) => void;
   total: number;
   useBonuses: boolean;
@@ -26,6 +27,7 @@ export function CheckoutSummary({
   finalTotal,
   isLoading,
   orderBonus,
+  orderBonusEnabled,
   setUseBonuses,
   total,
   useBonuses,
@@ -64,7 +66,7 @@ export function CheckoutSummary({
             </span>
           </div>
 
-          {user && user.bonusBalance > 0 && (
+          {orderBonusEnabled && user && user.bonusBalance > 0 && (
             <label className="flex cursor-pointer items-center gap-2 rounded bg-muted/50 p-2">
               <input
                 checked={useBonuses}

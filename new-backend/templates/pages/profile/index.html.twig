@@ -1,7 +1,13 @@
 {% extends 'layouts/main.html.twig' %}
 
 {% block content %}
-    <div data-react-island="profile-page">
+    <div
+        data-react-island="profile-page"
+        data-cart-enabled="{{ site_feature('cart_enabled') ? 'true' : 'false' }}"
+        data-favorites-enabled="{{ site_feature('favorites_enabled') ? 'true' : 'false' }}"
+        data-referral-enabled="{{ site_feature('referral_enabled') ? 'true' : 'false' }}"
+        data-withdrawals-enabled="{{ site_feature('withdrawals_enabled') ? 'true' : 'false' }}"
+    >
         <section class="container mx-auto px-4 py-24">
             <h1 class="font-display text-4xl font-bold text-foreground md:text-5xl">Личный кабинет</h1>
             <p class="mt-4 max-w-2xl text-lg text-muted-foreground">

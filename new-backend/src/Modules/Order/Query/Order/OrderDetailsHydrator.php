@@ -26,6 +26,11 @@ final readonly class OrderDetailsHydrator
      *     status: string,
      *     payment_status: string,
      *     total: int|string,
+     *     subtotal: int|string,
+     *     delivery_method: string|null,
+     *     delivery_cost: int|string,
+     *     discount_amount: int|string,
+     *     promo_code: string|null,
      *     bonus_used: int|string,
      *     bonus_earned: int|string,
      *     shipping_address: array{

@@ -77,6 +77,8 @@ export function pageFormFromPage(page: CmsPage): PageForm {
 }
 
 export function pagePayloadFromForm(form: PageForm) {
+  const isIndexable = form.is_indexable;
+
   return {
     title: form.title,
     slugPath: form.page_type === 'custom' ? form.slug_path : null,
@@ -92,8 +94,8 @@ export function pagePayloadFromForm(form: PageForm) {
     ogImageAlt: form.og_image_alt || null,
     publishedAt: form.page_type === 'custom' ? form.published_at || null : null,
     isPublished: form.is_published,
-    isIndexable: form.is_indexable,
-    showInSitemap: form.show_in_sitemap,
+    isIndexable,
+    showInSitemap: isIndexable && form.show_in_sitemap,
     showInHeader: form.show_in_header,
     showInFooter: form.show_in_footer,
     sortOrder: form.sort_order ? Number(form.sort_order) : 0,

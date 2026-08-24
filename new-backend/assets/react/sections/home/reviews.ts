@@ -1,4 +1,6 @@
 export function mountHomeReviews() {
+  const emptyPreviewImage = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
+
   document.querySelectorAll<HTMLElement>('[data-react-island="home-reviews"]').forEach((island) => {
     if (island.dataset.mounted === 'true') {
       return;
@@ -89,6 +91,10 @@ export function mountHomeReviews() {
         return;
       }
 
+      if (lightbox.parentElement !== document.body) {
+        document.body.appendChild(lightbox);
+      }
+
       lightboxImage.src = image;
       lightbox.style.opacity = '0';
       lightbox.style.transition = 'opacity 200ms ease';
@@ -97,6 +103,8 @@ export function mountHomeReviews() {
       lightbox.classList.remove('hidden');
       lightbox.classList.add('flex');
       lightbox.setAttribute('aria-hidden', 'false');
+      document.documentElement.classList.add('overflow-hidden');
+      document.body.classList.add('overflow-hidden');
       lightbox.focus();
 
       requestAnimationFrame(() => {
@@ -113,11 +121,13 @@ export function mountHomeReviews() {
       lightbox.classList.add('hidden');
       lightbox.classList.remove('flex');
       lightbox.setAttribute('aria-hidden', 'true');
-      lightboxImage.removeAttribute('src');
+      lightboxImage.src = emptyPreviewImage;
       lightbox.style.opacity = '';
       lightbox.style.transition = '';
       lightboxImage.style.transform = '';
       lightboxImage.style.transition = '';
+      document.documentElement.classList.remove('overflow-hidden');
+      document.body.classList.remove('overflow-hidden');
     };
 
     previousButton?.addEventListener('click', () => show(currentIndex - 1));

@@ -1,9 +1,10 @@
-import { Gift, LogOut, Package, User } from 'lucide-react';
+import { Gift, Heart, LogOut, Package, User } from 'lucide-react';
 import { createRoot } from 'react-dom/client';
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import {
   clearAuth,
   createWithdrawal,
+  getFavorites,
   getOrders,
   getReferralInfo,
   getReferralOrders,
@@ -12,12 +13,15 @@ import {
   getWithdrawals,
   refreshUser,
   updateProfile,
+  type FavoriteProduct,
   type ReferralInfo,
   type SiteOrder,
   type SiteUser,
   type WithdrawalRequest,
 } from '../../site/api';
+import { loadFavoriteIds, toggleFavorite } from '../../site/favorites';
 import { Button } from '../../site/ui';
+import { FavoritesPanel } from './components/FavoritesPanel';
 import { OrderDetailsDialog } from './components/OrderDetailsDialog';
 import { OrdersPanel } from './components/OrdersPanel';
 import { ProfileDetailsCard } from './components/ProfileDetailsCard';
@@ -26,11 +30,23 @@ import { TabButton } from './components/ProfileTabs';
 import { ReferralPanel } from './components/ReferralPanel';
 import type { ProfileTab } from './types';
 
-function ProfilePage() {
+function messageFromError(error: unknown, fallback: string): string {
+  return error instanceof Error && error.message ? error.message : fallback;
+}
+
+type ProfilePageProps = {
+  cartEnabled: boolean;
+  favoritesEnabled: boolean;
+  referralEnabled: boolean;
+  withdrawalsEnabled: boolean;
+};
+
+function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, withdrawalsEnabled }: ProfilePageProps) {
   const [user, setUser] = useState<SiteUser | null>(() => getStoredUser());
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<ProfileTab>('profile');
   const [orders, setOrders] = useState<SiteOrder[]>([]);
+  const [favorites, setFavorites] = useState<FavoriteProduct[]>([]);
   const [referralOrders, setReferralOrders] = useState<SiteOrder[]>([]);
   const [referralInfo, setReferralInfo] = useState<ReferralInfo | null>(null);
   const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([]);
@@ -54,7 +70,7 @@ function ProfilePage() {
       return;
     }
 
-    void Promise.all([refreshUser(), getOrders()])
+    void Promise.all([refreshUser(), cartEnabled ? getOrders() : Promise.resolve([])])
       .then(async ([freshUser, loadedOrders]) => {
         if (!freshUser) {
           window.location.href = '/login?redirect=/profile';
@@ -67,19 +83,28 @@ function ProfilePage() {
         setEditCardNumber(freshUser.cardNumber || '');
         setOrders(loadedOrders);
 
-        if (freshUser.isPartner) {
+        if (favoritesEnabled) {
+          await loadFavoriteIds();
+          setFavorites(await getFavorites());
+        }
+
+        if (freshUser.isPartner && referralEnabled) {
           const [info, refOrders, userWithdrawals] = await Promise.all([
             getReferralInfo(),
             getReferralOrders(),
-            getWithdrawals(),
+            withdrawalsEnabled ? getWithdrawals() : Promise.resolve([]),
           ]);
           setReferralInfo(info);
           setReferralOrders(refOrders);
           setWithdrawals(userWithdrawals);
         }
       })
+      .catch((error: unknown) => {
+        console.error('Failed to load profile page', error);
+        setNotice(messageFromError(error, 'Не удалось загрузить личный кабинет'));
+      })
       .finally(() => setLoading(false));
-  }, []);
+  }, [cartEnabled, favoritesEnabled, referralEnabled, withdrawalsEnabled]);
 
   function handleLogout() {
     clearAuth();
@@ -87,19 +112,27 @@ function ProfilePage() {
   }
 
   async function copyReferralLink() {
-    const link = `${window.location.origin}?ref=${referralCode}`;
-    await navigator.clipboard.writeText(link);
-    setCopied(true);
-    setNotice('Ссылка скопирована!');
-    window.setTimeout(() => setCopied(false), 2000);
+    try {
+      const link = `${window.location.origin}?ref=${referralCode}`;
+      await navigator.clipboard.writeText(link);
+      setCopied(true);
+      setNotice('Ссылка скопирована!');
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      setNotice(messageFromError(error, 'Не удалось скопировать ссылку'));
+    }
   }
 
   async function handleSaveProfile() {
-    const updated = await updateProfile({ cardNumber: editCardNumber, name: editName, phone: editPhone });
-    if (updated) {
-      setUser(updated);
-      setIsEditing(false);
-      setNotice('Профиль обновлен');
+    try {
+      const updated = await updateProfile({ cardNumber: editCardNumber, name: editName, phone: editPhone });
+      if (updated) {
+        setUser(updated);
+        setIsEditing(false);
+        setNotice('Профиль обновлен');
+      }
+    } catch (error) {
+      setNotice(messageFromError(error, 'Не удалось сохранить профиль'));
     }
   }
 
@@ -111,14 +144,31 @@ function ProfilePage() {
       return;
     }
 
-    await createWithdrawal(amount);
-    const [freshUser, userWithdrawals] = await Promise.all([refreshUser(), getWithdrawals()]);
-    if (freshUser) {
-      setUser(freshUser);
+    try {
+      await createWithdrawal(amount);
+      const [freshUser, userWithdrawals] = await Promise.all([
+        refreshUser(),
+        withdrawalsEnabled ? getWithdrawals() : Promise.resolve([]),
+      ]);
+      if (freshUser) {
+        setUser(freshUser);
+      }
+      setWithdrawals(userWithdrawals);
+      setWithdrawalAmount('');
+      setNotice('Заявка на вывод создана');
+    } catch (error) {
+      setNotice(messageFromError(error, 'Не удалось создать заявку на вывод'));
     }
-    setWithdrawals(userWithdrawals);
-    setWithdrawalAmount('');
-    setNotice('Заявка на вывод создана');
+  }
+
+  async function handleRemoveFavorite(product: FavoriteProduct) {
+    try {
+      await toggleFavorite(product.id, true);
+      setFavorites((items) => items.filter((item) => item.id !== product.id));
+      setNotice('Товар удален из избранного');
+    } catch (error) {
+      setNotice(messageFromError(error, 'Не удалось удалить товар из избранного'));
+    }
   }
 
   if (loading) {
@@ -157,14 +207,22 @@ function ProfilePage() {
               <User className="h-4 w-4" />
               <span className="hidden sm:inline">Профиль</span>
             </TabButton>
-            <TabButton active={tab === 'orders'} onClick={() => setTab('orders')}>
-              <Package className="h-4 w-4" />
-              <span className="hidden sm:inline">Заказы</span>
-            </TabButton>
-            {user.isPartner && (
+            {cartEnabled && (
+              <TabButton active={tab === 'orders'} onClick={() => setTab('orders')}>
+                <Package className="h-4 w-4" />
+                <span className="hidden sm:inline">Заказы</span>
+              </TabButton>
+            )}
+            {user.isPartner && referralEnabled && (
               <TabButton active={tab === 'referral'} onClick={() => setTab('referral')}>
                 <Gift className="h-4 w-4" />
                 <span className="hidden sm:inline">Рефералы</span>
+              </TabButton>
+            )}
+            {favoritesEnabled && (
+              <TabButton active={tab === 'favorites'} onClick={() => setTab('favorites')}>
+                <Heart className="h-4 w-4" />
+                <span className="hidden sm:inline">Избранное</span>
               </TabButton>
             )}
           </div>
@@ -184,9 +242,13 @@ function ProfilePage() {
             />
           )}
 
-          {tab === 'orders' && <OrdersPanel orders={orders} onSelectOrder={setSelectedOrder} />}
+          {cartEnabled && tab === 'orders' && <OrdersPanel orders={orders} onSelectOrder={setSelectedOrder} />}
 
-          {user.isPartner && tab === 'referral' && (
+          {favoritesEnabled && tab === 'favorites' && (
+            <FavoritesPanel favorites={favorites} onRemove={(product) => void handleRemoveFavorite(product)} />
+          )}
+
+          {user.isPartner && referralEnabled && tab === 'referral' && (
             <ReferralPanel
               copied={copied}
               referralCode={referralCode}
@@ -195,6 +257,7 @@ function ProfilePage() {
               setWithdrawalAmount={setWithdrawalAmount}
               withdrawalAmount={withdrawalAmount}
               withdrawals={withdrawals}
+              withdrawalsEnabled={withdrawalsEnabled}
               onCopyReferralLink={() => void copyReferralLink()}
               onSelectOrder={setSelectedOrder}
               onWithdrawal={(event) => void handleWithdrawal(event)}
@@ -214,6 +277,13 @@ export function mountProfilePage() {
       return;
     }
     root.dataset.mounted = 'true';
-    createRoot(root).render(<ProfilePage />);
+    createRoot(root).render(
+      <ProfilePage
+        cartEnabled={root.dataset.cartEnabled !== 'false'}
+        favoritesEnabled={root.dataset.favoritesEnabled !== 'false'}
+        referralEnabled={root.dataset.referralEnabled !== 'false'}
+        withdrawalsEnabled={root.dataset.withdrawalsEnabled !== 'false'}
+      />,
+    );
   });
 }

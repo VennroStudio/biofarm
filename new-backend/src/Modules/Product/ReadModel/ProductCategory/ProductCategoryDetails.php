@@ -32,20 +32,20 @@ final readonly class ProductCategoryDetails implements ProductCategoryModelInter
     public static function fields(): array
     {
         return [
-            'id'         => 'id',
-            'slug'       => 'slug',
-            'name'       => 'name',
-            'parent_id'  => 'parent_id',
-            'h1'         => 'h1',
-            'seo_title'  => 'seo_title',
+            'id'              => 'id',
+            'slug'            => 'slug',
+            'name'            => 'name',
+            'parent_id'       => 'parent_id',
+            'h1'              => 'h1',
+            'seo_title'       => 'seo_title',
             'seo_description' => 'seo_description',
-            'intro_text' => 'intro_text',
-            'bottom_text' => 'bottom_text',
-            'image'      => 'image',
-            'is_indexable' => 'is_indexable',
-            'sort_order' => 'sort_order',
-            'created_at' => 'created_at',
-            'updated_at' => 'updated_at',
+            'intro_text'      => 'intro_text',
+            'bottom_text'     => 'bottom_text',
+            'image'           => 'image',
+            'is_indexable'    => 'is_indexable',
+            'sort_order'      => 'sort_order',
+            'created_at'      => 'created_at',
+            'updated_at'      => 'updated_at',
         ];
     }
 
@@ -97,20 +97,20 @@ final readonly class ProductCategoryDetails implements ProductCategoryModelInter
     public function toArray(): array
     {
         return [
-            'id'         => $this->id,
-            'slug'       => $this->slug,
-            'name'       => $this->name,
-            'parent_id'  => $this->parentId,
-            'h1'         => $this->h1,
-            'seo_title'  => $this->seoTitle,
+            'id'              => $this->id,
+            'slug'            => $this->slug,
+            'name'            => $this->name,
+            'parent_id'       => $this->parentId,
+            'h1'              => $this->h1,
+            'seo_title'       => $this->seoTitle,
             'seo_description' => $this->seoDescription,
-            'intro_text' => $this->introText,
-            'bottom_text' => $this->bottomText,
-            'image'      => $this->image,
-            'is_indexable' => $this->isIndexable,
-            'sort_order' => $this->sortOrder,
-            'created_at' => $this->createdAt,
-            'updated_at' => $this->updatedAt,
+            'intro_text'      => $this->introText,
+            'bottom_text'     => $this->bottomText,
+            'image'           => $this->image,
+            'is_indexable'    => $this->isIndexable,
+            'sort_order'      => $this->sortOrder,
+            'created_at'      => $this->createdAt,
+            'updated_at'      => $this->updatedAt,
         ];
     }
 }

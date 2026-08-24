@@ -18,6 +18,7 @@ final readonly class PageSlugPathNormalizer
         'catalog',
         'product',
         'blog',
+        'certificates',
         'cart',
         'checkout',
         'order-success',

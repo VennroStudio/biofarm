@@ -53,7 +53,7 @@ final readonly class BlogPostPageUnifier
                 robots: $post !== null ? 'index, follow' : 'noindex, follow',
                 ogTitle: $post?->h1 ?: $post?->title ?: $title,
                 ogDescription: $description,
-                ogImage: $post !== null ? $this->urls->absolute($post->image) : $this->urls->absolute('/assets/images/og/default.jpg'),
+                ogImage: $post !== null ? $this->urls->absolute($post->image) : null,
                 ogImageAlt: $post?->imageAlt ?: $post?->title ?: 'Статья БИОФАРМ',
                 ogType: 'article',
                 jsonLd: $post !== null ? [

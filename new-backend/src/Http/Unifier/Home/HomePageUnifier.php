@@ -52,7 +52,7 @@ final readonly class HomePageUnifier
                 canonicalUrl: $this->urls->absolute('/'),
                 ogTitle: 'БИОФАРМ — натуральные продукты',
                 ogDescription: 'Экологически чистые продукты БИОФАРМ напрямую из собственных лабораторий.',
-                ogImage: $this->urls->absolute('/assets/images/og/default.jpg'),
+                ogImage: null,
                 ogImageAlt: 'БИОФАРМ',
                 jsonLd: [
                     $this->jsonLd->organization(),

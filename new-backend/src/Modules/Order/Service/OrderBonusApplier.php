@@ -40,6 +40,10 @@ final readonly class OrderBonusApplier
             $this->applyBuyerBonus($order, $buyerProfile);
         }
 
+        if (!$this->settings->bool('referral_enabled')) {
+            return;
+        }
+
         $referrerProfile = $this->resolveReferrerProfile($order, $buyerProfile);
         if ($referrerProfile === null || !$referrerProfile->isPartner || $referrerProfile->userId === $order->userId) {
             return;
@@ -103,7 +107,7 @@ final readonly class OrderBonusApplier
             return $this->profileRepository->findByReferralCode($referredBy);
         }
 
-        if ($buyerProfile?->referredByUserId === null) {
+        if ($buyerProfile === null || $buyerProfile->referredByUserId === null) {
             return null;
         }
 

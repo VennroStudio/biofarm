@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Action\v1\Withdrawal;
 
+use App\Components\Exception\DomainExceptionModule;
 use App\Components\Http\Middleware\Identity\RequestIdentity;
 use App\Components\Http\Response\JsonDataItemsResponse;
+use App\Components\Setting\SiteSettings;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 use Override;
@@ -17,6 +19,7 @@ final readonly class GetWithdrawalsAction implements RequestHandlerInterface
 {
     public function __construct(
         private Connection $connection,
+        private SiteSettings $settings,
     ) {}
 
     /**
@@ -25,6 +28,10 @@ final readonly class GetWithdrawalsAction implements RequestHandlerInterface
     #[Override]
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
+        if (!$this->settings->bool('withdrawals_enabled')) {
+            throw new DomainExceptionModule('withdrawal', 'error.withdrawals_disabled', 4, status: 403);
+        }
+
         $identity = RequestIdentity::get($request);
         $rows = $this->connection->createQueryBuilder()
             ->select('id', 'user_id', 'amount', 'status', 'processed_by', 'processed_at', 'created_at', 'updated_at')

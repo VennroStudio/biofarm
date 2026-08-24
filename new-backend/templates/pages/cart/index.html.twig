@@ -3,6 +3,8 @@
 {% block content %}
     <div
         data-react-island="cart-page"
+        data-cdek-delivery-price="{{ site_setting('cdek_delivery_price', 350) }}"
+        data-free-delivery-threshold="{{ site_setting('free_delivery_threshold', 3000) }}"
         data-order-bonus-enabled="{{ site_feature('order_bonus_enabled') ? 'true' : 'false' }}"
         data-order-bonus-percent="{{ site_setting('order_bonus_percent', 5) }}"
     >

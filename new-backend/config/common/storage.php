@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
+use App\Components\Image\ImageVariantGenerator;
+use App\Components\Image\ImageVariantLocator;
 use App\Components\Storage\FileUploaderService;
 use App\Components\Storage\ImageCompressor;
 use App\Components\Storage\ImageCompressorConfig;
 use App\Components\Storage\LocalStorage;
 use App\Components\Storage\StorageInterface;
-use App\Components\Image\ImageVariantGenerator;
-use App\Components\Image\ImageVariantLocator;
 use Psr\Container\ContainerInterface;
 
 use function App\Components\env;
@@ -39,7 +39,7 @@ return [
     ),
 
     ImageVariantLocator::class => static fn (): ImageVariantLocator => new ImageVariantLocator(
-        publicRoot: \dirname(env('UPLOADS_STORAGE_PATH', __DIR__ . '/../../public/uploads')),
+        publicRoot: dirname(env('UPLOADS_STORAGE_PATH', __DIR__ . '/../../public/uploads')),
     ),
 
     ImageVariantGenerator::class => static fn (ContainerInterface $container): ImageVariantGenerator => new ImageVariantGenerator(
@@ -51,5 +51,5 @@ return [
     ),
 
     'image.uploads_path' => static fn (): string => env('UPLOADS_STORAGE_PATH', __DIR__ . '/../../public/uploads'),
-    'image.public_root' => static fn (): string => \dirname(env('UPLOADS_STORAGE_PATH', __DIR__ . '/../../public/uploads')),
+    'image.public_root'  => static fn (): string => dirname(env('UPLOADS_STORAGE_PATH', __DIR__ . '/../../public/uploads')),
 ];

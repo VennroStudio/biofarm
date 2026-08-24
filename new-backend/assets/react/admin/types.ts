@@ -7,10 +7,7 @@ export type AdminUser = {
   id: number;
   first_name: string;
   email?: string;
-  role: {
-    id: number;
-    label: string;
-  };
+  role: number;
 };
 
 export type Product = {
@@ -35,10 +32,17 @@ export type Product = {
   description: string;
   short_description: string | null;
   ingredients: string | null;
+  usage_text: string | null;
+  contraindications: string | null;
+  country: string | null;
+  shelf_life: string | null;
+  storage_conditions: string | null;
+  bad_disclaimer: string | null;
+  active_components_text: string | null;
   attribute_value_ids: number[] | null;
-  component_ids: number[] | null;
-  purpose_ids: number[] | null;
   product_group_id: number | null;
+  related_blog_post_ids: number[] | null;
+  certificate_ids: number[] | null;
   features: string[] | null;
   wb_link: string | null;
   ozon_link: string | null;
@@ -92,6 +96,47 @@ export type ProductGroup = {
   id: number;
   name: string;
   products_count: number;
+};
+
+export type PromoCode = {
+  id: number;
+  code: string;
+  type: 'percent' | 'fixed';
+  value: number;
+  min_order_total: number;
+  starts_at: string | null;
+  ends_at: string | null;
+  usage_limit: number | null;
+  used_count: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string | null;
+};
+
+export type Certificate = {
+  id: number;
+  title: string;
+  file_path: string;
+  document_type: 'pdf' | 'image';
+  product_id: number | null;
+  product_name: string | null;
+  description: string | null;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string | null;
+};
+
+export type FaqItem = {
+  id: number;
+  question: string;
+  answer: string;
+  page_scope: string;
+  page_id: string | null;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string | null;
 };
 
 export type CmsPage = {
@@ -179,6 +224,11 @@ export type Order = {
   user_id: number;
   status: string;
   payment_status: string;
+  subtotal: number;
+  delivery_method: string | null;
+  delivery_cost: number;
+  discount_amount: number;
+  promo_code: string | null;
   total: number;
   bonus_used: number;
   bonus_earned: number;
@@ -197,6 +247,8 @@ export type Order = {
 
 export type AdminCustomer = {
   id: number;
+  first_name: string;
+  last_name: string;
   name: string;
   email: string;
   phone: string | null;
@@ -205,6 +257,19 @@ export type AdminCustomer = {
   is_partner: boolean;
   referral_code: string | null;
   referred_by_user_id: number | null;
+  referrals_count: number;
+  referral_orders_total: number;
+  bonus_transactions: BonusTransaction[];
+  created_at: string;
+};
+
+export type BonusTransaction = {
+  id: number;
+  amount: number;
+  type: string;
+  source_order_id: string | null;
+  source_withdrawal_id: string | null;
+  comment: string | null;
   created_at: string;
 };
 
@@ -228,8 +293,21 @@ export type Settings = {
   referral_percent: number;
   registration_enabled: boolean;
   cart_enabled: boolean;
+  referral_enabled: boolean;
+  withdrawals_enabled: boolean;
+  favorites_enabled: boolean;
   order_bonus_enabled: boolean;
   order_bonus_percent: number;
+  order_bonus_spend_limit_percent: number;
+  welcome_bonus_enabled: boolean;
+  welcome_bonus_amount: number;
+  promo_codes_enabled: boolean;
+  free_delivery_threshold: number;
+  cdek_delivery_price: number;
+  post_delivery_price: number;
+  order_emails_enabled: boolean;
+  yandex_metrika_enabled: boolean;
+  yandex_metrika_id: string;
   site_name: string;
   site_phone: string;
   site_email: string;

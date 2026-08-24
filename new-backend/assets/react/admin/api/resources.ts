@@ -4,13 +4,17 @@ import type {
   AttributeValue,
   BlogPost,
   Category,
+  Certificate,
   CmsPage,
   CmsPageTemplate,
   DashboardStats,
+  FaqItem,
+  MediaAsset,
   Order,
   Product,
   ProductAttribute,
   ProductGroup,
+  PromoCode,
   Review,
   Settings,
   Withdrawal,
@@ -21,12 +25,40 @@ export const dashboardApi = {
   get: () => request<DashboardStats>('/admin/api/dashboard'),
 };
 
+export const certificatesApi = {
+  list: () => requestItems<Certificate>('/admin/api/certificates'),
+  create: (payload: Record<string, unknown>) => request('/admin/api/certificates', { method: 'POST', body: payload }),
+  update: (id: number, payload: Record<string, unknown>) => request(`/admin/api/certificates/${id}`, { method: 'PATCH', body: payload }),
+  delete: (id: number) => request(`/admin/api/certificates/${id}`, { method: 'DELETE' }),
+  upload: (file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+
+    return request<MediaAsset>('/admin/api/certificates/upload', {
+      method: 'POST',
+      body: form,
+    });
+  },
+};
+
+export const faqApi = {
+  list: () => requestItems<FaqItem>('/admin/api/faq-items'),
+  create: (payload: Record<string, unknown>) => request('/admin/api/faq-items', { method: 'POST', body: payload }),
+  update: (id: number, payload: Record<string, unknown>) => request(`/admin/api/faq-items/${id}`, { method: 'PATCH', body: payload }),
+  delete: (id: number) => request(`/admin/api/faq-items/${id}`, { method: 'DELETE' }),
+};
+
 export const settingsApi = {
   get: () => request<Settings>('/admin/api/settings'),
   update: (payload: Partial<Settings>) => request<Partial<Settings>>('/admin/api/settings', {
     method: 'PATCH',
     body: payload as Record<string, unknown>,
   }),
+  changePassword: (payload: { current_password: string; new_password: string; confirm_password: string }) =>
+    request('/admin/api/settings/password', {
+      method: 'PATCH',
+      body: payload,
+    }),
 };
 
 export const productsApi = {
@@ -62,6 +94,13 @@ export const productGroupsApi = {
   delete: (id: number) => request(`/admin/api/product-groups/${id}`, { method: 'DELETE' }),
 };
 
+export const promoCodesApi = {
+  list: () => requestItems<PromoCode>('/admin/api/promo-codes'),
+  create: (payload: Record<string, unknown>) => request('/admin/api/promo-codes', { method: 'POST', body: payload }),
+  update: (id: number, payload: Record<string, unknown>) => request(`/admin/api/promo-codes/${id}`, { method: 'PATCH', body: payload }),
+  delete: (id: number) => request(`/admin/api/promo-codes/${id}`, { method: 'DELETE' }),
+};
+
 export const pagesApi = {
   list: () => requestItems<CmsPage>('/admin/api/pages'),
   templates: () => request<CmsPageTemplate[]>('/admin/api/page-templates'),
@@ -87,6 +126,7 @@ export const reviewsApi = {
 
 export const ordersApi = {
   list: () => requestItems<Order>('/v1/orders?perPage=100'),
+  update: (id: string, payload: Record<string, unknown>) => request(`/admin/api/orders/${id}`, { method: 'PATCH', body: payload }),
   updateStatus: (id: string, status: string) => request(`/admin/api/orders/${id}/status`, { method: 'PATCH', body: { status } }),
   updatePaymentStatus: (id: string, payment_status: string) =>
     request(`/admin/api/orders/${id}/payment-status`, { method: 'PATCH', body: { payment_status } }),

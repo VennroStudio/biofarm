@@ -1,8 +1,10 @@
 import { Lock, Mail, Shield } from 'lucide-react';
-import { FormEvent, useState } from 'react';
+import type { FormEvent } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login } from '../api/client';
-import { Button, Card, Field, inputClass } from '../shared/ui';
+import { messageFromError } from '../shared/lib';
+import { Button, Card, ErrorAlert, Field, inputClass } from '../shared/ui';
 
 export function AdminLogin() {
   const navigate = useNavigate();
@@ -20,7 +22,7 @@ export function AdminLogin() {
       await login(email, password);
       navigate('/admin');
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Не удалось войти');
+      setError(messageFromError(reason, 'Не удалось войти'));
     } finally {
       setLoading(false);
     }
@@ -67,7 +69,7 @@ export function AdminLogin() {
               />
             </div>
           </Field>
-          {error && <p className="rounded-md bg-[#f7e2e2] px-3 py-2 text-sm font-semibold text-[#a33d3d]">{error}</p>}
+          <ErrorAlert>{error}</ErrorAlert>
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? 'Входим...' : 'Войти'}
           </Button>

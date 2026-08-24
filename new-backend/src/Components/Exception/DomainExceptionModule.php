@@ -14,6 +14,7 @@ final class DomainExceptionModule extends DomainException
         string $message = '',
         int $code = 0,
         private readonly ?array $payload = null,
+        private readonly int $status = 409,
         ?Throwable $previous = null,
     ) {
         parent::__construct($message, $code, $previous);
@@ -27,5 +28,10 @@ final class DomainExceptionModule extends DomainException
     public function getPayload(): ?array
     {
         return $this->payload;
+    }
+
+    public function getStatus(): int
+    {
+        return $this->status;
     }
 }

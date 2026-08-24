@@ -27,6 +27,8 @@ function HomeVideo({ modalElement, rootElement }: Props) {
       dialog.style.transform = 'scale(0.95)';
       dialog.style.transition = 'opacity 200ms ease, transform 200ms ease';
       modalElement.hidden = false;
+      document.documentElement.classList.add('overflow-hidden');
+      document.body.classList.add('overflow-hidden');
 
       requestAnimationFrame(() => {
         modalElement.style.opacity = '1';
@@ -44,6 +46,8 @@ function HomeVideo({ modalElement, rootElement }: Props) {
       dialog.style.transform = '';
       dialog.style.transition = '';
       frame.removeAttribute('src');
+      document.documentElement.classList.remove('overflow-hidden');
+      document.body.classList.remove('overflow-hidden');
       openButton.focus();
     };
 
@@ -82,6 +86,11 @@ function HomeVideo({ modalElement, rootElement }: Props) {
 export function mountHomeVideo() {
   document.querySelectorAll('[data-react-island="home-video"]').forEach((element) => {
     const htmlElement = element as HTMLElement;
+    if (htmlElement.dataset.mounted === 'true') {
+      return;
+    }
+
+    htmlElement.dataset.mounted = 'true';
     const rootElement = htmlElement.closest<HTMLElement>(
       htmlElement.dataset.rootSelector || '[data-home-video-root]',
     );

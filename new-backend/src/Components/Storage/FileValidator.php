@@ -23,6 +23,7 @@ readonly class FileValidator
                 module: 'components',
                 message: 'error.invalid_mime_type',
                 code: 14,
+                status: 422,
             );
         }
 
@@ -31,6 +32,7 @@ readonly class FileValidator
                 module: 'components',
                 message: 'error.file_too_large',
                 code: 15,
+                status: 413,
             );
         }
     }

@@ -1,17 +1,18 @@
 import type { Dispatch, FormEvent, SetStateAction } from 'react';
-import { Button, Field, inputClass, Modal } from '../../../shared/ui';
+import { Button, ErrorAlert, Field, inputClass, Modal } from '../../../shared/ui';
 import type { ProductGroupForm } from '../model/productGroupForm';
 
 type Props = {
   form: ProductGroupForm;
   open: boolean;
+  error?: string | null;
   saving: boolean;
   setForm: Dispatch<SetStateAction<ProductGroupForm>>;
   onClose: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 };
 
-export function ProductGroupFormModal({ form, open, saving, setForm, onClose, onSubmit }: Props) {
+export function ProductGroupFormModal({ form, open, error, saving, setForm, onClose, onSubmit }: Props) {
   return (
     <Modal
       open={open}
@@ -29,6 +30,7 @@ export function ProductGroupFormModal({ form, open, saving, setForm, onClose, on
       )}
     >
       <form id="admin-product-group-form" className="grid gap-4" onSubmit={onSubmit}>
+        <ErrorAlert>{error}</ErrorAlert>
         <Field label="Название *">
           <input className={inputClass} value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} placeholder="Группа 1" />
         </Field>

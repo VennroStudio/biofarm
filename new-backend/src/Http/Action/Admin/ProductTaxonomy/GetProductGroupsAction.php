@@ -25,11 +25,12 @@ final readonly class GetProductGroupsAction implements RequestHandlerInterface
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
         $items = $this->connection->createQueryBuilder()
-            ->select('g.id', 'g.name', 'COUNT(gi.id) AS products_count')
+            ->select('g.id', 'g.name', 'COUNT(DISTINCT p.id) AS products_count')
             ->from('product_groups', 'g')
             ->leftJoin('g', 'product_group_items', 'gi', 'gi.group_id = g.id')
+            ->leftJoin('gi', 'products', 'p', 'p.id = gi.product_id AND p.deleted_at IS NULL')
             ->where('g.deleted_at IS NULL')
-            ->groupBy('g.id')
+            ->groupBy('g.id', 'g.name')
             ->orderBy('g.name', 'ASC')
             ->executeQuery()
             ->fetchAllAssociative();

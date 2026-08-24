@@ -35,6 +35,21 @@ class Order
     private(set) int $total;
 
     #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
+    private(set) int $subtotal;
+
+    #[ORM\Column(name: 'delivery_method', type: Types::STRING, length: 30, nullable: true)]
+    private(set) ?string $deliveryMethod;
+
+    #[ORM\Column(name: 'delivery_cost', type: Types::INTEGER, options: ['default' => 0])]
+    private(set) int $deliveryCost;
+
+    #[ORM\Column(name: 'discount_amount', type: Types::INTEGER, options: ['default' => 0])]
+    private(set) int $discountAmount;
+
+    #[ORM\Column(name: 'promo_code', type: Types::STRING, length: 100, nullable: true)]
+    private(set) ?string $promoCode;
+
+    #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
     private(set) int $bonusUsed;
 
     #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
@@ -88,6 +103,11 @@ class Order
         string $id,
         int $userId,
         int $total,
+        int $subtotal,
+        ?string $deliveryMethod,
+        int $deliveryCost,
+        int $discountAmount,
+        ?string $promoCode,
         array $shippingAddress,
         string $paymentMethod,
         int $bonusUsed,
@@ -98,6 +118,11 @@ class Order
         $this->id = $id;
         $this->userId = $userId;
         $this->total = $total;
+        $this->subtotal = $subtotal;
+        $this->deliveryMethod = $deliveryMethod;
+        $this->deliveryCost = $deliveryCost;
+        $this->discountAmount = $discountAmount;
+        $this->promoCode = $promoCode;
         $this->shippingAddress = $shippingAddress;
         $this->paymentMethod = $paymentMethod;
         $this->bonusUsed = $bonusUsed;
@@ -125,12 +150,32 @@ class Order
         int $total,
         array $shippingAddress,
         string $paymentMethod,
+        int $subtotal = 0,
+        ?string $deliveryMethod = null,
+        int $deliveryCost = 0,
+        int $discountAmount = 0,
+        ?string $promoCode = null,
         int $bonusUsed = 0,
         string $status = 'pending',
         string $paymentStatus = 'pending',
         ?string $referredBy = null,
     ): self {
-        return new self($id, $userId, $total, $shippingAddress, $paymentMethod, $bonusUsed, $status, $paymentStatus, $referredBy);
+        return new self(
+            $id,
+            $userId,
+            $total,
+            $subtotal > 0 ? $subtotal : $total,
+            $deliveryMethod,
+            $deliveryCost,
+            $discountAmount,
+            $promoCode,
+            $shippingAddress,
+            $paymentMethod,
+            $bonusUsed,
+            $status,
+            $paymentStatus,
+            $referredBy,
+        );
     }
 
     /**
@@ -171,6 +216,11 @@ class Order
         string $status,
         string $paymentStatus,
         int $total,
+        int $subtotal,
+        ?string $deliveryMethod,
+        int $deliveryCost,
+        int $discountAmount,
+        ?string $promoCode,
         int $bonusUsed,
         int $bonusEarned,
         array $shippingAddress,
@@ -182,6 +232,11 @@ class Order
         $this->status = $status;
         $this->paymentStatus = $paymentStatus;
         $this->total = $total;
+        $this->subtotal = $subtotal;
+        $this->deliveryMethod = $deliveryMethod;
+        $this->deliveryCost = $deliveryCost;
+        $this->discountAmount = $discountAmount;
+        $this->promoCode = $promoCode;
         $this->bonusUsed = $bonusUsed;
         $this->bonusEarned = $bonusEarned;
         $this->shippingAddress = $shippingAddress;

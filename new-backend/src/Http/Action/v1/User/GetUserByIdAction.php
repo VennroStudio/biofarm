@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Action\v1\User;
 
+use App\Components\Exception\AccessDeniedException;
+use App\Components\Http\Middleware\Identity\RequestIdentity;
 use App\Components\Http\Response\JsonDataResponse;
 use App\Components\Router\Route;
 use App\Http\Unifier\User\UserUnifier;
+use App\Modules\User\Entity\User\Fields\Enums\UserRole;
 use App\Modules\User\Query\User\GetById\UserGetByIdFetcher;
 use App\Modules\User\Query\User\GetById\UserGetByIdQuery;
 use Doctrine\DBAL\Exception;
@@ -52,6 +55,11 @@ final readonly class GetUserByIdAction implements RequestHandlerInterface
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
         $id = Route::getArgumentToInt($request, 'id');
+        $identity = RequestIdentity::get($request);
+
+        if ($identity->id !== $id && !\in_array($identity->role, [UserRole::ADMIN, UserRole::DEVELOPER, UserRole::EDITOR], true)) {
+            throw new AccessDeniedException();
+        }
 
         $user = $this->fetcher->fetch(new UserGetByIdQuery($id));
 

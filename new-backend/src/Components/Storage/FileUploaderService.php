@@ -58,20 +58,22 @@ final readonly class FileUploaderService
             }
         }
 
+        $stream = null;
         try {
-            if ($oldFilePath !== null && $oldFilePath !== '') {
-                $this->storage->delete($oldFilePath);
-            }
-
             $finalPath = $this->buildPath($destinationDir, $validator->getExtension($mimeType));
 
             $stream = $this->openStream($tmpFilePath);
             $this->storage->upload($finalPath, $stream, $mimeType);
-            $stream->close();
 
             $finalSize = (int)filesize($tmpFilePath);
             $dimensions = $this->detectImageDimensions($tmpFilePath);
+
+            if ($oldFilePath !== null && $oldFilePath !== '') {
+                $this->storage->delete($oldFilePath);
+            }
         } finally {
+            $stream?->close();
+
             if ($compressed !== null) {
                 @unlink($compressed->path);
             }

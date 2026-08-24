@@ -20,6 +20,7 @@ final readonly class SitemapController implements RequestHandlerInterface
         'home'          => '/',
         'catalog'       => '/catalog',
         'blog'          => '/blog',
+        'certificates'  => '/certificates',
         'privacy'       => '/privacy',
         'oferta'        => '/oferta',
         'cart'          => '/cart',
@@ -27,6 +28,14 @@ final readonly class SitemapController implements RequestHandlerInterface
         'order_success' => '/order-success',
         'login'         => '/login',
         'profile'       => '/profile',
+    ];
+
+    private const array NOINDEX_SYSTEM_KEYS = [
+        'cart',
+        'checkout',
+        'order_success',
+        'login',
+        'profile',
     ];
 
     public function __construct(
@@ -63,6 +72,7 @@ final readonly class SitemapController implements RequestHandlerInterface
             ...$this->purposeItems(),
             ...$this->productItems(),
             ...$this->blogItems(),
+            ...$this->certificateItems(),
         ]);
     }
 
@@ -84,6 +94,10 @@ final readonly class SitemapController implements RequestHandlerInterface
 
         $items = [];
         foreach ($rows as $row) {
+            if (!$this->isSystemPageVisible($row)) {
+                continue;
+            }
+
             $loc = $this->pageLocation($row);
             if ($loc === null) {
                 continue;
@@ -97,6 +111,23 @@ final readonly class SitemapController implements RequestHandlerInterface
         }
 
         return $items;
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     */
+    private function isSystemPageVisible(array $row): bool
+    {
+        if ((string)$row['page_type'] !== 'system') {
+            return true;
+        }
+
+        $systemKey = (string)($row['system_key'] ?? '');
+        if (\in_array($systemKey, self::NOINDEX_SYSTEM_KEYS, true)) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -118,11 +149,12 @@ final readonly class SitemapController implements RequestHandlerInterface
     private function pagePriority(string $loc, string $pageType): string
     {
         return match (true) {
-            $loc === '/' => '1.0',
-            $loc === '/catalog' => '0.9',
-            $loc === '/blog' => '0.7',
-            $pageType === 'custom' => '0.5',
-            default => '0.3',
+            $loc === '/'             => '1.0',
+            $loc === '/catalog'      => '0.9',
+            $loc === '/blog'         => '0.7',
+            $loc === '/certificates' => '0.6',
+            $pageType === 'custom'   => '0.5',
+            default                  => '0.3',
         };
     }
 
@@ -141,7 +173,7 @@ final readonly class SitemapController implements RequestHandlerInterface
         );
 
         return array_map(static fn (array $row): array => [
-            'loc'      => $row['parent_slug'] !== null
+            'loc' => $row['parent_slug'] !== null
                 ? '/catalog/' . $row['parent_slug'] . '/' . $row['slug']
                 : '/catalog/' . $row['slug'],
             'lastmod'  => self::lastmod((string)($row['updated_at'] ?? $row['created_at'] ?? '')),
@@ -205,7 +237,7 @@ final readonly class SitemapController implements RequestHandlerInterface
         ], $rootRows);
 
         $categoryItems = array_map(static fn (array $row): array => [
-            'loc'      => '/catalog/'
+            'loc' => '/catalog/'
                 . ($row['parent_slug'] !== null ? $row['parent_slug'] . '/' : '')
                 . $row['category_slug']
                 . '/'
@@ -274,6 +306,35 @@ final readonly class SitemapController implements RequestHandlerInterface
     }
 
     /**
+     * @return list<array{loc: string, lastmod: string|null, priority: string}>
+     * @throws Exception
+     */
+    private function certificateItems(): array
+    {
+        if (!$this->hasTable('certificates')) {
+            return [];
+        }
+
+        $hasCertificates = (bool)$this->connection->fetchOne(
+            'SELECT 1 FROM certificates WHERE is_active = 1 LIMIT 1'
+        );
+
+        if (!$hasCertificates) {
+            return [];
+        }
+
+        $lastmod = $this->connection->fetchOne(
+            'SELECT COALESCE(MAX(updated_at), MAX(created_at)) FROM certificates WHERE is_active = 1'
+        );
+
+        return [[
+            'loc'      => '/certificates',
+            'lastmod'  => self::lastmod((string)$lastmod) ?? $this->today(),
+            'priority' => '0.6',
+        ]];
+    }
+
+    /**
      * @param list<array{loc: string, lastmod: string|null, priority: string}> $items
      */
     private function xml(array $items): string
@@ -295,7 +356,7 @@ final readonly class SitemapController implements RequestHandlerInterface
 
     private function today(): string
     {
-        return (new DateTimeImmutable())->format('Y-m-d');
+        return new DateTimeImmutable()->format('Y-m-d');
     }
 
     private static function lastmod(string $value): ?string
@@ -307,5 +368,13 @@ final readonly class SitemapController implements RequestHandlerInterface
         $time = strtotime($value);
 
         return $time === false ? null : date('Y-m-d', $time);
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function hasTable(string $name): bool
+    {
+        return $this->connection->createSchemaManager()->tablesExist([$name]);
     }
 }

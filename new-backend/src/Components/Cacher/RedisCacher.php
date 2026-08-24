@@ -6,10 +6,12 @@ namespace App\Components\Cacher;
 
 use Override;
 use Redis;
+use RuntimeException;
 
-class RedisCacher implements Cacher
+final class RedisCacher implements Cacher
 {
     private const string TAG_PREFIX = 'tag.';
+    private const string VALUE_PREFIX = 'php:';
 
     private readonly string $host;
     private readonly int $port;
@@ -42,7 +44,7 @@ class RedisCacher implements Cacher
 
         $value = $this->redis?->get($key);
 
-        return $value === false ? null : $value;
+        return $this->decode($value);
     }
 
     #[Override]
@@ -52,7 +54,11 @@ class RedisCacher implements Cacher
             $this->connect();
         }
 
-        return (bool)$this->redis?->set($key, $value, $ttl);
+        $encoded = $this->encode($value);
+
+        return $ttl === null
+            ? (bool)$this->redis?->set($key, $encoded)
+            : (bool)$this->redis?->set($key, $encoded, $ttl);
     }
 
     #[Override]
@@ -89,14 +95,8 @@ class RedisCacher implements Cacher
         }
 
         $tagKey = $this->tagKey($tag);
-        $keys = $this->redis?->sMembers($tagKey);
-
-        if (\is_array($keys)) {
-            foreach ($keys as $key) {
-                if (\is_string($key)) {
-                    $this->redis?->del($key);
-                }
-            }
+        foreach ($this->sMembers($tagKey) as $key) {
+            $this->redis?->del($key);
         }
 
         $this->redis?->del($tagKey);
@@ -125,7 +125,7 @@ class RedisCacher implements Cacher
             return [];
         }
 
-        return $result;
+        return array_map($this->decode(...), $result);
     }
 
     #[Override]
@@ -245,10 +245,17 @@ class RedisCacher implements Cacher
             return [];
         }
 
-        return array_values(array_filter(
-            $result,
-            \is_string(...),
-        ));
+        $rawMembers = array_values($result);
+        $members = [];
+
+        /** @psalm-suppress MixedAssignment Redis extension stubs expose set members as mixed. */
+        foreach ($rawMembers as $member) {
+            if (\is_string($member)) {
+                $members[] = $member;
+            }
+        }
+
+        return $members;
     }
 
     private function addTag(string $tag, string $key, int $ttl): void
@@ -265,27 +272,63 @@ class RedisCacher implements Cacher
 
     private function connect(): void
     {
-        $this->redis = new Redis();
-        $this->redis->connect($this->host, $this->port, $this->timeout);
+        $redis = new Redis();
+
+        if (!$redis->connect($this->host, $this->port, $this->timeout)) {
+            throw new RuntimeException(\sprintf('Cannot connect to Redis at %s:%d.', $this->host, $this->port));
+        }
 
         if ($this->password !== '') {
             $auth = $this->user !== ''
                 ? [$this->user, $this->password]
                 : $this->password;
 
-            $this->redis->auth($auth);
+            if ($redis->auth($auth) === false) {
+                throw new RuntimeException('Cannot authenticate Redis connection.');
+            }
         }
 
-        $this->redis->setOption(Redis::OPT_SERIALIZER, Redis::SERIALIZER_PHP);
+        $redis->setOption(Redis::OPT_SERIALIZER, Redis::SERIALIZER_PHP);
+
+        $this->redis = $redis;
     }
 
     private function isConnected(): bool
     {
-        return null !== $this->redis;
+        return $this->redis?->isConnected() === true;
     }
 
     private function tagKey(string $tag): string
     {
         return self::TAG_PREFIX . $tag;
+    }
+
+    private function encode(array|bool|float|int|object|string|null $value): string
+    {
+        return self::VALUE_PREFIX . serialize($value);
+    }
+
+    private function decode(mixed $value): array|bool|float|int|object|string|null
+    {
+        if ($value === false || $value === null) {
+            return null;
+        }
+
+        if (!\is_string($value)) {
+            return \is_array($value) || \is_bool($value) || \is_float($value) || \is_int($value) || \is_object($value)
+                ? $value
+                : null;
+        }
+
+        if (!str_starts_with($value, self::VALUE_PREFIX)) {
+            return $value;
+        }
+
+        /** @psalm-suppress MixedAssignment unserialize returns mixed by design; the value is normalized below. */
+        $decoded = @unserialize(substr($value, \strlen(self::VALUE_PREFIX)), ['allowed_classes' => true]);
+
+        return \is_array($decoded) || \is_bool($decoded) || \is_float($decoded) || \is_int($decoded) || \is_object($decoded) || \is_string($decoded) || $decoded === null
+            ? $decoded
+            : null;
     }
 }

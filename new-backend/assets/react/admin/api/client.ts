@@ -14,8 +14,13 @@ type ApiEnvelope<T> = {
 
 type ApiErrorEnvelope = {
   error?: string | {
+    description?: string;
     message?: string;
   };
+  validations?: Array<{
+    field: string;
+    message: string;
+  }>;
 };
 
 export function getToken() {
@@ -64,7 +69,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
     body: normalizedBody,
   });
 
-  if (response.status === 401 || response.status === 403) {
+  if (response.status === 401) {
     clearSession();
   }
 
@@ -89,6 +94,10 @@ export async function requestItems<T>(path: string): Promise<ApiItems<T>> {
 }
 
 function errorMessage(payload: ApiEnvelope<unknown> | ApiErrorEnvelope | null, fallback: string) {
+  if (payload && 'validations' in payload && Array.isArray(payload.validations) && payload.validations.length > 0) {
+    return payload.validations.map((item) => item.message).join('\n');
+  }
+
   if (!payload || !('error' in payload) || !payload.error) {
     return fallback;
   }
@@ -97,7 +106,7 @@ function errorMessage(payload: ApiEnvelope<unknown> | ApiErrorEnvelope | null, f
     return payload.error;
   }
 
-  return payload.error.message || fallback;
+  return payload.error.message || payload.error.description || fallback;
 }
 
 function errorFallback(status: number) {

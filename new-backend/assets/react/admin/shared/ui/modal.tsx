@@ -1,5 +1,6 @@
 import { X } from 'lucide-react';
 import type { PropsWithChildren, ReactNode } from 'react';
+import { useEffect } from 'react';
 import { Button } from './button';
 
 type ModalProps = PropsWithChildren<{
@@ -12,6 +13,22 @@ type ModalProps = PropsWithChildren<{
 }>;
 
 export function Modal({ children, description, footer, maxWidth = 'max-w-2xl', onClose, open, title }: ModalProps) {
+  useEffect(() => {
+    if (!open) {
+      return undefined;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onClose, open]);
+
   if (!open) {
     return null;
   }

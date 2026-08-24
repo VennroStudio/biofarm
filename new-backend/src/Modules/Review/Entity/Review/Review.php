@@ -112,6 +112,7 @@ class Review
         string $source,
         ?string $userId,
         ?array $images,
+        bool $isApproved,
     ): void {
         $this->assertNotDeleted();
         $this->productId = $productId;
@@ -121,6 +122,7 @@ class Review
         $this->source = $source;
         $this->userId = $userId;
         $this->images = $images;
+        $this->isApproved = $isApproved;
         $this->touch();
     }
 

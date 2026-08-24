@@ -241,7 +241,7 @@
                         </div>
                     {% endif %}
 
-                    <div class="{% if currentView == 'list' %}flex flex-col gap-4{% else %}grid gap-6 sm:grid-cols-2 xl:grid-cols-3{% endif %}">
+                    <div class="{% if currentView == 'list' %}flex flex-col gap-4{% else %}grid auto-rows-fr gap-6 sm:grid-cols-2 xl:grid-cols-3{% endif %}">
                         {% for product in products %}
                             {% include 'components/product/card.html.twig' with { product: product, viewMode: currentView, revealDelay: loop.index0 * 100 } only %}
                         {% else %}
@@ -323,7 +323,7 @@
                 {% endfor %}
             </nav>
 
-            <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            <div class="grid auto-rows-fr gap-8 sm:grid-cols-2 lg:grid-cols-3">
                 {% for product in products %}
                     {% include 'components/product/card.html.twig' with { product: product, viewMode: currentView, revealDelay: loop.index0 * 100 } only %}
                 {% else %}

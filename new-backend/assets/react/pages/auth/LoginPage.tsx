@@ -2,7 +2,7 @@ import { ArrowRight, Eye, EyeOff, Lock, Mail, User } from 'lucide-react';
 import { createRoot } from 'react-dom/client';
 import { type FormEvent, useMemo, useState } from 'react';
 import { login, register } from '../../site/api';
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label, cn } from '../../site/ui';
+import { Button, Card, CardContent, CardDescription, CardHeader, Input, Label, cn } from '../../site/ui';
 
 function redirectAfterLogin() {
   const params = new URLSearchParams(window.location.search);
@@ -76,7 +76,7 @@ function LoginPage({ registrationEnabled }: { registrationEnabled: boolean }) {
       <div className="container mx-auto max-w-md px-4">
         <Card className="border-0 shadow-premium-lg">
           <CardHeader className="pb-2 text-center">
-            <CardTitle className="text-2xl font-bold">Личный кабинет</CardTitle>
+            <h1 className="text-2xl font-bold">Личный кабинет</h1>
             <CardDescription>{cardDescription}</CardDescription>
           </CardHeader>
 

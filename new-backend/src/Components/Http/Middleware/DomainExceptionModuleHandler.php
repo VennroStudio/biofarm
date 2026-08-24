@@ -43,7 +43,7 @@ final readonly class DomainExceptionModuleHandler implements MiddlewareInterface
                 code: $exception->getCode(),
                 message: $this->translator->trans($exception->getMessage(), [], $module),
                 payload: $exception->getPayload(),
-                status: 409,
+                status: $exception->getStatus(),
             );
         }
     }

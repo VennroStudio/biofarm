@@ -88,6 +88,34 @@ export function SeoSettingsCard({ settings, onChange }: Props) {
       </div>
 
       <div className="mt-6">
+        <div className="mb-5 flex items-center justify-between rounded-lg border border-[#e4e5da] px-4 py-4">
+          <div>
+            <p className="font-semibold">Яндекс.Метрика</p>
+            <p className="text-sm text-[#789083]">Подключает счетчик, если указан ID.</p>
+          </div>
+          <button
+            aria-label="Переключить Яндекс.Метрику"
+            aria-pressed={settings.yandex_metrika_enabled}
+            className={`relative h-7 w-12 rounded-full transition ${settings.yandex_metrika_enabled ? 'bg-[#2f7d4b]' : 'bg-[#d9dece]'}`}
+            type="button"
+            onClick={() => set('yandex_metrika_enabled', !settings.yandex_metrika_enabled)}
+          >
+            <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition ${settings.yandex_metrika_enabled ? 'left-6' : 'left-1'}`} />
+          </button>
+        </div>
+
+        {settings.yandex_metrika_enabled && (
+          <div className="mb-5 max-w-sm">
+            <Field label="ID счетчика Яндекс.Метрики">
+              <input
+                className={inputClass}
+                value={settings.yandex_metrika_id}
+                onChange={(event) => set('yandex_metrika_id', event.target.value)}
+              />
+            </Field>
+          </div>
+        )}
+
         <Field label={<span className="flex items-center gap-2"><FileText className="h-4 w-4" />Дополнительные Disallow в robots.txt</span>}>
           <textarea
             className={`${textareaClass} min-h-32`}

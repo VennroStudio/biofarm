@@ -43,11 +43,13 @@
             <script type="application/ld+json">{{ schema|json_encode|raw }}</script>
         {% endfor %}
     {% endif %}
+    {% include 'components/seo/yandex-metrika-head.html.twig' only %}
     {% block stylesheets %}
         <link rel="stylesheet" href="{{ vite_asset('assets/styles/app.css') }}">
     {% endblock %}
 </head>
 <body class="overflow-x-hidden bg-background font-sans text-foreground antialiased">
+    {% include 'components/seo/yandex-metrika-body.html.twig' only %}
     {% include 'components/layout/header.html.twig' with { site: site } only %}
 
     <main class="min-h-screen">

@@ -59,4 +59,22 @@ final readonly class DoctrineProductCategoryRepository implements ProductCategor
     {
         return $this->repo->findOneBy(['slug' => $slug, 'deletedAt' => null]);
     }
+
+    #[Override]
+    public function findAnyBySlug(string $slug): ?ProductCategory
+    {
+        return $this->repo->findOneBy(['slug' => $slug]);
+    }
+
+    #[Override]
+    public function countChildren(int $parentId): int
+    {
+        return (int)$this->repo->createQueryBuilder('c')
+            ->select('COUNT(c.id)')
+            ->where('c.parentId = :parentId')
+            ->andWhere('c.deletedAt IS NULL')
+            ->setParameter('parentId', $parentId)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
 }

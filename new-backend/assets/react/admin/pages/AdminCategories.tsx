@@ -10,7 +10,8 @@ import {
 import { CategoryFormModal } from '../features/categories/ui/CategoryFormModal';
 import { CategoryList } from '../features/categories/ui/CategoryList';
 import { useLoadOnMount } from '../hooks/useLoadOnMount';
-import { Button, PageHeader } from '../shared/ui';
+import { messageFromError } from '../shared/lib';
+import { Button, ErrorAlert, PageHeader } from '../shared/ui';
 import type { Category, Product } from '../types';
 
 export function AdminCategories() {
@@ -18,6 +19,7 @@ export function AdminCategories() {
   const [products, setProducts] = useState<Product[]>([]);
   const [form, setForm] = useState<CategoryForm>(emptyCategoryForm);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const productCounts = useMemo(() => {
@@ -46,17 +48,20 @@ export function AdminCategories() {
   useLoadOnMount(load);
 
   function openCreate() {
+    setError(null);
     setForm(emptyCategoryForm);
     setDialogOpen(true);
   }
 
   function openEdit(category: Category) {
+    setError(null);
     setForm(categoryFormFromCategory(category));
     setDialogOpen(true);
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setError(null);
     setSaving(true);
     try {
       if (form.id) {
@@ -66,6 +71,8 @@ export function AdminCategories() {
       }
       setDialogOpen(false);
       await load();
+    } catch (submitError) {
+      setError(messageFromError(submitError, 'Не удалось сохранить категорию'));
     } finally {
       setSaving(false);
     }
@@ -75,18 +82,23 @@ export function AdminCategories() {
     const count = productCounts.get(String(category.id)) ?? 0;
     const children = childCounts.get(String(category.id)) ?? 0;
     if (children > 0) {
-      alert('Нельзя удалить категорию, у которой есть подкатегории.');
+      setError('Нельзя удалить категорию, у которой есть подкатегории.');
       return;
     }
     if (count > 0) {
-      alert('Нельзя удалить категорию, в которой есть товары.');
+      setError('Нельзя удалить категорию, в которой есть товары.');
       return;
     }
     if (!confirm(`Удалить категорию "${category.name}"?`)) {
       return;
     }
-    await categoriesApi.delete(category.id);
-    await load();
+    setError(null);
+    try {
+      await categoriesApi.delete(category.id);
+      await load();
+    } catch (removeError) {
+      setError(messageFromError(removeError, 'Не удалось удалить категорию'));
+    }
   }
 
   return (
@@ -97,6 +109,8 @@ export function AdminCategories() {
         actions={<Button onClick={openCreate}><Plus className="h-4 w-4" />Добавить категорию</Button>}
       />
 
+      <ErrorAlert className="mb-5">{dialogOpen ? null : error}</ErrorAlert>
+
       <CategoryList
         categories={categories}
         productCounts={productCounts}
@@ -106,11 +120,15 @@ export function AdminCategories() {
 
       <CategoryFormModal
         categories={categories}
+        error={dialogOpen ? error : null}
         form={form}
         open={dialogOpen}
         saving={saving}
         setForm={setForm}
-        onClose={() => setDialogOpen(false)}
+        onClose={() => {
+          setDialogOpen(false);
+          setError(null);
+        }}
         onSubmit={(event) => void submit(event)}
       />
     </>

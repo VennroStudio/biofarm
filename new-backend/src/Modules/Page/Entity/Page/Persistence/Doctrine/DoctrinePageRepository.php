@@ -43,7 +43,7 @@ final readonly class DoctrinePageRepository implements PageRepository
     #[Override]
     public function findBySlugPath(string $slugPath): ?Page
     {
-        return $this->repo->findOneBy(['slugPath' => $slugPath, 'deletedAt' => null]);
+        return $this->repo->findOneBy(['slugPath' => $slugPath]);
     }
 
     #[Override]

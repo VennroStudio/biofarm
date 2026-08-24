@@ -9,7 +9,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 final readonly class CreateOrderCommand
 {
     /**
-     * @param list<array{productId?: int|string, product_id?: int|string, productName?: string, product_name?: string, price?: int|string, quantity?: int|string}> $items
+     * @param list<array{productId?: int|string, product_id?: int|string, quantity?: int|string}> $items
      * @param array{
      *     name?: string|null,
      *     phone?: string|null,
@@ -24,9 +24,6 @@ final readonly class CreateOrderCommand
         #[Assert\NotBlank]
         public int $userId,
         #[Assert\NotBlank]
-        #[Assert\Positive]
-        public int $total,
-        #[Assert\NotBlank]
         public array $shippingAddress,
         #[Assert\NotBlank]
         public string $paymentMethod,
@@ -37,7 +34,11 @@ final readonly class CreateOrderCommand
         public int $currentUserRole,
         public array $items = [],
         public ?string $orderId = null,
-        public int $bonusUsed = 0,
+        public ?int $total = null,
+        public ?int $bonusUsed = null,
+        public bool $useBonuses = false,
+        public string $deliveryMethod = 'cdek',
+        public ?string $promoCode = null,
         public string $status = 'pending',
         public string $paymentStatus = 'pending',
         public ?string $referredBy = null,

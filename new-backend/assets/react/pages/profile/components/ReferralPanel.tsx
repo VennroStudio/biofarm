@@ -16,6 +16,7 @@ type Props = {
   setWithdrawalAmount: (value: string) => void;
   withdrawalAmount: string;
   withdrawals: WithdrawalRequest[];
+  withdrawalsEnabled: boolean;
 };
 
 export function ReferralPanel({
@@ -29,6 +30,7 @@ export function ReferralPanel({
   setWithdrawalAmount,
   withdrawalAmount,
   withdrawals,
+  withdrawalsEnabled,
 }: Props) {
   return (
     <div className="grid gap-6">
@@ -63,35 +65,37 @@ export function ReferralPanel({
         </CardContent>
       </Card>
 
-      <Card className="border-0 shadow-premium">
-        <CardHeader>
-          <CardTitle>Вывод бонусов</CardTitle>
-          <CardDescription>Создайте заявку на выплату партнерских начислений</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <form className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto]" onSubmit={onWithdrawal}>
-            <Input
-              min="1"
-              placeholder="Сумма"
-              type="number"
-              value={withdrawalAmount}
-              onChange={(event) => setWithdrawalAmount(event.target.value)}
-            />
-            <Button type="submit">Создать заявку</Button>
-          </form>
-          {withdrawals.length > 0 && (
-            <div className="space-y-2">
-              {withdrawals.map((withdrawal) => (
-                <div className="flex items-center justify-between rounded border p-3" key={withdrawal.id}>
-                  <span>{formatMoney(withdrawal.amount)}</span>
-                  <span className="text-sm text-muted-foreground">{formatDate(withdrawal.createdAt)}</span>
-                  <Badge variant={withdrawal.status === 'approved' ? 'default' : 'secondary'}>{withdrawal.status}</Badge>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {withdrawalsEnabled && (
+        <Card className="border-0 shadow-premium">
+          <CardHeader>
+            <CardTitle>Вывод бонусов</CardTitle>
+            <CardDescription>Создайте заявку на выплату партнерских начислений</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <form className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto]" onSubmit={onWithdrawal}>
+              <Input
+                min="1"
+                placeholder="Сумма"
+                type="number"
+                value={withdrawalAmount}
+                onChange={(event) => setWithdrawalAmount(event.target.value)}
+              />
+              <Button type="submit">Создать заявку</Button>
+            </form>
+            {withdrawals.length > 0 && (
+              <div className="space-y-2">
+                {withdrawals.map((withdrawal) => (
+                  <div className="flex items-center justify-between rounded border p-3" key={withdrawal.id}>
+                    <span>{formatMoney(withdrawal.amount)}</span>
+                    <span className="text-sm text-muted-foreground">{formatDate(withdrawal.createdAt)}</span>
+                    <Badge variant={withdrawal.status === 'approved' ? 'default' : 'secondary'}>{withdrawal.status}</Badge>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="border-0 shadow-premium">
         <CardHeader>

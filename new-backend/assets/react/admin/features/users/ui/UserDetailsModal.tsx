@@ -1,0 +1,159 @@
+import type { FormEvent } from 'react';
+import { useState } from 'react';
+import { formatDate, formatMoney } from '../../../shared/lib';
+import { Badge, Button, ErrorAlert, Field, inputClass, Modal } from '../../../shared/ui';
+import type { AdminCustomer } from '../../../types';
+
+type UserForm = {
+  firstName: string;
+  lastName: string;
+  phone: string;
+  cardNumber: string;
+  referralCode: string;
+  referredByUserId: string;
+  isPartner: boolean;
+  bonusAdjustment: string;
+  bonusComment: string;
+};
+
+type Props = {
+  user: AdminCustomer | null;
+  error?: string | null;
+  saving: boolean;
+  onClose: () => void;
+  onSave: (user: AdminCustomer, payload: Record<string, unknown>) => Promise<void>;
+};
+
+function toForm(user: AdminCustomer | null): UserForm {
+  return {
+    firstName: user?.first_name ?? '',
+    lastName: user?.last_name ?? '',
+    phone: user?.phone ?? '',
+    cardNumber: user?.card_number ?? '',
+    referralCode: user?.referral_code ?? '',
+    referredByUserId: user?.referred_by_user_id ? String(user.referred_by_user_id) : '',
+    isPartner: user?.is_partner ?? false,
+    bonusAdjustment: '',
+    bonusComment: '',
+  };
+}
+
+export function UserDetailsModal({ user, error, saving, onClose, onSave }: Props) {
+  const [form, setForm] = useState<UserForm>(() => toForm(user));
+
+  if (!user) {
+    return null;
+  }
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!user) {
+      return;
+    }
+    const adjustment = Number(form.bonusAdjustment || 0);
+
+    await onSave(user, {
+      firstName: form.firstName,
+      lastName: form.lastName,
+      phone: form.phone || null,
+      cardNumber: form.cardNumber || null,
+      referralCode: form.referralCode || null,
+      referredByUserId: form.referredByUserId ? Number(form.referredByUserId) : null,
+      isPartner: form.isPartner,
+      bonusAdjustment: adjustment,
+      bonusComment: form.bonusComment || null,
+    });
+  }
+
+  return (
+    <Modal
+      open
+      title={user.name || user.email}
+      description="Профиль, рефералка и бонусы пользователя"
+      maxWidth="max-w-3xl"
+      onClose={onClose}
+      footer={(
+        <>
+          <Button type="button" variant="outline" onClick={onClose}>Отмена</Button>
+          <Button type="submit" form="admin-user-form" disabled={saving || !form.firstName || !form.lastName}>
+            {saving ? 'Сохранение...' : 'Сохранить'}
+          </Button>
+        </>
+      )}
+    >
+      <form id="admin-user-form" className="grid gap-5" onSubmit={(event) => void submit(event)}>
+        <ErrorAlert>{error}</ErrorAlert>
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label="Имя">
+            <input className={inputClass} value={form.firstName} onChange={(event) => setForm({ ...form, firstName: event.target.value })} />
+          </Field>
+          <Field label="Фамилия">
+            <input className={inputClass} value={form.lastName} onChange={(event) => setForm({ ...form, lastName: event.target.value })} />
+          </Field>
+          <Field label="Телефон">
+            <input className={inputClass} value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} />
+          </Field>
+          <Field label="Карта для выплат">
+            <input className={inputClass} value={form.cardNumber} onChange={(event) => setForm({ ...form, cardNumber: event.target.value })} />
+          </Field>
+        </div>
+
+        <div className="grid gap-4 rounded-lg border border-[#e4e5da] bg-[#fbfaf4] p-4 md:grid-cols-2">
+          <Field label="Реферальный код">
+            <input className={inputClass} value={form.referralCode} onChange={(event) => setForm({ ...form, referralCode: event.target.value })} />
+          </Field>
+          <Field label="ID пригласившего">
+            <input className={inputClass} type="number" value={form.referredByUserId} onChange={(event) => setForm({ ...form, referredByUserId: event.target.value })} />
+          </Field>
+          <label className="flex items-center gap-2 text-sm font-semibold text-[#26382d]">
+            <input type="checkbox" checked={form.isPartner} onChange={(event) => setForm({ ...form, isPartner: event.target.checked })} />
+            Партнер
+          </label>
+          <div className="text-sm text-[#789083]">
+            <p>Приглашено: <b className="text-[#26382d]">{user.referrals_count}</b></p>
+            <p>Оборот рефералов: <b className="text-[#26382d]">{formatMoney(user.referral_orders_total)}</b></p>
+          </div>
+        </div>
+
+        <div className="grid gap-4 rounded-lg border border-[#e4e5da] bg-[#fbfaf4] p-4 md:grid-cols-[1fr_2fr]">
+          <Field label="Ручная корректировка бонусов">
+            <input
+              className={inputClass}
+              type="number"
+              value={form.bonusAdjustment}
+              onChange={(event) => setForm({ ...form, bonusAdjustment: event.target.value })}
+              placeholder="-100 или 250"
+            />
+          </Field>
+          <Field label="Комментарий">
+            <input className={inputClass} value={form.bonusComment} onChange={(event) => setForm({ ...form, bonusComment: event.target.value })} />
+          </Field>
+        </div>
+
+        <div>
+          <div className="mb-2 flex items-center justify-between">
+            <h4 className="font-semibold text-[#26382d]">История бонусов</h4>
+            <Badge tone="green">{formatMoney(user.bonus_balance)}</Badge>
+          </div>
+          <div className="max-h-72 overflow-y-auto rounded-lg border border-[#e4e5da] bg-white">
+            {user.bonus_transactions.length > 0 ? user.bonus_transactions.map((transaction) => (
+              <div key={transaction.id} className="grid gap-2 border-b border-[#e4e5da] p-3 text-sm last:border-b-0 md:grid-cols-[120px_1fr_auto]">
+                <span className={transaction.amount >= 0 ? 'font-semibold text-[#2f7d4b]' : 'font-semibold text-[#c24141]'}>
+                  {transaction.amount >= 0 ? '+' : ''}{formatMoney(transaction.amount)}
+                </span>
+                <span>
+                  {transaction.comment || transaction.type}
+                  {transaction.source_order_id && <span className="ml-2 text-[#789083]">Заказ {transaction.source_order_id}</span>}
+                  {transaction.source_withdrawal_id && <span className="ml-2 text-[#789083]">Выплата {transaction.source_withdrawal_id}</span>}
+                </span>
+                <span className="text-[#789083]">{formatDate(transaction.created_at)}</span>
+              </div>
+            )) : (
+              <p className="p-4 text-sm text-[#789083]">Операций по бонусам пока нет</p>
+            )}
+          </div>
+        </div>
+      </form>
+    </Modal>
+  );
+}

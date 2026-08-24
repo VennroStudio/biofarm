@@ -26,8 +26,17 @@ export type ProductForm = {
   short_description: string;
   description: string;
   ingredients: string;
+  usage_text: string;
+  contraindications: string;
+  country: string;
+  shelf_life: string;
+  storage_conditions: string;
+  bad_disclaimer: string;
+  active_components_text: string;
   attribute_value_ids: number[];
   product_group_id: string;
+  related_blog_post_ids: number[];
+  certificate_ids: number[];
   image: string;
   image_alt: string;
   image_items: ProductImageForm[];
@@ -54,8 +63,17 @@ export const emptyProductForm: ProductForm = {
   short_description: '',
   description: '',
   ingredients: '',
+  usage_text: '',
+  contraindications: '',
+  country: '',
+  shelf_life: '',
+  storage_conditions: '',
+  bad_disclaimer: '',
+  active_components_text: '',
   attribute_value_ids: [],
   product_group_id: '',
+  related_blog_post_ids: [],
+  certificate_ids: [],
   image: '',
   image_alt: '',
   image_items: [],
@@ -87,8 +105,17 @@ export function productFormFromProduct(product: Product): ProductForm {
     short_description: product.short_description ?? '',
     description: product.description,
     ingredients: product.ingredients ?? '',
+    usage_text: product.usage_text ?? '',
+    contraindications: product.contraindications ?? '',
+    country: product.country ?? '',
+    shelf_life: product.shelf_life ?? '',
+    storage_conditions: product.storage_conditions ?? '',
+    bad_disclaimer: product.bad_disclaimer ?? '',
+    active_components_text: product.active_components_text ?? '',
     attribute_value_ids: product.attribute_value_ids ?? [],
     product_group_id: product.product_group_id ? String(product.product_group_id) : '',
+    related_blog_post_ids: product.related_blog_post_ids ?? [],
+    certificate_ids: product.certificate_ids ?? [],
     image: mainImage?.path ?? product.image,
     image_alt: mainImage?.alt ?? product.image_alt ?? '',
     image_items: imageItems,
@@ -132,8 +159,17 @@ export function productPayloadFromForm(form: ProductForm) {
     shortDescription: form.short_description || null,
     description: form.description,
     ingredients: form.ingredients || null,
+    usageText: form.usage_text || null,
+    contraindications: form.contraindications || null,
+    country: form.country || null,
+    shelfLife: form.shelf_life || null,
+    storageConditions: form.storage_conditions || null,
+    badDisclaimer: form.bad_disclaimer || null,
+    activeComponentsText: form.active_components_text || null,
     attributeValueIds: form.attribute_value_ids,
     productGroupId: form.product_group_id ? Number(form.product_group_id) : null,
+    relatedBlogPostIds: form.related_blog_post_ids,
+    certificateIds: form.certificate_ids,
     features: listFromLines(form.features),
     wbLink: form.wb_link || null,
     ozonLink: form.ozon_link || null,

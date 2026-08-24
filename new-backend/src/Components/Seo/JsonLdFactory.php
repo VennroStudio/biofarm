@@ -6,6 +6,7 @@ namespace App\Components\Seo;
 
 use App\Components\Setting\SiteSettings;
 use App\Http\View\Blog\BlogPostView;
+use App\Http\View\Faq\FaqItemView;
 use App\Http\View\Product\ProductCardView;
 use App\Http\View\Product\ProductPageProductView;
 use DateTimeImmutable;
@@ -28,14 +29,14 @@ final readonly class JsonLdFactory
         $email = $this->stringSetting('site_email', 'bio.active@bk.ru');
 
         return array_filter([
-            '@context'     => 'https://schema.org',
-            '@type'        => 'Organization',
-            'name'         => $name,
-            'url'          => $this->urls->baseUrl(),
-            'logo'         => $this->urls->absolute($this->stringSetting('site_logo_url', '/uploads/images/logo.png')),
-            'telephone'    => $phone,
-            'email'        => $email,
-            'address'      => [
+            '@context'  => 'https://schema.org',
+            '@type'     => 'Organization',
+            'name'      => $name,
+            'url'       => $this->urls->baseUrl(),
+            'logo'      => $this->urls->absolute($this->stringSetting('site_logo_url', '/uploads/images/logo.png')),
+            'telephone' => $phone,
+            'email'     => $email,
+            'address'   => [
                 '@type'           => 'PostalAddress',
                 'addressCountry'  => $this->stringSetting('site_address_country', 'RU'),
                 'addressRegion'   => $this->stringSetting('site_address_region', 'Томская область'),
@@ -128,7 +129,7 @@ final readonly class JsonLdFactory
                 '@type' => 'Brand',
                 'name'  => $this->stringSetting('site_name', 'БИОФАРМ'),
             ],
-            'offers'      => [
+            'offers' => [
                 '@type'         => 'Offer',
                 'url'           => $this->urls->absolute('/product/' . $product->slug),
                 'priceCurrency' => 'RUB',
@@ -151,6 +152,11 @@ final readonly class JsonLdFactory
                 'ratingValue' => $product->ratingRate,
                 'reviewCount' => $product->ratingCount,
             ];
+        }
+
+        $additionalProperties = $this->productAdditionalProperties($product);
+        if ($additionalProperties !== []) {
+            $schema['additionalProperty'] = $additionalProperties;
         }
 
         return $schema;
@@ -185,17 +191,17 @@ final readonly class JsonLdFactory
     public function blogPosting(BlogPostView $post): array
     {
         $schema = [
-            '@context'         => 'https://schema.org',
-            '@type'            => 'BlogPosting',
-            'headline'         => $post->title,
-            'description'      => $post->excerpt,
-            'image'            => $this->urls->absolute($post->image),
-            'url'              => $this->urls->absolute('/blog/' . $post->slug),
-            'author'           => [
+            '@context'    => 'https://schema.org',
+            '@type'       => 'BlogPosting',
+            'headline'    => $post->title,
+            'description' => $post->excerpt,
+            'image'       => $this->urls->absolute($post->image),
+            'url'         => $this->urls->absolute('/blog/' . $post->slug),
+            'author'      => [
                 '@type' => 'Person',
                 'name'  => $post->authorName,
             ],
-            'publisher'        => [
+            'publisher' => [
                 '@type' => 'Organization',
                 'name'  => $this->stringSetting('site_name', 'БИОФАРМ'),
                 'logo'  => [
@@ -215,6 +221,29 @@ final readonly class JsonLdFactory
         return $schema;
     }
 
+    /**
+     * @param list<FaqItemView> $items
+     * @return array<string, mixed>
+     */
+    public function faqPage(array $items): array
+    {
+        return [
+            '@context'   => 'https://schema.org',
+            '@type'      => 'FAQPage',
+            'mainEntity' => array_map(
+                static fn (FaqItemView $item): array => [
+                    '@type'          => 'Question',
+                    'name'           => $item->question,
+                    'acceptedAnswer' => [
+                        '@type' => 'Answer',
+                        'text'  => trim(strip_tags($item->answer)),
+                    ],
+                ],
+                $items,
+            ),
+        ];
+    }
+
     private function date(?string $date): ?string
     {
         if ($date === null || trim($date) === '') {
@@ -222,7 +251,7 @@ final readonly class JsonLdFactory
         }
 
         try {
-            return (new DateTimeImmutable($date))->format(DATE_ATOM);
+            return new DateTimeImmutable($date)->format(DATE_ATOM);
         } catch (Throwable) {
             return null;
         }
@@ -235,6 +264,35 @@ final readonly class JsonLdFactory
             'preorder'     => 'https://schema.org/PreOrder',
             default        => 'https://schema.org/InStock',
         };
+    }
+
+    /**
+     * @return list<array{ '@type': string, name: string, value: string }>
+     */
+    private function productAdditionalProperties(ProductPageProductView $product): array
+    {
+        $properties = [
+            'Состав'              => $product->ingredients,
+            'Активные компоненты' => $product->activeComponentsText,
+            'Страна производства' => $product->country,
+            'Срок годности'       => $product->shelfLife,
+            'Условия хранения'    => $product->storageConditions,
+        ];
+
+        $items = [];
+        foreach ($properties as $name => $value) {
+            if ($value === null || trim($value) === '') {
+                continue;
+            }
+
+            $items[] = [
+                '@type' => 'PropertyValue',
+                'name'  => $name,
+                'value' => trim($value),
+            ];
+        }
+
+        return $items;
     }
 
     private function stringSetting(string $key, string $default): string

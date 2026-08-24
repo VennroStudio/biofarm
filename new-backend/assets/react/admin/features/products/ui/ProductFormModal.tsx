@@ -1,15 +1,18 @@
 import type { Dispatch, FormEvent, SetStateAction } from 'react';
 import { ImageUploader } from '../../media/ui/ImageUploader';
-import { Button, Field, inputClass, Modal, textareaClass } from '../../../shared/ui';
-import type { Category, ProductAttribute, ProductGroup } from '../../../types';
+import { Button, ErrorAlert, Field, inputClass, Modal, textareaClass } from '../../../shared/ui';
+import type { BlogPost, Category, Certificate, ProductAttribute, ProductGroup } from '../../../types';
 import { hasProductImage, setMainImage, type ProductForm, type ProductImageForm } from '../model/productForm';
 
 type Props = {
   categories: Category[];
   attributes: ProductAttribute[];
   productGroups: ProductGroup[];
+  blogPosts: BlogPost[];
+  certificates: Certificate[];
   form: ProductForm;
   open: boolean;
+  error?: string | null;
   saving: boolean;
   setForm: Dispatch<SetStateAction<ProductForm>>;
   onAddImage: (url: string) => void;
@@ -21,8 +24,11 @@ export function ProductFormModal({
   categories,
   attributes,
   productGroups,
+  blogPosts,
+  certificates,
   form,
   open,
+  error,
   saving,
   setForm,
   onAddImage,
@@ -33,42 +39,48 @@ export function ProductFormModal({
     ids.includes(id) ? ids.filter((item) => item !== id) : [...ids, id]
   );
   const updateImage = (index: number, updates: Partial<ProductImageForm>) => {
-    const imageItems = form.image_items.map((item, itemIndex) => (
-      itemIndex === index ? { ...item, ...updates } : item
-    ));
-    const mainImage = imageItems.find((item) => item.is_main) ?? imageItems[0];
+    setForm((current) => {
+      const imageItems = current.image_items.map((item, itemIndex) => (
+        itemIndex === index ? { ...item, ...updates } : item
+      ));
+      const mainImage = imageItems.find((item) => item.is_main) ?? imageItems[0];
 
-    setForm({
-      ...form,
-      image_items: imageItems,
-      image: mainImage?.path ?? '',
-      image_alt: mainImage?.alt ?? '',
+      return {
+        ...current,
+        image_items: imageItems,
+        image: mainImage?.path ?? '',
+        image_alt: mainImage?.alt ?? '',
+      };
     });
   };
   const removeImage = (index: number) => {
-    const imageItems = form.image_items.filter((_, itemIndex) => itemIndex !== index)
-      .map((item, itemIndex) => ({ ...item, sort_order: itemIndex }));
-    const normalized = imageItems.length > 0 && !imageItems.some((item) => item.is_main)
-      ? setMainImage(imageItems, 0)
-      : imageItems;
-    const mainImage = normalized.find((item) => item.is_main) ?? normalized[0];
+    setForm((current) => {
+      const imageItems = current.image_items.filter((_, itemIndex) => itemIndex !== index)
+        .map((item, itemIndex) => ({ ...item, sort_order: itemIndex }));
+      const normalized = imageItems.length > 0 && !imageItems.some((item) => item.is_main)
+        ? setMainImage(imageItems, 0)
+        : imageItems;
+      const mainImage = normalized.find((item) => item.is_main) ?? normalized[0];
 
-    setForm({
-      ...form,
-      image_items: normalized,
-      image: mainImage?.path ?? '',
-      image_alt: mainImage?.alt ?? '',
+      return {
+        ...current,
+        image_items: normalized,
+        image: mainImage?.path ?? '',
+        image_alt: mainImage?.alt ?? '',
+      };
     });
   };
   const markMainImage = (index: number) => {
-    const imageItems = setMainImage(form.image_items, index);
-    const mainImage = imageItems[index];
+    setForm((current) => {
+      const imageItems = setMainImage(current.image_items, index);
+      const mainImage = imageItems[index];
 
-    setForm({
-      ...form,
-      image_items: imageItems,
-      image: mainImage?.path ?? '',
-      image_alt: mainImage?.alt ?? '',
+      return {
+        ...current,
+        image_items: imageItems,
+        image: mainImage?.path ?? '',
+        image_alt: mainImage?.alt ?? '',
+      };
     });
   };
 
@@ -89,6 +101,7 @@ export function ProductFormModal({
       )}
     >
       <form id="admin-product-form" className="grid gap-4" onSubmit={onSubmit}>
+        <ErrorAlert>{error}</ErrorAlert>
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="Название *">
             <input className={inputClass} value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} />
@@ -143,6 +156,33 @@ export function ProductFormModal({
           <input className={inputClass} value={form.ingredients} onChange={(event) => setForm({ ...form, ingredients: event.target.value })} />
         </Field>
 
+        <div className="grid gap-4 rounded-lg border border-[#e4e5da] bg-[#fbfaf4] p-4">
+          <p className="text-sm font-semibold text-[#26382d]">БАД и применение</p>
+          <Field label="Активные компоненты">
+            <textarea className={textareaClass} value={form.active_components_text} onChange={(event) => setForm({ ...form, active_components_text: event.target.value })} />
+          </Field>
+          <Field label="Способ применения">
+            <textarea className={textareaClass} value={form.usage_text} onChange={(event) => setForm({ ...form, usage_text: event.target.value })} />
+          </Field>
+          <Field label="Противопоказания">
+            <textarea className={textareaClass} value={form.contraindications} onChange={(event) => setForm({ ...form, contraindications: event.target.value })} />
+          </Field>
+          <div className="grid gap-4 md:grid-cols-3">
+            <Field label="Страна производства">
+              <input className={inputClass} value={form.country} onChange={(event) => setForm({ ...form, country: event.target.value })} />
+            </Field>
+            <Field label="Срок годности">
+              <input className={inputClass} value={form.shelf_life} onChange={(event) => setForm({ ...form, shelf_life: event.target.value })} />
+            </Field>
+            <Field label="Условия хранения">
+              <input className={inputClass} value={form.storage_conditions} onChange={(event) => setForm({ ...form, storage_conditions: event.target.value })} />
+            </Field>
+          </div>
+          <Field label="Дисклеймер БАД">
+            <textarea className={textareaClass} value={form.bad_disclaimer} onChange={(event) => setForm({ ...form, bad_disclaimer: event.target.value })} />
+          </Field>
+        </div>
+
         {attributes.filter((attribute) => attribute.values.length > 0).map((attribute) => (
           <div key={attribute.id} className="space-y-2">
             <p className="text-sm font-semibold text-[#26382d]">{attribute.name}</p>
@@ -169,6 +209,52 @@ export function ProductFormModal({
             </select>
           </Field>
         </div>
+
+        {blogPosts.length > 0 && (
+          <div className="space-y-2 rounded-lg border border-[#e4e5da] bg-[#fbfaf4] p-4">
+            <p className="text-sm font-semibold text-[#26382d]">Связанные статьи</p>
+            <div className="grid gap-2">
+              {blogPosts.map((post) => (
+                <label key={post.id} className="flex items-start gap-2 rounded-md border border-[#e4e5da] bg-white px-3 py-2 text-sm font-semibold text-[#26382d]">
+                  <input
+                    type="checkbox"
+                    className="mt-1"
+                    checked={form.related_blog_post_ids.includes(post.id)}
+                    onChange={() => setForm({ ...form, related_blog_post_ids: toggleId(form.related_blog_post_ids, post.id) })}
+                  />
+                  <span>
+                    {post.title}
+                    <span className="block text-xs font-medium text-[#789083]">{post.is_published ? 'Опубликована' : 'Черновик'}</span>
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {certificates.length > 0 && (
+          <div className="space-y-2 rounded-lg border border-[#e4e5da] bg-[#fbfaf4] p-4">
+            <p className="text-sm font-semibold text-[#26382d]">Сертификаты товара</p>
+            <div className="grid gap-2">
+              {certificates.map((certificate) => (
+                <label key={certificate.id} className="flex items-start gap-2 rounded-md border border-[#e4e5da] bg-white px-3 py-2 text-sm font-semibold text-[#26382d]">
+                  <input
+                    type="checkbox"
+                    className="mt-1"
+                    checked={form.certificate_ids.includes(certificate.id)}
+                    onChange={() => setForm({ ...form, certificate_ids: toggleId(form.certificate_ids, certificate.id) })}
+                  />
+                  <span>
+                    {certificate.title}
+                    {certificate.product_name && !form.certificate_ids.includes(certificate.id) && (
+                      <span className="block text-xs font-medium text-[#789083]">Сейчас привязан: {certificate.product_name}</span>
+                    )}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="space-y-2">
           <p className="text-sm font-semibold text-[#26382d]">Изображения товара *</p>

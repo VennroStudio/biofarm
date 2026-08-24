@@ -1,5 +1,5 @@
 import { Lock } from 'lucide-react';
-import type { Dispatch, SetStateAction } from 'react';
+import type { Dispatch, FormEvent, SetStateAction } from 'react';
 import { Button, Card, Field, inputClass } from '../../../shared/ui';
 
 export type PasswordForm = {
@@ -10,10 +10,14 @@ export type PasswordForm = {
 
 type Props = {
   password: PasswordForm;
+  error: string | null;
+  saved: boolean;
+  saving: boolean;
   setPassword: Dispatch<SetStateAction<PasswordForm>>;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 };
 
-export function PasswordSettingsCard({ password, setPassword }: Props) {
+export function PasswordSettingsCard({ password, error, saved, saving, setPassword, onSubmit }: Props) {
   return (
     <Card className="p-6">
       <div className="mb-6">
@@ -23,7 +27,7 @@ export function PasswordSettingsCard({ password, setPassword }: Props) {
         </h2>
         <p className="text-sm text-[#789083]">Измените пароль для входа в админ-панель</p>
       </div>
-      <div className="space-y-4">
+      <form className="space-y-4" onSubmit={onSubmit}>
         <Field label="Текущий пароль">
           <input
             className={inputClass}
@@ -51,11 +55,15 @@ export function PasswordSettingsCard({ password, setPassword }: Props) {
             placeholder="Повторите новый пароль"
           />
         </Field>
-        <Button type="button" variant="outline" disabled>
-          <Lock className="h-4 w-4" />
-          Изменить пароль
-        </Button>
-      </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button type="submit" variant="outline" disabled={saving}>
+            <Lock className="h-4 w-4" />
+            {saving ? 'Смена пароля...' : 'Изменить пароль'}
+          </Button>
+          {saved && <span className="text-sm font-semibold text-[#2f7d4b]">Пароль изменён</span>}
+          {error && <span className="text-sm font-semibold text-[#c44747]">{error}</span>}
+        </div>
+      </form>
     </Card>
   );
 }

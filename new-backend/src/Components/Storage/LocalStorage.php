@@ -25,11 +25,15 @@ final readonly class LocalStorage implements StorageInterface
             throw new RuntimeException("Cannot create upload directory: {$directory}");
         }
 
-        $bytes = \is_string($content) ? $content : $this->streamContents($content);
+        if (\is_string($content)) {
+            if (file_put_contents($targetPath, $content) === false) {
+                throw new RuntimeException("Cannot write uploaded file: {$targetPath}");
+            }
 
-        if (file_put_contents($targetPath, $bytes) === false) {
-            throw new RuntimeException("Cannot write uploaded file: {$targetPath}");
+            return $this->url($path);
         }
+
+        $this->writeStream($targetPath, $content);
 
         return $this->url($path);
     }
@@ -59,12 +63,30 @@ final readonly class LocalStorage implements StorageInterface
         return rtrim($this->storagePath, '/') . '/' . ltrim($path, '/');
     }
 
-    private function streamContents(StreamInterface $stream): string
+    private function writeStream(string $targetPath, StreamInterface $stream): void
     {
         if ($stream->isSeekable()) {
             $stream->rewind();
         }
 
-        return $stream->getContents();
+        $target = fopen($targetPath, 'wb');
+        if ($target === false) {
+            throw new RuntimeException("Cannot open uploaded file target: {$targetPath}");
+        }
+
+        try {
+            while (!$stream->eof()) {
+                $chunk = $stream->read(8192);
+                if ($chunk === '') {
+                    break;
+                }
+
+                if (fwrite($target, $chunk) === false) {
+                    throw new RuntimeException("Cannot write uploaded file: {$targetPath}");
+                }
+            }
+        } finally {
+            fclose($target);
+        }
     }
 }

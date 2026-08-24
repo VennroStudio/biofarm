@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Components\Http\Request;
 
+use App\Components\Exception\DomainExceptionModule;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UploadedFileInterface;
-use RuntimeException;
 
 final readonly class RequestFile
 {
@@ -15,8 +15,14 @@ final readonly class RequestFile
     private function __construct(
         private UploadedFileInterface $file,
     ) {
+        $isTooLarge = $this->file->getError() === UPLOAD_ERR_INI_SIZE || $this->file->getError() === UPLOAD_ERR_FORM_SIZE;
         if ($this->file->getError() !== UPLOAD_ERR_OK) {
-            throw new RuntimeException('File upload error code: ' . $this->file->getError());
+            throw new DomainExceptionModule(
+                module: 'components',
+                message: $isTooLarge ? 'error.file_too_large' : 'error.file_upload_failed',
+                code: 16,
+                status: $isTooLarge ? 413 : 422,
+            );
         }
 
         $this->path = $this->buildTempPath();

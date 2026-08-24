@@ -49,7 +49,7 @@ export function BlogTable({ posts, onEdit, onRemove }: Props) {
               </TableCell>
               <TableCell><Badge tone="gray">{post.category_id}</Badge></TableCell>
               <TableCell>{post.author_name}</TableCell>
-              <TableCell>{formatDate(post.created_at)}</TableCell>
+              <TableCell>{formatDate(post.published_at || post.created_at)}</TableCell>
               <TableCell>
                 <div className="flex justify-end gap-2">
                   <a

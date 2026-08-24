@@ -1,18 +1,19 @@
 import type { Dispatch, FormEvent, SetStateAction } from 'react';
-import { Button, Field, inputClass, Modal, textareaClass } from '../../../shared/ui';
+import { Button, ErrorAlert, Field, inputClass, Modal, textareaClass } from '../../../shared/ui';
 import type { AttributeValueForm } from '../model/attributeForm';
 
 type Props = {
   attributeName: string;
   form: AttributeValueForm;
   open: boolean;
+  error?: string | null;
   saving: boolean;
   setForm: Dispatch<SetStateAction<AttributeValueForm>>;
   onClose: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 };
 
-export function AttributeValueFormModal({ attributeName, form, open, saving, setForm, onClose, onSubmit }: Props) {
+export function AttributeValueFormModal({ attributeName, form, open, error, saving, setForm, onClose, onSubmit }: Props) {
   return (
     <Modal
       open={open}
@@ -30,6 +31,7 @@ export function AttributeValueFormModal({ attributeName, form, open, saving, set
       )}
     >
       <form id="admin-attribute-value-form" className="grid gap-4" onSubmit={onSubmit}>
+        <ErrorAlert>{error}</ErrorAlert>
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="Название *">
             <input className={inputClass} value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} />

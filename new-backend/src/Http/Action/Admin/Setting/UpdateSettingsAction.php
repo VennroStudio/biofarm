@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Action\Admin\Setting;
 
 use App\Components\Http\Response\JsonDataResponse;
+use App\Components\Setting\SiteSettings;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 use JsonException;
@@ -15,24 +16,6 @@ use Psr\Http\Server\RequestHandlerInterface;
 
 final readonly class UpdateSettingsAction implements RequestHandlerInterface
 {
-    private const array ALLOWED_KEYS = [
-        'referral_percent',
-        'registration_enabled',
-        'cart_enabled',
-        'order_bonus_enabled',
-        'order_bonus_percent',
-        'site_name',
-        'site_phone',
-        'site_email',
-        'site_logo_url',
-        'site_default_og_image',
-        'site_address_country',
-        'site_address_region',
-        'site_address_locality',
-        'site_address_street',
-        'robots_extra_disallow',
-    ];
-
     public function __construct(
         private Connection $connection,
     ) {}
@@ -48,7 +31,7 @@ final readonly class UpdateSettingsAction implements RequestHandlerInterface
         /** @var array<string, bool|float|int|string|null> $updated */
         $updated = [];
 
-        foreach (self::ALLOWED_KEYS as $key) {
+        foreach (SiteSettings::keys() as $key) {
             if (!\array_key_exists($key, $payload)) {
                 continue;
             }

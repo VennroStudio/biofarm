@@ -81,6 +81,27 @@ class Product
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private(set) ?string $ingredients;
 
+    #[ORM\Column(name: 'usage_text', type: Types::TEXT, nullable: true)]
+    private(set) ?string $usageText;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private(set) ?string $contraindications;
+
+    #[ORM\Column(type: Types::STRING, length: 100, nullable: true)]
+    private(set) ?string $country;
+
+    #[ORM\Column(name: 'shelf_life', type: Types::STRING, length: 100, nullable: true)]
+    private(set) ?string $shelfLife;
+
+    #[ORM\Column(name: 'storage_conditions', type: Types::STRING, length: 255, nullable: true)]
+    private(set) ?string $storageConditions;
+
+    #[ORM\Column(name: 'bad_disclaimer', type: Types::STRING, length: 500, nullable: true)]
+    private(set) ?string $badDisclaimer;
+
+    #[ORM\Column(name: 'active_components_text', type: Types::TEXT, nullable: true)]
+    private(set) ?string $activeComponentsText;
+
     /** @var list<string>|null */
     #[ORM\Column(type: Types::JSON, nullable: true)]
     private(set) ?array $features;
@@ -124,6 +145,13 @@ class Product
         ?array $images,
         ?string $badge,
         ?string $ingredients,
+        ?string $usageText,
+        ?string $contraindications,
+        ?string $country,
+        ?string $shelfLife,
+        ?string $storageConditions,
+        ?string $badDisclaimer,
+        ?string $activeComponentsText,
         ?array $features,
         ?string $wbLink,
         ?string $ozonLink,
@@ -156,6 +184,13 @@ class Product
         $this->description = $description;
         $this->shortDescription = $shortDescription;
         $this->ingredients = $ingredients;
+        $this->usageText = $usageText;
+        $this->contraindications = $contraindications;
+        $this->country = $country;
+        $this->shelfLife = $shelfLife;
+        $this->storageConditions = $storageConditions;
+        $this->badDisclaimer = $badDisclaimer;
+        $this->activeComponentsText = $activeComponentsText;
         $this->features = $features;
         $this->wbLink = $wbLink;
         $this->ozonLink = $ozonLink;
@@ -182,6 +217,13 @@ class Product
         ?array $images = null,
         ?string $badge = null,
         ?string $ingredients = null,
+        ?string $usageText = null,
+        ?string $contraindications = null,
+        ?string $country = null,
+        ?string $shelfLife = null,
+        ?string $storageConditions = null,
+        ?string $badDisclaimer = null,
+        ?string $activeComponentsText = null,
         ?array $features = null,
         ?string $wbLink = null,
         ?string $ozonLink = null,
@@ -208,6 +250,13 @@ class Product
             images: $images,
             badge: $badge,
             ingredients: $ingredients,
+            usageText: $usageText,
+            contraindications: $contraindications,
+            country: $country,
+            shelfLife: $shelfLife,
+            storageConditions: $storageConditions,
+            badDisclaimer: $badDisclaimer,
+            activeComponentsText: $activeComponentsText,
             features: $features,
             wbLink: $wbLink,
             ozonLink: $ozonLink,
@@ -241,6 +290,13 @@ class Product
         ?array $images,
         ?string $badge,
         ?string $ingredients,
+        ?string $usageText,
+        ?string $contraindications,
+        ?string $country,
+        ?string $shelfLife,
+        ?string $storageConditions,
+        ?string $badDisclaimer,
+        ?string $activeComponentsText,
         ?array $features,
         ?string $wbLink,
         ?string $ozonLink,
@@ -274,6 +330,13 @@ class Product
         $this->images = $images;
         $this->badge = $badge;
         $this->ingredients = $ingredients;
+        $this->usageText = $usageText;
+        $this->contraindications = $contraindications;
+        $this->country = $country;
+        $this->shelfLife = $shelfLife;
+        $this->storageConditions = $storageConditions;
+        $this->badDisclaimer = $badDisclaimer;
+        $this->activeComponentsText = $activeComponentsText;
         $this->features = $features;
         $this->wbLink = $wbLink;
         $this->ozonLink = $ozonLink;

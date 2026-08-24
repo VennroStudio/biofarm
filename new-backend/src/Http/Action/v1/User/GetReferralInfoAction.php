@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Action\v1\User;
 
+use App\Components\Exception\DomainExceptionModule;
 use App\Components\Http\Middleware\Identity\RequestIdentity;
 use App\Components\Http\Response\JsonDataResponse;
 use App\Components\Setting\SiteSettings;
@@ -27,6 +28,10 @@ final readonly class GetReferralInfoAction implements RequestHandlerInterface
     #[Override]
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
+        if (!$this->settings->bool('referral_enabled')) {
+            throw new DomainExceptionModule('user', 'error.referral_disabled', 37, status: 403);
+        }
+
         $identity = RequestIdentity::get($request);
         $referralPercent = (int)$this->settings->get('referral_percent', 5);
         $profile = $this->profile($identity->id);

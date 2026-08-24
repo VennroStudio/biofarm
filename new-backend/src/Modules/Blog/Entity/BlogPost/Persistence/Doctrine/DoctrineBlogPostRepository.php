@@ -57,6 +57,6 @@ final readonly class DoctrineBlogPostRepository implements BlogPostRepository
     #[Override]
     public function findBySlug(string $slug): ?BlogPost
     {
-        return $this->repo->findOneBy(['slug' => $slug, 'deletedAt' => null]);
+        return $this->repo->findOneBy(['slug' => $slug]);
     }
 }

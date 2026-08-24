@@ -8,9 +8,11 @@ use Doctrine\DBAL\Connection;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Override;
+use RuntimeException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Throwable;
 
 final class LocalizeReviewImagesCommand extends Command
 {
@@ -22,7 +24,7 @@ final class LocalizeReviewImagesCommand extends Command
         private readonly Connection $connection,
     ) {
         parent::__construct();
-        $this->publicDir = dirname(__DIR__, 2) . '/public';
+        $this->publicDir = \dirname(__DIR__, 2) . '/public';
     }
 
     #[Override]
@@ -34,7 +36,7 @@ final class LocalizeReviewImagesCommand extends Command
     }
 
     /**
-     * @throws \Throwable
+     * @throws Throwable
      */
     #[Override]
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -50,8 +52,8 @@ final class LocalizeReviewImagesCommand extends Command
         }
 
         $targetDir = $this->publicDir . self::PUBLIC_PATH;
-        if (!is_dir($targetDir) && !mkdir($targetDir, 0775, true) && !is_dir($targetDir)) {
-            throw new \RuntimeException('Unable to create directory: ' . $targetDir);
+        if (!is_dir($targetDir) && !mkdir($targetDir, 0o775, true) && !is_dir($targetDir)) {
+            throw new RuntimeException('Unable to create directory: ' . $targetDir);
         }
 
         $client = new Client([

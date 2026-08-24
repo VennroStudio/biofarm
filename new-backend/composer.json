@@ -2,6 +2,7 @@
     "name": "slim-backend/api",
     "description": "",
     "type": "project",
+    "license": "proprietary",
     "authors": [
         {
             "name": "Vennro"

@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-use App\Console\HelloCommand;
+use App\Components\Image\ImageVariantGenerator;
 use App\Console\GenerateImageVariantsCommand;
+use App\Console\HelloCommand;
 use App\Console\LocalizeBlogImagesCommand;
 use App\Console\LocalizeProductImagesCommand;
 use App\Console\LocalizeReviewImagesCommand;
-use App\Components\Image\ImageVariantGenerator;
 use Psr\Container\ContainerInterface;
 
 return [

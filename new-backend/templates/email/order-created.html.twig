@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <title>Ваш заказ принят</title>
+</head>
+<body style="margin:0;background:#f6f5ee;color:#20362c;font-family:Arial,sans-serif;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f6f5ee;padding:24px;">
+    <tr>
+        <td align="center">
+            <table role="presentation" width="640" cellpadding="0" cellspacing="0" style="max-width:640px;background:#ffffff;border:1px solid #e4e5da;border-radius:12px;padding:28px;">
+                <tr>
+                    <td>
+                        <p style="margin:0 0 8px;color:#789083;">{{ siteName }}</p>
+                        <h1 style="margin:0 0 16px;font-size:28px;line-height:1.2;">Заказ {{ order.id }} принят</h1>
+                        <p style="margin:0 0 24px;color:#52665b;">Мы получили ваш заказ и свяжемся с вами для подтверждения.</p>
+
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+                            {% for item in items %}
+                                <tr>
+                                    <td style="padding:10px 0;border-bottom:1px solid #edf0e7;">{{ item.product_name }} × {{ item.quantity }}</td>
+                                    <td align="right" style="padding:10px 0;border-bottom:1px solid #edf0e7;font-weight:700;">{{ (item.price * item.quantity)|money }}</td>
+                                </tr>
+                            {% endfor %}
+                        </table>
+
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:20px;">
+                            <tr>
+                                <td style="color:#789083;">Товары</td>
+                                <td align="right">{{ order.subtotal|money }}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding-top:8px;color:#789083;">Доставка</td>
+                                <td align="right" style="padding-top:8px;">{{ order.deliveryCost|money }}</td>
+                            </tr>
+                            {% if order.discountAmount > 0 or order.bonusUsed > 0 %}
+                                <tr>
+                                    <td style="padding-top:8px;color:#789083;">Скидки и бонусы</td>
+                                    <td align="right" style="padding-top:8px;">-{{ (order.discountAmount + order.bonusUsed)|money }}</td>
+                                </tr>
+                            {% endif %}
+                            <tr>
+                                <td style="padding-top:16px;font-size:20px;font-weight:700;">Итого</td>
+                                <td align="right" style="padding-top:16px;font-size:20px;font-weight:700;">{{ order.total|money }}</td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

@@ -36,7 +36,7 @@ final readonly class UpdateProductCategoryHandler
 
         $category = $this->categoryRepository->getById($command->categoryId);
         $slug = $this->slug($command->slug, $command->name);
-        $existing = $this->categoryRepository->findBySlug($slug);
+        $existing = $this->categoryRepository->findAnyBySlug($slug);
 
         if ($existing !== null && $existing->id !== $category->id) {
             throw new DomainExceptionModule(
@@ -89,12 +89,35 @@ final readonly class UpdateProductCategoryHandler
             );
         }
 
-        if ($this->categoryRepository->findById($parentId) === null) {
+        $parent = $this->categoryRepository->findById($parentId);
+        if ($parent === null) {
             throw new DomainExceptionModule(
                 module: 'product',
                 message: 'error.category_parent_not_found',
                 code: 4,
             );
+        }
+
+        $visited = [];
+        while ($parent !== null && $parent->parentId !== null) {
+            if ($parent->parentId === $categoryId) {
+                throw new DomainExceptionModule(
+                    module: 'product',
+                    message: 'error.category_parent_cycle',
+                    code: 5,
+                );
+            }
+
+            if (isset($visited[$parent->id])) {
+                throw new DomainExceptionModule(
+                    module: 'product',
+                    message: 'error.category_parent_cycle',
+                    code: 5,
+                );
+            }
+
+            $visited[$parent->id] = true;
+            $parent = $this->categoryRepository->findById($parent->parentId);
         }
     }
 }

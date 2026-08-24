@@ -15,4 +15,8 @@ interface ProductCategoryRepository
     public function findById(int $id): ?ProductCategory;
 
     public function findBySlug(string $slug): ?ProductCategory;
+
+    public function findAnyBySlug(string $slug): ?ProductCategory;
+
+    public function countChildren(int $parentId): int;
 }

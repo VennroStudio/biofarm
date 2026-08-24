@@ -1,4 +1,4 @@
-import { ShoppingCart, UserPlus } from 'lucide-react';
+import { Heart, ShoppingCart, UserPlus, Users, Wallet } from 'lucide-react';
 import type { ComponentType } from 'react';
 import { Card } from '../../../shared/ui';
 import type { Settings } from '../../../types';
@@ -59,6 +59,27 @@ export function FeatureSettingsCard({ settings, onChange }: Props) {
           description="Показывает вкладку регистрации в личном кабинете."
           icon={UserPlus}
           onToggle={() => onChange({ ...settings, registration_enabled: !settings.registration_enabled })}
+        />
+        <FeatureToggle
+          checked={settings.referral_enabled}
+          label="Реферальная программа"
+          description="Показывает партнёрский блок в профиле и начисляет реферальные бонусы только при включенных заказах."
+          icon={Users}
+          onToggle={() => onChange({ ...settings, referral_enabled: !settings.referral_enabled })}
+        />
+        <FeatureToggle
+          checked={settings.withdrawals_enabled}
+          label="Заявки на вывод"
+          description="Показывает вывод средств партнёрам только при включенной реферальной программе."
+          icon={Wallet}
+          onToggle={() => onChange({ ...settings, withdrawals_enabled: !settings.withdrawals_enabled })}
+        />
+        <FeatureToggle
+          checked={settings.favorites_enabled}
+          label="Избранное"
+          description="Показывает избранные товары и кнопки добавления в избранное."
+          icon={Heart}
+          onToggle={() => onChange({ ...settings, favorites_enabled: !settings.favorites_enabled })}
         />
       </div>
     </Card>

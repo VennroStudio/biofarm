@@ -69,7 +69,7 @@ final readonly class CreateProductCategoryHandler
 
     private function assertSlugFree(string $slug): void
     {
-        if ($this->categoryRepository->findBySlug($slug) !== null) {
+        if ($this->categoryRepository->findAnyBySlug($slug) !== null) {
             throw new DomainExceptionModule(
                 module: 'product',
                 message: 'error.category_slug_already_exists',

@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Action\Admin\Media;
 
 use App\Components\Flusher\FlusherInterface;
+use App\Components\Exception\DomainExceptionModule;
 use App\Components\Http\Request\RequestFile;
 use App\Components\Http\Response\JsonDataResponse;
-use App\Components\Http\Response\JsonErrorResponse;
 use App\Components\Storage\FileUploaderService;
 use App\Components\Storage\ImageFileValidator;
 use App\Modules\Media\Entity\MediaAsset\MediaAsset;
@@ -37,7 +37,12 @@ final readonly class UploadMediaAction implements RequestHandlerInterface
     {
         $file = RequestFile::extract($request, 'file');
         if ($file === null) {
-            return new JsonErrorResponse(1, 'file_required', status: 422);
+            throw new DomainExceptionModule(
+                module: 'components',
+                message: 'error.file_required',
+                code: 17,
+                status: 422,
+            );
         }
 
         $body = (array)$request->getParsedBody();

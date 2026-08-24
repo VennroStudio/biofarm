@@ -1,18 +1,19 @@
 import type { Dispatch, FormEvent, SetStateAction } from 'react';
 import { ImageUploader } from '../../media/ui/ImageUploader';
-import { Button, Field, inputClass, Modal, textareaClass } from '../../../shared/ui';
+import { Button, ErrorAlert, Field, inputClass, Modal, textareaClass } from '../../../shared/ui';
 import type { BlogForm } from '../model/blogForm';
 
 type Props = {
   form: BlogForm;
   open: boolean;
+  error?: string | null;
   saving: boolean;
   setForm: Dispatch<SetStateAction<BlogForm>>;
   onClose: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 };
 
-export function BlogFormModal({ form, open, saving, setForm, onClose, onSubmit }: Props) {
+export function BlogFormModal({ form, open, error, saving, setForm, onClose, onSubmit }: Props) {
   return (
     <Modal
       open={open}
@@ -29,6 +30,7 @@ export function BlogFormModal({ form, open, saving, setForm, onClose, onSubmit }
       )}
     >
       <form id="admin-blog-form" className="grid gap-4" onSubmit={onSubmit}>
+        <ErrorAlert>{error}</ErrorAlert>
         <Field label="Заголовок *">
           <input className={inputClass} value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} />
         </Field>
@@ -45,7 +47,7 @@ export function BlogFormModal({ form, open, saving, setForm, onClose, onSubmit }
         </div>
         <div className="space-y-2">
           <p className="text-sm font-semibold text-[#26382d]">Изображение</p>
-          <ImageUploader scope="blog" onUploaded={(url) => setForm({ ...form, image: url })} />
+          <ImageUploader scope="blog" onUploaded={(url) => setForm((current) => ({ ...current, image: url }))} />
           {form.image ? (
             <div className="grid gap-3 rounded-lg border border-[#e4e5da] bg-white p-3 md:grid-cols-[88px_1fr]">
               <img src={form.image} alt={form.image_alt || form.title} className="h-20 w-20 rounded object-cover" />

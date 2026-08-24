@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace App\Http\Action\v1\User;
 
+use App\Components\Exception\AccessDeniedException;
+use App\Components\Http\Middleware\Identity\RequestIdentity;
 use App\Components\Http\Response\JsonDataItemsResponse;
 use App\Components\Serializer\Denormalizer;
 use App\Components\Validator\Validator;
 use App\Http\Unifier\User\UserUnifier;
 use App\Modules\User\Query\User\FindAll\UserFindAllFetcher;
 use App\Modules\User\Query\User\FindAll\UserFindAllQuery;
+use App\Modules\User\Entity\User\Fields\Enums\UserRole;
 use Doctrine\DBAL\Exception;
 use JsonException;
 use OpenApi\Attributes as OA;
@@ -55,6 +58,11 @@ final readonly class GetUsersAction implements RequestHandlerInterface
     #[Override]
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
+        $identity = RequestIdentity::get($request);
+        if (!\in_array($identity->role, [UserRole::ADMIN, UserRole::DEVELOPER, UserRole::EDITOR], true)) {
+            throw new AccessDeniedException();
+        }
+
         $query = $this->denormalizer->denormalize(
             $request->getQueryParams(),
             UserFindAllQuery::class,

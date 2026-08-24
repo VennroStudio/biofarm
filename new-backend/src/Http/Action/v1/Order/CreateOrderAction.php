@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Action\v1\Order;
 
+use App\Components\Exception\DomainExceptionModule;
 use App\Components\Http\Middleware\Identity\RequestIdentity;
 use App\Components\Http\Response\JsonDataResponse;
-use App\Components\Http\Response\JsonErrorResponse;
 use App\Components\Serializer\Denormalizer;
 use App\Components\Setting\SiteSettings;
 use App\Components\Validator\Validator;
@@ -14,6 +14,7 @@ use App\Modules\Order\Command\Order\Create\CreateOrderCommand;
 use App\Modules\Order\Command\Order\Create\CreateOrderHandler;
 use App\Modules\User\Entity\User\Fields\Enums\UserRole;
 use DateMalformedStringException;
+use Doctrine\DBAL\Exception;
 use OpenApi\Attributes as OA;
 use Override;
 use Psr\Http\Message\ResponseInterface;
@@ -34,6 +35,7 @@ final readonly class CreateOrderAction implements RequestHandlerInterface
 
     /**
      * @throws DateMalformedStringException
+     * @throws Exception
      * @throws ExceptionInterface
      * @throws RandomException
      */
@@ -44,11 +46,19 @@ final readonly class CreateOrderAction implements RequestHandlerInterface
         $payload = (array)$request->getParsedBody();
 
         if ($identity->role === UserRole::USER && !$this->settings->bool('cart_enabled')) {
-            return new JsonErrorResponse(1, 'cart_disabled', status: 403);
+            throw new DomainExceptionModule(
+                module: 'order',
+                message: 'error.cart_disabled',
+                code: 20,
+            );
         }
 
         if ($identity->role === UserRole::USER) {
             $payload['userId'] = $identity->id;
+            $payload['orderId'] = null;
+            $payload['status'] = 'pending';
+            $payload['paymentStatus'] = 'pending';
+            $payload['payment_status'] = 'pending';
         }
 
         $payload = array_merge($payload, [
@@ -58,12 +68,6 @@ final readonly class CreateOrderAction implements RequestHandlerInterface
 
         $command = $this->denormalizer->denormalize($payload, CreateOrderCommand::class);
         $this->validator->validate($command);
-        $orderId = $this->handler->handle($command);
-
-        return new JsonDataResponse([
-            'id'      => $orderId,
-            'user_id' => $command->userId,
-            'total'   => $command->total,
-        ], 201);
+        return new JsonDataResponse($this->handler->handle($command), 201);
     }
 }

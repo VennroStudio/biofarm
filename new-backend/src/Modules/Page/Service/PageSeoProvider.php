@@ -61,8 +61,7 @@ final readonly class PageSeoProvider
         string $description,
         string $ogType = 'website',
         string $robots = 'index, follow',
-    ): PageMetaView
-    {
+    ): PageMetaView {
         return $this->applySystem($systemKey, new PageMetaView(
             title: $title,
             description: $description,
@@ -70,7 +69,7 @@ final readonly class PageSeoProvider
             robots: $robots,
             ogTitle: $title,
             ogDescription: $description,
-            ogImage: $this->urls->absolute('/assets/images/og/default.jpg'),
+            ogImage: null,
             ogImageAlt: $title,
             ogType: $ogType,
             jsonLd: [

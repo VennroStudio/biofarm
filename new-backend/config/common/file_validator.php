@@ -2,10 +2,21 @@
 
 declare(strict_types=1);
 
+use App\Components\Storage\DocumentFileValidator;
 use App\Components\Storage\ImageFileValidator;
 use App\Components\Storage\VideoFileValidator;
 
 return [
+    DocumentFileValidator::class => static fn (): DocumentFileValidator => new DocumentFileValidator(
+        allowedMimeTypes: [
+            'application/pdf' => 'pdf',
+            'image/jpeg'      => 'jpg',
+            'image/png'       => 'png',
+            'image/webp'      => 'webp',
+        ],
+        maxFileSize: 30 * 1024 * 1024,
+    ),
+
     ImageFileValidator::class => static fn (): ImageFileValidator => new ImageFileValidator(
         allowedMimeTypes: [
             'image/jpeg' => 'jpg',

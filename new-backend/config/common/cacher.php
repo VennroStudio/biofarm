@@ -38,7 +38,7 @@ return [
             'host'     => env('REDIS_HOST'),
             'port'     => env_int('REDIS_PORT'),
             'user'     => env('REDIS_USER', ''),
-            'password' => env('REDIS_PASSWORD'),
+            'password' => env('REDIS_PASSWORD', ''),
         ],
     ],
 ];

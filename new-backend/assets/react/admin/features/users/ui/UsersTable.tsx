@@ -1,4 +1,4 @@
-import { Calendar, Mail, Phone, UserCheck } from 'lucide-react';
+import { Calendar, Edit, Mail, Phone, UserCheck } from 'lucide-react';
 import { formatDate, formatMoney } from '../../../shared/lib';
 import {
   AdminTable,
@@ -15,9 +15,10 @@ import type { AdminCustomer } from '../../../types';
 type Props = {
   users: AdminCustomer[];
   onTogglePartner: (user: AdminCustomer) => void;
+  onEdit: (user: AdminCustomer) => void;
 };
 
-export function UsersTable({ users, onTogglePartner }: Props) {
+export function UsersTable({ users, onTogglePartner, onEdit }: Props) {
   if (users.length === 0) {
     return <EmptyState>Пользователи не найдены</EmptyState>;
   }
@@ -64,10 +65,16 @@ export function UsersTable({ users, onTogglePartner }: Props) {
                 </span>
               </TableCell>
               <TableCell>
-                <Button variant={user.is_partner ? 'outline' : 'primary'} size="sm" onClick={() => onTogglePartner(user)}>
-                  <UserCheck className="h-4 w-4" />
-                  {user.is_partner ? 'Снять партнёра' : 'Сделать партнёром'}
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="outline" size="sm" onClick={() => onEdit(user)}>
+                    <Edit className="h-4 w-4" />
+                    Изменить
+                  </Button>
+                  <Button variant={user.is_partner ? 'outline' : 'primary'} size="sm" onClick={() => onTogglePartner(user)}>
+                    <UserCheck className="h-4 w-4" />
+                    {user.is_partner ? 'Снять партнёра' : 'Сделать партнёром'}
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           ))}

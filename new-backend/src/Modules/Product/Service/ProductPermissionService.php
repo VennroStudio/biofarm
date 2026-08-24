@@ -30,6 +30,7 @@ final readonly class ProductPermissionService
             ProductPermission::UPDATE,
             ProductPermission::DELETE => [
                 UserRole::ADMIN,
+                UserRole::DEVELOPER,
                 UserRole::EDITOR,
             ],
         };

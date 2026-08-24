@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Action\v1\User;
 
+use App\Components\Exception\DomainExceptionModule;
 use App\Components\Http\Middleware\Identity\RequestIdentity;
 use App\Components\Http\Response\JsonDataItemsResponse;
+use App\Components\Setting\SiteSettings;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
@@ -18,6 +20,7 @@ final readonly class GetReferralOrdersAction implements RequestHandlerInterface
 {
     public function __construct(
         private Connection $connection,
+        private SiteSettings $settings,
     ) {}
 
     /**
@@ -26,6 +29,10 @@ final readonly class GetReferralOrdersAction implements RequestHandlerInterface
     #[Override]
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
+        if (!$this->settings->bool('referral_enabled')) {
+            throw new DomainExceptionModule('user', 'error.referral_disabled', 37, status: 403);
+        }
+
         $identity = RequestIdentity::get($request);
         $refs = [(string)$identity->id, $this->referralCode($identity->id)];
 

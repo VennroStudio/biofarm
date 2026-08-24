@@ -6,6 +6,7 @@ namespace App\Modules\Review\Command\Review\Update;
 
 use App\Components\Cacher\Cacher;
 use App\Components\Flusher\FlusherInterface;
+use App\Modules\Product\Entity\Product\ProductRepository;
 use App\Modules\Review\Entity\Review\ReviewRepository;
 use App\Modules\Review\Permission\ReviewPermission;
 use App\Modules\Review\Service\ReviewPermissionService;
@@ -16,6 +17,7 @@ final readonly class UpdateReviewHandler
 {
     public function __construct(
         private ReviewRepository $reviewRepository,
+        private ProductRepository $productRepository,
         private ReviewPermissionService $permissionService,
         private Cacher $cacher,
         private FlusherInterface $flusher,
@@ -29,6 +31,7 @@ final readonly class UpdateReviewHandler
         $this->permissionService->checkRole(UserRole::from($command->currentUserRole), ReviewPermission::UPDATE);
 
         $review = $this->reviewRepository->getById($command->reviewId);
+        $this->productRepository->getById($command->productId);
         $oldProductId = $review->productId;
 
         $review->edit(
@@ -39,6 +42,7 @@ final readonly class UpdateReviewHandler
             source: $command->source,
             userId: $command->userId,
             images: $command->images,
+            isApproved: $command->isApproved,
         );
 
         $this->deleteCache($oldProductId);

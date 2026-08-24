@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Components\Image;
 
+use Override;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
 
@@ -16,6 +17,7 @@ final class ImageVariantTwigExtension extends AbstractExtension
     /**
      * @return list<TwigFunction>
      */
+    #[Override]
     public function getFunctions(): array
     {
         return [

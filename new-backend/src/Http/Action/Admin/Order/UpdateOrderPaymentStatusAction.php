@@ -10,6 +10,8 @@ use App\Components\Http\Response\JsonDataSuccessResponse;
 use App\Components\Router\Route;
 use App\Modules\Order\Entity\Order\OrderRepository;
 use App\Modules\Order\Service\OrderBonusApplier;
+use App\Modules\Order\Service\OrderEmailNotifier;
+use App\Modules\Order\Service\OrderStatusGuard;
 use DateMalformedStringException;
 use Doctrine\DBAL\Exception;
 use Override;
@@ -22,6 +24,8 @@ final readonly class UpdateOrderPaymentStatusAction implements RequestHandlerInt
     public function __construct(
         private OrderRepository $repository,
         private OrderBonusApplier $bonusApplier,
+        private OrderEmailNotifier $emailNotifier,
+        private OrderStatusGuard $statusGuard,
         private Cacher $cacher,
         private FlusherInterface $flusher,
     ) {}
@@ -35,7 +39,7 @@ final readonly class UpdateOrderPaymentStatusAction implements RequestHandlerInt
     {
         $order = $this->repository->getById(Route::getArgument($request, 'id'));
         $payload = (array)$request->getParsedBody();
-        $order->updatePaymentStatus((string)($payload['paymentStatus'] ?? $payload['payment_status'] ?? $order->paymentStatus));
+        $order->updatePaymentStatus($this->statusGuard->paymentStatus((string)($payload['paymentStatus'] ?? $payload['payment_status'] ?? $order->paymentStatus)));
 
         if ($order->paymentStatus === 'completed') {
             $this->bonusApplier->apply($order);
@@ -44,6 +48,7 @@ final readonly class UpdateOrderPaymentStatusAction implements RequestHandlerInt
         $this->cacher->deleteTag('orders');
         $this->cacher->delete('order_by_id_' . $order->id);
         $this->flusher->flush();
+        $this->emailNotifier->updated($order);
 
         return new JsonDataSuccessResponse(1, 200);
     }

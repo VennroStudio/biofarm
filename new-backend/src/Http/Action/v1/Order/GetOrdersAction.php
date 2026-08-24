@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Action\v1\Order;
 
-use App\Components\Http\Response\JsonDataItemsResponse;
 use App\Components\Http\Middleware\Identity\RequestIdentity;
+use App\Components\Http\Response\JsonDataItemsResponse;
 use App\Components\Serializer\Denormalizer;
 use App\Components\Validator\Validator;
 use App\Http\Unifier\Order\OrderUnifier;

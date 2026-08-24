@@ -13,8 +13,13 @@ type ApiEnvelope<T> = {
 
 type ApiErrorEnvelope = {
   error?: string | {
+    description?: string;
     message?: string;
   };
+  validations?: Array<{
+    field: string;
+    message: string;
+  }>;
 };
 
 export type SiteUser = {
@@ -54,6 +59,11 @@ export type SiteOrder = {
   items: OrderItem[];
   status: 'cancelled' | 'delivered' | 'pending' | 'processing' | 'shipped';
   paymentStatus: 'completed' | 'failed' | 'pending' | 'refunded';
+  subtotal: number;
+  deliveryMethod?: string;
+  deliveryCost: number;
+  discountAmount: number;
+  promoCode?: string;
   total: number;
   bonusUsed: number;
   bonusEarned: number;
@@ -78,6 +88,20 @@ export type WithdrawalRequest = {
   status: 'approved' | 'pending' | 'rejected';
   createdAt: string;
   processedAt?: null | string;
+};
+
+export type FavoriteProduct = {
+  id: number;
+  slug: string;
+  name: string;
+  title: string;
+  image: string;
+  imageAlt?: string;
+  price: number;
+  oldPrice?: number | null;
+  weight: string;
+  shortDescription?: string;
+  favoritedAt?: string;
 };
 
 export function getToken() {
@@ -158,6 +182,10 @@ function boolValue(value: unknown) {
 }
 
 function errorMessage(payload: ApiEnvelope<unknown> | ApiErrorEnvelope | null, fallback: string) {
+  if (payload && 'validations' in payload && Array.isArray(payload.validations) && payload.validations.length > 0) {
+    return payload.validations.map((item) => item.message).join('\n');
+  }
+
   if (!payload || !('error' in payload) || !payload.error) {
     return fallback;
   }
@@ -166,7 +194,7 @@ function errorMessage(payload: ApiEnvelope<unknown> | ApiErrorEnvelope | null, f
     return payload.error;
   }
 
-  return payload.error.message || fallback;
+  return payload.error.message || payload.error.description || fallback;
 }
 
 function mapUser(value: unknown): SiteUser | null {
@@ -239,6 +267,11 @@ function mapOrder(value: unknown): SiteOrder | null {
     items,
     status: stringValue(value.status, 'pending') as SiteOrder['status'],
     paymentStatus: stringValue(value.payment_status ?? value.paymentStatus, 'pending') as SiteOrder['paymentStatus'],
+    subtotal: numberValue(value.subtotal, numberValue(value.total)),
+    deliveryMethod: stringValue(value.delivery_method ?? value.deliveryMethod) || undefined,
+    deliveryCost: numberValue(value.delivery_cost ?? value.deliveryCost),
+    discountAmount: numberValue(value.discount_amount ?? value.discountAmount),
+    promoCode: stringValue(value.promo_code ?? value.promoCode) || undefined,
     total: numberValue(value.total),
     bonusUsed: numberValue(value.bonus_used ?? value.bonusUsed),
     bonusEarned: numberValue(value.bonus_earned ?? value.bonusEarned),
@@ -247,6 +280,37 @@ function mapOrder(value: unknown): SiteOrder | null {
     shippingAddress: mapShippingAddress(value.shipping_address ?? value.shippingAddress),
     paymentMethod: stringValue(value.payment_method ?? value.paymentMethod, 'card'),
     trackingNumber: stringValue(value.tracking_number ?? value.trackingNumber) || undefined,
+  };
+}
+
+function mapFavoriteProduct(value: unknown): FavoriteProduct | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const id = numberValue(value.id);
+  if (id <= 0) {
+    return null;
+  }
+
+  const name = stringValue(value.name ?? value.title, 'Товар');
+
+  return {
+    id,
+    slug: stringValue(value.slug),
+    name,
+    title: stringValue(value.title, name),
+    image: stringValue(value.image),
+    imageAlt: stringValue(value.image_alt ?? value.imageAlt) || undefined,
+    price: numberValue(value.price),
+    oldPrice: value.old_price !== null && value.old_price !== undefined
+      ? numberValue(value.old_price)
+      : value.oldPrice !== null && value.oldPrice !== undefined
+        ? numberValue(value.oldPrice)
+        : null,
+    weight: stringValue(value.weight),
+    shortDescription: stringValue(value.short_description ?? value.shortDescription) || undefined,
+    favoritedAt: stringValue(value.favorited_at ?? value.favoritedAt) || undefined,
   };
 }
 
@@ -341,7 +405,14 @@ export async function getReferralInfo(): Promise<ReferralInfo> {
   };
 }
 
-export async function createOrder(cart: CartItem[], shippingAddress: ShippingAddress, paymentMethod: string, bonusUsed: number, total: number) {
+export async function createOrder(
+  cart: CartItem[],
+  shippingAddress: ShippingAddress,
+  paymentMethod: string,
+  deliveryMethod: string,
+  useBonuses: boolean,
+  promoCode?: string,
+) {
   const referralCode = window.localStorage.getItem('referralCode') || undefined;
   const data = await request('/v1/orders/create', {
     method: 'POST',
@@ -349,14 +420,13 @@ export async function createOrder(cart: CartItem[], shippingAddress: ShippingAdd
       userId: Number(getStoredUser()?.id || 0),
       items: cart.map((item) => ({
         productId: item.product.id,
-        productName: item.product.name,
-        price: item.product.price,
         quantity: item.quantity,
       })),
-      total,
       shippingAddress,
       paymentMethod,
-      bonusUsed,
+      deliveryMethod,
+      useBonuses,
+      promoCode: promoCode?.trim() || undefined,
       referredBy: referralCode,
     },
   });
@@ -373,6 +443,7 @@ export async function createOrder(cart: CartItem[], shippingAddress: ShippingAdd
     payment_status: 'pending',
     shipping_address: shippingAddress,
     payment_method: paymentMethod,
+    delivery_method: deliveryMethod,
   });
 }
 
@@ -398,5 +469,23 @@ export async function createWithdrawal(amount: number) {
   await request('/v1/withdrawals/create', {
     method: 'POST',
     body: { amount },
+  });
+}
+
+export async function getFavorites() {
+  const data = await request('/v1/favorites');
+
+  return mapItemsResponse(data, mapFavoriteProduct);
+}
+
+export async function addFavorite(productId: number) {
+  await request(`/v1/favorites/${productId}`, {
+    method: 'POST',
+  });
+}
+
+export async function removeFavorite(productId: number) {
+  await request(`/v1/favorites/${productId}`, {
+    method: 'DELETE',
   });
 }

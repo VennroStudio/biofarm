@@ -4,7 +4,7 @@
             <h2 class="mb-8 font-display text-2xl font-bold text-foreground">
                 Похожие товары
             </h2>
-            <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div class="grid auto-rows-fr gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {% for product in products %}
                     {% include 'components/product/card.html.twig' with {
                         product: product,

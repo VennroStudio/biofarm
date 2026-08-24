@@ -13,11 +13,12 @@ import {
 import type { Withdrawal } from '../../../types';
 
 type Props = {
+  processingId: string | null;
   withdrawals: Withdrawal[];
   onSetStatus: (withdrawal: Withdrawal, status: 'approved' | 'rejected') => void;
 };
 
-export function PendingWithdrawalsTable({ withdrawals, onSetStatus }: Props) {
+export function PendingWithdrawalsTable({ processingId, withdrawals, onSetStatus }: Props) {
   return (
     <Card className="mt-6 p-6">
       <div className="mb-6">
@@ -55,8 +56,21 @@ export function PendingWithdrawalsTable({ withdrawals, onSetStatus }: Props) {
                   <TableCell>{formatDate(withdrawal.created_at)}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
-                      <Button size="sm" onClick={() => onSetStatus(withdrawal, 'approved')}><Check className="h-4 w-4" />Одобрить</Button>
-                      <Button size="icon" variant="danger" onClick={() => onSetStatus(withdrawal, 'rejected')}><X className="h-4 w-4" /></Button>
+                      <Button
+                        disabled={processingId === withdrawal.id}
+                        size="sm"
+                        onClick={() => onSetStatus(withdrawal, 'approved')}
+                      >
+                        <Check className="h-4 w-4" />Одобрить
+                      </Button>
+                      <Button
+                        disabled={processingId === withdrawal.id}
+                        size="icon"
+                        variant="danger"
+                        onClick={() => onSetStatus(withdrawal, 'rejected')}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>

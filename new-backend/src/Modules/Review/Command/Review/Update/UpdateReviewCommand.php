@@ -30,5 +30,6 @@ final readonly class UpdateReviewCommand
         public ?string $userId = null,
         /** @var list<string>|null */
         public ?array $images = null,
+        public bool $isApproved = false,
     ) {}
 }

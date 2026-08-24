@@ -24,3 +24,7 @@ export function labelByValue(options: Array<{ value: string; label: string }>, v
 export function isOrderPaid(order: Order) {
   return order.payment_status === 'completed' || order.payment_status === 'paid' || order.paid_at !== null;
 }
+
+export function normalizePaymentStatus(value: string | null | undefined) {
+  return value === 'paid' ? 'completed' : value || 'pending';
+}

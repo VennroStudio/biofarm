@@ -1,4 +1,5 @@
 import { Edit, Trash2 } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { Badge, Button, Card, EmptyState } from '../../../shared/ui';
 import type { Category } from '../../../types';
 
@@ -29,7 +30,7 @@ export function CategoryList({ categories, productCounts, onEdit, onRemove }: Pr
   return (
     <Card className="overflow-hidden">
       <div className="divide-y divide-[#e4e5da]">
-        {roots.map((category) => renderCategory(category, byParent, productCounts, onEdit, onRemove))}
+        {roots.map((category) => renderCategory(category, byParent, productCounts, onEdit, onRemove, 0, new Set()))}
       </div>
     </Card>
   );
@@ -42,7 +43,15 @@ function renderCategory(
   onEdit: (category: Category) => void,
   onRemove: (category: Category) => void,
   level = 0,
-): React.ReactNode {
+  visited: Set<number>,
+): ReactNode {
+  if (visited.has(category.id)) {
+    return null;
+  }
+
+  const nextVisited = new Set(visited);
+  nextVisited.add(category.id);
+
   return (
     <div key={category.id}>
       <CategoryRow
@@ -53,7 +62,7 @@ function renderCategory(
         onRemove={onRemove}
       />
       {(byParent.get(String(category.id)) ?? []).map((child) => (
-        renderCategory(child, byParent, productCounts, onEdit, onRemove, level + 1)
+        renderCategory(child, byParent, productCounts, onEdit, onRemove, level + 1, nextVisited)
       ))}
     </div>
   );

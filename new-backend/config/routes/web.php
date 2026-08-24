@@ -10,16 +10,14 @@ use App\Http\Web\Cart\CartPageController;
 use App\Http\Web\Cart\CheckoutPageController;
 use App\Http\Web\Cart\OrderSuccessPageController;
 use App\Http\Web\Catalog\CatalogPageController;
+use App\Http\Web\Certificate\CertificatePageController;
 use App\Http\Web\Feedback\FeedbackController;
 use App\Http\Web\Home\HomePageController;
 use App\Http\Web\Legal\PrivacyPolicyPageController;
 use App\Http\Web\Legal\PublicOfferPageController;
 use App\Http\Web\Page\CmsPageController;
-use App\Http\Web\Profile\ProfilePageController;
-use App\Http\Web\Product\CreateProductController;
-use App\Http\Web\Product\DeleteProductController;
 use App\Http\Web\Product\ProductPageController;
-use App\Http\Web\Product\UpdateProductController;
+use App\Http\Web\Profile\ProfilePageController;
 use App\Http\Web\Seo\RobotsController;
 use App\Http\Web\Seo\SitemapController;
 use App\Http\Web\System\HealthController;
@@ -46,6 +44,7 @@ return static function (App $app): void {
         $group->get('/product/{slug}', ProductPageController::class);
         $group->get('/blog', BlogPageController::class);
         $group->get('/blog/{slug}', BlogPostPageController::class);
+        $group->get('/certificates', CertificatePageController::class);
         $group->get('/cart', CartPageController::class);
         $group->get('/checkout', CheckoutPageController::class);
         $group->get('/order-success', OrderSuccessPageController::class);
@@ -55,10 +54,6 @@ return static function (App $app): void {
         $group->get('/oferta', PublicOfferPageController::class);
 
         $group->post('/feedback', FeedbackController::class);
-        $group->post('/products/create', CreateProductController::class);
-        $group->post('/products/update', UpdateProductController::class);
-        $group->post('/products/delete', DeleteProductController::class);
-
         $group->get('/healthz', HealthController::class);
         $group->get('/readyz', ReadinessController::class);
 

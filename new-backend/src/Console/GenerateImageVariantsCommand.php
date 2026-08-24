@@ -59,7 +59,7 @@ final class GenerateImageVariantsCommand extends Command
                 continue;
             }
 
-            $processed++;
+            ++$processed;
             $publicPath = $this->publicPath($file->getPathname());
             $created += \count($this->generator->generate($publicPath, $overwrite));
         }
@@ -73,6 +73,6 @@ final class GenerateImageVariantsCommand extends Command
     {
         $relativePath = ltrim(substr($absolutePath, \strlen(rtrim($this->publicRoot, '/'))), '/');
 
-        return '/' . str_replace(DIRECTORY_SEPARATOR, '/', $relativePath);
+        return '/' . str_replace(\DIRECTORY_SEPARATOR, '/', $relativePath);
     }
 }

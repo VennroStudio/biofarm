@@ -10,7 +10,8 @@ import {
 import { BlogFormModal } from '../features/blog/ui/BlogFormModal';
 import { BlogTable } from '../features/blog/ui/BlogTable';
 import { useLoadOnMount } from '../hooks/useLoadOnMount';
-import { Badge, Button, Card, PageHeader, SearchField } from '../shared/ui';
+import { messageFromError } from '../shared/lib';
+import { Badge, Button, Card, ErrorAlert, PageHeader, SearchField } from '../shared/ui';
 import type { BlogPost } from '../types';
 
 export function AdminBlog() {
@@ -18,6 +19,7 @@ export function AdminBlog() {
   const [search, setSearch] = useState('');
   const [form, setForm] = useState<BlogForm>(emptyBlogForm);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const filteredPosts = useMemo(
@@ -33,17 +35,20 @@ export function AdminBlog() {
   useLoadOnMount(load);
 
   function openCreate() {
+    setError(null);
     setForm(emptyBlogForm);
     setDialogOpen(true);
   }
 
   function openEdit(post: BlogPost) {
+    setError(null);
     setForm(blogFormFromPost(post));
     setDialogOpen(true);
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setError(null);
     setSaving(true);
     try {
       if (form.id) {
@@ -53,6 +58,8 @@ export function AdminBlog() {
       }
       setDialogOpen(false);
       await load();
+    } catch (submitError) {
+      setError(messageFromError(submitError, 'Не удалось сохранить статью'));
     } finally {
       setSaving(false);
     }
@@ -62,8 +69,13 @@ export function AdminBlog() {
     if (!confirm(`Удалить статью "${post.title}"?`)) {
       return;
     }
-    await blogApi.delete(post.id);
-    await load();
+    setError(null);
+    try {
+      await blogApi.delete(post.id);
+      await load();
+    } catch (removeError) {
+      setError(messageFromError(removeError, 'Не удалось удалить статью'));
+    }
   }
 
   return (
@@ -73,6 +85,8 @@ export function AdminBlog() {
         subtitle="Управление статьями блога"
         actions={<Button onClick={openCreate}><Plus className="h-4 w-4" />Написать статью</Button>}
       />
+
+      <ErrorAlert className="mb-5">{dialogOpen ? null : error}</ErrorAlert>
 
       <Card className="p-6">
         <div className="mb-8 flex flex-wrap items-center gap-4">
@@ -86,9 +100,13 @@ export function AdminBlog() {
       <BlogFormModal
         form={form}
         open={dialogOpen}
+        error={dialogOpen ? error : null}
         saving={saving}
         setForm={setForm}
-        onClose={() => setDialogOpen(false)}
+        onClose={() => {
+          setDialogOpen(false);
+          setError(null);
+        }}
         onSubmit={(event) => void submit(event)}
       />
     </>

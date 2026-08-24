@@ -7,6 +7,7 @@ namespace App\Modules\Review\Command\Review\Create;
 use App\Components\Cacher\Cacher;
 use App\Components\Flusher\FlusherInterface;
 use App\Components\Id\ReadableIdGenerator;
+use App\Modules\Product\Entity\Product\ProductRepository;
 use App\Modules\Review\Entity\Review\Review;
 use App\Modules\Review\Entity\Review\ReviewRepository;
 use App\Modules\Review\Permission\ReviewPermission;
@@ -19,6 +20,7 @@ final readonly class CreateReviewHandler
 {
     public function __construct(
         private ReviewRepository $reviewRepository,
+        private ProductRepository $productRepository,
         private ReadableIdGenerator $idGenerator,
         private ReviewPermissionService $permissionService,
         private Cacher $cacher,
@@ -35,6 +37,7 @@ final readonly class CreateReviewHandler
             currentUserRole: UserRole::from($command->currentUserRole),
             action: ReviewPermission::CREATE,
         );
+        $this->productRepository->getById($command->productId);
 
         $id = $command->reviewId ?? $this->idGenerator->generate('rev');
 

@@ -41,13 +41,13 @@ final readonly class CorsMiddleware implements MiddlewareInterface
 
     private function isAllowedOrigin(string $origin): bool
     {
-        $domains = ['wowbanner.local'];
+        $domains = array_filter(array_map(
+            static fn (string $domain): string => trim($domain),
+            explode(',', (string)getenv('CORS_ALLOWED_ORIGINS'))
+        ));
 
         foreach ($domains as $domain) {
-            $escaped = preg_quote($domain, '~');
-            $pattern = '~^https?://(.+\.)?' . $escaped . '$~i';
-
-            if (preg_match($pattern, $origin) === 1) {
+            if ($origin === rtrim($domain, '/')) {
                 return true;
             }
         }

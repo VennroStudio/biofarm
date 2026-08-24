@@ -1,7 +1,10 @@
 import { Upload } from 'lucide-react';
 import { type ChangeEvent, useRef, useState } from 'react';
 import { uploadImage } from '../../../api/client';
+import { messageFromError } from '../../../shared/lib';
 import { Button } from '../../../shared/ui';
+
+const maxImageSize = 20 * 1024 * 1024;
 
 type Props = {
   scope: string;
@@ -20,7 +23,7 @@ export function ImageUploader({ scope, onUploaded }: Props) {
       const asset = await uploadImage(file, scope);
       onUploaded(asset.url);
     } catch (uploadError) {
-      setError(uploadError instanceof Error ? uploadError.message : 'Не удалось загрузить изображение');
+      setError(messageFromError(uploadError, 'Не удалось загрузить изображение'));
     } finally {
       setLoading(false);
     }
@@ -29,6 +32,12 @@ export function ImageUploader({ scope, onUploaded }: Props) {
   function handleChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.currentTarget.files?.[0];
     if (file) {
+      if (file.size > maxImageSize) {
+        setError('Изображение слишком большое. Максимальный размер: 20 МБ.');
+        event.currentTarget.value = '';
+        return;
+      }
+
       void upload(file);
     }
     event.currentTarget.value = '';

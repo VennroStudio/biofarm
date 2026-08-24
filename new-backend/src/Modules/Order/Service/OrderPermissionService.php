@@ -28,12 +28,14 @@ final readonly class OrderPermissionService
         return match ($action) {
             OrderPermission::CREATE => [
                 UserRole::ADMIN,
+                UserRole::DEVELOPER,
                 UserRole::EDITOR,
                 UserRole::USER,
             ],
             OrderPermission::UPDATE,
             OrderPermission::DELETE => [
                 UserRole::ADMIN,
+                UserRole::DEVELOPER,
                 UserRole::EDITOR,
             ],
         };

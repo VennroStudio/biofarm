@@ -3,8 +3,13 @@
 {% block content %}
     <div
         data-react-island="checkout-page"
+        data-cdek-delivery-price="{{ site_setting('cdek_delivery_price', 350) }}"
+        data-free-delivery-threshold="{{ site_setting('free_delivery_threshold', 3000) }}"
         data-order-bonus-enabled="{{ site_feature('order_bonus_enabled') ? 'true' : 'false' }}"
         data-order-bonus-percent="{{ site_setting('order_bonus_percent', 5) }}"
+        data-order-bonus-spend-limit-percent="{{ site_setting('order_bonus_spend_limit_percent', 30) }}"
+        data-post-delivery-price="{{ site_setting('post_delivery_price', 250) }}"
+        data-promo-codes-enabled="{{ site_feature('promo_codes_enabled') ? 'true' : 'false' }}"
     >
         <section class="container mx-auto px-4 py-24">
             <h1 class="font-display text-4xl font-bold text-foreground md:text-5xl">Оформление заказа</h1>

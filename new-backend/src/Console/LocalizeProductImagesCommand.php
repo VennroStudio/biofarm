@@ -7,10 +7,13 @@ namespace App\Console;
 use Doctrine\DBAL\Connection;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use JsonException;
 use Override;
+use RuntimeException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Throwable;
 
 final class LocalizeProductImagesCommand extends Command
 {
@@ -22,7 +25,7 @@ final class LocalizeProductImagesCommand extends Command
         private readonly Connection $connection,
     ) {
         parent::__construct();
-        $this->publicDir = dirname(__DIR__, 2) . '/public';
+        $this->publicDir = \dirname(__DIR__, 2) . '/public';
     }
 
     #[Override]
@@ -34,7 +37,7 @@ final class LocalizeProductImagesCommand extends Command
     }
 
     /**
-     * @throws \Throwable
+     * @throws Throwable
      */
     #[Override]
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -50,8 +53,8 @@ final class LocalizeProductImagesCommand extends Command
         }
 
         $targetDir = $this->publicDir . self::PUBLIC_PATH;
-        if (!is_dir($targetDir) && !mkdir($targetDir, 0775, true) && !is_dir($targetDir)) {
-            throw new \RuntimeException('Unable to create directory: ' . $targetDir);
+        if (!is_dir($targetDir) && !mkdir($targetDir, 0o775, true) && !is_dir($targetDir)) {
+            throw new RuntimeException('Unable to create directory: ' . $targetDir);
         }
 
         $client = new Client([
@@ -73,11 +76,11 @@ final class LocalizeProductImagesCommand extends Command
 
             $metadata = $this->metadata($this->publicDir . $localPath);
             $this->connection->update('product_images', [
-                'path'      => $localPath,
-                'width'     => $metadata['width'],
-                'height'    => $metadata['height'],
-                'mime_type' => $metadata['mime_type'],
-                'size'      => $metadata['size'],
+                'path'       => $localPath,
+                'width'      => $metadata['width'],
+                'height'     => $metadata['height'],
+                'mime_type'  => $metadata['mime_type'],
+                'size'       => $metadata['size'],
                 'updated_at' => gmdate('Y-m-d H:i:s'),
             ], ['id' => (int)$row['id']]);
 
@@ -146,7 +149,7 @@ final class LocalizeProductImagesCommand extends Command
 
     /**
      * @param array<string, string> $rewrites
-     * @throws \JsonException
+     * @throws JsonException
      */
     private function rewriteProducts(array $rewrites): void
     {

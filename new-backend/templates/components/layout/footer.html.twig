@@ -1,10 +1,12 @@
-{% set infoLinks = [
-    { label: 'Доставка', href: '/delivery' },
-    { label: 'Оплата', href: '/payment' },
-    { label: 'Возврат', href: '/return' },
+{% set commerceLinks = site_feature('cart_enabled') ? [
+    { label: 'Доставка', href: '/dostavka' },
+    { label: 'Оплата', href: '/oplata' },
+    { label: 'Возврат', href: '/vozvrat' },
+] : [] %}
+{% set infoLinks = commerceLinks | merge([
     { label: 'Публичная оферта', href: '/oferta' },
     { label: 'Политика конфиденциальности', href: '/privacy' },
-] | merge(cms_footer_pages()) %}
+]) | merge(cms_footer_pages()) %}
 
 <footer class="bg-primary text-primary-foreground">
     <div class="container mx-auto px-4 py-6">

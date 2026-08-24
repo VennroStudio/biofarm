@@ -26,7 +26,8 @@ services:
   php-cli:
     image: ${REGISTRY}/biofarm-php-cli:${IMAGE_TAG}
     container_name: biofarm-php-cli
-    restart: unless-stopped
+    profiles:
+      - tools
     env_file: .env
     networks:
       - proxy

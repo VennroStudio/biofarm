@@ -10,21 +10,34 @@ use Doctrine\DBAL\Exception;
 final class SiteSettings
 {
     private const array DEFAULTS = [
-        'referral_percent'     => 5,
-        'registration_enabled' => false,
-        'cart_enabled'         => false,
-        'order_bonus_enabled'  => true,
-        'order_bonus_percent'  => 5,
-        'site_name'            => 'БИОФАРМ',
-        'site_phone'           => '+7 (999) 123-45-67',
-        'site_email'           => 'bio.active@bk.ru',
-        'site_logo_url'        => '/uploads/images/logo.png',
-        'site_default_og_image' => '/assets/images/og/default.jpg',
-        'site_address_country' => 'RU',
-        'site_address_region'  => 'Томская область',
-        'site_address_locality' => 'Томск',
-        'site_address_street'  => 'особая экономическая зона микрорайон Академгородок, проспект Развитие 3Е',
-        'robots_extra_disallow' => '',
+        'cart_enabled'                    => false,
+        'registration_enabled'            => false,
+        'referral_enabled'                => false,
+        'withdrawals_enabled'             => false,
+        'favorites_enabled'               => true,
+        'order_bonus_enabled'             => true,
+        'order_bonus_percent'             => 5,
+        'order_bonus_spend_limit_percent' => 30,
+        'welcome_bonus_enabled'           => false,
+        'welcome_bonus_amount'            => 0,
+        'promo_codes_enabled'             => false,
+        'free_delivery_threshold'         => 3000,
+        'cdek_delivery_price'             => 350,
+        'post_delivery_price'             => 250,
+        'order_emails_enabled'            => false,
+        'yandex_metrika_enabled'          => false,
+        'yandex_metrika_id'               => '',
+        'referral_percent'                => 5,
+        'site_name'                       => 'БИОФАРМ',
+        'site_phone'                      => '+7 (999) 123-45-67',
+        'site_email'                      => 'bio.active@bk.ru',
+        'site_logo_url'                   => '/uploads/images/logo.png',
+        'site_default_og_image'           => '/assets/images/og/default.jpg',
+        'site_address_country'            => 'RU',
+        'site_address_region'             => 'Томская область',
+        'site_address_locality'           => 'Томск',
+        'site_address_street'             => 'особая экономическая зона микрорайон Академгородок, проспект Развитие 3Е',
+        'robots_extra_disallow'           => '',
     ];
 
     /** @var array<string, bool|float|int|string|null>|null */
@@ -41,7 +54,38 @@ final class SiteSettings
         return \array_key_exists($key, $settings) ? $settings[$key] : $default;
     }
 
+    /**
+     * @return array<string, bool|float|int|string|null>
+     */
+    public static function defaults(): array
+    {
+        return self::DEFAULTS;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function keys(): array
+    {
+        return \array_keys(self::DEFAULTS);
+    }
+
     public function bool(string $key, bool $default = false): bool
+    {
+        return match ($key) {
+            'referral_enabled' => $this->rawBool('referral_enabled', $default)
+                && $this->rawBool('cart_enabled'),
+            'withdrawals_enabled' => $this->rawBool('withdrawals_enabled', $default)
+                && $this->bool('referral_enabled'),
+            'order_bonus_enabled',
+            'promo_codes_enabled',
+            'order_emails_enabled' => $this->rawBool($key, $default)
+                && $this->rawBool('cart_enabled'),
+            default => $this->rawBool($key, $default),
+        };
+    }
+
+    public function rawBool(string $key, bool $default = false): bool
     {
         $value = $this->get($key, $default);
 

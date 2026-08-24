@@ -7,7 +7,6 @@ namespace App\Http\Action\v1\User;
 use App\Components\Cacher\Cacher;
 use App\Components\Flusher\FlusherInterface;
 use App\Components\Http\Middleware\Identity\RequestIdentity;
-use App\Components\Http\Response\JsonDataResponse;
 use App\Modules\User\Entity\User\UserRepository;
 use App\Modules\User\Entity\UserProfile\UserProfile;
 use App\Modules\User\Entity\UserProfile\UserProfileRepository;

@@ -68,6 +68,8 @@ final readonly class CatalogPageUnifier
         $purposeContext = $this->catalogData->purposeContext($purposeSlug);
         $activeComponentSlug = $componentContext['slug'] ?? null;
         $activePurposeSlug = $purposeContext['slug'] ?? null;
+        $filterComponentSlug = $activeComponentSlug;
+        $filterPurposeSlug = $activePurposeSlug;
         $catalogPath = $this->catalogPath(
             $categories,
             $category,
@@ -81,7 +83,7 @@ final readonly class CatalogPageUnifier
             $useFacetSeo ? $purposeContext : null,
         );
 
-        $productsTotal = $this->catalogData->countProducts($category, $query, $componentSlug, $purposeSlug);
+        $productsTotal = $this->catalogData->countProducts($category, $query, $filterComponentSlug, $filterPurposeSlug);
         $categoriesTotal = $this->catalogData->countProducts();
         $totalPages = max(1, (int)ceil($productsTotal / self::PRODUCTS_PER_PAGE));
         $currentPage = min(max(1, $page ?? 1), $totalPages);
@@ -93,13 +95,13 @@ final readonly class CatalogPageUnifier
             search: $query,
             sort: $sort,
             offset: $offset,
-            componentSlug: $componentSlug,
-            purposeSlug: $purposeSlug,
+            componentSlug: $filterComponentSlug,
+            purposeSlug: $filterPurposeSlug,
         );
         $componentFilters = $this->catalogData->componentFilters($category, $query, $activePurposeSlug);
         $purposeFilters = $this->catalogData->purposeFilters($category, $query, $activeComponentSlug);
-        $hasQueryFacet = !$useFacetSeo && ($this->hasSlug($componentSlug) || $this->hasSlug($purposeSlug));
-        $hasMultipleFacets = $this->hasSlug($componentSlug) && $this->hasSlug($purposeSlug);
+        $hasQueryFacet = !$useFacetSeo && ($this->hasSlug($filterComponentSlug) || $this->hasSlug($filterPurposeSlug));
+        $hasMultipleFacets = $this->hasSlug($filterComponentSlug) && $this->hasSlug($filterPurposeSlug);
         $hasUnknownContext = ($category !== null && $categoryContext === null)
             || (trim((string)$componentSlug) !== '' && $componentContext === null)
             || (trim((string)$purposeSlug) !== '' && $purposeContext === null);
@@ -119,22 +121,22 @@ final readonly class CatalogPageUnifier
         $queryPurposeSlug = $useFacetSeo ? null : $activePurposeSlug;
 
         $meta = new PageMetaView(
-                title: $copy['title'],
-                description: $copy['description'],
-                canonicalUrl: $this->urls->absolute($catalogPath),
-                robots: $isFiltered ? 'noindex, follow' : 'index, follow',
-                ogTitle: $copy['title'],
-                ogDescription: $copy['description'],
-                ogImage: $this->urls->absolute('/assets/images/og/default.jpg'),
-                ogImageAlt: 'Каталог БИОФАРМ',
-                jsonLd: [
-                    $this->jsonLd->breadcrumbs([
-                        ['name' => 'Главная', 'url' => '/'],
-                        ['name' => 'Каталог', 'url' => $catalogPath],
-                    ]),
-                    $this->jsonLd->itemList($products, $catalogPath),
-                ],
-            );
+            title: $copy['title'],
+            description: $copy['description'],
+            canonicalUrl: $this->urls->absolute($catalogPath),
+            robots: $isFiltered ? 'noindex, follow' : 'index, follow',
+            ogTitle: $copy['title'],
+            ogDescription: $copy['description'],
+            ogImage: null,
+            ogImageAlt: 'Каталог БИОФАРМ',
+            jsonLd: [
+                $this->jsonLd->breadcrumbs([
+                    ['name' => 'Главная', 'url' => '/'],
+                    ['name' => 'Каталог', 'url' => $catalogPath],
+                ]),
+                $this->jsonLd->itemList($products, $catalogPath),
+            ],
+        );
 
         if ($category === null && !$useFacetSeo) {
             $meta = $this->pages->applySystem('catalog', $meta);
@@ -193,8 +195,7 @@ final readonly class CatalogPageUnifier
         ?string $activeComponentSlug,
         ?string $activePurposeSlug,
         string $filterKey,
-    ): array
-    {
+    ): array {
         $urls = [];
         foreach ($facets as $facet) {
             $componentSlug = $activeComponentSlug;
@@ -260,8 +261,7 @@ final readonly class CatalogPageUnifier
         string $view,
         ?string $componentSlug,
         ?string $purposeSlug,
-    ): array
-    {
+    ): array {
         $urls = [];
         foreach ($pages as $page) {
             $urls[$page] = $this->catalogUrl($path, $query, $sort, $view, $page, $componentSlug, $purposeSlug);

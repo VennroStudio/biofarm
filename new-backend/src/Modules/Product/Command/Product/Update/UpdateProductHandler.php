@@ -11,11 +11,14 @@ use App\Components\String\SlugGenerator;
 use App\Modules\Product\Entity\Product\ProductRepository;
 use App\Modules\Product\Entity\ProductCategory\ProductCategoryRepository;
 use App\Modules\Product\Permission\ProductPermission;
+use App\Modules\Product\Service\ProductContentSyncer;
 use App\Modules\Product\Service\ProductFacetSyncer;
 use App\Modules\Product\Service\ProductImageSyncer;
 use App\Modules\Product\Service\ProductPermissionService;
 use App\Modules\User\Entity\User\Fields\Enums\UserRole;
 use DateMalformedStringException;
+use Doctrine\DBAL\Connection;
+use Throwable;
 
 final readonly class UpdateProductHandler
 {
@@ -25,7 +28,9 @@ final readonly class UpdateProductHandler
         private ProductPermissionService $permissionService,
         private ProductImageSyncer $productImageSyncer,
         private ProductFacetSyncer $productFacetSyncer,
+        private ProductContentSyncer $productContentSyncer,
         private SlugGenerator $slugGenerator,
+        private Connection $connection,
         private Cacher $cacher,
         private FlusherInterface $flusher,
     ) {}
@@ -54,49 +59,66 @@ final readonly class UpdateProductHandler
             );
         }
 
-        $product->edit(
-            slug: $slug,
-            name: trim($command->name),
-            categoryId: $command->categoryId,
-            price: $command->price,
-            image: $command->image,
-            weight: $command->weight,
-            description: $command->description,
-            shortDescription: $command->shortDescription,
-            oldPrice: $command->oldPrice,
-            images: $command->images,
-            badge: $command->badge,
-            ingredients: $command->ingredients,
-            features: $command->features,
-            wbLink: $command->wbLink,
-            ozonLink: $command->ozonLink,
-            isActive: $command->isActive,
-            h1: $command->h1,
-            seoTitle: $command->seoTitle,
-            seoDescription: $command->seoDescription,
-            imageAlt: $command->imageAlt,
-            sku: $command->sku,
-            gtin: $command->gtin,
-            availability: $command->availability,
-        );
+        $this->connection->beginTransaction();
+        try {
+            $product->edit(
+                slug: $slug,
+                name: trim($command->name),
+                categoryId: $command->categoryId,
+                price: $command->price,
+                image: $command->image,
+                weight: $command->weight,
+                description: $command->description,
+                shortDescription: $command->shortDescription,
+                oldPrice: $command->oldPrice,
+                images: $command->images,
+                badge: $command->badge,
+                ingredients: $command->ingredients,
+                usageText: $command->usageText,
+                contraindications: $command->contraindications,
+                country: $command->country,
+                shelfLife: $command->shelfLife,
+                storageConditions: $command->storageConditions,
+                badDisclaimer: $command->badDisclaimer,
+                activeComponentsText: $command->activeComponentsText,
+                features: $command->features,
+                wbLink: $command->wbLink,
+                ozonLink: $command->ozonLink,
+                isActive: $command->isActive,
+                h1: $command->h1,
+                seoTitle: $command->seoTitle,
+                seoDescription: $command->seoDescription,
+                imageAlt: $command->imageAlt,
+                sku: $command->sku,
+                gtin: $command->gtin,
+                availability: $command->availability,
+            );
 
-        $this->productImageSyncer->sync(
-            productId: $command->productId,
-            mainImage: $product->image,
-            alt: $product->imageAlt,
-            title: $product->name,
-            images: $product->images,
-            productImages: $command->productImages,
-        );
-        $this->productFacetSyncer->sync(
-            productId: $command->productId,
-            attributeValueIds: $command->attributeValueIds,
-            componentIds: $command->componentIds,
-            purposeIds: $command->purposeIds,
-            productGroupId: $command->productGroupId,
-        );
-        $this->deleteCache();
-        $this->flusher->flush();
+            $this->productImageSyncer->sync(
+                productId: $command->productId,
+                mainImage: $product->image,
+                alt: $product->imageAlt,
+                title: $product->name,
+                images: $product->images,
+                productImages: $command->productImages,
+            );
+            $this->productFacetSyncer->sync(
+                productId: $command->productId,
+                attributeValueIds: $command->attributeValueIds,
+                productGroupId: $command->productGroupId,
+            );
+            $this->productContentSyncer->sync(
+                productId: $command->productId,
+                relatedBlogPostIds: $command->relatedBlogPostIds,
+                certificateIds: $command->certificateIds,
+            );
+            $this->deleteCache();
+            $this->flusher->flush();
+            $this->connection->commit();
+        } catch (Throwable $e) {
+            $this->connection->rollBack();
+            throw $e;
+        }
 
         return $command->productId;
     }

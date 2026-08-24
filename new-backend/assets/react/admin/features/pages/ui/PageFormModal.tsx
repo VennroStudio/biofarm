@@ -1,12 +1,13 @@
 import type { Dispatch, FormEvent, SetStateAction } from 'react';
 import { ImageUploader } from '../../media/ui/ImageUploader';
-import { Button, Field, inputClass, Modal, textareaClass } from '../../../shared/ui';
+import { Button, ErrorAlert, Field, inputClass, Modal, textareaClass } from '../../../shared/ui';
 import type { CmsPageTemplate } from '../../../types';
 import type { PageForm } from '../model/pageForm';
 
 type Props = {
   form: PageForm;
   open: boolean;
+  error?: string | null;
   saving: boolean;
   templates: CmsPageTemplate[];
   setForm: Dispatch<SetStateAction<PageForm>>;
@@ -14,7 +15,7 @@ type Props = {
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 };
 
-export function PageFormModal({ form, open, saving, templates, setForm, onClose, onSubmit }: Props) {
+export function PageFormModal({ form, open, error, saving, templates, setForm, onClose, onSubmit }: Props) {
   const isSystem = form.page_type === 'system';
 
   return (
@@ -34,6 +35,7 @@ export function PageFormModal({ form, open, saving, templates, setForm, onClose,
       )}
     >
       <form id="admin-page-form" className="grid gap-5" onSubmit={onSubmit}>
+        <ErrorAlert>{error}</ErrorAlert>
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="Название *">
             <input className={inputClass} value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} />
@@ -89,7 +91,7 @@ export function PageFormModal({ form, open, saving, templates, setForm, onClose,
             <Field label="OG изображение">
               <input className={inputClass} value={form.og_image} onChange={(event) => setForm({ ...form, og_image: event.target.value })} />
             </Field>
-            <ImageUploader scope="pages" onUploaded={(url) => setForm({ ...form, og_image: url })} />
+            <ImageUploader scope="pages" onUploaded={(url) => setForm((current) => ({ ...current, og_image: url }))} />
           </div>
           <div className="mt-4">
             <Field label="Alt OG изображения">

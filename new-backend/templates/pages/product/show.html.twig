@@ -9,6 +9,17 @@
         {% include 'sections/product/detail.html.twig' with {
             product: page.product,
         } only %}
+        {% include 'sections/product/certificates.html.twig' with {
+            certificates: page.certificates,
+        } only %}
+        {% include 'sections/product/related-posts.html.twig' with {
+            posts: page.relatedPosts,
+        } only %}
+        {% include 'sections/faq/list.html.twig' with {
+            items: page.faqItems,
+            eyebrow: 'FAQ',
+            title: 'Вопросы о товаре',
+        } only %}
         {% include 'sections/product/related.html.twig' with {
             products: page.relatedProducts,
         } only %}

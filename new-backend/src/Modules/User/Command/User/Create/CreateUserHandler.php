@@ -7,6 +7,7 @@ namespace App\Modules\User\Command\User\Create;
 use App\Components\Clock\UtcClock;
 use App\Components\Exception\DomainExceptionModule;
 use App\Components\Flusher\FlusherInterface;
+use App\Components\Setting\SiteSettings;
 use App\Modules\User\Command\Mailer\EmailVerification\EmailVerificationCommand;
 use App\Modules\User\Command\Mailer\EmailVerification\EmailVerificationHandler;
 use App\Modules\User\Command\UserToken\Create\CreateUserTokenCommand;
@@ -40,6 +41,7 @@ final readonly class CreateUserHandler
         private FlusherInterface $flusher,
         private EmailVerificationHandler $emailVerificationHandler,
         private UserProfileRepository $profileRepository,
+        private SiteSettings $settings,
     ) {}
 
     /**
@@ -117,6 +119,10 @@ final readonly class CreateUserHandler
 
     private function resolveReferredByUserId(?string $referredBy): ?int
     {
+        if (!$this->settings->bool('referral_enabled')) {
+            return null;
+        }
+
         $referredBy = trim((string)$referredBy);
         if ($referredBy === '') {
             return null;

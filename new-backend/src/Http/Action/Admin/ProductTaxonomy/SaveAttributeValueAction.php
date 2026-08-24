@@ -40,11 +40,11 @@ final readonly class SaveAttributeValueAction implements RequestHandlerInterface
         $name = trim((string)($payload['name'] ?? ''));
 
         if ($attributeId === null || $attributeId <= 0) {
-            throw new DomainExceptionModule('product', 'error.attribute_required', 37);
+            throw new DomainExceptionModule('product', 'error.attribute_required', 37, status: 422);
         }
 
         if ($name === '') {
-            throw new DomainExceptionModule('product', 'error.attribute_value_name_required', 38);
+            throw new DomainExceptionModule('product', 'error.attribute_value_name_required', 38, status: 422);
         }
 
         $this->assertAttributeExists($attributeId);
@@ -101,7 +101,7 @@ final readonly class SaveAttributeValueAction implements RequestHandlerInterface
         );
 
         if ($attributeId === false) {
-            throw new DomainExceptionModule('product', 'error.attribute_value_not_found', 39);
+            throw new DomainExceptionModule('product', 'error.attribute_value_not_found', 39, status: 404);
         }
 
         return (int)$attributeId;
@@ -118,7 +118,7 @@ final readonly class SaveAttributeValueAction implements RequestHandlerInterface
         );
 
         if ($exists === false) {
-            throw new DomainExceptionModule('product', 'error.attribute_not_found', 40);
+            throw new DomainExceptionModule('product', 'error.attribute_not_found', 40, status: 404);
         }
     }
 
@@ -128,12 +128,12 @@ final readonly class SaveAttributeValueAction implements RequestHandlerInterface
     private function assertSlugFree(int $attributeId, string $slug, ?int $id): void
     {
         $existingId = $this->connection->fetchOne(
-            'SELECT id FROM attribute_values WHERE attribute_id = :attributeId AND slug = :slug AND deleted_at IS NULL LIMIT 1',
+            'SELECT id FROM attribute_values WHERE attribute_id = :attributeId AND slug = :slug LIMIT 1',
             ['attributeId' => $attributeId, 'slug' => $slug],
         );
 
         if ($existingId !== false && (int)$existingId !== $id) {
-            throw new DomainExceptionModule('product', 'error.attribute_value_slug_already_exists', 41);
+            throw new DomainExceptionModule('product', 'error.attribute_value_slug_already_exists', 41, status: 422);
         }
     }
 

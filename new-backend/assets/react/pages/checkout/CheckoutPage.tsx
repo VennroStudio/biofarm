@@ -27,11 +27,24 @@ function numberDataset(value: string | undefined, fallback: number) {
 }
 
 type CheckoutPageProps = {
+  cdekDeliveryPrice: number;
+  freeDeliveryThreshold: number;
   orderBonusEnabled: boolean;
   orderBonusPercent: number;
+  orderBonusSpendLimitPercent: number;
+  postDeliveryPrice: number;
+  promoCodesEnabled: boolean;
 };
 
-function CheckoutPage({ orderBonusEnabled, orderBonusPercent }: CheckoutPageProps) {
+function CheckoutPage({
+  cdekDeliveryPrice,
+  freeDeliveryThreshold,
+  orderBonusEnabled,
+  orderBonusPercent,
+  orderBonusSpendLimitPercent,
+  postDeliveryPrice,
+  promoCodesEnabled,
+}: CheckoutPageProps) {
   const [cart] = useState<CartItem[]>(() => readCart());
   const [user, setUser] = useState<SiteUser | null>(() => getStoredUser());
   const [isLoading, setIsLoading] = useState(false);
@@ -39,11 +52,16 @@ function CheckoutPage({ orderBonusEnabled, orderBonusPercent }: CheckoutPageProp
   const [useBonuses, setUseBonuses] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [deliveryMethod, setDeliveryMethod] = useState('cdek');
+  const [promoCode, setPromoCode] = useState('');
   const [form, setForm] = useState<ShippingAddress>(() => emptyAddress(getStoredUser()));
 
   const total = useMemo(() => cartTotal(cart), [cart]);
-  const deliveryCost = total >= 3000 ? 0 : 350;
-  const bonusDiscount = useBonuses ? Math.min(user?.bonusBalance || 0, total * 0.3) : 0;
+  const deliveryCostFor = (baseCost: number) => (total >= freeDeliveryThreshold ? 0 : baseCost);
+  const cdekDeliveryCost = deliveryCostFor(cdekDeliveryPrice);
+  const postDeliveryCost = deliveryCostFor(postDeliveryPrice);
+  const deliveryCost = deliveryMethod === 'post' ? postDeliveryCost : cdekDeliveryCost;
+  const maxBonusSpend = Math.floor((total + deliveryCost) * (orderBonusSpendLimitPercent / 100));
+  const bonusDiscount = useBonuses && orderBonusEnabled ? Math.min(user?.bonusBalance || 0, maxBonusSpend) : 0;
   const finalTotal = total + deliveryCost - bonusDiscount;
   const orderBonus = orderBonusEnabled ? Math.floor(total * (orderBonusPercent / 100)) : 0;
 
@@ -87,9 +105,10 @@ function CheckoutPage({ orderBonusEnabled, orderBonusPercent }: CheckoutPageProp
       const order = await createOrder(
         cart,
         form,
-        paymentMethod === 'card' ? 'Банковская карта' : 'СБП',
-        bonusDiscount,
-        finalTotal,
+        paymentMethod,
+        deliveryMethod,
+        useBonuses,
+        promoCodesEnabled ? promoCode : undefined,
       );
       clearCart();
       window.location.href = `/order-success?order=${encodeURIComponent(order?.id || '')}`;
@@ -177,14 +196,14 @@ function CheckoutPage({ orderBonusEnabled, orderBonusPercent }: CheckoutPageProp
                       <span className="font-medium">СДЭК</span>
                       <span className="ml-2 text-muted-foreground">от 2 дней</span>
                     </span>
-                    <span className="font-medium">{deliveryCost === 0 ? 'Бесплатно' : formatMoney(deliveryCost)}</span>
+                    <span className="font-medium">{cdekDeliveryCost === 0 ? 'Бесплатно' : formatMoney(cdekDeliveryCost)}</span>
                   </RadioOption>
                   <RadioOption checked={deliveryMethod === 'post'} name="delivery" value="post" onChange={setDeliveryMethod}>
                     <span className="flex-1">
                       <span className="font-medium">Почта России</span>
                       <span className="ml-2 text-muted-foreground">от 5 дней</span>
                     </span>
-                    <span className="font-medium">250 ₽</span>
+                    <span className="font-medium">{postDeliveryCost === 0 ? 'Бесплатно' : formatMoney(postDeliveryCost)}</span>
                   </RadioOption>
                 </CardContent>
               </Card>
@@ -256,6 +275,23 @@ function CheckoutPage({ orderBonusEnabled, orderBonusPercent }: CheckoutPageProp
                   </RadioOption>
                 </CardContent>
               </Card>
+
+              {promoCodesEnabled && (
+                <Card className="border-0 shadow-premium">
+                  <CardHeader>
+                    <CardTitle>Промокод</CardTitle>
+                    <CardDescription>Скидка будет рассчитана после подтверждения заказа</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Input
+                      autoComplete="off"
+                      placeholder="Введите промокод"
+                      value={promoCode}
+                      onChange={(event) => setPromoCode(event.target.value)}
+                    />
+                  </CardContent>
+                </Card>
+              )}
             </div>
 
             <div>
@@ -267,6 +303,7 @@ function CheckoutPage({ orderBonusEnabled, orderBonusPercent }: CheckoutPageProp
                 finalTotal={finalTotal}
                 isLoading={isLoading}
                 orderBonus={orderBonus}
+                orderBonusEnabled={orderBonusEnabled}
                 setUseBonuses={setUseBonuses}
                 total={total}
                 useBonuses={useBonuses}
@@ -288,8 +325,13 @@ export function mountCheckoutPage() {
     root.dataset.mounted = 'true';
     createRoot(root).render((
       <CheckoutPage
+        cdekDeliveryPrice={numberDataset(root.dataset.cdekDeliveryPrice, 350)}
+        freeDeliveryThreshold={numberDataset(root.dataset.freeDeliveryThreshold, 3000)}
         orderBonusEnabled={root.dataset.orderBonusEnabled === 'true'}
         orderBonusPercent={numberDataset(root.dataset.orderBonusPercent, 5)}
+        orderBonusSpendLimitPercent={numberDataset(root.dataset.orderBonusSpendLimitPercent, 30)}
+        postDeliveryPrice={numberDataset(root.dataset.postDeliveryPrice, 250)}
+        promoCodesEnabled={root.dataset.promoCodesEnabled === 'true'}
       />
     ));
   });

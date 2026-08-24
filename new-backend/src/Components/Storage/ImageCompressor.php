@@ -36,10 +36,10 @@ final readonly class ImageCompressor
     private function load(string $path, string $mime): GdImage
     {
         $image = match ($mime) {
-            'image/jpeg' => imagecreatefromjpeg($path),
-            'image/png'  => imagecreatefrompng($path),
-            'image/webp' => imagecreatefromwebp($path),
-            'image/gif'  => imagecreatefromgif($path),
+            'image/jpeg' => @imagecreatefromjpeg($path),
+            'image/png'  => @imagecreatefrompng($path),
+            'image/webp' => @imagecreatefromwebp($path),
+            'image/gif'  => @imagecreatefromgif($path),
             default      => throw new RuntimeException("Unsupported mime type: {$mime}"),
         };
 
@@ -67,10 +67,16 @@ final readonly class ImageCompressor
         $newW = (int)round($w * $ratio);
         $newH = (int)round($h * $ratio);
         $resized = imagecreatetruecolor($newW, $newH);
+        if ($resized === false) {
+            throw new RuntimeException('Cannot allocate resized image.');
+        }
 
         imagealphablending($resized, false);
         imagesavealpha($resized, true);
-        imagecopyresampled($resized, $image, 0, 0, 0, 0, $newW, $newH, $w, $h);
+        if (!imagecopyresampled($resized, $image, 0, 0, 0, 0, $newW, $newH, $w, $h)) {
+            imagedestroy($resized);
+            throw new RuntimeException('Cannot resize image.');
+        }
         imagedestroy($image);
 
         return $resized;
@@ -79,7 +85,11 @@ final readonly class ImageCompressor
     private function autoRotate(GdImage $image, string $path): GdImage
     {
         $exif = @exif_read_data($path);
-        $orientation = $exif['Orientation'] ?? 1;
+        if (!\is_array($exif)) {
+            return $image;
+        }
+
+        $orientation = (int)($exif['Orientation'] ?? 1);
 
         $rotated = match ($orientation) {
             3       => imagerotate($image, 180, 0),
@@ -88,7 +98,7 @@ final readonly class ImageCompressor
             default => null,
         };
 
-        if ($rotated === null) {
+        if ($rotated === null || $rotated === false) {
             return $image;
         }
 

@@ -57,7 +57,7 @@ final readonly class DoctrineProductRepository implements ProductRepository
     #[Override]
     public function findBySlug(string $slug): ?Product
     {
-        return $this->repo->findOneBy(['slug' => $slug, 'deletedAt' => null]);
+        return $this->repo->findOneBy(['slug' => $slug]);
     }
 
     #[Override]

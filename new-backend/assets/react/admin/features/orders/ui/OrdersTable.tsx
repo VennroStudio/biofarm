@@ -11,7 +11,7 @@ import {
   TableRow,
 } from '../../../shared/ui';
 import type { Order } from '../../../types';
-import { isOrderPaid, orderStatusOptions, paymentStatusOptions } from '../model/orderOptions';
+import { isOrderPaid, normalizePaymentStatus, orderStatusOptions, paymentStatusOptions } from '../model/orderOptions';
 
 type Props = {
   orders: Order[];
@@ -62,7 +62,7 @@ export function OrdersTable({ orders, onChangePayment, onChangeStatus, onSelect 
                   </select>
                 </TableCell>
                 <TableCell>
-                  <select className={`${inputClass} h-9 !w-36 ${paid ? 'text-[#16a34a]' : ''}`} value={order.payment_status || 'pending'} onChange={(event) => onChangePayment(order, event.target.value)}>
+                  <select className={`${inputClass} h-9 !w-36 ${paid ? 'text-[#16a34a]' : ''}`} value={normalizePaymentStatus(order.payment_status)} onChange={(event) => onChangePayment(order, event.target.value)}>
                     {paymentStatusOptions.map((status) => <option key={status.value} value={status.value}>{status.label}</option>)}
                   </select>
                 </TableCell>

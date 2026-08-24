@@ -28,7 +28,7 @@ final readonly class ReviewPermissionService
         return match ($action) {
             ReviewPermission::CREATE,
             ReviewPermission::UPDATE,
-            ReviewPermission::DELETE => [UserRole::ADMIN, UserRole::EDITOR],
+            ReviewPermission::DELETE => [UserRole::ADMIN, UserRole::DEVELOPER, UserRole::EDITOR],
         };
     }
 }

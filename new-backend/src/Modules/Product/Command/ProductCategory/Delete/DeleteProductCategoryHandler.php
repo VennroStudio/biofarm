@@ -47,6 +47,14 @@ final readonly class DeleteProductCategoryHandler
             );
         }
 
+        if ($this->categoryRepository->countChildren($category->id) > 0) {
+            throw new DomainExceptionModule(
+                module: 'product',
+                message: 'error.category_has_children',
+                code: 5,
+            );
+        }
+
         $category->markDeleted();
 
         $this->cacher->delete('categories_find_all');
