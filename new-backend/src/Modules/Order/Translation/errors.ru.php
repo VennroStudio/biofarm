@@ -7,6 +7,8 @@ return [
     'error.order_items_required'           => 'Добавьте товары в заказ.',
     'error.order_not_found'                => 'Заказ не найден.',
     'error.order_product_not_available'    => 'Один из товаров заказа недоступен.',
+    'error.order_payment_method_invalid'   => 'Выберите корректный способ оплаты.',
+    'error.order_shipping_address_invalid' => 'Заполните контактные данные и адрес доставки.',
     'error.invalid_order_status'           => 'Выберите корректный статус заказа.',
     'error.invalid_payment_status'         => 'Выберите корректный статус оплаты.',
     'error.promo_code_required'            => 'Укажите промокод.',

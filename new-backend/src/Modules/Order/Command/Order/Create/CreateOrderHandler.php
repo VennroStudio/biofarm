@@ -72,6 +72,7 @@ final readonly class CreateOrderHandler
             ? trim($command->orderId)
             : $this->idGenerator->generate('ORD');
         $calculation = $this->calculate($command);
+        $shippingAddress = $this->normalizeShippingAddress($command->shippingAddress);
 
         $order = Order::create(
             id: $orderId,
@@ -82,7 +83,7 @@ final readonly class CreateOrderHandler
             deliveryCost: $calculation['delivery_cost'],
             discountAmount: $calculation['discount_amount'],
             promoCode: $calculation['promo_code'],
-            shippingAddress: $command->shippingAddress,
+            shippingAddress: $shippingAddress,
             paymentMethod: $this->normalizePaymentMethod($command->paymentMethod),
             bonusUsed: $calculation['bonus_used'],
             status: $command->status,
@@ -312,7 +313,87 @@ final readonly class CreateOrderHandler
             return 'card';
         }
 
-        return mb_substr($method, 0, 20);
+        if (!\in_array($method, ['card', 'sbp'], true)) {
+            throw new DomainExceptionModule(
+                module: 'order',
+                message: 'error.order_payment_method_invalid',
+                code: 25,
+                status: 422,
+            );
+        }
+
+        return $method;
+    }
+
+    /**
+     * @param array<string, mixed> $shippingAddress
+     * @return array{name: string, phone: string, email: string, city: string, address: string, postalCode: string, postal_code: string, comment: string|null}
+     */
+    private function normalizeShippingAddress(array $shippingAddress): array
+    {
+        $email = $this->requiredShippingValue($shippingAddress, ['email']);
+        if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+            throw $this->invalidShippingAddress();
+        }
+
+        $postalCode = $this->requiredShippingValue($shippingAddress, ['postalCode', 'postal_code']);
+
+        return [
+            'name'        => $this->requiredShippingValue($shippingAddress, ['name']),
+            'phone'       => $this->requiredShippingValue($shippingAddress, ['phone']),
+            'email'       => $email,
+            'city'        => $this->requiredShippingValue($shippingAddress, ['city']),
+            'address'     => $this->requiredShippingValue($shippingAddress, ['address']),
+            'postalCode'  => $postalCode,
+            'postal_code' => $postalCode,
+            'comment'     => $this->optionalShippingValue($shippingAddress, ['comment']),
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $source
+     * @param list<string> $keys
+     */
+    private function requiredShippingValue(array $source, array $keys): string
+    {
+        $value = $this->optionalShippingValue($source, $keys);
+        if ($value === null) {
+            throw $this->invalidShippingAddress();
+        }
+
+        return $value;
+    }
+
+    /**
+     * @param array<string, mixed> $source
+     * @param list<string> $keys
+     */
+    private function optionalShippingValue(array $source, array $keys): ?string
+    {
+        foreach ($keys as $key) {
+            $raw = $source[$key] ?? null;
+
+            if (!\is_scalar($raw)) {
+                continue;
+            }
+
+            $value = trim((string)$raw);
+            if ($value !== '') {
+                return mb_substr($value, 0, 500);
+            }
+        }
+
+        return null;
+    }
+
+    private function invalidShippingAddress(): DomainExceptionModule
+    {
+        return new DomainExceptionModule(
+            module: 'order',
+            message: 'error.order_shipping_address_invalid',
+            code: 24,
+            status: 422,
+        );
     }
 
     private function deliveryCost(int $subtotal, string $deliveryMethod): int

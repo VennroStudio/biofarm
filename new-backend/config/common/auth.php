@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Components\Auth\JwtTokenService;
 use App\Components\Http\Middleware\Identity\Authenticate;
+use App\Components\Http\Middleware\Identity\OptionalAuthenticate;
 use App\Modules\User\Query\User\GetById\UserGetByIdFetcher;
 use Psr\Container\ContainerInterface;
 
@@ -28,5 +29,9 @@ return [
         $userGetByIdFetcher = $container->get(UserGetByIdFetcher::class);
 
         return new Authenticate($jwtTokenService, $userGetByIdFetcher);
+    },
+
+    OptionalAuthenticate::class => static function (ContainerInterface $container): OptionalAuthenticate {
+        return new OptionalAuthenticate($container->get(Authenticate::class));
     },
 ];

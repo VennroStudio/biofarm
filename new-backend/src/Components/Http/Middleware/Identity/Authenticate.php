@@ -31,16 +31,22 @@ final readonly class Authenticate implements MiddlewareInterface
     #[Override]
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
+        return $handler->handle(RequestIdentity::with($request, $this->authenticate($request)));
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function authenticate(ServerRequestInterface $request): Identity
+    {
         $payload = $this->jwtService->decodeAccessToken($this->extractBearerToken($request));
         $user = $this->getUser($payload->userId);
 
-        $identity = new Identity(
+        return new Identity(
             id: $user->id,
             firstName: $user->firstName,
             role: $user->role,
         );
-
-        return $handler->handle(RequestIdentity::with($request, $identity));
     }
 
     /**

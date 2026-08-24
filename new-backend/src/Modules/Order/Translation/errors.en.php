@@ -7,6 +7,8 @@ return [
     'error.order_items_required'           => 'Add products to the order.',
     'error.order_not_found'                => 'Order not found.',
     'error.order_product_not_available'    => 'One of the order products is unavailable.',
+    'error.order_payment_method_invalid'   => 'Choose a valid payment method.',
+    'error.order_shipping_address_invalid' => 'Fill in contact details and delivery address.',
     'error.invalid_order_status'           => 'Select a valid order status.',
     'error.invalid_payment_status'         => 'Select a valid payment status.',
     'error.promo_code_required'            => 'Promo code is required.',

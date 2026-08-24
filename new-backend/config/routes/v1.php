@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Components\Http\Middleware\Cookie\ExtractCookies;
 use App\Components\Http\Middleware\Identity\Authenticate;
+use App\Components\Http\Middleware\Identity\OptionalAuthenticate;
 use App\Components\Router\StaticRouteGroup as Group;
 use App\Http\Action\v1\Auth\ConfirmEmailAction;
 use App\Http\Action\v1\Auth\LoginAction;
@@ -134,7 +135,7 @@ return static function (App $app): void {
 
         $group->group('/orders', new Group(static function (RouteCollectorProxy $group): void {
             $group->get('', GetOrdersAction::class)->add(Authenticate::class);
-            $group->post('/create', CreateOrderAction::class);
+            $group->post('/create', CreateOrderAction::class)->add(OptionalAuthenticate::class);
             $group->get('/{id}', GetOrderByIdAction::class)->add(Authenticate::class);
             $group->patch('/update/{id}', UpdateOrderAction::class)->add(Authenticate::class);
             $group->delete('/delete/{id}', DeleteOrderAction::class)->add(Authenticate::class);
