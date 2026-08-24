@@ -139,6 +139,7 @@ final class Version20260824130000 extends AbstractMigration
             'site_address_region'                => 'Томская область',
             'site_address_locality'              => 'Томск',
             'site_address_street'                => 'особая экономическая зона микрорайон Академгородок, проспект Развитие 3Е',
+            'robots_txt'                         => '',
             'robots_extra_disallow'              => '',
         ];
 

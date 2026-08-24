@@ -335,6 +335,7 @@ export type Settings = {
   site_address_region: string;
   site_address_locality: string;
   site_address_street: string;
+  robots_txt: string;
   robots_extra_disallow: string;
 };
 

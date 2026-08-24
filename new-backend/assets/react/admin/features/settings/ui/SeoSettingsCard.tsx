@@ -1,4 +1,4 @@
-import { FileText, Image, Mail, MapPin, Phone, Search } from 'lucide-react';
+import { FileText, Image, Mail, MapPin, Phone, RotateCcw, Search } from 'lucide-react';
 import { Card, Field, inputClass, textareaClass } from '../../../shared/ui';
 import type { Settings } from '../../../types';
 
@@ -6,6 +6,21 @@ type Props = {
   settings: Settings;
   onChange: (settings: Settings) => void;
 };
+
+function defaultRobotsText(): string {
+  return [
+    'User-agent: *',
+    'Disallow: /admin',
+    'Disallow: /login',
+    'Disallow: /cart',
+    'Disallow: /checkout',
+    'Disallow: /order-success',
+    'Disallow: /profile',
+    '',
+    `Sitemap: ${window.location.origin}/sitemap.xml`,
+    '',
+  ].join('\n');
+}
 
 export function SeoSettingsCard({ settings, onChange }: Props) {
   const set = (key: keyof Settings, value: Settings[keyof Settings]) => onChange({ ...settings, [key]: value });
@@ -171,14 +186,38 @@ export function SeoSettingsCard({ settings, onChange }: Props) {
           </div>
         )}
 
-        <Field label={<span className="flex items-center gap-2"><FileText className="h-4 w-4" />Дополнительные Disallow в robots.txt</span>}>
-          <textarea
-            className={`${textareaClass} min-h-32`}
-            value={settings.robots_extra_disallow}
-            onChange={(event) => set('robots_extra_disallow', event.target.value)}
-            placeholder="/example&#10;/private"
-          />
-        </Field>
+        <div className="rounded-lg border border-[#e4e5da] p-4">
+          <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="flex items-center gap-2 font-semibold">
+                <FileText className="h-4 w-4" />
+                robots.txt
+              </p>
+              <p className="text-sm text-[#789083]">
+                Полный текст файла. Можно менять порядок, добавлять User-agent, Allow, Disallow, Sitemap и комментарии.
+              </p>
+            </div>
+            <button
+              className="inline-flex items-center gap-2 rounded-lg border border-[#e4e5da] px-3 py-2 text-sm font-semibold text-[#26392f] transition hover:border-[#2f7d4b] hover:text-[#2f7d4b]"
+              type="button"
+              onClick={() => set('robots_txt', defaultRobotsText())}
+            >
+              <RotateCcw className="h-4 w-4" />
+              Шаблон
+            </button>
+          </div>
+          <Field label="Содержимое /robots.txt">
+            <textarea
+              className={`${textareaClass} min-h-56 font-mono text-sm`}
+              value={settings.robots_txt}
+              onChange={(event) => set('robots_txt', event.target.value)}
+              placeholder={defaultRobotsText()}
+            />
+          </Field>
+          <p className="mt-2 text-xs text-[#789083]">
+            Если поле пустое, сайт автоматически отдаст системный robots.txt.
+          </p>
+        </div>
       </div>
     </Card>
   );

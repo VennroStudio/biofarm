@@ -23,6 +23,17 @@ final readonly class RobotsController implements RequestHandlerInterface
     #[Override]
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
+        $body = $this->customRobotsTxt() ?? $this->defaultRobotsTxt();
+
+        $response = $this->responseFactory->createResponse()
+            ->withHeader('Content-Type', 'text/plain; charset=UTF-8');
+        $response->getBody()->write($body);
+
+        return $response;
+    }
+
+    private function defaultRobotsTxt(): string
+    {
         $disallow = [
             '/admin',
             '/login',
@@ -37,19 +48,25 @@ final readonly class RobotsController implements RequestHandlerInterface
             ...$this->extraDisallow(),
         ];
 
-        $body = implode("\n", [
+        return implode("\n", [
             'User-agent: *',
             ...array_map(static fn (string $path): string => 'Disallow: ' . $path, array_unique($disallow)),
             '',
             'Sitemap: ' . $this->urls->absolute('/sitemap.xml'),
             '',
         ]);
+    }
 
-        $response = $this->responseFactory->createResponse()
-            ->withHeader('Content-Type', 'text/plain; charset=UTF-8');
-        $response->getBody()->write($body);
+    private function customRobotsTxt(): ?string
+    {
+        $value = $this->settings->get('robots_txt', '');
+        if (!\is_string($value) || trim($value) === '') {
+            return null;
+        }
 
-        return $response;
+        $body = str_replace(["\r\n", "\r"], "\n", $value);
+
+        return rtrim($body, "\n") . "\n";
     }
 
     /**
