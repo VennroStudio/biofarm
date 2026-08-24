@@ -12,7 +12,7 @@ final readonly class Bitrix24FeedbackSyncer
 {
     public function __construct(
         private Bitrix24CrmSettings $settings,
-        private Bitrix24Client $client,
+        private Bitrix24CrmGateway $crm,
         private IntegrationErrorLogger $errorLogger,
         private Connection $connection,
     ) {}
@@ -32,39 +32,26 @@ final readonly class Bitrix24FeedbackSyncer
         }
 
         $fields = [
-            'title'             => 'Заявка с формы обратной связи',
-            'name'              => $feedback['name'],
-            'comments'          => $this->comments($feedback),
-            'sourceId'          => 'WEB',
-            'sourceDescription' => 'Форма на сайте БИОФАРМ',
-            'fm'                => [],
+            'title'               => 'Заявка с формы: ' . $feedback['name'],
+            'opportunity'         => 0,
+            'currencyId'          => 'RUB',
+            'isManualOpportunity' => 'Y',
+            'comments'            => $this->comments($feedback),
+            'sourceId'            => 'WEB',
+            'sourceDescription'   => 'Форма на сайте БИОФАРМ',
+            'opened'              => 'Y',
         ];
 
-        if ($feedback['phone'] !== null) {
-            $fields['fm'][] = [
-                'typeId'    => 'PHONE',
-                'valueType' => 'WORK',
-                'value'     => $feedback['phone'],
-            ];
-        }
+        $contactId = $this->createContactId($webhookUrl, $feedbackId, $feedback);
 
-        if ($feedback['email'] !== null) {
-            $fields['fm'][] = [
-                'typeId'    => 'EMAIL',
-                'valueType' => 'WORK',
-                'value'     => $feedback['email'],
-            ];
+        if ($contactId !== null) {
+            $fields['contactIds'] = [$contactId];
         }
 
         try {
-            $response = $this->client->call($webhookUrl, 'crm.item.add', [
-                'entityTypeId' => 1,
-                'fields'       => $fields,
-            ]);
-
-            $leadId = isset($response['result']['item']['id']) ? (int)$response['result']['item']['id'] : null;
-            if ($leadId !== null && $leadId > 0) {
-                $this->connection->update('feedback_requests', ['bitrix_lead_id' => $leadId], ['id' => $feedbackId]);
+            $dealId = $this->crm->addDeal($webhookUrl, $fields);
+            if ($dealId !== null) {
+                $this->connection->update('feedback_requests', ['bitrix_deal_id' => $dealId], ['id' => $feedbackId]);
             }
         } catch (Bitrix24Exception $exception) {
             $this->errorLogger->log(
@@ -92,9 +79,49 @@ final readonly class Bitrix24FeedbackSyncer
     /**
      * @param array{name: string, phone: string|null, email: string|null, message: string, source_page: string|null} $feedback
      */
+    private function createContactId(string $webhookUrl, int $feedbackId, array $feedback): ?int
+    {
+        try {
+            return $this->crm->addContact(
+                $webhookUrl,
+                $feedback['name'],
+                $feedback['phone'],
+                $feedback['email'],
+            );
+        } catch (Bitrix24Exception $exception) {
+            $this->errorLogger->log(
+                service: 'bitrix24',
+                scenario: 'feedback_form',
+                operation: 'crm.item.add.contact',
+                message: $exception->getMessage(),
+                httpStatus: $exception->httpStatus(),
+                responseBody: $exception->responseBody(),
+                localEntityType: 'feedback_request',
+                localEntityId: (string)$feedbackId,
+            );
+        } catch (Throwable $exception) {
+            $this->errorLogger->log(
+                service: 'bitrix24',
+                scenario: 'feedback_form',
+                operation: 'crm.item.add.contact',
+                message: $exception->getMessage(),
+                localEntityType: 'feedback_request',
+                localEntityId: (string)$feedbackId,
+            );
+        }
+
+        return null;
+    }
+
+    /**
+     * @param array{name: string, phone: string|null, email: string|null, message: string, source_page: string|null} $feedback
+     */
     private function comments(array $feedback): string
     {
         $lines = [
+            'Имя: ' . $feedback['name'],
+            'Телефон: ' . ($feedback['phone'] ?? '-'),
+            'Email: ' . ($feedback['email'] ?? '-'),
             'Сообщение: ' . $feedback['message'],
         ];
 

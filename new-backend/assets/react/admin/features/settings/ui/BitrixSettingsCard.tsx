@@ -1,6 +1,6 @@
 import { CheckCircle2, MessageCircle, PlugZap } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { bitrix24Api } from '../../../api/resources';
+import { bitrix24Api, settingsApi } from '../../../api/resources';
 import { messageFromError } from '../../../shared/lib';
 import { Button, Card, Field, inputClass, textareaClass } from '../../../shared/ui';
 import type { Bitrix24IntegrationSettings, Settings } from '../../../types';
@@ -16,9 +16,9 @@ export function BitrixSettingsCard({ settings, onChange }: Props) {
   const [crmEnabled, setCrmEnabled] = useState(false);
   const [webhookUrl, setWebhookUrl] = useState('');
   const [crmError, setCrmError] = useState<string | null>(null);
-  const [crmSaved, setCrmSaved] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [crmTested, setCrmTested] = useState(false);
-  const [savingCrm, setSavingCrm] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [testingCrm, setTestingCrm] = useState(false);
 
   useEffect(() => {
@@ -43,25 +43,32 @@ export function BitrixSettingsCard({ settings, onChange }: Props) {
     };
   }, []);
 
-  async function saveCrm() {
+  async function saveIntegrations() {
     setCrmError(null);
-    setCrmSaved(false);
+    setSaved(false);
     setCrmTested(false);
-    setSavingCrm(true);
+    setSaving(true);
 
     try {
+      await settingsApi.update({
+        bitrix_widget_enabled: settings.bitrix_widget_enabled,
+        bitrix_widget_code: settings.bitrix_widget_code,
+      });
+
       const next = await bitrix24Api.update({
         enabled: crmEnabled,
         webhook_url: webhookUrl.trim() || undefined,
       });
       setCrm(next);
+      setCrmEnabled(next.enabled);
+      set('bitrix_crm_enabled', next.enabled);
       setWebhookUrl('');
-      setCrmSaved(true);
-      window.setTimeout(() => setCrmSaved(false), 1800);
+      setSaved(true);
+      window.setTimeout(() => setSaved(false), 1800);
     } catch (error) {
-      setCrmError(messageFromError(error, 'Не удалось сохранить настройки CRM'));
+      setCrmError(messageFromError(error, 'Не удалось сохранить интеграции'));
     } finally {
-      setSavingCrm(false);
+      setSaving(false);
     }
   }
 
@@ -152,13 +159,13 @@ export function BitrixSettingsCard({ settings, onChange }: Props) {
         </Field>
         <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-[#789083]">
           {crm?.has_webhook ? <span>Сохранен: {crm.webhook_mask}</span> : <span>Вебхук еще не сохранен.</span>}
-          {crmSaved && <span className="inline-flex items-center gap-1 font-semibold text-[#2f7d4b]"><CheckCircle2 className="h-4 w-4" />Сохранено</span>}
+          {saved && <span className="inline-flex items-center gap-1 font-semibold text-[#2f7d4b]"><CheckCircle2 className="h-4 w-4" />Сохранено</span>}
           {crmTested && <span className="inline-flex items-center gap-1 font-semibold text-[#2f7d4b]"><CheckCircle2 className="h-4 w-4" />Связь есть</span>}
         </div>
 
         <div className="mt-4 flex flex-wrap gap-3">
-          <Button disabled={savingCrm} onClick={() => void saveCrm()}>
-            {savingCrm ? 'Сохранение...' : 'Сохранить CRM'}
+          <Button disabled={saving} onClick={() => void saveIntegrations()}>
+            {saving ? 'Сохранение...' : 'Сохранить'}
           </Button>
           <Button disabled={testingCrm || !crm?.has_webhook} variant="outline" onClick={() => void testCrm()}>
             {testingCrm ? 'Проверка...' : 'Проверить связь'}

@@ -320,6 +320,7 @@ export type Settings = {
   yandex_metrika_id: string;
   bitrix_widget_enabled: boolean;
   bitrix_widget_code: string;
+  bitrix_crm_enabled: boolean;
   seo_product_title_template: string;
   seo_product_description_template: string;
   seo_category_title_template: string;

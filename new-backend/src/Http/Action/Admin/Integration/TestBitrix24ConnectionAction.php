@@ -6,8 +6,8 @@ namespace App\Http\Action\Admin\Integration;
 
 use App\Components\Exception\DomainExceptionModule;
 use App\Components\Http\Response\JsonDataResponse;
-use App\Components\Integration\Bitrix24\Bitrix24Client;
 use App\Components\Integration\Bitrix24\Bitrix24CrmSettings;
+use App\Components\Integration\Bitrix24\Bitrix24CrmGateway;
 use App\Components\Integration\Bitrix24\Bitrix24Exception;
 use App\Components\Integration\IntegrationErrorLogger;
 use Override;
@@ -19,7 +19,7 @@ final readonly class TestBitrix24ConnectionAction implements RequestHandlerInter
 {
     public function __construct(
         private Bitrix24CrmSettings $settings,
-        private Bitrix24Client $client,
+        private Bitrix24CrmGateway $crm,
         private IntegrationErrorLogger $errorLogger,
     ) {}
 
@@ -32,12 +32,13 @@ final readonly class TestBitrix24ConnectionAction implements RequestHandlerInter
         }
 
         try {
-            $this->client->call($webhookUrl, 'crm.lead.fields');
+            $this->crm->dealFields($webhookUrl);
+            $this->crm->contactFields($webhookUrl);
         } catch (Bitrix24Exception $exception) {
             $this->errorLogger->log(
                 service: 'bitrix24',
                 scenario: 'admin_test',
-                operation: 'crm.lead.fields',
+                operation: 'crm.item.fields',
                 message: $exception->getMessage(),
                 httpStatus: $exception->httpStatus(),
                 responseBody: $exception->responseBody(),

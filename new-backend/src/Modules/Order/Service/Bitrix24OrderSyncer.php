@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Order\Service;
 
-use App\Components\Integration\Bitrix24\Bitrix24Client;
 use App\Components\Integration\Bitrix24\Bitrix24CrmSettings;
+use App\Components\Integration\Bitrix24\Bitrix24CrmGateway;
 use App\Components\Integration\Bitrix24\Bitrix24Exception;
 use App\Components\Integration\IntegrationErrorLogger;
 use App\Modules\Order\Entity\Order\Order;
@@ -16,7 +16,7 @@ final readonly class Bitrix24OrderSyncer
 {
     public function __construct(
         private Bitrix24CrmSettings $settings,
-        private Bitrix24Client $client,
+        private Bitrix24CrmGateway $crm,
         private IntegrationErrorLogger $errorLogger,
         private Connection $connection,
     ) {}
@@ -35,22 +35,25 @@ final readonly class Bitrix24OrderSyncer
             return;
         }
 
-        try {
-            $response = $this->client->call($webhookUrl, 'crm.item.add', [
-                'entityTypeId' => 2,
-                'fields'       => [
-                    'title'               => 'Заказ ' . $order->id . ' с сайта',
-                    'opportunity'         => $order->total,
-                    'currencyId'          => 'RUB',
-                    'isManualOpportunity' => 'Y',
-                    'comments'            => $this->comments($order, $items),
-                    'sourceId'            => 'WEB',
-                    'sourceDescription'   => 'Сайт BioFarm',
-                    'opened'              => 'Y',
-                ],
-            ]);
+        $contactId = $this->createContactId($webhookUrl, $order);
 
-            $dealId = isset($response['result']['item']['id']) ? (int)$response['result']['item']['id'] : null;
+        $fields = [
+            'title'               => 'Заказ ' . $order->id . ' с сайта',
+            'opportunity'         => $order->total,
+            'currencyId'          => 'RUB',
+            'isManualOpportunity' => 'Y',
+            'comments'            => $this->comments($order, $items),
+            'sourceId'            => 'WEB',
+            'sourceDescription'   => 'Сайт BioFarm',
+            'opened'              => 'Y',
+        ];
+
+        if ($contactId !== null) {
+            $fields['contactIds'] = [$contactId];
+        }
+
+        try {
+            $dealId = $this->crm->addDeal($webhookUrl, $fields);
             if ($dealId === null || $dealId <= 0) {
                 return;
             }
@@ -71,6 +74,31 @@ final readonly class Bitrix24OrderSyncer
         }
     }
 
+    private function createContactId(string $webhookUrl, Order $order): ?int
+    {
+        try {
+            return $this->crm->addContact(
+                $webhookUrl,
+                trim((string)($order->shippingAddress['name'] ?? '')),
+                trim((string)($order->shippingAddress['phone'] ?? '')) ?: null,
+                trim((string)($order->shippingAddress['email'] ?? '')) ?: null,
+            );
+        } catch (Bitrix24Exception $exception) {
+            $this->log($order->id, 'crm.item.add.contact', $exception);
+        } catch (Throwable $exception) {
+            $this->errorLogger->log(
+                service: 'bitrix24',
+                scenario: 'order_created',
+                operation: 'crm.item.add.contact',
+                message: $exception->getMessage(),
+                localEntityType: 'order',
+                localEntityId: $order->id,
+            );
+        }
+
+        return null;
+    }
+
     /**
      * @param list<array{product_id: int, product_name: string, price: int, quantity: int}> $items
      */
@@ -87,11 +115,7 @@ final readonly class Bitrix24OrderSyncer
         ], $items);
 
         try {
-            $this->client->call($webhookUrl, 'crm.item.productrow.set', [
-                'ownerType'   => 'D',
-                'ownerId'     => $dealId,
-                'productRows' => $rows,
-            ]);
+            $this->crm->setDealProductRows($webhookUrl, $dealId, $rows);
         } catch (Bitrix24Exception $exception) {
             $this->log($order->id, 'crm.item.productrow.set', $exception);
         } catch (Throwable $exception) {

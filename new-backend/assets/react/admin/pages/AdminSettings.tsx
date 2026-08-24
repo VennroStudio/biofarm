@@ -53,6 +53,7 @@ const defaults: Settings = {
   yandex_metrika_id: '',
   bitrix_widget_enabled: false,
   bitrix_widget_code: '',
+  bitrix_crm_enabled: false,
   seo_product_title_template: '{name} — купить натуральный продукт БИОФАРМ',
   seo_product_description_template: '{name}: описание, состав, цена и сертификаты качества. Натуральная продукция БИОФАРМ с доставкой по России.',
   seo_category_title_template: '{h1} — БИОФАРМ',
@@ -77,6 +78,75 @@ const emptyPassword: PasswordForm = {
   next: '',
   confirm: '',
 };
+
+type SaveableSettingsSectionId = Exclude<SettingsSectionId, 'integrations' | 'security'>;
+
+type WritableSettingsKey = Exclude<keyof Settings, 'bitrix_crm_enabled'>;
+
+const sectionSettingsKeys: Record<SaveableSettingsSectionId, readonly WritableSettingsKey[]> = {
+  features: [
+    'cart_enabled',
+    'registration_enabled',
+    'referral_enabled',
+    'withdrawals_enabled',
+    'favorites_enabled',
+  ],
+  home: [
+    'home_features_enabled',
+    'home_catalog_enabled',
+    'home_video_enabled',
+    'home_blog_enabled',
+    'home_about_enabled',
+    'home_marketplaces_enabled',
+    'home_certificates_enabled',
+    'home_loyalty_enabled',
+    'home_reviews_enabled',
+    'home_contacts_enabled',
+  ],
+  seo: [
+    'site_name',
+    'site_phone',
+    'site_email',
+    'site_logo_url',
+    'site_default_og_image',
+    'site_address_country',
+    'site_address_region',
+    'site_address_locality',
+    'site_address_street',
+    'seo_product_title_template',
+    'seo_product_description_template',
+    'seo_category_title_template',
+    'seo_category_description_template',
+    'seo_attribute_title_template',
+    'seo_attribute_description_template',
+    'yandex_metrika_enabled',
+    'yandex_metrika_id',
+    'robots_txt',
+    'robots_extra_disallow',
+  ],
+  orders: [
+    'free_delivery_threshold',
+    'cdek_delivery_price',
+    'post_delivery_price',
+    'promo_codes_enabled',
+    'order_emails_enabled',
+  ],
+  loyalty: [
+    'referral_percent',
+    'order_bonus_enabled',
+    'order_bonus_percent',
+    'order_bonus_spend_limit_percent',
+    'welcome_bonus_enabled',
+    'welcome_bonus_amount',
+  ],
+};
+
+function pickSectionSettings(settings: Settings, section: SaveableSettingsSectionId): Partial<Settings> {
+  return sectionSettingsKeys[section].reduce<Partial<Settings>>((payload, key) => ({
+    ...payload,
+    [key]: settings[key],
+  }), {});
+}
 
 function renderSettingsSection(section: SettingsSectionId, settings: Settings, setSettings: (settings: Settings) => void) {
   switch (section) {
@@ -119,12 +189,12 @@ export function AdminSettings() {
     setSettings(await settingsApi.get());
   });
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>, sectionId: SaveableSettingsSectionId) {
     event.preventDefault();
     setError(null);
     setSaving(true);
     try {
-      await settingsApi.update(settings);
+      await settingsApi.update(pickSectionSettings(settings, sectionId));
       setSaved(true);
       window.setTimeout(() => setSaved(false), 1800);
     } catch (saveError) {
@@ -196,16 +266,18 @@ export function AdminSettings() {
           setPassword={setPassword}
           onSubmit={(event) => void submitPassword(event)}
         />
+      ) : activeSection === 'integrations' ? (
+        <BitrixSettingsCard settings={settings} onChange={setSettings} />
       ) : (
-        <form className="space-y-6" onSubmit={(event) => void submit(event)}>
+        <form className="space-y-6" onSubmit={(event) => void submit(event, activeSection)}>
           <ErrorAlert>{error}</ErrorAlert>
           {renderSettingsSection(activeSection, settings, setSettings)}
 
           <div className="flex items-center justify-end gap-3">
-            {saved && <span className="text-sm font-semibold text-[#2f7d4b]">Настройки сохранены</span>}
+            {saved && <span className="text-sm font-semibold text-[#2f7d4b]">Вкладка сохранена</span>}
             <Button type="submit" disabled={saving}>
               <Save className="h-4 w-4" />
-              {saving ? 'Сохранение...' : 'Сохранить настройки'}
+              {saving ? 'Сохранение...' : 'Сохранить'}
             </Button>
           </div>
         </form>

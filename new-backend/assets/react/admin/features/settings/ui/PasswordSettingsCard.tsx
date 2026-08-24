@@ -58,7 +58,7 @@ export function PasswordSettingsCard({ password, error, saved, saving, setPasswo
         <div className="flex flex-wrap items-center gap-3">
           <Button type="submit" variant="outline" disabled={saving}>
             <Lock className="h-4 w-4" />
-            {saving ? 'Смена пароля...' : 'Изменить пароль'}
+            {saving ? 'Сохранение...' : 'Сохранить'}
           </Button>
           {saved && <span className="text-sm font-semibold text-[#2f7d4b]">Пароль изменён</span>}
           {error && <span className="text-sm font-semibold text-[#c44747]">{error}</span>}
