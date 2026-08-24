@@ -78,6 +78,9 @@ class Order
     #[ORM\Column(type: Types::STRING, length: 50, nullable: true)]
     private(set) ?string $referredBy = null;
 
+    #[ORM\Column(type: Types::INTEGER, nullable: true)]
+    private(set) ?int $bitrixDealId = null;
+
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private(set) DateTimeImmutable $createdAt;
 
@@ -266,6 +269,15 @@ class Order
     public function setTrackingNumber(?string $trackingNumber): void
     {
         $this->trackingNumber = $trackingNumber;
+        $this->touch();
+    }
+
+    /**
+     * @throws DateMalformedStringException
+     */
+    public function markBitrixDeal(int $dealId): void
+    {
+        $this->bitrixDealId = $dealId;
         $this->touch();
     }
 

@@ -16,6 +16,12 @@ use App\Http\Action\Admin\Dashboard\GetDashboardAction;
 use App\Http\Action\Admin\Faq\DeleteFaqItemAction;
 use App\Http\Action\Admin\Faq\GetFaqItemsAction;
 use App\Http\Action\Admin\Faq\SaveFaqItemAction;
+use App\Http\Action\Admin\Integration\GetBitrix24SettingsAction;
+use App\Http\Action\Admin\Integration\GetIntegrationErrorsAction;
+use App\Http\Action\Admin\Integration\MarkAllIntegrationErrorsReadAction;
+use App\Http\Action\Admin\Integration\MarkIntegrationErrorReadAction;
+use App\Http\Action\Admin\Integration\TestBitrix24ConnectionAction;
+use App\Http\Action\Admin\Integration\UpdateBitrix24SettingsAction;
 use App\Http\Action\Admin\Media\DeleteMediaAction;
 use App\Http\Action\Admin\Media\UploadMediaAction;
 use App\Http\Action\Admin\Order\UpdateOrderDetailsAction;
@@ -65,6 +71,12 @@ return static function (App $app): void {
                 $group->get('/settings', GetSettingsAction::class);
                 $group->patch('/settings', UpdateSettingsAction::class);
                 $group->patch('/settings/password', ChangePasswordAction::class);
+                $group->get('/integrations/bitrix24', GetBitrix24SettingsAction::class);
+                $group->patch('/integrations/bitrix24', UpdateBitrix24SettingsAction::class);
+                $group->post('/integrations/bitrix24/test', TestBitrix24ConnectionAction::class);
+                $group->get('/integration-errors', GetIntegrationErrorsAction::class);
+                $group->patch('/integration-errors/read-all', MarkAllIntegrationErrorsReadAction::class);
+                $group->patch('/integration-errors/{id}/read', MarkIntegrationErrorReadAction::class);
 
                 $group->get('/promo-codes', GetPromoCodesAction::class);
                 $group->post('/promo-codes', SavePromoCodeAction::class);

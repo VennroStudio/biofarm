@@ -17,6 +17,7 @@ use App\Modules\Order\Entity\Order\OrderRepository;
 use App\Modules\Order\Entity\OrderItem\OrderItem;
 use App\Modules\Order\Entity\OrderItem\OrderItemRepository;
 use App\Modules\Order\Permission\OrderPermission;
+use App\Modules\Order\Service\Bitrix24OrderSyncer;
 use App\Modules\Order\Service\OrderEmailNotifier;
 use App\Modules\Order\Service\OrderPermissionService;
 use App\Modules\User\Entity\User\Fields\Enums\UserRole;
@@ -40,6 +41,7 @@ final readonly class CreateOrderHandler
         private BonusTransactionRepository $bonusRepository,
         private SiteSettings $settings,
         private OrderEmailNotifier $emailNotifier,
+        private Bitrix24OrderSyncer $bitrix24OrderSyncer,
         private Connection $connection,
         private Cacher $cacher,
         private FlusherInterface $flusher,
@@ -133,6 +135,7 @@ final readonly class CreateOrderHandler
         }
 
         $this->emailNotifier->created($order);
+        $this->bitrix24OrderSyncer->created($order, $calculation['items']);
 
         return [
             'id'              => $orderId,

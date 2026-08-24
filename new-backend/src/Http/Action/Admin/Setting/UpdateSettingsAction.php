@@ -31,7 +31,7 @@ final readonly class UpdateSettingsAction implements RequestHandlerInterface
         /** @var array<string, bool|float|int|string|null> $updated */
         $updated = [];
 
-        foreach (SiteSettings::keys() as $key) {
+        foreach (SiteSettings::adminWritableKeys() as $key) {
             if (!\array_key_exists($key, $payload)) {
                 continue;
             }

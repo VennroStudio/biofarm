@@ -8,6 +8,7 @@ import { AdminCategories } from './pages/AdminCategories';
 import { AdminCertificates } from './pages/AdminCertificates';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { AdminFaq } from './pages/AdminFaq';
+import { AdminIntegrationErrors } from './pages/AdminIntegrationErrors';
 import { AdminLogin } from './pages/AdminLogin';
 import { AdminOrders } from './pages/AdminOrders';
 import { AdminPages } from './pages/AdminPages';
@@ -55,6 +56,7 @@ export function AdminApp() {
           <Route path="reviews" element={<AdminReviews />} />
           <Route path="users" element={<AdminUsers />} />
           <Route path="withdrawals" element={<AdminWithdrawals />} />
+          <Route path="integration-errors" element={<AdminIntegrationErrors />} />
           <Route path="settings" element={<AdminSettings />} />
         </Route>
         <Route path="*" element={<Navigate to="/admin" replace />} />

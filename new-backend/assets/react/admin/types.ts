@@ -338,6 +338,28 @@ export type Settings = {
   robots_extra_disallow: string;
 };
 
+export type Bitrix24IntegrationSettings = {
+  enabled: boolean;
+  has_webhook: boolean;
+  webhook_mask: string | null;
+};
+
+export type IntegrationErrorLog = {
+  id: number;
+  service: string;
+  scenario: string;
+  operation: string;
+  local_entity_type: string | null;
+  local_entity_id: string | null;
+  message: string;
+  http_status: number | null;
+  response_body: string | null;
+  context: Record<string, unknown>;
+  is_read: boolean;
+  created_at: string;
+  read_at: string | null;
+};
+
 export type DashboardStats = {
   total_orders: number;
   total_revenue: number;

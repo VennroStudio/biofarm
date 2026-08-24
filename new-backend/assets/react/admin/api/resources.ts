@@ -9,6 +9,7 @@ import type {
   CmsPageTemplate,
   DashboardStats,
   FaqItem,
+  IntegrationErrorLog,
   MediaAsset,
   Order,
   Product,
@@ -17,6 +18,7 @@ import type {
   PromoCode,
   Review,
   Settings,
+  Bitrix24IntegrationSettings,
   Withdrawal,
 } from '../types';
 import { request, requestItems } from './client';
@@ -59,6 +61,22 @@ export const settingsApi = {
       method: 'PATCH',
       body: payload,
     }),
+};
+
+export const bitrix24Api = {
+  get: () => request<Bitrix24IntegrationSettings>('/admin/api/integrations/bitrix24'),
+  update: (payload: { enabled: boolean; webhook_url?: string }) =>
+    request<Bitrix24IntegrationSettings>('/admin/api/integrations/bitrix24', {
+      method: 'PATCH',
+      body: payload,
+    }),
+  test: () => request<{ ok: boolean }>('/admin/api/integrations/bitrix24/test', { method: 'POST' }),
+};
+
+export const integrationErrorsApi = {
+  list: () => requestItems<IntegrationErrorLog>('/admin/api/integration-errors'),
+  markRead: (id: number) => request(`/admin/api/integration-errors/${id}/read`, { method: 'PATCH', body: {} }),
+  markAllRead: () => request('/admin/api/integration-errors/read-all', { method: 'PATCH', body: {} }),
 };
 
 export const productsApi = {

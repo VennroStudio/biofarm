@@ -1,5 +1,6 @@
 import {
   FileText,
+  CircleAlert,
   FileCheck2,
   FolderTree,
   HelpCircle,
@@ -35,6 +36,7 @@ const links = [
   { to: '/admin/reviews', label: 'Отзывы', icon: Star },
   { to: '/admin/users', label: 'Пользователи', icon: Users },
   { to: '/admin/withdrawals', label: 'Заявки на вывод', icon: Wallet },
+  { to: '/admin/integration-errors', label: 'Ошибки', icon: CircleAlert },
   { to: '/admin/settings', label: 'Настройки', icon: Settings },
 ];
 

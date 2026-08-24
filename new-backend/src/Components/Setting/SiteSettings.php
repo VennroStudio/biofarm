@@ -39,6 +39,7 @@ final class SiteSettings
         'yandex_metrika_id'                  => '',
         'bitrix_widget_enabled'              => false,
         'bitrix_widget_code'                 => '',
+        'bitrix_crm_enabled'                 => false,
         'referral_percent'                   => 5,
         'seo_product_title_template'         => '{name} — купить натуральный продукт БИОФАРМ',
         'seo_product_description_template'   => '{name}: описание, состав, цена и сертификаты качества. Натуральная продукция БИОФАРМ с доставкой по России.',
@@ -86,6 +87,17 @@ final class SiteSettings
     public static function keys(): array
     {
         return array_keys(self::DEFAULTS);
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function adminWritableKeys(): array
+    {
+        return array_values(array_filter(
+            self::keys(),
+            static fn (string $key): bool => $key !== 'bitrix_crm_enabled',
+        ));
     }
 
     public function bool(string $key, bool $default = false): bool
