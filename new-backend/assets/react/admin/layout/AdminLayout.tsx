@@ -1,6 +1,7 @@
 import {
-  FileText,
+  ChevronDown,
   CircleAlert,
+  FileText,
   FileCheck2,
   FolderTree,
   HelpCircle,
@@ -19,8 +20,9 @@ import {
   X,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Navigate, NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { getStoredAdmin, getToken, logout, sessionClearedEvent } from '../api/client';
+import { settingsSections, settingsSectionPath } from '../features/settings/model/settingsSections';
 
 const links = [
   { to: '/admin', label: 'Дашборд', icon: LayoutDashboard },
@@ -42,8 +44,12 @@ const links = [
 
 export function AdminLayout() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [admin, setAdmin] = useState(() => getStoredAdmin());
   const [open, setOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(() => location.pathname.startsWith('/admin/settings'));
+  const settingsActive = location.pathname.startsWith('/admin/settings');
+  const showSettingsSubnav = settingsOpen;
 
   useEffect(() => {
     const handleSessionCleared = () => {
@@ -68,13 +74,71 @@ export function AdminLayout() {
   };
 
   const sidebar = (
-    <aside className="flex h-full w-64 flex-col border-r border-[#e4e5da] bg-[#fbfaf4]">
+    <aside className="flex h-full min-h-0 w-64 flex-col border-r border-[#e4e5da] bg-[#fbfaf4]">
       <div className="flex h-16 items-center border-b border-[#e4e5da] px-4">
         <a href="/admin" className="text-xl font-bold text-[#1f6b3a]">BioFarm</a>
       </div>
-      <nav className="flex-1 space-y-2 px-4 py-5">
+      <nav className="min-h-0 flex-1 space-y-2 overflow-y-auto px-4 py-5">
         {links.map((link) => {
           const Icon = link.icon;
+          if (link.to === '/admin/settings') {
+            return (
+              <div key={link.to}>
+                <div className="flex items-center gap-2">
+                  <NavLink
+                    to={settingsSectionPath('features')}
+                    onClick={() => {
+                      setOpen(false);
+                      setSettingsOpen(true);
+                    }}
+                    className={`flex min-w-0 flex-1 items-center gap-3 rounded-md px-3 py-3 text-sm font-semibold transition ${
+                      settingsActive
+                        ? 'bg-[#1f6b3a] text-white'
+                        : 'text-[#789083] hover:bg-[#eef1e8] hover:text-[#26382d]'
+                    }`}
+                  >
+                    <Icon className="h-5 w-5 shrink-0" />
+                    {link.label}
+                  </NavLink>
+                  <button
+                    type="button"
+                    className={`grid h-10 w-10 place-items-center rounded-md transition ${
+                      settingsActive
+                        ? 'bg-[#1f6b3a] text-white'
+                        : 'text-[#789083] hover:bg-[#eef1e8] hover:text-[#26382d]'
+                    }`}
+                    aria-expanded={showSettingsSubnav}
+                    aria-label={showSettingsSubnav ? 'Свернуть настройки' : 'Развернуть настройки'}
+                    onClick={() => setSettingsOpen((value) => !value)}
+                  >
+                    <ChevronDown className={`h-4 w-4 transition ${showSettingsSubnav ? 'rotate-180' : ''}`} />
+                  </button>
+                </div>
+
+                {showSettingsSubnav && (
+                  <div className="mt-2 space-y-1 pl-8">
+                    {settingsSections.map((section) => (
+                      <NavLink
+                        key={section.id}
+                        to={settingsSectionPath(section.id)}
+                        onClick={() => setOpen(false)}
+                        className={({ isActive }) =>
+                          `block rounded-md px-3 py-2 text-sm font-semibold transition ${
+                            isActive
+                              ? 'bg-[#e5f3e9] text-[#1f6b3a]'
+                              : 'text-[#789083] hover:bg-[#eef1e8] hover:text-[#26382d]'
+                          }`
+                        }
+                      >
+                        {section.label}
+                      </NavLink>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          }
+
           return (
             <NavLink
               key={link.to}

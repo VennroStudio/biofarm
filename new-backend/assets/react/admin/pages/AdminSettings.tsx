@@ -1,6 +1,14 @@
 import { Save } from 'lucide-react';
 import { FormEvent, useState } from 'react';
+import { Navigate, NavLink, useParams } from 'react-router-dom';
 import { settingsApi } from '../api/resources';
+import {
+  defaultSettingsSection,
+  isSettingsSectionId,
+  settingsSections,
+  settingsSectionPath,
+  type SettingsSectionId,
+} from '../features/settings/model/settingsSections';
 import { BitrixSettingsCard } from '../features/settings/ui/BitrixSettingsCard';
 import { DeliverySettingsCard } from '../features/settings/ui/DeliverySettingsCard';
 import { FeatureSettingsCard } from '../features/settings/ui/FeatureSettingsCard';
@@ -70,7 +78,34 @@ const emptyPassword: PasswordForm = {
   confirm: '',
 };
 
+function renderSettingsSection(section: SettingsSectionId, settings: Settings, setSettings: (settings: Settings) => void) {
+  switch (section) {
+    case 'features':
+      return <FeatureSettingsCard settings={settings} onChange={setSettings} />;
+    case 'home':
+      return <HomeBlocksSettingsCard settings={settings} onChange={setSettings} />;
+    case 'seo':
+      return <SeoSettingsCard settings={settings} onChange={setSettings} />;
+    case 'integrations':
+      return <BitrixSettingsCard settings={settings} onChange={setSettings} />;
+    case 'orders':
+      return <DeliverySettingsCard settings={settings} onChange={setSettings} />;
+    case 'loyalty':
+      return (
+        <>
+          <ReferralSettingsCard settings={settings} onChange={setSettings} />
+          <OrderBonusSettingsCard settings={settings} onChange={setSettings} />
+        </>
+      );
+    case 'security':
+      return null;
+  }
+}
+
 export function AdminSettings() {
+  const { section } = useParams();
+  const activeSection = isSettingsSectionId(section) ? section : defaultSettingsSection;
+  const sectionMeta = settingsSections.find((item) => item.id === activeSection);
   const [settings, setSettings] = useState<Settings>(defaults);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -126,30 +161,33 @@ export function AdminSettings() {
     }
   }
 
+  if (section !== undefined && !isSettingsSectionId(section)) {
+    return <Navigate to={settingsSectionPath(defaultSettingsSection)} replace />;
+  }
+
   return (
     <>
-      <PageHeader title="Настройки" subtitle="Конфигурация магазина и бонусной программы" />
+      <PageHeader title="Настройки" subtitle={sectionMeta?.subtitle ?? 'Конфигурация магазина'} />
 
-      <form className="space-y-6" onSubmit={(event) => void submit(event)}>
-        <ErrorAlert>{error}</ErrorAlert>
-        <FeatureSettingsCard settings={settings} onChange={setSettings} />
-        <HomeBlocksSettingsCard settings={settings} onChange={setSettings} />
-        <SeoSettingsCard settings={settings} onChange={setSettings} />
-        <BitrixSettingsCard settings={settings} onChange={setSettings} />
-        <ReferralSettingsCard settings={settings} onChange={setSettings} />
-        <OrderBonusSettingsCard settings={settings} onChange={setSettings} />
-        <DeliverySettingsCard settings={settings} onChange={setSettings} />
+      <div className="mb-6 flex flex-wrap gap-2">
+        {settingsSections.map((item) => (
+          <NavLink
+            key={item.id}
+            to={settingsSectionPath(item.id)}
+            className={({ isActive }) =>
+              `rounded-md border px-4 py-2 text-sm font-semibold transition ${
+                isActive
+                  ? 'border-[#2f7d4b] bg-[#2f7d4b] text-white'
+                  : 'border-[#d9dece] bg-white text-[#53685c] hover:border-[#2f7d4b] hover:text-[#2f7d4b]'
+              }`
+            }
+          >
+            {item.label}
+          </NavLink>
+        ))}
+      </div>
 
-        <div className="flex items-center justify-end gap-3">
-          {saved && <span className="text-sm font-semibold text-[#2f7d4b]">Настройки сохранены</span>}
-          <Button type="submit" disabled={saving}>
-            <Save className="h-4 w-4" />
-            {saving ? 'Сохранение...' : 'Сохранить все настройки'}
-          </Button>
-        </div>
-      </form>
-
-      <div className="mt-6">
+      {activeSection === 'security' ? (
         <PasswordSettingsCard
           password={password}
           error={passwordError}
@@ -158,7 +196,20 @@ export function AdminSettings() {
           setPassword={setPassword}
           onSubmit={(event) => void submitPassword(event)}
         />
-      </div>
+      ) : (
+        <form className="space-y-6" onSubmit={(event) => void submit(event)}>
+          <ErrorAlert>{error}</ErrorAlert>
+          {renderSettingsSection(activeSection, settings, setSettings)}
+
+          <div className="flex items-center justify-end gap-3">
+            {saved && <span className="text-sm font-semibold text-[#2f7d4b]">Настройки сохранены</span>}
+            <Button type="submit" disabled={saving}>
+              <Save className="h-4 w-4" />
+              {saving ? 'Сохранение...' : 'Сохранить настройки'}
+            </Button>
+          </div>
+        </form>
+      )}
     </>
   );
 }

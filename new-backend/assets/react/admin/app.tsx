@@ -18,6 +18,7 @@ import { AdminReviews } from './pages/AdminReviews';
 import { AdminSettings } from './pages/AdminSettings';
 import { AdminUsers } from './pages/AdminUsers';
 import { AdminWithdrawals } from './pages/AdminWithdrawals';
+import { defaultSettingsSection, settingsSectionPath } from './features/settings/model/settingsSections';
 
 function Guard({ children }: { children: ReactNode }) {
   if (!getToken()) {
@@ -57,7 +58,8 @@ export function AdminApp() {
           <Route path="users" element={<AdminUsers />} />
           <Route path="withdrawals" element={<AdminWithdrawals />} />
           <Route path="integration-errors" element={<AdminIntegrationErrors />} />
-          <Route path="settings" element={<AdminSettings />} />
+          <Route path="settings" element={<Navigate to={settingsSectionPath(defaultSettingsSection)} replace />} />
+          <Route path="settings/:section" element={<AdminSettings />} />
         </Route>
         <Route path="*" element={<Navigate to="/admin" replace />} />
       </Routes>
