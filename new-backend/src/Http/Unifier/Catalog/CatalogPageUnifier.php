@@ -6,6 +6,7 @@ namespace App\Http\Unifier\Catalog;
 
 use App\Components\Seo\JsonLdFactory;
 use App\Components\Seo\SeoUrlGenerator;
+use App\Components\Setting\SiteSettings;
 use App\Http\Unifier\Product\ProductCatalogDataProvider;
 use App\Http\View\Catalog\CatalogFacetView;
 use App\Http\View\Catalog\CatalogPageView;
@@ -24,6 +25,7 @@ final readonly class CatalogPageUnifier
         private SeoUrlGenerator $urls,
         private JsonLdFactory $jsonLd,
         private PageSeoProvider $pages,
+        private SiteSettings $settings,
     ) {}
 
     public function unify(
@@ -417,15 +419,25 @@ final readonly class CatalogPageUnifier
             $h1 = $categoryName !== null
                 ? $categoryName . ' ' . $purposePhrase
                 : ($purpose['h1'] ?? 'БАДы ' . $purpose['name']);
-            $description = $categoryName !== null
+            $fallbackDescription = $categoryName !== null
                 ? ('Подборка товаров БИОФАРМ в категории «' . $categoryName . '» ' . $purposePhrase . '. Натуральные растительные экстракты и БАДы с доставкой по России.')
-                : ($purpose['seo_description'] ?? ('Натуральная продукция БИОФАРМ ' . $purpose['name'] . '.'));
+                : ('Натуральная продукция БИОФАРМ ' . $purpose['name'] . '.');
+            $variables = [
+                'category' => $categoryName ?? '',
+                'h1'       => $h1,
+                'name'     => $purpose['name'],
+                'slug'     => $purpose['slug'],
+            ];
+            $description = $purpose['seo_description']
+                ?? $this->template('seo_attribute_description_template', $variables, $fallbackDescription);
+            $title = $purpose['seo_title']
+                ?? $this->template('seo_attribute_title_template', $variables, $h1 . ' — БИОФАРМ');
 
             return [
                 'eyebrow'     => 'Для здоровья',
                 'h1'          => $h1,
                 'lead'        => $description,
-                'title'       => $categoryName !== null ? ($h1 . ' — БИОФАРМ') : ($purpose['seo_title'] ?? ($h1 . ' — БИОФАРМ')),
+                'title'       => $title,
                 'description' => $description,
                 'introText'   => $purpose['intro_text'] ?? $category['intro_text'] ?? null,
                 'bottomText'  => $purpose['bottom_text'] ?? $category['bottom_text'] ?? null,
@@ -438,15 +450,25 @@ final readonly class CatalogPageUnifier
             $h1 = $categoryName !== null
                 ? $categoryName . ' ' . $componentPhrase
                 : ($component['h1'] ?? 'БАДы с ' . $componentName);
-            $description = $categoryName !== null
+            $fallbackDescription = $categoryName !== null
                 ? ('Подборка товаров БИОФАРМ в категории «' . $categoryName . '» ' . $componentPhrase . '. Натуральная продукция с понятным составом.')
-                : ($component['seo_description'] ?? ('Каталог продукции БИОФАРМ с компонентом ' . $componentName . '.'));
+                : ('Каталог продукции БИОФАРМ с компонентом ' . $componentName . '.');
+            $variables = [
+                'category' => $categoryName ?? '',
+                'h1'       => $h1,
+                'name'     => $component['name'],
+                'slug'     => $component['slug'],
+            ];
+            $description = $component['seo_description']
+                ?? $this->template('seo_attribute_description_template', $variables, $fallbackDescription);
+            $title = $component['seo_title']
+                ?? $this->template('seo_attribute_title_template', $variables, $h1 . ' — БИОФАРМ');
 
             return [
                 'eyebrow'     => 'Состав',
                 'h1'          => $h1,
                 'lead'        => $description,
-                'title'       => $categoryName !== null ? ($h1 . ' — БИОФАРМ') : ($component['seo_title'] ?? ($h1 . ' — БИОФАРМ')),
+                'title'       => $title,
                 'description' => $description,
                 'introText'   => $component['intro_text'] ?? $component['short_description'] ?? $category['intro_text'] ?? null,
                 'bottomText'  => $component['bottom_text'] ?? $category['bottom_text'] ?? null,
@@ -455,14 +477,25 @@ final readonly class CatalogPageUnifier
 
         if ($category !== null) {
             $h1 = $categoryHeading ?? $category['name'];
+            $variables = [
+                'category' => $category['name'],
+                'h1'       => $h1,
+                'name'     => $category['name'],
+                'slug'     => $category['slug'],
+            ];
             $description = $category['seo_description']
-                ?? ('Каталог продукции БИОФАРМ в категории ' . $category['name'] . '.');
+                ?? $this->template(
+                    'seo_category_description_template',
+                    $variables,
+                    'Каталог продукции БИОФАРМ в категории ' . $category['name'] . '.',
+                );
 
             return [
-                'eyebrow'     => 'Натуральные продукты',
-                'h1'          => $h1,
-                'lead'        => $description,
-                'title'       => $category['seo_title'] ?? ($h1 . ' — БИОФАРМ'),
+                'eyebrow' => 'Натуральные продукты',
+                'h1'      => $h1,
+                'lead'    => $description,
+                'title'   => $category['seo_title']
+                    ?? $this->template('seo_category_title_template', $variables, $h1 . ' — БИОФАРМ'),
                 'description' => $description,
                 'introText'   => $category['intro_text'],
                 'bottomText'  => $category['bottom_text'],
@@ -478,6 +511,24 @@ final readonly class CatalogPageUnifier
             'introText'   => null,
             'bottomText'  => null,
         ];
+    }
+
+    /**
+     * @param array<string, string> $variables
+     */
+    private function template(string $key, array $variables, string $fallback): string
+    {
+        $template = trim((string)$this->settings->get($key, $fallback));
+        if ($template === '') {
+            $template = $fallback;
+        }
+
+        $replacements = [];
+        foreach ($variables as $name => $value) {
+            $replacements['{' . $name . '}'] = $value;
+        }
+
+        return strtr($template, $replacements);
     }
 
     private function facetPhrase(?string $h1, string $fallback): string

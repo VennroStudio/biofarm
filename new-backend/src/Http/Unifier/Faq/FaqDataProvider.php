@@ -32,8 +32,8 @@ final readonly class FaqDataProvider
 
         if ($scope !== '') {
             $conditions[] = $pageId !== null
-                ? '(page_scope = :scope AND (page_id IS NULL OR page_id = :pageId))'
-                : '(page_scope = :scope AND page_id IS NULL)';
+                ? '(page_scope = :scope AND (page_id IS NULL OR page_id = "" OR page_id = :pageId OR FIND_IN_SET(:pageId, REPLACE(REPLACE(REPLACE(page_id, CHAR(10), ","), CHAR(13), ","), ";", ",")) > 0))'
+                : '(page_scope = :scope AND (page_id IS NULL OR page_id = ""))';
             $params['scope'] = $scope;
             if ($pageId !== null) {
                 $params['pageId'] = $pageId;

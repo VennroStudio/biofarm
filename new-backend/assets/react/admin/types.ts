@@ -221,7 +221,7 @@ export type Review = {
 
 export type Order = {
   id: string;
-  user_id: number;
+  user_id: number | null;
   status: string;
   payment_status: string;
   subtotal: number;
@@ -306,8 +306,26 @@ export type Settings = {
   cdek_delivery_price: number;
   post_delivery_price: number;
   order_emails_enabled: boolean;
+  home_features_enabled: boolean;
+  home_catalog_enabled: boolean;
+  home_video_enabled: boolean;
+  home_blog_enabled: boolean;
+  home_about_enabled: boolean;
+  home_marketplaces_enabled: boolean;
+  home_certificates_enabled: boolean;
+  home_loyalty_enabled: boolean;
+  home_reviews_enabled: boolean;
+  home_contacts_enabled: boolean;
   yandex_metrika_enabled: boolean;
   yandex_metrika_id: string;
+  bitrix_widget_enabled: boolean;
+  bitrix_widget_code: string;
+  seo_product_title_template: string;
+  seo_product_description_template: string;
+  seo_category_title_template: string;
+  seo_category_description_template: string;
+  seo_attribute_title_template: string;
+  seo_attribute_description_template: string;
   site_name: string;
   site_phone: string;
   site_email: string;

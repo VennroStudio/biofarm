@@ -1185,6 +1185,10 @@ final readonly class ProductCatalogDataProvider
      */
     private function productVariants(int $productId): array
     {
+        if (!$this->hasTable('product_groups') || !$this->hasTable('product_group_items')) {
+            return [];
+        }
+
         $groupId = $this->connection->fetchOne(
             'SELECT pgi.group_id
              FROM product_group_items pgi

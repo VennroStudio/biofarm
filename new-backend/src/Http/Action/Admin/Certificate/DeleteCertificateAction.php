@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Action\Admin\Certificate;
 
-use App\Components\Http\Response\JsonDataResponse;
 use App\Components\Exception\DomainExceptionModule;
+use App\Components\Http\Response\JsonDataResponse;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 use Override;

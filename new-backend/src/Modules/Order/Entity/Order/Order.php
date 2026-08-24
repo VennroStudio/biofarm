@@ -22,8 +22,8 @@ class Order
     #[ORM\Column(type: Types::STRING, length: 50)]
     private(set) string $id;
 
-    #[ORM\Column(type: Types::INTEGER)]
-    private(set) int $userId;
+    #[ORM\Column(type: Types::INTEGER, nullable: true)]
+    private(set) ?int $userId;
 
     #[ORM\Column(type: Types::STRING, length: 20)]
     private(set) string $status;
@@ -101,7 +101,7 @@ class Order
      */
     private function __construct(
         string $id,
-        int $userId,
+        ?int $userId,
         int $total,
         int $subtotal,
         ?string $deliveryMethod,
@@ -146,7 +146,7 @@ class Order
      */
     public static function create(
         string $id,
-        int $userId,
+        ?int $userId,
         int $total,
         array $shippingAddress,
         string $paymentMethod,
@@ -212,7 +212,7 @@ class Order
      * @throws DateMalformedStringException
      */
     public function edit(
-        int $userId,
+        ?int $userId,
         string $status,
         string $paymentStatus,
         int $total,

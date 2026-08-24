@@ -34,7 +34,9 @@ final readonly class OrderBonusApplier
             return;
         }
 
-        $buyerProfile = $this->profileRepository->findByUserId($order->userId);
+        $buyerProfile = $order->userId !== null
+            ? $this->profileRepository->findByUserId($order->userId)
+            : null;
 
         if ($buyerProfile !== null && $this->settings->bool('order_bonus_enabled', true)) {
             $this->applyBuyerBonus($order, $buyerProfile);
@@ -45,7 +47,11 @@ final readonly class OrderBonusApplier
         }
 
         $referrerProfile = $this->resolveReferrerProfile($order, $buyerProfile);
-        if ($referrerProfile === null || !$referrerProfile->isPartner || $referrerProfile->userId === $order->userId) {
+        if (
+            $referrerProfile === null
+            || !$referrerProfile->isPartner
+            || ($order->userId !== null && $referrerProfile->userId === $order->userId)
+        ) {
             return;
         }
 

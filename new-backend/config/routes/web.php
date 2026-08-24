@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Components\Router\StaticRouteGroup as Group;
+use App\Http\Web\Auth\EmailVerificationPageController;
 use App\Http\Web\Auth\LoginPageController;
 use App\Http\Web\Blog\BlogPageController;
 use App\Http\Web\Blog\BlogPostPageController;
@@ -11,10 +12,12 @@ use App\Http\Web\Cart\CheckoutPageController;
 use App\Http\Web\Cart\OrderSuccessPageController;
 use App\Http\Web\Catalog\CatalogPageController;
 use App\Http\Web\Certificate\CertificatePageController;
+use App\Http\Web\Faq\FaqPageController;
 use App\Http\Web\Feedback\FeedbackController;
 use App\Http\Web\Home\HomePageController;
 use App\Http\Web\Legal\PrivacyPolicyPageController;
 use App\Http\Web\Legal\PublicOfferPageController;
+use App\Http\Web\Loyalty\LoyaltyPageController;
 use App\Http\Web\Page\CmsPageController;
 use App\Http\Web\Product\ProductPageController;
 use App\Http\Web\Profile\ProfilePageController;
@@ -45,6 +48,9 @@ return static function (App $app): void {
         $group->get('/blog', BlogPageController::class);
         $group->get('/blog/{slug}', BlogPostPageController::class);
         $group->get('/certificates', CertificatePageController::class);
+        $group->get('/faq', FaqPageController::class);
+        $group->get('/loyalnost', LoyaltyPageController::class);
+        $group->get('/email-verification', EmailVerificationPageController::class);
         $group->get('/cart', CartPageController::class);
         $group->get('/checkout', CheckoutPageController::class);
         $group->get('/order-success', OrderSuccessPageController::class);

@@ -21,6 +21,9 @@ export const faqScopes = [
   { value: 'post', label: 'Статья' },
   { value: 'page', label: 'Обычная страница' },
   { value: 'certificates', label: 'Сертификаты' },
+  { value: 'faq', label: 'FAQ' },
+  { value: 'loyalty', label: 'Лояльность' },
+  { value: 'email_verification', label: 'Подтверждение email' },
 ];
 
 export const emptyFaqForm: FaqForm = {

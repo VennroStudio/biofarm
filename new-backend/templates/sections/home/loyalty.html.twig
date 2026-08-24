@@ -1,0 +1,68 @@
+<section id="loyalty" class="bg-secondary/30 py-20 md:py-28">
+    <div class="container mx-auto px-4">
+        <div class="mx-auto mb-12 max-w-3xl text-center" data-reveal>
+            <p class="mb-2 text-sm font-semibold text-secondary">Бонусная программа</p>
+            <h2 class="font-display text-3xl font-bold text-foreground md:text-4xl">Покупайте с выгодой</h2>
+            <p class="mt-4 text-muted-foreground">
+                Копите бонусы за заказы, используйте промокоды и получайте бесплатную доставку при заказе от заданной суммы.
+            </p>
+        </div>
+
+        <div class="mx-auto grid max-w-6xl gap-5 md:grid-cols-3">
+            {% if site_feature('order_bonus_enabled') %}
+                <div class="rounded-2xl bg-card p-6 shadow-premium" data-reveal>
+                    <div class="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                        <svg class="h-6 w-6" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 12v10H4V12"></path>
+                            <path d="M2 7h20v5H2z"></path>
+                            <path d="M12 22V7"></path>
+                            <path d="M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7z"></path>
+                            <path d="M12 7h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="mb-3 text-xl font-bold text-foreground">{{ site_setting('order_bonus_percent', 5) }}% бонусами</h3>
+                    <p class="text-sm leading-6 text-muted-foreground">
+                        Бонусы начисляются после заказа и доступны для оплаты следующих покупок.
+                    </p>
+                </div>
+            {% endif %}
+
+            {% if site_feature('promo_codes_enabled') %}
+                <div class="rounded-2xl bg-card p-6 shadow-premium" data-reveal>
+                    <div class="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                        <svg class="h-6 w-6" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20.59 13.41 11 3H4v7l9.59 9.59a2 2 0 0 0 2.82 0l4.18-4.18a2 2 0 0 0 0-2.82z"></path>
+                            <path d="M7 7h.01"></path>
+                        </svg>
+                    </div>
+                    <h3 class="mb-3 text-xl font-bold text-foreground">Промокоды</h3>
+                    <p class="text-sm leading-6 text-muted-foreground">
+                        Скидочные коды можно применить при оформлении заказа в корзине.
+                    </p>
+                </div>
+            {% endif %}
+
+            <div class="rounded-2xl bg-card p-6 shadow-premium" data-reveal>
+                <div class="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <svg class="h-6 w-6" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M10 17h4V5H2v12h3"></path>
+                        <path d="M14 17h1"></path>
+                        <path d="M19 17h3v-6h-3l-2-3h-3"></path>
+                        <circle cx="7.5" cy="17.5" r="2.5"></circle>
+                        <circle cx="17.5" cy="17.5" r="2.5"></circle>
+                    </svg>
+                </div>
+                <h3 class="mb-3 text-xl font-bold text-foreground">Бесплатная доставка</h3>
+                <p class="text-sm leading-6 text-muted-foreground">
+                    Доставка становится бесплатной при заказе от {{ site_setting('free_delivery_threshold', 3000)|number_format(0, '.', ' ') }} ₽.
+                </p>
+            </div>
+        </div>
+
+        <div class="mt-10 text-center" data-reveal>
+            <a class="inline-flex h-11 items-center justify-center rounded-md bg-primary px-6 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-95" href="/loyalnost">
+                Подробнее о программе
+            </a>
+        </div>
+    </div>
+</section>

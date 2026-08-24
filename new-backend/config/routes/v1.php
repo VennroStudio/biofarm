@@ -43,12 +43,15 @@ use App\Http\Action\v1\Review\UpdateReviewAction;
 use App\Http\Action\v1\User\CreateUserAction;
 use App\Http\Action\v1\User\DeleteAvatarAction;
 use App\Http\Action\v1\User\DeleteUserAction;
+use App\Http\Action\v1\User\DeleteUserAddressAction;
 use App\Http\Action\v1\User\GetMeAction;
 use App\Http\Action\v1\User\GetReferralInfoAction;
 use App\Http\Action\v1\User\GetReferralOrdersAction;
+use App\Http\Action\v1\User\GetUserAddressesAction;
 use App\Http\Action\v1\User\GetUserByIdAction;
 use App\Http\Action\v1\User\GetUserRolesAction;
 use App\Http\Action\v1\User\GetUsersAction;
+use App\Http\Action\v1\User\SaveUserAddressAction;
 use App\Http\Action\v1\User\UpdateMeAction;
 use App\Http\Action\v1\User\UploadAvatarAction;
 use App\Http\Action\v1\User\UserUpdateAction;
@@ -68,6 +71,10 @@ return static function (App $app): void {
             $group->post('/create', CreateUserAction::class);
             $group->get('/me', GetMeAction::class)->add(Authenticate::class);
             $group->patch('/me', UpdateMeAction::class)->add(Authenticate::class);
+            $group->get('/me/addresses', GetUserAddressesAction::class)->add(Authenticate::class);
+            $group->post('/me/addresses', SaveUserAddressAction::class)->add(Authenticate::class);
+            $group->patch('/me/addresses/{id}', SaveUserAddressAction::class)->add(Authenticate::class);
+            $group->delete('/me/addresses/{id}', DeleteUserAddressAction::class)->add(Authenticate::class);
             $group->get('/me/referral-info', GetReferralInfoAction::class)->add(Authenticate::class);
             $group->get('/me/referral-orders', GetReferralOrdersAction::class)->add(Authenticate::class);
             $group->get('/roles', GetUserRolesAction::class)->add(Authenticate::class);
@@ -127,7 +134,7 @@ return static function (App $app): void {
 
         $group->group('/orders', new Group(static function (RouteCollectorProxy $group): void {
             $group->get('', GetOrdersAction::class)->add(Authenticate::class);
-            $group->post('/create', CreateOrderAction::class)->add(Authenticate::class);
+            $group->post('/create', CreateOrderAction::class);
             $group->get('/{id}', GetOrderByIdAction::class)->add(Authenticate::class);
             $group->patch('/update/{id}', UpdateOrderAction::class)->add(Authenticate::class);
             $group->delete('/delete/{id}', DeleteOrderAction::class)->add(Authenticate::class);

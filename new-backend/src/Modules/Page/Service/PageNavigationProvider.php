@@ -10,17 +10,20 @@ use Doctrine\DBAL\Exception;
 final readonly class PageNavigationProvider
 {
     private const array SYSTEM_PAGE_PATHS = [
-        'home'          => '/',
-        'catalog'       => '/catalog',
-        'blog'          => '/blog',
-        'certificates'  => '/certificates',
-        'privacy'       => '/privacy',
-        'oferta'        => '/oferta',
-        'cart'          => '/cart',
-        'checkout'      => '/checkout',
-        'order_success' => '/order-success',
-        'login'         => '/login',
-        'profile'       => '/profile',
+        'home'               => '/',
+        'catalog'            => '/catalog',
+        'blog'               => '/blog',
+        'certificates'       => '/certificates',
+        'faq'                => '/faq',
+        'loyalty'            => '/loyalnost',
+        'email_verification' => '/email-verification',
+        'privacy'            => '/privacy',
+        'oferta'             => '/oferta',
+        'cart'               => '/cart',
+        'checkout'           => '/checkout',
+        'order_success'      => '/order-success',
+        'login'              => '/login',
+        'profile'            => '/profile',
     ];
 
     public function __construct(

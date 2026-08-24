@@ -22,7 +22,7 @@ final readonly class OrderDetailsHydrator
     /**
      * @param list<array{
      *     id: string,
-     *     user_id: int|string,
+     *     user_id: int|string|null,
      *     status: string,
      *     payment_status: string,
      *     total: int|string,

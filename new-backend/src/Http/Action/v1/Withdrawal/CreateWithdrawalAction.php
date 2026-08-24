@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Action\v1\Withdrawal;
 
-use App\Components\Flusher\FlusherInterface;
 use App\Components\Exception\DomainExceptionModule;
+use App\Components\Flusher\FlusherInterface;
 use App\Components\Http\Middleware\Identity\RequestIdentity;
 use App\Components\Http\Response\JsonDataResponse;
 use App\Components\Id\ReadableIdGenerator;

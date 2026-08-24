@@ -21,14 +21,12 @@ final readonly class CreateOrderCommand
      * } $shippingAddress
      */
     public function __construct(
-        #[Assert\NotBlank]
-        public int $userId,
+        public ?int $userId,
         #[Assert\NotBlank]
         public array $shippingAddress,
         #[Assert\NotBlank]
         public string $paymentMethod,
         #[Assert\NotBlank]
-        #[Assert\GreaterThan(0)]
         public int $currentUserId,
         #[Assert\NotBlank]
         public int $currentUserRole,

@@ -88,6 +88,61 @@ export function SeoSettingsCard({ settings, onChange }: Props) {
       </div>
 
       <div className="mt-6">
+        <div className="mb-6 rounded-lg border border-[#e4e5da] p-4">
+          <div className="mb-4">
+            <p className="font-semibold">SEO-шаблоны</p>
+            <p className="text-sm text-[#789083]">
+              Используются только когда у товара, категории или атрибута не заполнено собственное SEO.
+              Доступные переменные: {'{name}'}, {'{h1}'}, {'{category}'}, {'{price}'}, {'{weight}'}, {'{slug}'}.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+            <Field label="Title товара">
+              <input
+                className={inputClass}
+                value={settings.seo_product_title_template}
+                onChange={(event) => set('seo_product_title_template', event.target.value)}
+              />
+            </Field>
+            <Field label="Description товара">
+              <textarea
+                className={textareaClass}
+                value={settings.seo_product_description_template}
+                onChange={(event) => set('seo_product_description_template', event.target.value)}
+              />
+            </Field>
+            <Field label="Title категории">
+              <input
+                className={inputClass}
+                value={settings.seo_category_title_template}
+                onChange={(event) => set('seo_category_title_template', event.target.value)}
+              />
+            </Field>
+            <Field label="Description категории">
+              <textarea
+                className={textareaClass}
+                value={settings.seo_category_description_template}
+                onChange={(event) => set('seo_category_description_template', event.target.value)}
+              />
+            </Field>
+            <Field label="Title SEO-фильтра">
+              <input
+                className={inputClass}
+                value={settings.seo_attribute_title_template}
+                onChange={(event) => set('seo_attribute_title_template', event.target.value)}
+              />
+            </Field>
+            <Field label="Description SEO-фильтра">
+              <textarea
+                className={textareaClass}
+                value={settings.seo_attribute_description_template}
+                onChange={(event) => set('seo_attribute_description_template', event.target.value)}
+              />
+            </Field>
+          </div>
+        </div>
+
         <div className="mb-5 flex items-center justify-between rounded-lg border border-[#e4e5da] px-4 py-4">
           <div>
             <p className="font-semibold">Яндекс.Метрика</p>

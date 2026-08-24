@@ -1,0 +1,81 @@
+{% extends 'layouts/main.html.twig' %}
+
+{% block title %}{{ page.meta.title }}{% endblock %}
+{% block description %}{{ page.meta.description }}{% endblock %}
+
+{% block content %}
+    <section class="bg-secondary/30 pb-14 pt-28 md:pb-20 md:pt-32">
+        <div class="container mx-auto px-4 text-center">
+            <p class="mb-2 text-sm font-semibold text-secondary">Бонусная программа</p>
+            <h1 class="font-display text-4xl font-bold text-foreground md:text-5xl">Покупайте БИОФАРМ с выгодой</h1>
+            <p class="mx-auto mt-4 max-w-2xl text-muted-foreground">
+                Бонусы, промокоды, бесплатная доставка и реферальная программа в одном личном кабинете.
+            </p>
+        </div>
+    </section>
+
+    <section class="bg-background py-16">
+        <div class="container mx-auto px-4">
+            {% if not page.cartEnabled %}
+                <div class="mx-auto max-w-3xl rounded-2xl bg-card p-8 text-center shadow-premium">
+                    <h2 class="mb-3 font-display text-3xl font-bold text-foreground">Программа временно недоступна</h2>
+                    <p class="text-muted-foreground">
+                        Оформление заказов сейчас отключено, поэтому бонусы и промокоды временно не применяются.
+                    </p>
+                </div>
+            {% else %}
+                <div class="mx-auto grid max-w-6xl gap-5 md:grid-cols-2 lg:grid-cols-4">
+                    {% if page.orderBonusEnabled %}
+                        <div class="rounded-2xl bg-card p-6 shadow-premium">
+                            <p class="mb-2 text-sm font-semibold text-secondary">За заказ</p>
+                            <h2 class="mb-3 text-3xl font-bold text-primary">{{ page.orderBonusPercent }}%</h2>
+                            <p class="text-sm leading-6 text-muted-foreground">
+                                Начисляем бонусы от суммы товаров. Потратить можно до {{ page.orderBonusSpendLimitPercent }}% от заказа.
+                            </p>
+                        </div>
+                    {% endif %}
+                    {% if page.promoCodesEnabled %}
+                        <div class="rounded-2xl bg-card p-6 shadow-premium">
+                            <p class="mb-2 text-sm font-semibold text-secondary">Промокоды</p>
+                            <h2 class="mb-3 text-3xl font-bold text-primary">Скидки</h2>
+                            <p class="text-sm leading-6 text-muted-foreground">
+                                Промокод вводится в корзине перед подтверждением заказа.
+                            </p>
+                        </div>
+                    {% endif %}
+                    {% if page.referralEnabled %}
+                        <div class="rounded-2xl bg-card p-6 shadow-premium">
+                            <p class="mb-2 text-sm font-semibold text-secondary">Рефералы</p>
+                            <h2 class="mb-3 text-3xl font-bold text-primary">{{ page.referralPercent }}%</h2>
+                            <p class="text-sm leading-6 text-muted-foreground">
+                                Партнер получает начисление от покупок приглашенных пользователей.
+                            </p>
+                        </div>
+                    {% endif %}
+                    <div class="rounded-2xl bg-card p-6 shadow-premium">
+                        <p class="mb-2 text-sm font-semibold text-secondary">Доставка</p>
+                        <h2 class="mb-3 text-3xl font-bold text-primary">{{ page.freeDeliveryThreshold|number_format(0, '.', ' ') }} ₽</h2>
+                        <p class="text-sm leading-6 text-muted-foreground">
+                            При заказе от этой суммы доставка становится бесплатной.
+                        </p>
+                    </div>
+                    {% if page.welcomeBonusEnabled %}
+                        <div class="rounded-2xl bg-card p-6 shadow-premium">
+                            <p class="mb-2 text-sm font-semibold text-secondary">После регистрации</p>
+                            <h2 class="mb-3 text-3xl font-bold text-primary">{{ page.welcomeBonusAmount|number_format(0, '.', ' ') }} ₽</h2>
+                            <p class="text-sm leading-6 text-muted-foreground">
+                                Welcome-бонус начисляется после подтверждения email.
+                            </p>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </section>
+
+    {% include 'sections/faq/list.html.twig' with {
+        items: page.faqItems,
+        eyebrow: 'Условия',
+        title: 'Вопросы о бонусах',
+    } only %}
+{% endblock %}

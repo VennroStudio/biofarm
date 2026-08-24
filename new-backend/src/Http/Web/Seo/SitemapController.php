@@ -17,17 +17,20 @@ use Psr\Http\Server\RequestHandlerInterface;
 final readonly class SitemapController implements RequestHandlerInterface
 {
     private const array SYSTEM_PAGE_PATHS = [
-        'home'          => '/',
-        'catalog'       => '/catalog',
-        'blog'          => '/blog',
-        'certificates'  => '/certificates',
-        'privacy'       => '/privacy',
-        'oferta'        => '/oferta',
-        'cart'          => '/cart',
-        'checkout'      => '/checkout',
-        'order_success' => '/order-success',
-        'login'         => '/login',
-        'profile'       => '/profile',
+        'home'               => '/',
+        'catalog'            => '/catalog',
+        'blog'               => '/blog',
+        'certificates'       => '/certificates',
+        'faq'                => '/faq',
+        'loyalty'            => '/loyalnost',
+        'email_verification' => '/email-verification',
+        'privacy'            => '/privacy',
+        'oferta'             => '/oferta',
+        'cart'               => '/cart',
+        'checkout'           => '/checkout',
+        'order_success'      => '/order-success',
+        'login'              => '/login',
+        'profile'            => '/profile',
     ];
 
     private const array NOINDEX_SYSTEM_KEYS = [
@@ -36,6 +39,7 @@ final readonly class SitemapController implements RequestHandlerInterface
         'order_success',
         'login',
         'profile',
+        'email_verification',
     ];
 
     public function __construct(
@@ -153,6 +157,8 @@ final readonly class SitemapController implements RequestHandlerInterface
             $loc === '/catalog'      => '0.9',
             $loc === '/blog'         => '0.7',
             $loc === '/certificates' => '0.6',
+            $loc === '/loyalnost'    => '0.6',
+            $loc === '/faq'          => '0.5',
             $pageType === 'custom'   => '0.5',
             default                  => '0.3',
         };

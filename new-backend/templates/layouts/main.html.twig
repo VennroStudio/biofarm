@@ -61,5 +61,6 @@
     {% block javascripts %}
         <script type="module" src="{{ vite_asset('assets/react/mount.tsx') }}"></script>
     {% endblock %}
+    {% include 'components/integrations/bitrix-widget.html.twig' only %}
 </body>
 </html>

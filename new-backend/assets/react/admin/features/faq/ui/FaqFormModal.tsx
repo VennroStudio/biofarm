@@ -17,7 +17,7 @@ export function FaqFormModal({ form, open, error, saving, setForm, onClose, onSu
     <Modal
       open={open}
       title={form.id ? 'Редактировать вопрос' : 'Новый вопрос FAQ'}
-      description="Page ID нужен только для точечной привязки: slug товара, slug фильтра, id страницы"
+      description="ID/slug нужен только для точечной привязки. Можно указать несколько значений через запятую, точку с запятой или с новой строки."
       maxWidth="max-w-3xl"
       onClose={onClose}
       footer={(
@@ -45,8 +45,8 @@ export function FaqFormModal({ form, open, error, saving, setForm, onClose, onSu
               ))}
             </select>
           </Field>
-          <Field label="Page ID">
-            <input className={inputClass} value={form.page_id} onChange={(event) => setForm({ ...form, page_id: event.target.value })} placeholder="Например: ekstrakt-kory-osiny" />
+          <Field label="ID/slug страниц">
+            <input className={inputClass} value={form.page_id} onChange={(event) => setForm({ ...form, page_id: event.target.value })} placeholder="ekstrakt-kory-osiny, kapsuly, faq" />
           </Field>
           <Field label="Порядок">
             <input className={inputClass} type="number" value={form.sort_order} onChange={(event) => setForm({ ...form, sort_order: Number(event.target.value) })} />

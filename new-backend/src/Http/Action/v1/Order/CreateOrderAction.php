@@ -23,7 +23,7 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Random\RandomException;
 use Symfony\Component\Serializer\Exception\ExceptionInterface;
 
-#[OA\Post(path: '/orders/create', summary: 'Создать заказ', security: [['bearerAuth' => []]], tags: ['Orders'])]
+#[OA\Post(path: '/orders/create', summary: 'Создать заказ', security: [], tags: ['Orders'])]
 final readonly class CreateOrderAction implements RequestHandlerInterface
 {
     public function __construct(
@@ -42,10 +42,10 @@ final readonly class CreateOrderAction implements RequestHandlerInterface
     #[Override]
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        $identity = RequestIdentity::get($request);
+        $identity = RequestIdentity::find($request);
         $payload = (array)$request->getParsedBody();
 
-        if ($identity->role === UserRole::USER && !$this->settings->bool('cart_enabled')) {
+        if (!$this->settings->bool('cart_enabled')) {
             throw new DomainExceptionModule(
                 module: 'order',
                 message: 'error.cart_disabled',
@@ -53,8 +53,14 @@ final readonly class CreateOrderAction implements RequestHandlerInterface
             );
         }
 
-        if ($identity->role === UserRole::USER) {
+        if ($identity?->role === UserRole::USER) {
             $payload['userId'] = $identity->id;
+            $payload['orderId'] = null;
+            $payload['status'] = 'pending';
+            $payload['paymentStatus'] = 'pending';
+            $payload['payment_status'] = 'pending';
+        } elseif ($identity === null) {
+            $payload['userId'] = null;
             $payload['orderId'] = null;
             $payload['status'] = 'pending';
             $payload['paymentStatus'] = 'pending';
@@ -62,8 +68,8 @@ final readonly class CreateOrderAction implements RequestHandlerInterface
         }
 
         $payload = array_merge($payload, [
-            'currentUserId'   => $identity->id,
-            'currentUserRole' => $identity->role->value,
+            'currentUserId'   => $identity?->id ?? 0,
+            'currentUserRole' => $identity?->role->value ?? UserRole::USER->value,
         ]);
 
         $command = $this->denormalizer->denormalize($payload, CreateOrderCommand::class);

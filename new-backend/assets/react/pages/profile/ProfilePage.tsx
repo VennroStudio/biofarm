@@ -1,26 +1,32 @@
-import { Gift, Heart, LogOut, Package, User } from 'lucide-react';
+import { Gift, Heart, LogOut, MapPin, Package, User } from 'lucide-react';
 import { createRoot } from 'react-dom/client';
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import {
   clearAuth,
   createWithdrawal,
+  deleteUserAddress,
   getFavorites,
   getOrders,
   getReferralInfo,
   getReferralOrders,
   getStoredUser,
   getToken,
+  getUserAddresses,
   getWithdrawals,
   refreshUser,
+  saveUserAddress,
   updateProfile,
   type FavoriteProduct,
   type ReferralInfo,
+  type ShippingAddress,
   type SiteOrder,
   type SiteUser,
+  type UserAddress,
   type WithdrawalRequest,
 } from '../../site/api';
 import { loadFavoriteIds, toggleFavorite } from '../../site/favorites';
 import { Button } from '../../site/ui';
+import { AddressesPanel } from './components/AddressesPanel';
 import { FavoritesPanel } from './components/FavoritesPanel';
 import { OrderDetailsDialog } from './components/OrderDetailsDialog';
 import { OrdersPanel } from './components/OrdersPanel';
@@ -46,6 +52,7 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, withdrawa
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<ProfileTab>('profile');
   const [orders, setOrders] = useState<SiteOrder[]>([]);
+  const [addresses, setAddresses] = useState<UserAddress[]>([]);
   const [favorites, setFavorites] = useState<FavoriteProduct[]>([]);
   const [referralOrders, setReferralOrders] = useState<SiteOrder[]>([]);
   const [referralInfo, setReferralInfo] = useState<ReferralInfo | null>(null);
@@ -70,8 +77,12 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, withdrawa
       return;
     }
 
-    void Promise.all([refreshUser(), cartEnabled ? getOrders() : Promise.resolve([])])
-      .then(async ([freshUser, loadedOrders]) => {
+    void Promise.all([
+      refreshUser(),
+      cartEnabled ? getOrders() : Promise.resolve([]),
+      cartEnabled ? getUserAddresses() : Promise.resolve([]),
+    ])
+      .then(async ([freshUser, loadedOrders, loadedAddresses]) => {
         if (!freshUser) {
           window.location.href = '/login?redirect=/profile';
           return;
@@ -82,6 +93,7 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, withdrawa
         setEditPhone(freshUser.phone || '');
         setEditCardNumber(freshUser.cardNumber || '');
         setOrders(loadedOrders);
+        setAddresses(loadedAddresses);
 
         if (favoritesEnabled) {
           await loadFavoriteIds();
@@ -171,6 +183,27 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, withdrawa
     }
   }
 
+  async function handleSaveAddress(address: ShippingAddress & { isDefault: boolean; label: string }, id?: number) {
+    try {
+      await saveUserAddress(address, id);
+      setAddresses(await getUserAddresses());
+      setNotice(id ? 'Адрес обновлен' : 'Адрес добавлен');
+    } catch (error) {
+      setNotice(messageFromError(error, 'Не удалось сохранить адрес'));
+      throw error;
+    }
+  }
+
+  async function handleDeleteAddress(id: number) {
+    try {
+      await deleteUserAddress(id);
+      setAddresses((items) => items.filter((item) => item.id !== id));
+      setNotice('Адрес удален');
+    } catch (error) {
+      setNotice(messageFromError(error, 'Не удалось удалить адрес'));
+    }
+  }
+
   if (loading) {
     return (
       <section className="flex min-h-screen items-center justify-center bg-secondary/30 pt-24">
@@ -213,6 +246,12 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, withdrawa
                 <span className="hidden sm:inline">Заказы</span>
               </TabButton>
             )}
+            {cartEnabled && (
+              <TabButton active={tab === 'addresses'} onClick={() => setTab('addresses')}>
+                <MapPin className="h-4 w-4" />
+                <span className="hidden sm:inline">Адреса</span>
+              </TabButton>
+            )}
             {user.isPartner && referralEnabled && (
               <TabButton active={tab === 'referral'} onClick={() => setTab('referral')}>
                 <Gift className="h-4 w-4" />
@@ -243,6 +282,15 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, withdrawa
           )}
 
           {cartEnabled && tab === 'orders' && <OrdersPanel orders={orders} onSelectOrder={setSelectedOrder} />}
+
+          {cartEnabled && tab === 'addresses' && (
+            <AddressesPanel
+              addresses={addresses}
+              user={user}
+              onDelete={(id) => handleDeleteAddress(id)}
+              onSave={(address, id) => handleSaveAddress(address, id)}
+            />
+          )}
 
           {favoritesEnabled && tab === 'favorites' && (
             <FavoritesPanel favorites={favorites} onRemove={(product) => void handleRemoveFavorite(product)} />

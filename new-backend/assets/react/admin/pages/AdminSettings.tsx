@@ -1,8 +1,10 @@
 import { Save } from 'lucide-react';
 import { FormEvent, useState } from 'react';
 import { settingsApi } from '../api/resources';
+import { BitrixSettingsCard } from '../features/settings/ui/BitrixSettingsCard';
 import { DeliverySettingsCard } from '../features/settings/ui/DeliverySettingsCard';
 import { FeatureSettingsCard } from '../features/settings/ui/FeatureSettingsCard';
+import { HomeBlocksSettingsCard } from '../features/settings/ui/HomeBlocksSettingsCard';
 import { OrderBonusSettingsCard } from '../features/settings/ui/OrderBonusSettingsCard';
 import { PasswordSettingsCard, type PasswordForm } from '../features/settings/ui/PasswordSettingsCard';
 import { ReferralSettingsCard } from '../features/settings/ui/ReferralSettingsCard';
@@ -29,8 +31,26 @@ const defaults: Settings = {
   cdek_delivery_price: 350,
   post_delivery_price: 250,
   order_emails_enabled: false,
+  home_features_enabled: true,
+  home_catalog_enabled: true,
+  home_video_enabled: true,
+  home_blog_enabled: true,
+  home_about_enabled: true,
+  home_marketplaces_enabled: true,
+  home_certificates_enabled: true,
+  home_loyalty_enabled: true,
+  home_reviews_enabled: true,
+  home_contacts_enabled: true,
   yandex_metrika_enabled: false,
   yandex_metrika_id: '',
+  bitrix_widget_enabled: false,
+  bitrix_widget_code: '',
+  seo_product_title_template: '{name} — купить натуральный продукт БИОФАРМ',
+  seo_product_description_template: '{name}: описание, состав, цена и сертификаты качества. Натуральная продукция БИОФАРМ с доставкой по России.',
+  seo_category_title_template: '{h1} — БИОФАРМ',
+  seo_category_description_template: 'Каталог продукции БИОФАРМ в категории {name}. Натуральные растительные экстракты и БАДы с доставкой по России.',
+  seo_attribute_title_template: '{h1} — БИОФАРМ',
+  seo_attribute_description_template: '{h1}: натуральная продукция БИОФАРМ с понятным составом и доставкой по России.',
   site_name: 'БИОФАРМ',
   site_phone: '+7 (999) 123-45-67',
   site_email: 'bio.active@bk.ru',
@@ -112,7 +132,9 @@ export function AdminSettings() {
       <form className="space-y-6" onSubmit={(event) => void submit(event)}>
         <ErrorAlert>{error}</ErrorAlert>
         <FeatureSettingsCard settings={settings} onChange={setSettings} />
+        <HomeBlocksSettingsCard settings={settings} onChange={setSettings} />
         <SeoSettingsCard settings={settings} onChange={setSettings} />
+        <BitrixSettingsCard settings={settings} onChange={setSettings} />
         <ReferralSettingsCard settings={settings} onChange={setSettings} />
         <OrderBonusSettingsCard settings={settings} onChange={setSettings} />
         <DeliverySettingsCard settings={settings} onChange={setSettings} />

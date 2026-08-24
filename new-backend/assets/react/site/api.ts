@@ -46,6 +46,14 @@ export type ShippingAddress = {
   comment?: string;
 };
 
+export type UserAddress = ShippingAddress & {
+  id: number;
+  label: string;
+  isDefault: boolean;
+  createdAt: string;
+  updatedAt?: null | string;
+};
+
 export type OrderItem = {
   productId: number;
   productName: string;
@@ -55,7 +63,7 @@ export type OrderItem = {
 
 export type SiteOrder = {
   id: string;
-  userId: string;
+  userId: null | string;
   items: OrderItem[];
   status: 'cancelled' | 'delivered' | 'pending' | 'processing' | 'shipped';
   paymentStatus: 'completed' | 'failed' | 'pending' | 'refunded';
@@ -239,6 +247,26 @@ function mapShippingAddress(value: unknown): ShippingAddress {
   };
 }
 
+function mapUserAddress(value: unknown): UserAddress | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const id = numberValue(value.id);
+  if (id <= 0) {
+    return null;
+  }
+
+  return {
+    ...mapShippingAddress(value),
+    id,
+    label: stringValue(value.label, 'Адрес'),
+    isDefault: boolValue(value.is_default ?? value.isDefault),
+    createdAt: stringValue(value.created_at ?? value.createdAt),
+    updatedAt: stringValue(value.updated_at ?? value.updatedAt) || null,
+  };
+}
+
 function mapOrderItem(value: unknown): OrderItem | null {
   if (!isRecord(value)) {
     return null;
@@ -263,7 +291,11 @@ function mapOrder(value: unknown): SiteOrder | null {
 
   return {
     id: String(value.id || ''),
-    userId: String(value.user_id ?? value.userId ?? ''),
+    userId: value.user_id !== null && value.user_id !== undefined
+      ? String(value.user_id)
+      : value.userId !== null && value.userId !== undefined
+        ? String(value.userId)
+        : null,
     items,
     status: stringValue(value.status, 'pending') as SiteOrder['status'],
     paymentStatus: stringValue(value.payment_status ?? value.paymentStatus, 'pending') as SiteOrder['paymentStatus'],
@@ -380,6 +412,37 @@ export async function updateProfile(payload: { cardNumber?: string; name?: strin
   return user;
 }
 
+export async function getUserAddresses() {
+  const data = await request('/v1/users/me/addresses');
+
+  return mapItemsResponse(data, mapUserAddress);
+}
+
+export async function saveUserAddress(payload: Partial<UserAddress> & ShippingAddress, id?: number) {
+  const data = await request(id ? `/v1/users/me/addresses/${id}` : '/v1/users/me/addresses', {
+    method: id ? 'PATCH' : 'POST',
+    body: {
+      label: payload.label,
+      name: payload.name,
+      phone: payload.phone,
+      email: payload.email,
+      city: payload.city,
+      address: payload.address,
+      postalCode: payload.postalCode,
+      comment: payload.comment,
+      isDefault: payload.isDefault,
+    },
+  });
+
+  return mapUserAddress(data);
+}
+
+export async function deleteUserAddress(id: number) {
+  await request(`/v1/users/me/addresses/${id}`, {
+    method: 'DELETE',
+  });
+}
+
 export async function getOrders() {
   const data = await request('/v1/orders?perPage=100');
 
@@ -414,10 +477,11 @@ export async function createOrder(
   promoCode?: string,
 ) {
   const referralCode = window.localStorage.getItem('referralCode') || undefined;
+  const storedUser = getStoredUser();
   const data = await request('/v1/orders/create', {
     method: 'POST',
     body: {
-      userId: Number(getStoredUser()?.id || 0),
+      userId: storedUser?.id ? Number(storedUser.id) : null,
       items: cart.map((item) => ({
         productId: item.product.id,
         quantity: item.quantity,

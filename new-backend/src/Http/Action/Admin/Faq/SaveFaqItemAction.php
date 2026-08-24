@@ -16,7 +16,21 @@ use Slim\Routing\RouteContext;
 
 final readonly class SaveFaqItemAction implements RequestHandlerInterface
 {
-    private const array SCOPES = ['global', 'home', 'catalog', 'category', 'attribute', 'product', 'blog', 'post', 'page', 'certificates'];
+    private const array SCOPES = [
+        'global',
+        'home',
+        'catalog',
+        'category',
+        'attribute',
+        'product',
+        'blog',
+        'post',
+        'page',
+        'certificates',
+        'faq',
+        'loyalty',
+        'email_verification',
+    ];
 
     public function __construct(
         private Connection $connection,
@@ -85,7 +99,7 @@ final readonly class SaveFaqItemAction implements RequestHandlerInterface
     {
         $value = trim((string)$value);
 
-        return $value !== '' ? mb_substr($value, 0, 100) : null;
+        return $value !== '' ? mb_substr($value, 0, 255) : null;
     }
 
     /**

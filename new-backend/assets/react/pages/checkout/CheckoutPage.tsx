@@ -2,7 +2,17 @@ import { CreditCard, Mail, MapPin, Phone, Truck, User } from 'lucide-react';
 import { createRoot } from 'react-dom/client';
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { cartTotal, clearCart, readCart, type CartItem } from '../../site/cart';
-import { createOrder, getStoredUser, getToken, refreshUser, type ShippingAddress, type SiteUser } from '../../site/api';
+import {
+  clearAuth,
+  createOrder,
+  getStoredUser,
+  getToken,
+  getUserAddresses,
+  refreshUser,
+  type ShippingAddress,
+  type SiteUser,
+  type UserAddress,
+} from '../../site/api';
 import { formatMoney } from '../../site/format';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label, Textarea } from '../../site/ui';
 import { CheckoutSummary } from './components/CheckoutSummary';
@@ -46,14 +56,16 @@ function CheckoutPage({
   promoCodesEnabled,
 }: CheckoutPageProps) {
   const [cart] = useState<CartItem[]>(() => readCart());
-  const [user, setUser] = useState<SiteUser | null>(() => getStoredUser());
+  const [user, setUser] = useState<SiteUser | null>(() => (getToken() ? getStoredUser() : null));
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [useBonuses, setUseBonuses] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [deliveryMethod, setDeliveryMethod] = useState('cdek');
   const [promoCode, setPromoCode] = useState('');
-  const [form, setForm] = useState<ShippingAddress>(() => emptyAddress(getStoredUser()));
+  const [form, setForm] = useState<ShippingAddress>(() => emptyAddress(getToken() ? getStoredUser() : null));
+  const [addresses, setAddresses] = useState<UserAddress[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState('');
 
   const total = useMemo(() => cartTotal(cart), [cart]);
   const deliveryCostFor = (baseCost: number) => (total >= freeDeliveryThreshold ? 0 : baseCost);
@@ -61,9 +73,9 @@ function CheckoutPage({
   const postDeliveryCost = deliveryCostFor(postDeliveryPrice);
   const deliveryCost = deliveryMethod === 'post' ? postDeliveryCost : cdekDeliveryCost;
   const maxBonusSpend = Math.floor((total + deliveryCost) * (orderBonusSpendLimitPercent / 100));
-  const bonusDiscount = useBonuses && orderBonusEnabled ? Math.min(user?.bonusBalance || 0, maxBonusSpend) : 0;
+  const bonusDiscount = useBonuses && user && orderBonusEnabled ? Math.min(user.bonusBalance, maxBonusSpend) : 0;
   const finalTotal = total + deliveryCost - bonusDiscount;
-  const orderBonus = orderBonusEnabled ? Math.floor(total * (orderBonusPercent / 100)) : 0;
+  const orderBonus = user && orderBonusEnabled ? Math.floor(total * (orderBonusPercent / 100)) : 0;
 
   useEffect(() => {
     if (cart.length === 0) {
@@ -72,24 +84,58 @@ function CheckoutPage({
     }
 
     if (!getToken()) {
-      window.location.href = '/login?redirect=/checkout';
       return;
     }
 
-    void refreshUser().then((updatedUser) => {
+    void Promise.all([refreshUser(), getUserAddresses()]).then(([updatedUser, loadedAddresses]) => {
       if (updatedUser) {
         setUser(updatedUser);
+        setAddresses(loadedAddresses);
         setForm((current) => ({
           ...current,
           name: current.name || updatedUser.name,
           phone: current.phone || updatedUser.phone || '',
           email: current.email || updatedUser.email,
         }));
+
+        const defaultAddress = loadedAddresses.find((address) => address.isDefault) || loadedAddresses[0];
+        if (defaultAddress) {
+          setSelectedAddressId(String(defaultAddress.id));
+          setForm({
+            name: defaultAddress.name || updatedUser.name,
+            phone: defaultAddress.phone || updatedUser.phone || '',
+            email: defaultAddress.email || updatedUser.email,
+            city: defaultAddress.city,
+            address: defaultAddress.address,
+            postalCode: defaultAddress.postalCode,
+            comment: defaultAddress.comment || '',
+          });
+        }
       }
     }).catch(() => {
-      window.location.href = '/login?redirect=/checkout';
+      clearAuth();
+      setUser(null);
+      setUseBonuses(false);
     });
   }, [cart.length]);
+
+  function applySavedAddress(addressId: string) {
+    setSelectedAddressId(addressId);
+    const savedAddress = addresses.find((address) => String(address.id) === addressId);
+    if (!savedAddress) {
+      return;
+    }
+
+    setForm({
+      name: savedAddress.name || user?.name || '',
+      phone: savedAddress.phone || user?.phone || '',
+      email: savedAddress.email || user?.email || '',
+      city: savedAddress.city,
+      address: savedAddress.address,
+      postalCode: savedAddress.postalCode,
+      comment: savedAddress.comment || '',
+    });
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -216,6 +262,23 @@ function CheckoutPage({
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {user && addresses.length > 0 && (
+                    <div className="space-y-2">
+                      <Label htmlFor="checkout-saved-address">Сохраненный адрес</Label>
+                      <select
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+                        id="checkout-saved-address"
+                        value={selectedAddressId}
+                        onChange={(event) => applySavedAddress(event.target.value)}
+                      >
+                        {addresses.map((address) => (
+                          <option key={address.id} value={address.id}>
+                            {address.label}: {address.city}, {address.address}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <div className="space-y-2">
                       <Label htmlFor="checkout-city">Город *</Label>

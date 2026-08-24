@@ -47,7 +47,7 @@ final readonly class UpdateOrderDetailsAction implements RequestHandlerInterface
         $total = max(0, $subtotal + $deliveryCost - $discountAmount - $bonusUsed);
 
         $order->edit(
-            userId: $this->intPayload($payload, ['userId', 'user_id'], $order->userId),
+            userId: $this->nullableIntPayload($payload, ['userId', 'user_id'], $order->userId),
             status: $this->statusGuard->orderStatus($this->stringPayload($payload, ['status'], $order->status)),
             paymentStatus: $this->statusGuard->paymentStatus($this->stringPayload($payload, ['paymentStatus', 'payment_status'], $order->paymentStatus)),
             total: $total,
@@ -89,6 +89,21 @@ final readonly class UpdateOrderDetailsAction implements RequestHandlerInterface
         }
 
         return max(0, $fallback);
+    }
+
+    /**
+     * @param array<array-key, mixed> $payload
+     * @param list<string> $keys
+     */
+    private function nullableIntPayload(array $payload, array $keys, ?int $fallback): ?int
+    {
+        foreach ($keys as $key) {
+            if (\array_key_exists($key, $payload)) {
+                return $payload[$key] === null || $payload[$key] === '' ? null : max(0, (int)$payload[$key]);
+            }
+        }
+
+        return $fallback !== null ? max(0, $fallback) : null;
     }
 
     /**

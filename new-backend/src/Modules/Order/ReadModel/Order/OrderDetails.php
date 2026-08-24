@@ -27,7 +27,7 @@ final readonly class OrderDetails implements OrderModelInterface
      */
     public function __construct(
         public string $id,
-        public int $userId,
+        public ?int $userId,
         public string $status,
         public string $paymentStatus,
         public int $total,
@@ -76,7 +76,7 @@ final readonly class OrderDetails implements OrderModelInterface
     /**
      * @param array{
      *     id: string,
-     *     user_id: int|string,
+     *     user_id: int|string|null,
      *     status: string,
      *     payment_status: string,
      *     total: int|string,
@@ -112,7 +112,7 @@ final readonly class OrderDetails implements OrderModelInterface
     /**
      * @param array{
      *     id: string,
-     *     user_id: int|string,
+     *     user_id: int|string|null,
      *     status: string,
      *     payment_status: string,
      *     total: int|string,
@@ -145,7 +145,7 @@ final readonly class OrderDetails implements OrderModelInterface
     {
         return new self(
             id: $row['id'],
-            userId: (int)$row['user_id'],
+            userId: $row['user_id'] !== null ? (int)$row['user_id'] : null,
             status: $row['status'],
             paymentStatus: $row['payment_status'],
             total: (int)$row['total'],
@@ -176,7 +176,7 @@ final readonly class OrderDetails implements OrderModelInterface
     /**
      * @return array{
      *     id: string,
-     *     user_id: int,
+     *     user_id: int|null,
      *     status: string,
      *     payment_status: string,
      *     total: int,

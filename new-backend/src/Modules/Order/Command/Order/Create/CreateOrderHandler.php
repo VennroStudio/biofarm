@@ -46,7 +46,7 @@ final readonly class CreateOrderHandler
     ) {}
 
     /**
-     * @return array{id: string, user_id: int, subtotal: int, delivery_method: string, delivery_cost: int, discount_amount: int, bonus_used: int, total: int}
+     * @return array{id: string, user_id: int|null, subtotal: int, delivery_method: string, delivery_cost: int, discount_amount: int, bonus_used: int, total: int}
      * @throws DateMalformedStringException
      * @throws Exception
      * @throws RandomException
@@ -102,7 +102,7 @@ final readonly class CreateOrderHandler
                 ));
             }
 
-            if ($calculation['buyer_profile'] !== null && $calculation['bonus_used'] > 0) {
+            if ($command->userId !== null && $calculation['buyer_profile'] !== null && $calculation['bonus_used'] > 0) {
                 $calculation['buyer_profile']->addBonus(-$calculation['bonus_used']);
                 $this->bonusRepository->add(BonusTransaction::create(
                     userId: $command->userId,
@@ -155,6 +155,10 @@ final readonly class CreateOrderHandler
         $referredBy = trim((string)$command->referredBy);
         if ($referredBy !== '') {
             return $referredBy;
+        }
+
+        if ($command->userId === null) {
+            return null;
         }
 
         $profile = $this->profileRepository->findByUserId($command->userId);
@@ -213,7 +217,9 @@ final readonly class CreateOrderHandler
         $deliveryCost = $this->deliveryCost($subtotal, $deliveryMethod);
         $promo = $this->promoDiscount($command->promoCode, $subtotal);
         $baseTotal = max(0, $subtotal + $deliveryCost - $promo['discount_amount']);
-        $buyerProfile = $this->profileRepository->findByUserId($command->userId);
+        $buyerProfile = $command->userId !== null
+            ? $this->profileRepository->findByUserId($command->userId)
+            : null;
         $bonusUsed = $this->bonusUsed($command, $baseTotal, $buyerProfile);
 
         return [

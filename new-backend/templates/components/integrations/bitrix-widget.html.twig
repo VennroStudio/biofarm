@@ -1,0 +1,5 @@
+{% set bitrixWidgetCode = site_setting('bitrix_widget_code', '') %}
+
+{% if site_feature('bitrix_widget_enabled') and bitrixWidgetCode and 'bitrix24.ru' in bitrixWidgetCode %}
+    {{ bitrixWidgetCode|raw }}
+{% endif %}

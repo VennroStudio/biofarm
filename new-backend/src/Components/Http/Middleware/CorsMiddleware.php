@@ -42,17 +42,11 @@ final readonly class CorsMiddleware implements MiddlewareInterface
     private function isAllowedOrigin(string $origin): bool
     {
         $domains = array_filter(array_map(
-            static fn (string $domain): string => trim($domain),
+            trim(...),
             explode(',', (string)getenv('CORS_ALLOWED_ORIGINS'))
         ));
 
-        foreach ($domains as $domain) {
-            if ($origin === rtrim($domain, '/')) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any($domains, static fn ($domain) => $origin === rtrim($domain, '/'));
     }
 
     private function createPreflightResponse(string $origin): ResponseInterface

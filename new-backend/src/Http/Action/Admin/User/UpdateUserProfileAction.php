@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Action\Admin\User;
 
-use App\Components\Flusher\FlusherInterface;
 use App\Components\Exception\DomainExceptionModule;
+use App\Components\Flusher\FlusherInterface;
 use App\Components\Http\Response\JsonDataSuccessResponse;
 use App\Components\Router\Route;
 use App\Modules\Bonus\Entity\BonusTransaction\BonusTransaction;
