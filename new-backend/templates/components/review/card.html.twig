@@ -18,11 +18,11 @@
         </div>
         <div>
             <h4 class="font-medium text-foreground">{{ review.name }}</h4>
-            <p class="text-sm text-muted-foreground">{{ review.product }}</p>
+            {% if review.product != 'Товар' %}<p class="text-xs text-muted-foreground">{{ review.product }}</p>{% endif %}
         </div>
     </div>
 
-    <div class="mb-4 flex gap-1" aria-label="Оценка {{ review.rating }} из 5">
+    <div class="mb-3 flex gap-1" aria-label="Оценка {{ review.rating }} из 5">
         {% for starIndex in 0..4 %}
             <svg
                 class="h-4 w-4 {{ starIndex < review.rating ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground' }}"
@@ -39,9 +39,7 @@
         {% endfor %}
     </div>
 
-    <p class="mb-4 whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
-        {{ review.text }}
-    </p>
+    <p class="mb-4 whitespace-pre-line text-sm leading-relaxed text-muted-foreground">{{ review.text }}</p>
 
     {% if review.images is not empty %}
         <div class="mt-auto flex gap-2 overflow-x-auto">
