@@ -9,13 +9,13 @@ export default {
       center: true,
       padding: '2rem',
       screens: {
-        '2xl': '1400px',
+        '2xl': '1280px',
       },
     },
     extend: {
       fontFamily: {
-        display: ['Playfair Display', 'Georgia', 'serif'],
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        display: ['Avenir Next', 'Segoe UI', 'Arial', 'sans-serif'],
+        sans: ['Avenir Next', 'Segoe UI', 'Arial', 'sans-serif'],
       },
       colors: {
         accent: {

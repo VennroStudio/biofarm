@@ -1,5 +1,5 @@
 <article
-    class="relative rounded-2xl bg-card p-6 shadow-premium"
+    class="relative rounded-xl border border-border bg-card p-5 shadow-premium"
     data-review-card
     data-review-index="{{ index }}"
     {% if index >= 3 %}hidden{% endif %}
@@ -11,13 +11,13 @@
 
     <div class="mb-4 flex items-center gap-4">
         <div
-            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/15 text-lg font-bold text-primary"
+            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/15 text-lg font-medium text-primary"
             aria-hidden="true"
         >
             {{ review.initials }}
         </div>
         <div>
-            <h4 class="font-bold text-foreground">{{ review.name }}</h4>
+            <h4 class="font-medium text-foreground">{{ review.name }}</h4>
             <p class="text-sm text-muted-foreground">{{ review.product }}</p>
         </div>
     </div>
@@ -25,7 +25,7 @@
     <div class="mb-4 flex gap-1" aria-label="Оценка {{ review.rating }} из 5">
         {% for starIndex in 0..4 %}
             <svg
-                class="h-4 w-4 {{ starIndex < review.rating ? 'fill-accent text-accent' : 'text-muted-foreground' }}"
+                class="h-4 w-4 {{ starIndex < review.rating ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground' }}"
                 aria-hidden="true"
                 viewBox="0 0 24 24"
                 fill="none"
@@ -39,12 +39,12 @@
         {% endfor %}
     </div>
 
-    <p class="mb-4 line-clamp-3 text-muted-foreground">
+    <p class="mb-4 whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
         {{ review.text }}
     </p>
 
     {% if review.images is not empty %}
-        <div class="mb-4 flex gap-2 overflow-x-auto">
+        <div class="mt-auto flex gap-2 overflow-x-auto">
             {% for image in review.images %}
                 <button
                     type="button"

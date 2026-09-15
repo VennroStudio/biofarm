@@ -12,6 +12,7 @@ use App\Http\View\Product\ProductCardView;
 final readonly class HomePageView
 {
     /**
+     * @param list<HomeHeroProductView> $heroProducts
      * @param list<ProductCardView> $products
      * @param list<HomeCategoryView> $categories
      * @param list<BlogPostView> $blogPosts
@@ -21,6 +22,7 @@ final readonly class HomePageView
     public function __construct(
         public PageMetaView $meta,
         public array $products,
+        public array $heroProducts,
         public ?string $selectedCategory,
         public ?ProductCardView $featuredProduct,
         public array $categories,

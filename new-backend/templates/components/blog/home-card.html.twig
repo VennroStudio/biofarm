@@ -2,18 +2,18 @@
 
 <article class="group" data-reveal data-reveal-duration="600" data-reveal-delay="{{ revealDelay }}">
     <a href="/blog/{{ post.slug }}" class="block">
-        <div class="overflow-hidden rounded-2xl bg-card shadow-premium transition-all duration-300 hover:shadow-premium-lg">
-            <div class="relative aspect-[4/3] overflow-hidden">
+        <div class="overflow-hidden rounded-xl border border-border bg-card shadow-premium transition-all duration-300 hover:shadow-premium-lg">
+            <div class="relative h-[170px] overflow-hidden">
                 {{ optimized_image(post.image, post.imageAlt ?: post.title, {
                     class: 'h-full w-full object-cover transition-transform duration-500 group-hover:scale-105',
                     loading: 'lazy',
                     decoding: 'async'
                 }) }}
-                <span class="absolute left-4 top-4 rounded-full bg-accent px-3 py-1 text-sm font-medium text-accent-foreground">
+                <span class="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-foreground">
                     {{ post.category }}
                 </span>
             </div>
-            <div class="p-6">
+            <div class="p-4">
                 <div class="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
                     <svg class="h-4 w-4" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M8 2v4"></path>
@@ -23,10 +23,10 @@
                     </svg>
                     {{ post.date }}
                 </div>
-                <h3 class="mb-3 line-clamp-2 text-lg font-bold text-foreground transition-colors group-hover:text-primary">
+                <h3 class="mb-3 line-clamp-2 text-base font-normal text-foreground transition-colors group-hover:text-primary">
                     {{ post.title }}
                 </h3>
-                <p class="mb-4 line-clamp-2 text-sm text-muted-foreground">
+                <p class="mb-3 line-clamp-2 text-xs text-muted-foreground">
                     {{ post.excerpt }}
                 </p>
                 <span class="inline-flex items-center font-medium text-primary">

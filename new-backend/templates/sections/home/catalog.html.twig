@@ -1,0 +1,21 @@
+<section id="catalog" class="scroll-mt-24 pb-8 md:pb-12">
+    <div class="container mx-auto px-5 md:px-8 lg:px-12">
+        <div class="mb-5 flex items-end justify-between gap-5">
+            <h2 class="text-3xl font-normal text-primary md:text-[42px]">Наша продукция</h2>
+            <a href="/catalog" class="shrink-0 text-sm text-primary hover:underline">Весь каталог <span class="ml-2" aria-hidden="true">→</span></a>
+        </div>
+        <nav class="mb-5 flex flex-wrap gap-2" aria-label="Категории товаров">
+            <a href="/#catalog" class="rounded-full border border-border px-4 py-2 text-xs text-secondary-foreground {{ selectedCategory is empty or selectedCategory == 'all' ? 'bg-secondary' : 'bg-white' }}" {% if selectedCategory is empty or selectedCategory == 'all' %}aria-current="true"{% endif %}>Все продукты</a>
+            {% for category in categories %}
+                <a href="/?category={{ category.id|url_encode }}#catalog" class="rounded-full border border-border px-4 py-2 text-xs text-secondary-foreground {{ selectedCategory == category.id ? 'bg-secondary' : 'bg-white' }}" {% if selectedCategory == category.id %}aria-current="true"{% endif %}>{{ category.name }}</a>
+            {% endfor %}
+        </nav>
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {% for product in products %}
+                {% include 'components/product/card.html.twig' with { product: product } only %}
+            {% else %}
+                {% include 'components/ui/empty-state.html.twig' with { title: 'Товары пока не добавлены', message: 'В выбранной категории пока нет товаров.' } only %}
+            {% endfor %}
+        </div>
+    </div>
+</section>

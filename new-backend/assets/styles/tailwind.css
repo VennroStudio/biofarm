@@ -17,43 +17,43 @@
   h4,
   h5,
   h6 {
-    @apply font-bold tracking-tight;
+    @apply font-normal tracking-tight;
   }
 }
 
 @layer base {
   :root {
-    --background: 60 30% 96%;
-    --foreground: 150 25% 15%;
-    --card: 60 20% 98%;
-    --card-foreground: 150 25% 15%;
-    --popover: 60 20% 98%;
-    --popover-foreground: 150 25% 15%;
-    --primary: 142 45% 28%;
-    --primary-foreground: 60 30% 96%;
-    --secondary: 40 30% 90%;
-    --secondary-foreground: 150 25% 20%;
-    --muted: 60 15% 90%;
-    --muted-foreground: 150 10% 45%;
-    --accent: 38 70% 50%;
-    --accent-foreground: 150 25% 10%;
+    --background: 0.000 0.000% 100.000%;
+    --foreground: 201.818 34.921% 24.706%;
+    --card: 0.000 0.000% 100.000%;
+    --card-foreground: 201.818 34.921% 24.706%;
+    --popover: 0.000 0.000% 100.000%;
+    --popover-foreground: 201.818 34.921% 24.706%;
+    --primary: 171.325 47.429% 34.314%;
+    --primary-foreground: 0.000 0.000% 100.000%;
+    --secondary: 158.182 35.484% 93.922%;
+    --secondary-foreground: 172.381 56.757% 21.765%;
+    --muted: 158.182 35.484% 93.922%;
+    --muted-foreground: 200 14.798% 43.725%;
+    --accent: 148.000 33.333% 91.176%;
+    --accent-foreground: 172.381 56.757% 21.765%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 60 30% 96%;
-    --border: 60 15% 85%;
-    --input: 60 15% 85%;
-    --ring: 142 45% 28%;
+    --border: 166.154 25.490% 90.000%;
+    --input: 166.154 25.490% 90.000%;
+    --ring: 171.325 47.429% 34.314%;
     --radius: 0.75rem;
     --hero-overlay: 150 30% 10%;
     --gradient-start: 142 45% 28%;
     --gradient-end: 142 35% 38%;
-    --sidebar-background: 60 20% 97%;
-    --sidebar-foreground: 150 25% 20%;
-    --sidebar-primary: 142 45% 28%;
-    --sidebar-primary-foreground: 60 30% 96%;
-    --sidebar-accent: 40 30% 92%;
-    --sidebar-accent-foreground: 150 25% 20%;
-    --sidebar-border: 60 15% 88%;
-    --sidebar-ring: 142 45% 28%;
+    --sidebar-background: 144.000 33.333% 97.059%;
+    --sidebar-foreground: 201.818 34.921% 24.706%;
+    --sidebar-primary: 171.325 47.429% 34.314%;
+    --sidebar-primary-foreground: 0.000 0.000% 100.000%;
+    --sidebar-accent: 158.182 35.484% 93.922%;
+    --sidebar-accent-foreground: 172.381 56.757% 21.765%;
+    --sidebar-border: 166.154 25.490% 90.000%;
+    --sidebar-ring: 171.325 47.429% 34.314%;
   }
 
   .dark {
@@ -89,7 +89,7 @@
 
 @layer utilities {
   .gradient-primary {
-    background: linear-gradient(135deg, hsl(var(--gradient-start)), hsl(var(--gradient-end)));
+    background: hsl(var(--primary));
   }
 
   .gradient-hero {
@@ -116,4 +116,14 @@
   .text-balance {
     text-wrap: balance;
   }
+}
+
+@layer base {
+  html { scroll-padding-top: 6rem; }
+  :focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 3px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto !important; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }

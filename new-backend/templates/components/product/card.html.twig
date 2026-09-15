@@ -2,12 +2,12 @@
 {% set revealDelay = revealDelay|default(0) %}
 
 {% if mode == 'list' %}
-    <article class="group overflow-hidden rounded-2xl bg-card shadow-premium transition-all duration-300 hover:shadow-premium-lg" data-reveal data-reveal-duration="500" data-reveal-delay="{{ revealDelay }}">
+    <article class="group overflow-hidden rounded-xl border border-border bg-card shadow-premium transition-all duration-300 hover:shadow-premium-lg" data-reveal data-reveal-duration="500" data-reveal-delay="{{ revealDelay }}">
         <div class="flex gap-4 p-4 max-sm:flex-col">
             <a href="/product/{{ product.slug }}" class="block flex-shrink-0" aria-label="{{ product.title }}">
             <div class="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-lg bg-white max-sm:h-auto max-sm:w-full max-sm:aspect-square">
                 {{ optimized_image(product.image, product.imageAlt ?: product.title, {
-                    class: 'h-full w-full object-cover transition-transform duration-500 group-hover:scale-105',
+                    class: 'h-full w-full object-contain transition-transform duration-500 group-hover:scale-105',
                     loading: 'lazy',
                     decoding: 'async'
                 }) }}
@@ -22,7 +22,7 @@
             <div class="min-w-0 flex-1">
                 <div class="mb-1 flex items-start justify-between">
                     <a href="/product/{{ product.slug }}" class="min-w-0">
-                        <h3 class="line-clamp-1 text-lg font-bold text-foreground transition-colors group-hover:text-primary">
+                        <h3 class="line-clamp-1 text-base font-medium text-foreground transition-colors group-hover:text-primary">
                             {{ product.title }}
                         </h3>
                     </a>
@@ -35,13 +35,13 @@
 
                 <div class="flex items-center justify-between gap-3">
                     <div class="flex items-center gap-2">
-                        <span class="text-xl font-bold text-primary">{{ product.price|number_format(0, '.', ' ') }} ₽</span>
+                        <span class="text-xl font-bold text-primary">{{ product.price|money }}</span>
                         {% if product.oldPrice %}
-                            <span class="text-sm text-muted-foreground line-through">{{ product.oldPrice|number_format(0, '.', ' ') }} ₽</span>
+                            <span class="text-sm text-muted-foreground line-through">{{ product.oldPrice|money }}</span>
                         {% endif %}
                     </div>
 
-                    {% if site_feature('cart_enabled') or site_feature('favorites_enabled') %}
+                    {% if site_feature('cart_enabled') %}
                         <div class="flex flex-shrink-0 items-center gap-2">
                     {% endif %}
                     {% if site_feature('cart_enabled') %}
@@ -67,20 +67,7 @@
                             <span data-cart-add-label>В корзину</span>
                         </button>
                     {% endif %}
-                    {% if site_feature('favorites_enabled') %}
-                        <button
-                            class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-input bg-background text-foreground ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground"
-                            type="button"
-                            aria-label="Добавить в избранное"
-                            data-favorite-button
-                            data-product-id="{{ product.id }}"
-                        >
-                            <svg class="h-4 w-4" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path>
-                            </svg>
-                        </button>
-                    {% endif %}
-                    {% if site_feature('cart_enabled') or site_feature('favorites_enabled') %}
+                    {% if site_feature('cart_enabled') %}
                         </div>
                     {% endif %}
                 </div>
@@ -88,11 +75,11 @@
         </div>
     </article>
 {% else %}
-    <article class="group flex h-full flex-col overflow-hidden rounded-2xl bg-card shadow-premium transition-all duration-300 hover:shadow-premium-lg" data-reveal data-reveal-duration="500" data-reveal-delay="{{ revealDelay }}">
+    <article class="group flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-premium transition-all duration-300 hover:shadow-premium-lg" data-reveal data-reveal-duration="500" data-reveal-delay="{{ revealDelay }}">
         <a href="/product/{{ product.slug }}">
-            <div class="relative aspect-square overflow-hidden bg-white">
+            <div class="relative h-[235px] overflow-hidden bg-secondary">
                 {{ optimized_image(product.image, product.imageAlt ?: product.title, {
-                    class: 'h-full w-full object-cover transition-transform duration-500 group-hover:scale-105',
+                    class: 'h-full w-full object-contain transition-transform duration-500 group-hover:scale-105',
                     loading: 'lazy',
                     decoding: 'async'
                 }) }}
@@ -109,28 +96,28 @@
             </div>
         </a>
 
-        <div class="flex flex-1 flex-col p-6">
-            <div class="mb-2 flex items-start justify-between gap-3">
+        <div class="flex flex-1 flex-col p-4">
+            <div class="mb-2 flex flex-col gap-1">
                 <a href="/product/{{ product.slug }}">
-                    <h3 class="line-clamp-3 min-h-[5rem] text-lg font-bold leading-snug text-foreground transition-colors group-hover:text-primary">
+                    <h3 class="line-clamp-2 min-h-[2.6rem] text-base font-medium leading-snug text-foreground transition-colors group-hover:text-primary">
                         {{ product.title }}
                     </h3>
                 </a>
-                <span class="max-w-24 text-right text-sm text-muted-foreground">{{ product.weight }}</span>
+                <span class="text-xs text-muted-foreground">{{ product.weight }}</span>
             </div>
 
-            <p class="mb-4 line-clamp-2 min-h-[3rem] text-sm leading-6 text-muted-foreground">{{ product.shortDescription|default('') }}</p>
+            <p class="mb-3 line-clamp-2 text-xs leading-5 text-muted-foreground">{{ product.shortDescription|default('') }}</p>
 
             <div class="mt-auto">
                 <div class="flex min-h-10 items-center gap-2">
-                    <span class="text-2xl font-bold text-primary">{{ product.price|number_format(0, '.', ' ') }} ₽</span>
+                    <span class="text-xl font-semibold text-foreground">{{ product.price|money }}</span>
                     {% if product.oldPrice %}
-                        <span class="text-muted-foreground line-through">{{ product.oldPrice|number_format(0, '.', ' ') }} ₽</span>
+                        <span class="text-muted-foreground line-through">{{ product.oldPrice|money }}</span>
                     {% endif %}
                 </div>
 
-                {% if site_feature('cart_enabled') or site_feature('favorites_enabled') %}
-                    <div class="mt-4 flex gap-2">
+                {% if site_feature('cart_enabled') %}
+                    <div class="mt-2 flex gap-2">
                         {% if site_feature('cart_enabled') %}
                         <button
                             class="gradient-primary inline-flex h-10 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium text-primary-foreground ring-offset-background transition-opacity hover:opacity-95"
@@ -153,19 +140,6 @@
                             </svg>
                             <span data-cart-add-label>В корзину</span>
                         </button>
-                        {% endif %}
-                        {% if site_feature('favorites_enabled') %}
-                            <button
-                                class="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md border border-input bg-background text-foreground ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground"
-                                type="button"
-                                aria-label="Добавить в избранное"
-                                data-favorite-button
-                                data-product-id="{{ product.id }}"
-                            >
-                                <svg class="h-4 w-4" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path>
-                                </svg>
-                            </button>
                         {% endif %}
                     </div>
                 {% endif %}

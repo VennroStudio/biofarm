@@ -1,50 +1,22 @@
-<section class="relative flex min-h-screen items-center justify-center overflow-hidden" aria-labelledby="home-hero-title">
-    <div class="absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
-        <video
-            class="h-full w-full object-cover object-bottom"
-            autoplay
-            muted
-            loop
-            playsinline
-            poster="/assets/images/home/hero-poster.jpg"
-        >
-            <source src="/uploads/videos/biofarm.mp4" type="video/mp4">
-        </video>
-        <div class="absolute inset-0 gradient-hero"></div>
-    </div>
-
-    <div class="container relative z-10 mx-auto px-4 text-center">
-        <p class="mb-6 inline-block rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm" data-reveal data-reveal-onload="true" data-reveal-duration="800" data-reveal-delay="200">
-            Натуральные продукты БИОФАРМ
-        </p>
-        <h1 id="home-hero-title" class="mb-6 text-balance font-display text-4xl font-bold text-white md:text-6xl lg:text-7xl" data-reveal data-reveal-onload="true" data-reveal-duration="800" data-reveal-delay="400">
-            Качество, проверенное
-            <br>
-            <span class="text-accent">природой</span>
-        </h1>
-        <p class="mx-auto mb-10 max-w-2xl text-lg text-white/80 md:text-xl" data-reveal data-reveal-onload="true" data-reveal-duration="800" data-reveal-delay="600">
-            Мы поставляем экологически чистые продукты напрямую из собственных лабораторий.
-        </p>
-        <div class="flex flex-col items-center justify-center gap-4 sm:flex-row" data-reveal data-reveal-onload="true" data-reveal-duration="800" data-reveal-delay="800">
-            <a class="gradient-primary inline-flex min-h-14 items-center justify-center rounded-lg px-8 py-4 text-lg font-bold text-primary-foreground shadow-premium-lg transition-opacity hover:opacity-95" href="#catalog">
-                Смотреть каталог
-            </a>
-            <a class="inline-flex min-h-14 items-center justify-center rounded-lg border border-white/30 bg-white/10 px-8 py-4 text-lg font-bold text-white backdrop-blur-sm transition-colors hover:bg-white/20" href="#video">
-                <svg class="mr-2 h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
-                    <path d="M8 5v14l11-7z"></path>
-                </svg>
-                О производстве
-            </a>
+<section class="relative isolate overflow-hidden bg-[#76aa9d] pt-20" aria-labelledby="home-hero-title">
+    <img src="/assets/images/design/hero-background.webp" alt="" class="absolute inset-0 -z-10 h-full w-full object-cover opacity-80" loading="eager" fetchpriority="high" decoding="async">
+    <div class="container mx-auto grid items-center gap-3 px-5 md:min-h-[470px] md:grid-cols-[1.08fr_1fr] md:px-8 lg:px-12">
+        <div class="relative z-10 pt-8 md:py-12">
+            <h1 id="home-hero-title" class="mb-4 text-[40px] font-normal leading-[1.07] tracking-[-0.055em] text-white sm:text-5xl lg:text-[58px]">Природа Сибири.<br>Забота каждый день.</h1>
+            <p class="mb-6 max-w-lg text-lg leading-snug text-white lg:text-xl">Растительные экстракты и капсулы БИОФАРМ</p>
+            <a class="inline-flex min-h-12 items-center justify-center gap-5 rounded-lg bg-white px-6 text-sm font-medium text-secondary-foreground shadow-sm transition-shadow hover:shadow-md" href="{{ site_feature('home_catalog_enabled') ? '#catalog' : '/catalog' }}">Смотреть каталог <span aria-hidden="true">→</span></a>
+            <p class="mt-7 text-sm text-white md:mt-14">Природа. Наука. Забота.</p>
+        </div>
+        <div class="relative mx-auto h-[320px] w-full max-w-xl md:h-[425px]" aria-label="Продукты БИОФАРМ">
+            <span class="pointer-events-none absolute inset-x-0 inset-y-8 -rotate-[20deg] rounded-[50%] border border-dashed border-white/70" aria-hidden="true"></span>
+            <span class="pointer-events-none absolute inset-x-0 inset-y-12 rotate-[24deg] rounded-[50%] border border-dashed border-white/60" aria-hidden="true"></span>
+            {% for product in products %}
+                {% set position = product.slug == 'ekstrakt-kory-osiny' ? 'left-[25%] top-[115px] z-20 h-[190px] w-[53%] md:top-[145px] md:h-[265px]' : (product.slug == 'rodiola-rozovaya' ? 'right-0 top-5 h-[225px] w-[40%] md:h-[300px]' : 'left-0 top-5 h-[215px] w-[40%] md:h-[290px]') %}
+                <a href="/product/{{ product.slug }}" class="group absolute {{ position }} transition-transform hover:-translate-y-1" aria-label="{{ product.title }} — подробнее">
+                    <img src="{{ product.image }}" alt="{{ product.title }}" width="420" height="420" class="h-full w-full object-contain drop-shadow-xl {{ product.slug == 'ekstrakt-kory-osiny' ? '-rotate-[4deg]' : (product.slug == 'rodiola-rozovaya' ? 'rotate-[9deg]' : '-rotate-[12deg]') }}" loading="eager" decoding="async">
+                    <span class="absolute {{ product.slug == 'ekstrakt-kory-osiny' ? '-bottom-1 left-3' : '-top-2 left-0' }} max-w-full rounded-2xl bg-[#eef8f1]/90 px-2 py-1 text-[10px] leading-tight text-secondary-foreground backdrop-blur-sm md:text-xs">{{ product.title }} <span aria-hidden="true">↗</span></span>
+                </a>
+            {% endfor %}
         </div>
     </div>
-
-    <a class="absolute bottom-8 left-1/2 z-10 -translate-x-1/2 text-white/60" href="#catalog" aria-label="Перейти ниже" data-reveal data-reveal-onload="true" data-reveal-y="0" data-reveal-delay="1500">
-        <span class="flex animate-scroll-bounce flex-col items-center gap-2">
-            <span class="text-xs uppercase tracking-widest">Листайте вниз</span>
-            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-                <path d="M12 5v14"></path>
-                <path d="m19 12-7 7-7-7"></path>
-            </svg>
-        </span>
-    </a>
 </section>

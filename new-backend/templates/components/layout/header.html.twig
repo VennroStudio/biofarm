@@ -1,13 +1,13 @@
 <header
-    class="fixed top-0 left-0 right-0 z-50 bg-primary/90 backdrop-blur-sm transition-all duration-300"
+    class="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-b border-border transition-all duration-300"
     data-site-header-root
 >
-    <div class="container mx-auto px-4">
+    <div class="container mx-auto px-5 md:px-8 lg:px-12">
         <div class="flex h-20 items-center justify-between">
         <a class="flex items-center gap-2" href="/" aria-label="{{ site.brand.title }}">
             {% if site.brand.logoUrl is defined and site.brand.logoUrl %}
                 {{ optimized_image(site.brand.logoUrl, site.brand.title, {
-                    class: 'h-12 w-auto object-contain transition-[filter] duration-300',
+                    class: 'h-11 w-auto object-contain brightness-0 [filter:brightness(0)_saturate(100%)_invert(29%)_sepia(20%)_saturate(1250%)_hue-rotate(122deg)_brightness(89%)_contrast(91%)]',
                     width: 172,
                     height: 64,
                     loading: 'eager',
@@ -25,10 +25,10 @@
 
         {% set navigationItems = site.navigation|merge(cms_header_pages()) %}
 
-        <nav class="hidden items-center gap-8 lg:flex" aria-label="Основная навигация">
+        <nav class="hidden items-center gap-5 lg:flex" aria-label="Основная навигация">
             {% for item in navigationItems %}
                 {% include 'components/ui/link.html.twig' with {
-                    class: 'text-sm font-medium text-white/90 transition-colors hover:text-accent',
+                    class: 'text-sm font-medium text-secondary-foreground transition-colors hover:text-primary',
                     href: item.href,
                     label: item.label,
                     external: item.external|default(false),
@@ -36,11 +36,12 @@
             {% endfor %}
         </nav>
 
-        <div class="hidden items-center gap-4 lg:flex">
+        <div class="hidden items-center gap-3 lg:flex">
+            <a href="/profile" class="inline-flex min-h-11 items-center px-2 text-sm text-secondary-foreground hover:text-primary">Кабинет</a>
             {% if site_feature('cart_enabled') %}
                 <a
                     href="/cart"
-                    class="relative inline-flex h-11 w-11 items-center justify-center rounded-lg text-white transition-colors hover:text-accent"
+                    class="relative inline-flex h-11 w-11 items-center justify-center rounded-lg text-secondary-foreground transition-colors hover:text-primary"
                     data-cart-link
                     aria-label="Корзина"
                 >
@@ -55,14 +56,12 @@
                     ></span>
                 </a>
             {% endif %}
-            <a class="gradient-primary inline-flex min-h-11 items-center justify-center rounded-lg px-5 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-95" href="/catalog">
-                Заказать
-            </a>
+            <a href="/catalog" class="inline-flex h-11 w-11 items-center justify-center text-secondary-foreground" aria-label="Поиск в каталоге"><svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg></a>
         </div>
 
         <details class="group lg:hidden [&>nav]:block [&>summary::-webkit-details-marker]:hidden">
             <summary
-                class="flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-lg text-white"
+                class="flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-lg text-secondary-foreground"
                 aria-label="Открыть меню"
             >
                 <span class="relative block h-5 w-6">
@@ -73,7 +72,7 @@
             </summary>
 
             <nav
-                class="pointer-events-none absolute left-0 right-0 top-20 max-h-0 overflow-hidden border-t border-border bg-background opacity-0 shadow-premium transition-[max-height,opacity] duration-300 ease-out group-open:pointer-events-auto group-open:max-h-[440px] group-open:opacity-100 lg:hidden"
+                class="pointer-events-none absolute left-0 right-0 top-20 max-h-0 overflow-hidden border-t border-border bg-background opacity-0 shadow-premium transition-[max-height,opacity] duration-300 ease-out group-open:pointer-events-auto group-open:max-h-[80vh] group-open:overflow-y-auto group-open:opacity-100 lg:hidden"
                 id="site-header-mobile-menu"
                 aria-label="Мобильная навигация"
             >
@@ -86,6 +85,7 @@
                             external: item.external|default(false),
                         } only %}
                     {% endfor %}
+                    <a href="/profile" class="py-2 text-lg text-secondary-foreground">Личный кабинет</a>
                     {% if site_feature('cart_enabled') %}
                         <div class="border-t border-border pt-4">
                             <a

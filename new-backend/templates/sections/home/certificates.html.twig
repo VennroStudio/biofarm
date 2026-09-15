@@ -1,28 +1,23 @@
-<section id="certificates" class="bg-background py-20 md:py-28">
-    <div class="container mx-auto px-4">
-        <div class="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-            <div class="max-w-2xl" data-reveal>
-                <p class="mb-2 text-sm font-semibold text-secondary">Документы</p>
-                <h2 class="font-display text-3xl font-bold text-foreground md:text-4xl">Сертификаты качества</h2>
-                <p class="mt-4 text-muted-foreground">
-                    Документы, подтверждающие безопасность продукции и контроль качества БИОФАРМ.
-                </p>
-            </div>
-            <a
-                class="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-input bg-background px-5 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
-                href="/certificates"
-                data-reveal
-            >
-                Все сертификаты
-                <svg class="h-4 w-4" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M5 12h14"></path>
-                    <path d="m12 5 7 7-7 7"></path>
-                </svg>
+<section id="certificates" class="py-5" aria-label="Сертификаты и документы">
+    <div id="documents" class="container mx-auto px-5 md:px-8 lg:px-12">
+        <div class="grid overflow-hidden rounded-xl border border-border bg-card shadow-premium sm:grid-cols-2 lg:grid-cols-4">
+            <a href="/certificates" class="flex items-center gap-4 p-6 text-lg leading-snug text-secondary-foreground">
+                <svg class="h-9 w-9 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M6 2h9l5 5v15H4V2h2Z"/><path d="M14 2v6h6M8 12h8M8 16h8"/></svg>
+                Сертификаты<br>и документы <span aria-hidden="true">→</span>
             </a>
-        </div>
-
-        <div data-reveal>
-            {% include 'sections/certificates/list.html.twig' with { certificates: certificates } only %}
+            {% for certificate in certificates %}
+                <a href="{{ certificate.filePath }}" target="_blank" rel="noopener noreferrer" class="group flex min-h-40 flex-col items-center justify-center gap-2 border-t border-border p-4 text-center hover:bg-secondary sm:border-l sm:border-t-0">
+                    <span class="flex h-24 w-[72px] flex-col gap-2 border border-[#cbd6d4] bg-white p-2 shadow-sm" aria-hidden="true">
+                        <span class="text-[5px] leading-tight text-muted-foreground">{{ certificate.title }}</span>
+                        <span class="mt-auto h-px w-full bg-border"></span><span class="h-px w-full bg-border"></span><span class="h-px w-full bg-border"></span><span class="h-px w-3/4 bg-border"></span><span class="h-px w-full bg-border"></span>
+                    </span>
+                    <span class="text-xs font-medium">{{ certificate.title }} ↗</span>
+                    {% if certificate.productName %}<span class="text-xs text-muted-foreground">{{ certificate.productName }}</span>{% endif %}
+                    {% if certificate.description %}<span class="text-xs text-muted-foreground">{{ certificate.description }}</span>{% endif %}
+                </a>
+            {% else %}
+                <p class="p-6 text-sm text-muted-foreground lg:col-span-3">Сертификаты появятся после добавления документов.</p>
+            {% endfor %}
         </div>
     </div>
 </section>

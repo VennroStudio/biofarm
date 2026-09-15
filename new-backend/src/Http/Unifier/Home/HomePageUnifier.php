@@ -9,10 +9,12 @@ use App\Components\Seo\SeoUrlGenerator;
 use App\Http\Unifier\Product\ProductCatalogDataProvider;
 use App\Http\View\Blog\BlogPostView;
 use App\Http\View\Certificate\CertificateView;
+use App\Http\View\Home\HomeHeroProductView;
 use App\Http\View\Home\HomePageView;
 use App\Http\View\Home\HomeReviewView;
 use App\Http\View\PageMetaView;
 use App\Modules\Page\Service\PageSeoProvider;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 
@@ -43,7 +45,7 @@ final readonly class HomePageUnifier
 
     public function unify(?string $selectedCategory = null): HomePageView
     {
-        $products = $this->catalogData->products($selectedCategory, 6);
+        $products = $this->catalogData->products($selectedCategory, 4);
         $categories = $this->catalogData->categories();
 
         return new HomePageView(
@@ -61,6 +63,7 @@ final readonly class HomePageUnifier
                 ],
             )),
             products: $products,
+            heroProducts: $this->heroProducts(),
             selectedCategory: $selectedCategory,
             featuredProduct: $products[0] ?? null,
             categories: $categories,
@@ -69,6 +72,38 @@ final readonly class HomePageUnifier
             certificates: $this->certificates(),
             reviews: $this->reviews(),
         );
+    }
+
+    /**
+     * @return list<HomeHeroProductView>
+     * @throws Exception
+     */
+    private function heroProducts(): array
+    {
+        $artwork = [
+            'chaga-berezovaya-s-kletochnym-sokom-sibirskoy-pihty' => 'chaga.webp',
+            'ekstrakt-kory-osiny' => 'osina.webp',
+            'rodiola-rozovaya' => 'rhodiola.webp',
+        ];
+        $rows = $this->connection->createQueryBuilder()
+            ->select('p.slug', 'p.name')
+            ->from('products', 'p')
+            ->where('p.slug IN (:slugs)')
+            ->andWhere('p.deleted_at IS NULL AND p.is_active = 1')
+            ->setParameter('slugs', array_keys($artwork), ArrayParameterType::STRING)
+            ->executeQuery()
+            ->fetchAllAssociative();
+
+        $products = [];
+        foreach ($rows as $row) {
+            $products[(string)$row['slug']] = new HomeHeroProductView(
+                slug: (string)$row['slug'],
+                title: (string)$row['name'],
+                image: '/assets/images/design/' . $artwork[(string)$row['slug']],
+            );
+        }
+
+        return array_values(array_filter(array_replace(array_fill_keys(array_keys($artwork), null), $products)));
     }
 
     /**

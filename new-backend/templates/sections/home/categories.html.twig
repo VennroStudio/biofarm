@@ -1,0 +1,21 @@
+<section class="py-8 md:py-10" aria-labelledby="home-categories-title">
+    <div class="container mx-auto grid items-center gap-7 px-5 md:grid-cols-[.8fr_1.2fr] md:px-8 lg:px-12">
+        <div>
+            <h2 id="home-categories-title" class="text-4xl font-normal leading-none text-primary lg:text-5xl">Категории<br>продуктов</h2>
+            <p class="mt-4 max-w-xs text-base text-muted-foreground">Растительные экстракты и капсулы БИОФАРМ.</p>
+        </div>
+        <div class="grid gap-3 sm:grid-cols-2">
+            {% for category in categories %}
+                <a href="/?category={{ category.id|url_encode }}#catalog" class="flex min-h-24 items-center gap-4 rounded-xl border border-border bg-card px-5 py-4 shadow-premium transition-colors hover:bg-secondary">
+                    <svg class="h-8 w-8 shrink-0 text-secondary-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M20 3C10 2 3 7 4 15c1 7 11 8 15 0 2-4 1-12 1-12Z"/><path d="m3 22 14-15"/></svg>
+                    <span class="min-w-0 flex-1"><span class="block text-sm font-medium leading-snug">{{ category.name }}</span><span class="mt-1 block text-xs text-muted-foreground">{{ category.productsCount }} товаров</span></span>
+                    <span class="text-primary" aria-hidden="true">→</span>
+                </a>
+            {% endfor %}
+            <a href="/catalog" class="flex min-h-24 items-center gap-4 rounded-xl border border-border bg-card px-5 py-4 shadow-premium transition-colors hover:bg-secondary">
+                <svg class="h-8 w-8 shrink-0 text-secondary-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg>
+                <span class="flex-1"><span class="block text-sm font-medium">Весь каталог</span><span class="mt-1 block text-xs text-muted-foreground">Все продукты БИОФАРМ</span></span><span class="text-primary" aria-hidden="true">→</span>
+            </a>
+        </div>
+    </div>
+</section>

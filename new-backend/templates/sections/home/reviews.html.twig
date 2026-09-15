@@ -1,13 +1,13 @@
 {% if reviews is not empty %}
-    <section id="reviews" class="bg-secondary/30 py-20 lg:py-32" data-home-reviews-root>
-        <div class="container mx-auto px-4">
-            <div class="mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-end" data-reveal data-reveal-duration="600">
+    <section id="reviews" class="bg-background py-8 md:py-12" data-home-reviews-root>
+        <div class="container mx-auto px-5 md:px-8 lg:px-12">
+            <div class="mb-5 flex flex-col justify-between gap-6 md:flex-row md:items-end" data-reveal data-reveal-duration="600">
                 <div>
-                    <span class="mb-4 inline-block font-medium text-accent">
+                    <span class="mb-4 inline-block text-xs uppercase tracking-widest text-primary">
                         Отзывы
                     </span>
-                    <h2 class="font-display text-3xl font-bold text-foreground md:text-4xl">
-                        Что говорят наши клиенты
+                    <h2 class="text-3xl font-normal text-primary md:text-[42px]">
+                        Отзывы покупателей
                     </h2>
                 </div>
                 <div class="flex gap-2">
@@ -34,7 +34,7 @@
                 </div>
             </div>
 
-            <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3" data-reviews-track>
+            <div class="grid items-start gap-5 md:grid-cols-2 lg:grid-cols-3" data-reviews-track>
                 {% for review in reviews %}
                     {% include 'components/review/card.html.twig' with {
                         review: review,
