@@ -170,14 +170,14 @@ function CheckoutPage({
   }
 
   return (
-    <section className="min-h-screen bg-secondary/30 pb-8 pt-24 md:pb-12 md:pt-28">
-      <div className="container mx-auto px-4">
-        <h1 className="mb-8 text-2xl font-bold md:text-3xl">Оформление заказа</h1>
+    <section className="bg-secondary/30 py-10 md:py-12">
+      <div className="container mx-auto max-w-7xl px-4 sm:px-6">
+        <h1 className="mb-6 text-3xl font-normal tracking-tight text-primary md:text-4xl">Оформление заказа</h1>
 
         <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             <div className="space-y-6 lg:col-span-2">
-              <Card className="border-0 shadow-premium">
+              <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <User className="h-5 w-5" />
@@ -228,7 +228,7 @@ function CheckoutPage({
                 </CardContent>
               </Card>
 
-              <Card className="border-0 shadow-premium">
+              <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Truck className="h-5 w-5" />
@@ -254,7 +254,7 @@ function CheckoutPage({
                 </CardContent>
               </Card>
 
-              <Card className="border-0 shadow-premium">
+              <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <MapPin className="h-5 w-5" />
@@ -321,7 +321,7 @@ function CheckoutPage({
                 </CardContent>
               </Card>
 
-              <Card className="border-0 shadow-premium">
+              <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <CreditCard className="h-5 w-5" />
@@ -340,7 +340,7 @@ function CheckoutPage({
               </Card>
 
               {promoCodesEnabled && (
-                <Card className="border-0 shadow-premium">
+                <Card>
                   <CardHeader>
                     <CardTitle>Промокод</CardTitle>
                     <CardDescription>Скидка будет рассчитана после подтверждения заказа</CardDescription>
@@ -348,6 +348,7 @@ function CheckoutPage({
                   <CardContent>
                     <Input
                       autoComplete="off"
+                      aria-label="Промокод"
                       placeholder="Введите промокод"
                       value={promoCode}
                       onChange={(event) => setPromoCode(event.target.value)}

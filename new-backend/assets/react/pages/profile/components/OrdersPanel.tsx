@@ -11,7 +11,7 @@ type Props = {
 
 export function OrdersPanel({ orders, onSelectOrder }: Props) {
   return (
-    <Card className="border-0 shadow-premium">
+    <Card>
       <CardHeader>
         <CardTitle>История заказов</CardTitle>
         <CardDescription>Все ваши заказы</CardDescription>

@@ -31,10 +31,10 @@ function numberDataset(value: string | undefined, fallback: number) {
 
 function CartEmpty() {
   return (
-    <section className="flex min-h-screen items-center justify-center bg-secondary/30 pt-24">
+    <section className="flex min-h-[60vh] items-center justify-center bg-secondary/30 px-4 py-12">
       <div className="px-4 text-center">
         <ShoppingBag className="mx-auto mb-4 h-16 w-16 text-muted-foreground" />
-        <h1 className="mb-2 text-2xl font-bold">Корзина пуста</h1>
+        <h1 className="mb-2 text-3xl font-normal tracking-tight text-primary">Корзина пуста</h1>
         <p className="mb-6 text-muted-foreground">Добавьте товары из каталога</p>
         <LinkButton href="/catalog" size="lg">
           Перейти в каталог
@@ -65,9 +65,9 @@ function CartPage({ cdekDeliveryPrice, freeDeliveryThreshold, orderBonusEnabled,
   }
 
   return (
-    <section className="min-h-screen bg-secondary/30 pb-8 pt-24 md:pb-12 md:pt-28">
-      <div className="container mx-auto px-4">
-        <h1 className="mb-8 flex items-center gap-3 text-2xl font-bold md:text-3xl">
+    <section className="bg-secondary/30 py-10 md:py-12">
+      <div className="container mx-auto max-w-7xl px-4 sm:px-6">
+        <h1 className="mb-6 flex flex-wrap items-center gap-3 text-3xl font-normal tracking-tight text-primary md:text-4xl">
           <ShoppingCart className="h-8 w-8" />
           Корзина
           <span className="text-lg font-normal text-muted-foreground">
@@ -75,10 +75,10 @@ function CartPage({ cdekDeliveryPrice, freeDeliveryThreshold, orderBonusEnabled,
           </span>
         </h1>
 
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="space-y-4 lg:col-span-2">
             {cart.map((item) => (
-              <Card className="border-0 shadow-premium" key={item.product.id}>
+              <Card key={item.product.id}>
                 <CardContent className="p-4">
                   <div className="flex gap-4">
                     <a href={`/product/${item.product.slug}`}>
@@ -98,6 +98,7 @@ function CartPage({ cdekDeliveryPrice, freeDeliveryThreshold, orderBonusEnabled,
                       <div className="mt-3 flex items-center justify-between gap-3 max-sm:flex-col max-sm:items-start">
                         <div className="flex items-center gap-2">
                           <Button
+                            aria-label={`Уменьшить количество: ${item.product.name}`}
                             className="h-8 w-8"
                             size="icon"
                             variant="outline"
@@ -107,6 +108,7 @@ function CartPage({ cdekDeliveryPrice, freeDeliveryThreshold, orderBonusEnabled,
                           </Button>
                           <span className="w-8 text-center font-medium">{item.quantity}</span>
                           <Button
+                            aria-label={`Увеличить количество: ${item.product.name}`}
                             className="h-8 w-8"
                             size="icon"
                             variant="outline"
@@ -126,6 +128,7 @@ function CartPage({ cdekDeliveryPrice, freeDeliveryThreshold, orderBonusEnabled,
                             )}
                           </div>
                           <Button
+                            aria-label={`Удалить из корзины: ${item.product.name}`}
                             className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                             size="icon"
                             variant="ghost"
@@ -143,7 +146,7 @@ function CartPage({ cdekDeliveryPrice, freeDeliveryThreshold, orderBonusEnabled,
           </div>
 
           <div>
-            <Card className="sticky top-24 border-0 shadow-premium-lg">
+            <Card className="sticky top-24">
               <CardHeader>
                 <CardTitle>Итого</CardTitle>
               </CardHeader>

@@ -67,7 +67,7 @@ export function AddressesPanel({ addresses, onDelete, onSave, user }: Props) {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(320px,420px)]">
-      <Card className="border-0 shadow-premium">
+      <Card>
         <CardHeader>
           <CardTitle>Адреса доставки</CardTitle>
         </CardHeader>
@@ -118,47 +118,47 @@ export function AddressesPanel({ addresses, onDelete, onSave, user }: Props) {
         </CardContent>
       </Card>
 
-      <Card className="border-0 shadow-premium">
+      <Card>
         <CardHeader>
           <CardTitle>{editingId ? 'Редактировать адрес' : 'Новый адрес'}</CardTitle>
         </CardHeader>
         <CardContent>
           <form className="space-y-4" onSubmit={(event) => void submit(event)}>
             <div className="space-y-2">
-              <Label>Название</Label>
-              <Input value={form.label} onChange={(event) => setForm({ ...form, label: event.target.value })} />
+              <Label htmlFor="address-label">Название</Label>
+              <Input id="address-label" value={form.label} onChange={(event) => setForm({ ...form, label: event.target.value })} />
             </div>
             <div className="space-y-2">
-              <Label>Получатель</Label>
-              <Input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} />
+              <Label htmlFor="address-name">Получатель</Label>
+              <Input id="address-name" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label>Телефон</Label>
-                <Input value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} />
+                <Label htmlFor="address-phone">Телефон</Label>
+                <Input id="address-phone" value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} />
               </div>
               <div className="space-y-2">
-                <Label>Email</Label>
-                <Input type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} />
+                <Label htmlFor="address-email">Email</Label>
+                <Input id="address-email" type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} />
               </div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label>Город</Label>
-                <Input required value={form.city} onChange={(event) => setForm({ ...form, city: event.target.value })} />
+                <Label htmlFor="address-city">Город</Label>
+                <Input id="address-city" required value={form.city} onChange={(event) => setForm({ ...form, city: event.target.value })} />
               </div>
               <div className="space-y-2">
-                <Label>Индекс</Label>
-                <Input value={form.postalCode} onChange={(event) => setForm({ ...form, postalCode: event.target.value })} />
+                <Label htmlFor="address-postal-code">Индекс</Label>
+                <Input id="address-postal-code" value={form.postalCode} onChange={(event) => setForm({ ...form, postalCode: event.target.value })} />
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Адрес</Label>
-              <Textarea required value={form.address} onChange={(event) => setForm({ ...form, address: event.target.value })} />
+              <Label htmlFor="address-street">Адрес</Label>
+              <Textarea id="address-street" required value={form.address} onChange={(event) => setForm({ ...form, address: event.target.value })} />
             </div>
             <div className="space-y-2">
-              <Label>Комментарий</Label>
-              <Textarea value={form.comment} onChange={(event) => setForm({ ...form, comment: event.target.value })} />
+              <Label htmlFor="address-comment">Комментарий</Label>
+              <Textarea id="address-comment" value={form.comment} onChange={(event) => setForm({ ...form, comment: event.target.value })} />
             </div>
             <label className="flex items-center gap-2 text-sm font-medium">
               <input
@@ -175,7 +175,7 @@ export function AddressesPanel({ addresses, onDelete, onSave, user }: Props) {
                 {editingId ? 'Сохранить' : 'Добавить'}
               </Button>
               {editingId && (
-                <Button variant="outline" onClick={resetForm}>
+                <Button aria-label="Отменить редактирование адреса" variant="outline" onClick={resetForm}>
                   <X className="h-4 w-4" />
                 </Button>
               )}

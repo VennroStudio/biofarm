@@ -34,7 +34,7 @@ export function CheckoutSummary({
   user,
 }: Props) {
   return (
-    <Card className="sticky top-24 border-0 shadow-premium-lg">
+    <Card className="sticky top-24">
       <CardHeader>
         <CardTitle>Ваш заказ</CardTitle>
       </CardHeader>

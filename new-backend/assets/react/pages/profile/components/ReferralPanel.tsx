@@ -34,7 +34,7 @@ export function ReferralPanel({
 }: Props) {
   return (
     <div className="grid gap-6">
-      <Card className="border-0 shadow-premium">
+      <Card>
         <CardHeader>
           <CardTitle>Реферальная программа</CardTitle>
           <CardDescription>
@@ -43,10 +43,10 @@ export function ReferralPanel({
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
-            <Label className="text-sm font-medium">Ваша реферальная ссылка</Label>
+            <Label className="text-sm font-medium" htmlFor="referral-link">Ваша реферальная ссылка</Label>
             <div className="mt-2 flex gap-2">
-              <Input className="bg-background" readOnly value={`${window.location.origin}?ref=${referralCode}`} />
-              <Button variant="outline" onClick={onCopyReferralLink}>
+              <Input className="bg-background" id="referral-link" readOnly value={`${window.location.origin}?ref=${referralCode}`} />
+              <Button aria-label="Скопировать реферальную ссылку" variant="outline" onClick={onCopyReferralLink}>
                 {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
               </Button>
             </div>
@@ -58,7 +58,7 @@ export function ReferralPanel({
               <p className="text-sm text-muted-foreground">Заработано всего</p>
             </div>
             <div className="rounded-lg bg-muted/50 p-4 text-center">
-              <p className="text-2xl font-bold text-accent">{formatMoney(referralInfo?.pendingEarnings || 0)}</p>
+              <p className="text-2xl font-semibold text-primary">{formatMoney(referralInfo?.pendingEarnings || 0)}</p>
               <p className="text-sm text-muted-foreground">Ожидает начисления</p>
             </div>
           </div>
@@ -66,7 +66,7 @@ export function ReferralPanel({
       </Card>
 
       {withdrawalsEnabled && (
-        <Card className="border-0 shadow-premium">
+        <Card>
           <CardHeader>
             <CardTitle>Вывод бонусов</CardTitle>
             <CardDescription>Создайте заявку на выплату партнерских начислений</CardDescription>
@@ -74,6 +74,7 @@ export function ReferralPanel({
           <CardContent className="space-y-4">
             <form className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto]" onSubmit={onWithdrawal}>
               <Input
+                aria-label="Сумма вывода бонусов"
                 min="1"
                 placeholder="Сумма"
                 type="number"
@@ -97,7 +98,7 @@ export function ReferralPanel({
         </Card>
       )}
 
-      <Card className="border-0 shadow-premium">
+      <Card>
         <CardHeader>
           <CardTitle>Заказы рефералов</CardTitle>
           <CardDescription>Все заказы ваших приглашенных пользователей</CardDescription>

@@ -7,9 +7,9 @@ function OrderSuccessPage() {
   const orderId = params.get('order') || 'Не указан';
 
   return (
-    <section className="flex min-h-screen items-center justify-center bg-secondary/30 py-12 pt-24">
+    <section className="flex min-h-[60vh] items-center justify-center bg-secondary/30 py-12 md:py-16">
       <div className="container mx-auto max-w-lg px-4">
-        <Card className="border-0 text-center shadow-premium-lg">
+        <Card className="text-center">
           <CardContent className="px-6 pb-8 pt-8">
             <div className="mb-6">
               <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
@@ -17,7 +17,7 @@ function OrderSuccessPage() {
               </div>
             </div>
 
-            <h1 className="mb-2 text-2xl font-bold">Заказ оформлен!</h1>
+            <h1 className="mb-2 text-3xl font-normal tracking-tight text-primary">Заказ оформлен!</h1>
             <p className="mb-6 text-muted-foreground">
               Спасибо за ваш заказ. Мы уже начали его обработку.
             </p>

@@ -72,17 +72,17 @@ function LoginPage({ registrationEnabled }: { registrationEnabled: boolean }) {
   }
 
   return (
-    <section className="min-h-screen bg-secondary/30 py-12 pt-28 md:py-20 md:pt-32">
+    <section className="bg-secondary/30 py-12 md:py-16">
       <div className="container mx-auto max-w-md px-4">
-        <Card className="border-0 shadow-premium-lg">
+        <Card>
           <CardHeader className="pb-2 text-center">
-            <h1 className="text-2xl font-bold">Личный кабинет</h1>
+            <h1 className="text-3xl font-normal tracking-tight text-primary">Личный кабинет</h1>
             <CardDescription>{cardDescription}</CardDescription>
           </CardHeader>
 
           <CardContent>
             {registrationEnabled && (
-              <div className="mb-6 grid w-full grid-cols-2 rounded-md bg-muted p-1">
+              <div className="mb-6 grid w-full grid-cols-2 rounded-xl border border-border bg-secondary p-1">
                 <button
                   className={cn('rounded-sm px-3 py-1.5 text-sm font-medium transition-colors', mode === 'login' && 'bg-background shadow-sm')}
                   type="button"
@@ -132,6 +132,7 @@ function LoginPage({ registrationEnabled }: { registrationEnabled: boolean }) {
                       onChange={(event) => setLoginPassword(event.target.value)}
                     />
                     <button
+                      aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
@@ -200,6 +201,7 @@ function LoginPage({ registrationEnabled }: { registrationEnabled: boolean }) {
                       onChange={(event) => setRegisterPassword(event.target.value)}
                     />
                     <button
+                      aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}

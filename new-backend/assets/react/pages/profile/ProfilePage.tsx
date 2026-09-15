@@ -1,6 +1,6 @@
 import { Gift, Heart, LogOut, MapPin, Package, User } from 'lucide-react';
 import { createRoot } from 'react-dom/client';
-import { type FormEvent, useEffect, useMemo, useState } from 'react';
+import { type FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   clearAuth,
   createWithdrawal,
@@ -70,6 +70,7 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, withdrawa
     () => referralInfo?.referralCode || user?.referralCode || user?.id || '',
     [referralInfo?.referralCode, user?.id, user?.referralCode],
   );
+  const closeOrderDetails = useCallback(() => setSelectedOrder(null), []);
 
   useEffect(() => {
     if (!getToken()) {
@@ -206,7 +207,7 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, withdrawa
 
   if (loading) {
     return (
-      <section className="flex min-h-screen items-center justify-center bg-secondary/30 pt-24">
+      <section className="flex min-h-[60vh] items-center justify-center bg-secondary/30 py-12">
         <p className="text-muted-foreground">Загрузка...</p>
       </section>
     );
@@ -217,11 +218,11 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, withdrawa
   }
 
   return (
-    <section className="min-h-screen bg-secondary/30 pb-8 pt-24 md:pb-12 md:pt-28">
-      <div className="container mx-auto px-4">
-        <div className="mb-8 flex items-center justify-between gap-4">
+    <section className="bg-secondary/30 py-10 md:py-12">
+      <div className="container mx-auto max-w-7xl px-4 sm:px-6">
+        <div className="mb-6 flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold md:text-3xl">Личный кабинет</h1>
+            <h1 className="text-3xl font-normal tracking-tight text-primary md:text-4xl">Личный кабинет</h1>
             <p className="text-muted-foreground">Добро пожаловать, {user.name}!</p>
           </div>
           <Button variant="outline" onClick={handleLogout}>
@@ -235,7 +236,7 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, withdrawa
         <ProfileStats orders={orders} referralInfo={referralInfo} user={user} />
 
         <div className="space-y-6">
-          <div className="inline-flex rounded-md border bg-card p-1 shadow-sm">
+          <div className="flex max-w-full flex-wrap rounded-xl border border-border bg-card p-1 shadow-sm" role="tablist" aria-label="Разделы личного кабинета">
             <TabButton active={tab === 'profile'} onClick={() => setTab('profile')}>
               <User className="h-4 w-4" />
               <span className="hidden sm:inline">Профиль</span>
@@ -314,7 +315,7 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, withdrawa
         </div>
       </div>
 
-      <OrderDetailsDialog order={selectedOrder} onClose={() => setSelectedOrder(null)} />
+      <OrderDetailsDialog order={selectedOrder} onClose={closeOrderDetails} />
     </section>
   );
 }

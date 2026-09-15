@@ -11,8 +11,8 @@ type Props = {
 
 export function ProfileStats({ orders, referralInfo, user }: Props) {
   return (
-    <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
-      <Card className="border-0 shadow-premium">
+    <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+      <Card>
         <CardContent className="flex items-center gap-4 p-6">
           <div className="rounded-full bg-primary/10 p-3">
             <Wallet className="h-6 w-6 text-primary" />
@@ -24,10 +24,10 @@ export function ProfileStats({ orders, referralInfo, user }: Props) {
         </CardContent>
       </Card>
 
-      <Card className="border-0 shadow-premium">
+      <Card>
         <CardContent className="flex items-center gap-4 p-6">
           <div className="rounded-full bg-accent/10 p-3">
-            <Package className="h-6 w-6 text-accent" />
+            <Package className="h-6 w-6 text-primary" />
           </div>
           <div>
             <p className="text-2xl font-bold">{orders.length}</p>
@@ -37,7 +37,7 @@ export function ProfileStats({ orders, referralInfo, user }: Props) {
       </Card>
 
       {user.isPartner && (
-        <Card className="border-0 shadow-premium">
+        <Card>
           <CardContent className="flex items-center gap-4 p-6">
             <div className="rounded-full bg-green-100 p-3">
               <Users className="h-6 w-6 text-green-600" />

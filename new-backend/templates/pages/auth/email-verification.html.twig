@@ -4,21 +4,21 @@
 {% block description %}{{ page.meta.description }}{% endblock %}
 
 {% block content %}
-    <section class="flex min-h-screen items-center justify-center bg-secondary/30 px-4 pb-12 pt-28">
-        <div class="w-full max-w-xl rounded-2xl bg-card p-8 text-center shadow-premium">
+    <section class="flex min-h-[60vh] items-center justify-center bg-secondary/30 px-4 py-12">
+        <div class="w-full max-w-xl rounded-2xl border border-border bg-card p-7 text-center shadow-premium sm:p-9">
             {% if page.status == 'success' %}
-                <p class="mb-2 text-sm font-semibold text-secondary">Готово</p>
-                <h1 class="mb-4 font-display text-3xl font-bold text-foreground">Email подтвержден</h1>
+                <p class="mb-2 text-xs font-medium uppercase tracking-[0.14em] text-primary">Готово</p>
+                <h1 class="mb-4 text-3xl font-normal tracking-tight text-primary">Email подтвержден</h1>
                 <p class="mb-6 text-muted-foreground">Теперь можно войти в личный кабинет и продолжить оформление заказа.</p>
                 <a class="inline-flex h-11 items-center justify-center rounded-md bg-primary px-6 text-sm font-semibold text-primary-foreground" href="/login">Войти</a>
             {% elseif page.status == 'error' %}
-                <p class="mb-2 text-sm font-semibold text-secondary">Ссылка недействительна</p>
-                <h1 class="mb-4 font-display text-3xl font-bold text-foreground">Не удалось подтвердить email</h1>
+                <p class="mb-2 text-xs font-medium uppercase tracking-[0.14em] text-primary">Ссылка недействительна</p>
+                <h1 class="mb-4 text-3xl font-normal tracking-tight text-primary">Не удалось подтвердить email</h1>
                 <p class="mb-6 text-muted-foreground">Ссылка могла устареть или уже быть использована.</p>
                 <a class="inline-flex h-11 items-center justify-center rounded-md bg-primary px-6 text-sm font-semibold text-primary-foreground" href="/login">В личный кабинет</a>
             {% else %}
-                <p class="mb-2 text-sm font-semibold text-secondary">Нужен токен</p>
-                <h1 class="mb-4 font-display text-3xl font-bold text-foreground">Ссылка подтверждения неполная</h1>
+                <p class="mb-2 text-xs font-medium uppercase tracking-[0.14em] text-primary">Нужен токен</p>
+                <h1 class="mb-4 text-3xl font-normal tracking-tight text-primary">Ссылка подтверждения неполная</h1>
                 <p class="mb-6 text-muted-foreground">Откройте письмо с подтверждением и перейдите по полной ссылке.</p>
                 <a class="inline-flex h-11 items-center justify-center rounded-md border border-input bg-background px-6 text-sm font-semibold text-foreground" href="/">На главную</a>
             {% endif %}

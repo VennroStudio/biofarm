@@ -1,17 +1,79 @@
 import type { SiteOrder } from '../../../site/api';
 import { formatMoney } from '../../../site/format';
 import { Button } from '../../../site/ui';
+import { useEffect, useRef } from 'react';
 
 export function OrderDetailsDialog({ order, onClose }: { order: SiteOrder | null; onClose: () => void }) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!order) {
+      return;
+    }
+
+    const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    dialogRef.current?.focus();
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        onClose();
+        return;
+      }
+
+      if (event.key !== 'Tab' || !dialogRef.current) {
+        return;
+      }
+
+      const focusable = Array.from(dialogRef.current.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'))
+        .filter((element) => !element.hasAttribute('disabled'));
+      if (focusable.length === 0) {
+        event.preventDefault();
+        return;
+      }
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+      previouslyFocused?.focus();
+    };
+  }, [onClose, order]);
+
   if (!order) {
     return null;
   }
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true">
-      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-background p-6 shadow-premium-lg">
+    <div
+      className="fixed inset-0 z-[70] flex items-center justify-center bg-foreground/45 p-4"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <div
+        aria-labelledby="order-details-title"
+        aria-modal="true"
+        className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-border bg-background p-5 shadow-premium-lg outline-none sm:p-6"
+        ref={dialogRef}
+        role="dialog"
+        tabIndex={-1}
+      >
         <div className="mb-6 flex items-center justify-between gap-4">
-          <h2 className="text-xl font-bold">Заказ {order.id}</h2>
+          <h2 className="text-2xl font-normal tracking-tight text-primary" id="order-details-title">Заказ {order.id}</h2>
           <Button size="sm" variant="outline" onClick={onClose}>Закрыть</Button>
         </div>
 

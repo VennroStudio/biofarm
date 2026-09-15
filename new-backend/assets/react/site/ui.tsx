@@ -14,8 +14,8 @@ type ButtonProps = PropsWithChildren<ButtonHTMLAttributes<HTMLButtonElement> & {
 const buttonVariants = {
   destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
   ghost: 'bg-transparent hover:bg-accent hover:text-accent-foreground',
-  outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
-  primary: 'gradient-primary text-primary-foreground hover:opacity-95',
+  outline: 'border border-border bg-background text-foreground hover:border-primary/40 hover:bg-secondary',
+  primary: 'bg-primary text-primary-foreground hover:bg-secondary-foreground',
   secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
 };
 
@@ -30,7 +30,7 @@ export function Button({ children, className, size = 'md', type = 'button', vari
   return (
     <button
       className={cn(
-        'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+        'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
         buttonVariants[variant],
         buttonSizes[size],
         className,
@@ -52,7 +52,7 @@ export function LinkButton({ children, className, size = 'md', variant = 'primar
   return (
     <a
       className={cn(
-        'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+        'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
         buttonVariants[variant],
         buttonSizes[size],
         className,
@@ -65,15 +65,15 @@ export function LinkButton({ children, className, size = 'md', variant = 'primar
 }
 
 export function Card({ children, className }: PropsWithChildren<{ className?: string }>) {
-  return <section className={cn('rounded-xl border bg-card text-card-foreground shadow-premium', className)}>{children}</section>;
+  return <section className={cn('rounded-2xl border border-border bg-card text-card-foreground shadow-[0_6px_20px_hsl(var(--primary)/0.07)]', className)}>{children}</section>;
 }
 
 export function CardHeader({ children, className }: PropsWithChildren<{ className?: string }>) {
-  return <div className={cn('flex flex-col space-y-1.5 p-6', className)}>{children}</div>;
+  return <div className={cn('flex flex-col space-y-1.5 p-5 sm:p-6', className)}>{children}</div>;
 }
 
 export function CardTitle({ children, className }: PropsWithChildren<{ className?: string }>) {
-  return <h2 className={cn('text-2xl font-semibold leading-none tracking-normal', className)}>{children}</h2>;
+  return <h2 className={cn('text-xl font-normal leading-tight tracking-tight text-primary sm:text-2xl', className)}>{children}</h2>;
 }
 
 export function CardDescription({ children, className }: PropsWithChildren<{ className?: string }>) {
@@ -81,11 +81,11 @@ export function CardDescription({ children, className }: PropsWithChildren<{ cla
 }
 
 export function CardContent({ children, className }: PropsWithChildren<{ className?: string }>) {
-  return <div className={cn('p-6 pt-0', className)}>{children}</div>;
+  return <div className={cn('p-5 pt-0 sm:p-6 sm:pt-0', className)}>{children}</div>;
 }
 
 export function CardFooter({ children, className }: PropsWithChildren<{ className?: string }>) {
-  return <div className={cn('flex items-center p-6 pt-0', className)}>{children}</div>;
+  return <div className={cn('flex items-center p-5 pt-0 sm:p-6 sm:pt-0', className)}>{children}</div>;
 }
 
 export function Separator({ className }: { className?: string }) {
@@ -100,7 +100,7 @@ export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElem
   return (
     <input
       className={cn(
-        'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background transition-shadow file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50',
+        'flex h-11 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background transition-shadow file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50',
         className,
       )}
       {...props}
@@ -112,7 +112,7 @@ export function Textarea({ className, ...props }: TextareaHTMLAttributes<HTMLTex
   return (
     <textarea
       className={cn(
-        'flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background transition-shadow placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50',
+        'flex min-h-[96px] w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background transition-shadow placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50',
         className,
       )}
       {...props}

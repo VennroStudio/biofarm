@@ -29,7 +29,7 @@ export function ProfileDetailsCard({
   user,
 }: Props) {
   return (
-    <Card className="border-0 shadow-premium">
+    <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
           <CardTitle>Личные данные</CardTitle>
@@ -43,9 +43,9 @@ export function ProfileDetailsCard({
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <Label>Имя</Label>
+            <Label htmlFor={isEditing ? 'profile-name' : undefined}>Имя</Label>
             {isEditing ? (
-              <Input value={editName} onChange={(event) => setEditName(event.target.value)} />
+              <Input id="profile-name" value={editName} onChange={(event) => setEditName(event.target.value)} />
             ) : (
               <div className="flex items-center gap-2 rounded-md bg-muted/50 p-2">
                 <User className="h-4 w-4 text-muted-foreground" />
@@ -63,9 +63,9 @@ export function ProfileDetailsCard({
           </div>
 
           <div className="space-y-2">
-            <Label>Телефон</Label>
+            <Label htmlFor={isEditing ? 'profile-phone' : undefined}>Телефон</Label>
             {isEditing ? (
-              <Input placeholder="+7 (999) 123-45-67" value={editPhone} onChange={(event) => setEditPhone(event.target.value)} />
+              <Input id="profile-phone" placeholder="+7 (999) 123-45-67" value={editPhone} onChange={(event) => setEditPhone(event.target.value)} />
             ) : (
               <div className="flex items-center gap-2 rounded-md bg-muted/50 p-2">
                 <Phone className="h-4 w-4 text-muted-foreground" />
@@ -81,9 +81,9 @@ export function ProfileDetailsCard({
 
           {user.isPartner && (
             <div className="space-y-2 md:col-span-2">
-              <Label>Карта для выплат</Label>
+              <Label htmlFor={isEditing ? 'profile-card-number' : undefined}>Карта для выплат</Label>
               {isEditing ? (
-                <Input value={editCardNumber} onChange={(event) => setEditCardNumber(event.target.value)} />
+                <Input id="profile-card-number" value={editCardNumber} onChange={(event) => setEditCardNumber(event.target.value)} />
               ) : (
                 <div className="rounded-md bg-muted/50 p-2">{user.cardNumber || 'Не указана'}</div>
               )}
