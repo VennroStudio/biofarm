@@ -35,7 +35,7 @@ export function AdminLogin() {
     <div className="flex min-h-screen items-center justify-center bg-[#eaf5f1] p-4">
       <Card className="w-full max-w-md p-6 shadow-[0_24px_70px_rgba(41,69,85,0.12)] sm:p-8">
         <div className="mb-6 text-center">
-          <img src={brandLogoUrl} alt={brandName} className="mx-auto mb-5 h-12 w-auto max-w-[220px] object-contain" />
+          <img src={brandLogoUrl} alt={brandName} className="mx-auto mb-5 h-12 w-auto max-w-[220px] object-contain [filter:brightness(0)_saturate(100%)_invert(29%)_sepia(20%)_saturate(1250%)_hue-rotate(122deg)_brightness(89%)_contrast(91%)]" />
           <h1 className="text-2xl font-semibold text-[#2e8175]">Админ-панель</h1>
           <p className="mt-1 text-sm text-[#5f7580]">Войдите для управления магазином</p>
         </div>

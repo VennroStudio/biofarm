@@ -4,10 +4,10 @@ import { cn } from '../lib';
 type BadgeTone = 'amber' | 'blue' | 'gray' | 'green' | 'red';
 
 const styles: Record<BadgeTone, string> = {
-  amber: 'bg-[#faeed7] text-[#b36a08]',
-  blue: 'bg-[#dceafe] text-[#2563eb]',
+  amber: 'bg-[#faeed7] text-[#854d0e]',
+  blue: 'bg-[#dceafe] text-[#1d4ed8]',
   gray: 'bg-[#eaf5f1] text-[#526d78]',
-  green: 'bg-[#eaf5f1] text-[#2e8175]',
+  green: 'bg-[#eaf5f1] text-[#18574f]',
   red: 'bg-[#f7e2e2] text-[#a33d3d]',
 };
 

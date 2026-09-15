@@ -121,7 +121,7 @@ export function AdminLayout() {
     <aside className="flex h-full min-h-0 w-64 flex-col border-r border-[#dfece9] bg-[#eaf5f1]">
       <div className="flex h-16 items-center border-b border-[#dfece9] px-4">
         <a href="/admin" className="inline-flex min-w-0 items-center gap-3" aria-label={`${brandName}: админ-панель`}>
-          <img src={brandLogoUrl} alt="" className="h-9 w-auto max-w-[150px] object-contain" />
+          <img src={brandLogoUrl} alt="" className="h-9 w-auto max-w-[150px] object-contain [filter:brightness(0)_saturate(100%)_invert(29%)_sepia(20%)_saturate(1250%)_hue-rotate(122deg)_brightness(89%)_contrast(91%)]" />
         </a>
       </div>
       <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto px-3 py-4" aria-label="Разделы админ-панели">
@@ -212,7 +212,7 @@ export function AdminLayout() {
           </span>
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-[#294555]">{adminName}</p>
-            <p className="truncate text-xs text-[#5f7580]">{adminEmail}</p>
+            <p className="truncate text-xs text-[#526d78]">{adminEmail}</p>
           </div>
         </div>
         <button
@@ -231,7 +231,7 @@ export function AdminLayout() {
     <div className="min-h-screen bg-white text-[#294555]">
       <div className="fixed inset-y-0 left-0 z-30 hidden lg:block">{sidebar}</div>
       <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-[#dfece9] bg-[#eaf5f1] px-4 lg:hidden">
-        <a href="/admin" aria-label={`${brandName}: админ-панель`}><img src={brandLogoUrl} alt="" className="h-9 w-auto max-w-[150px] object-contain" /></a>
+        <a href="/admin" aria-label={`${brandName}: админ-панель`}><img src={brandLogoUrl} alt="" className="h-9 w-auto max-w-[150px] object-contain [filter:brightness(0)_saturate(100%)_invert(29%)_sepia(20%)_saturate(1250%)_hue-rotate(122deg)_brightness(89%)_contrast(91%)]" /></a>
         <button
           ref={menuButtonRef}
           type="button"

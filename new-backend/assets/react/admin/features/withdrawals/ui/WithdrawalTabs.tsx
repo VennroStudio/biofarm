@@ -13,14 +13,14 @@ export function WithdrawalTabs({ processedCount, tab, onChange }: Props) {
     <div className="mt-6 inline-flex rounded-md bg-[#eaf5f1] p-1">
       <button
         type="button"
-        className={`rounded-md px-4 py-2 text-sm font-semibold transition ${tab === 'pending' ? 'bg-white text-[#294555] shadow-sm' : 'text-[#5f7580]'}`}
+        className={`rounded-md px-4 py-2 text-sm font-semibold transition ${tab === 'pending' ? 'bg-white text-[#294555] shadow-sm' : 'text-[#526d78]'}`}
         onClick={() => onChange('pending')}
       >
         Ожидают
       </button>
       <button
         type="button"
-        className={`rounded-md px-4 py-2 text-sm font-semibold transition ${tab === 'processed' ? 'bg-white text-[#294555] shadow-sm' : 'text-[#5f7580]'}`}
+        className={`rounded-md px-4 py-2 text-sm font-semibold transition ${tab === 'processed' ? 'bg-white text-[#294555] shadow-sm' : 'text-[#526d78]'}`}
         onClick={() => onChange('processed')}
       >
         Обработанные <Badge tone="gray" className="ml-2">{processedCount}</Badge>

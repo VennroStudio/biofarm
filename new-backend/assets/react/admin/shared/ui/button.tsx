@@ -14,7 +14,7 @@ const variants: Record<ButtonVariant, string> = {
   ghost: 'bg-transparent text-[#526d78] hover:bg-[#eaf5f1] hover:text-[#18574f]',
   outline: 'border border-[#cfe2de] bg-white text-[#294555] hover:border-[#2e8175] hover:bg-[#f5faf8]',
   primary: 'bg-[#2e8175] text-white hover:bg-[#236b62]',
-  secondary: 'bg-[#eaf5f1] text-[#2e8175] hover:bg-[#dcefea]',
+  secondary: 'bg-[#eaf5f1] text-[#18574f] hover:bg-[#dcefea]',
 };
 
 const sizes: Record<ButtonSize, string> = {

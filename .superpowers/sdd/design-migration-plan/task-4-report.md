@@ -26,3 +26,8 @@
 - `git diff --check`
 - Full Node 22 Docker check: TypeScript, ESLint and Vite production build.
 - Source audit: 75 TSX files present; no old beige palette references remain.
+
+## Review fixes
+
+- Applied the established public-header green filter to the configured real logo on login, desktop sidebar and mobile header so the transparent white asset remains visible on light surfaces.
+- Darkened green, amber and blue badge foregrounds, the secondary button foreground, sidebar email and inactive withdrawal tabs to keep small text above the WCAG AA 4.5:1 contrast threshold on their actual backgrounds.
