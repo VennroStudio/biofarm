@@ -71,6 +71,7 @@ export function mountProductGallery() {
     const lightboxNextButton = root.querySelector<HTMLButtonElement>('[data-product-gallery-next]');
     const lightboxThumbnails = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-product-gallery-lightbox-thumb]'));
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const focusableSelector = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
     let selectedIndex = 0;
 
     const normalizeIndex = (index: number) => (index + images.length) % images.length;
@@ -164,7 +165,7 @@ export function mountProductGallery() {
       lightbox.setAttribute('aria-hidden', 'false');
       document.documentElement.classList.add('overflow-hidden');
       document.body.classList.add('overflow-hidden');
-      lightbox.focus();
+      lightboxCloseButton?.focus();
 
       if (reduceMotion) {
         return;
@@ -240,6 +241,21 @@ export function mountProductGallery() {
         select(selectedIndex - 1);
       } else if (event.key === 'ArrowRight') {
         select(selectedIndex + 1);
+      } else if (event.key === 'Tab') {
+        const focusable = Array.from(lightbox.querySelectorAll<HTMLElement>(focusableSelector));
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+
+        if (!first || !last) {
+          event.preventDefault();
+          lightbox.focus();
+        } else if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
       }
     });
 
