@@ -65,9 +65,20 @@
             tabindex="-1"
             data-reviews-lightbox
         >
+            <button
+                type="button"
+                class="absolute right-4 top-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-white px-5 text-sm font-medium text-foreground shadow-lg transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black/80"
+                data-reviews-lightbox-close
+            >
+                <svg class="h-4 w-4" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <path d="M18 6 6 18"></path>
+                    <path d="m6 6 12 12"></path>
+                </svg>
+                Закрыть фото
+            </button>
             <img
                 alt="Увеличенное фото"
-                class="max-h-[90vh] max-w-full rounded-lg object-contain"
+                class="max-h-[90vh] max-w-full rounded-xl object-contain"
                 src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="
                 data-reviews-lightbox-image
             >

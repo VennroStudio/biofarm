@@ -14,10 +14,10 @@
 {% set activePurposeSlug = activePurposeSlug|default(null) %}
 
 {% if isCatalogPage %}
-    <section class="bg-gradient-to-b from-primary/10 to-background pb-16 pt-32">
-        <div class="container mx-auto px-4 text-center">
-            <span class="mb-4 inline-block font-medium text-accent" data-reveal data-reveal-delay="0">{{ catalogEyebrow }}</span>
-            <h1 class="mb-6 font-display text-4xl font-bold text-foreground md:text-5xl" data-reveal data-reveal-delay="100">{{ catalogH1 }}</h1>
+    <section class="border-b border-border bg-secondary/40 pb-8 pt-28 md:pb-10">
+        <div class="container mx-auto px-5 md:px-8 lg:px-12">
+            <span class="mb-3 inline-block text-xs uppercase tracking-widest text-primary" data-reveal data-reveal-delay="0">{{ catalogEyebrow }}</span>
+            <h1 class="mb-4 text-3xl font-normal text-primary md:text-5xl" data-reveal data-reveal-delay="100">{{ catalogH1 }}</h1>
             <p class="mx-auto max-w-2xl text-muted-foreground" data-reveal data-reveal-delay="200">
                 {{ catalogLead }}
             </p>
@@ -25,8 +25,8 @@
     </section>
 {% endif %}
 
-<section id="catalog" class="scroll-mt-24 {% if isCatalogPage %}py-12{% else %}py-20 lg:py-32{% endif %}">
-    <div class="container mx-auto px-4">
+<section id="catalog" class="scroll-mt-24 {% if isCatalogPage %}py-8 md:py-10{% else %}py-12{% endif %}">
+    <div class="container mx-auto px-5 md:px-8 lg:px-12">
         {% if not isCatalogPage %}
             <div class="mx-auto mb-12 max-w-2xl text-center" data-reveal data-reveal-duration="600">
                 <span class="mb-4 inline-block font-medium text-accent">Наша продукция</span>
@@ -40,10 +40,10 @@
 
         {% if isCatalogPage %}
             {% set filterResetUrl = hasActiveCategory and categoryUrls[activeCategory] is defined ? categoryUrls[activeCategory] : allCategoryUrl %}
-            <div class="grid gap-8 lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start">
+            <div class="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)] lg:items-start">
                 <aside class="space-y-5 lg:sticky lg:top-28" data-reveal data-reveal-delay="300">
-                    <div class="rounded-2xl bg-card p-5 shadow-premium">
-                        <h2 class="mb-4 font-display text-2xl font-bold text-foreground">Категории</h2>
+                    <div class="rounded-2xl border border-border bg-card p-4">
+                        <h2 class="mb-3 text-xl font-normal text-primary">Категории</h2>
                         <nav class="space-y-1" aria-label="Категории товаров">
                             <a
                                 class="flex min-h-11 items-center justify-between gap-3 rounded-lg px-3 text-sm font-bold transition-colors {% if not hasActiveCategory %}bg-primary text-primary-foreground{% else %}text-foreground hover:bg-secondary{% endif %}"
@@ -68,9 +68,9 @@
                     </div>
 
                     {% if componentFilters|default([]) is not empty or purposeFilters|default([]) is not empty %}
-                        <div class="rounded-2xl bg-card p-5 shadow-premium">
+                        <div class="rounded-2xl border border-border bg-card p-4">
                             <div class="mb-4 flex items-center justify-between gap-3">
-                                <h2 class="font-display text-2xl font-bold text-foreground">Фильтры</h2>
+                                <h2 class="text-xl font-normal text-primary">Фильтры</h2>
                                 {% if activeComponentSlug is not empty or activePurposeSlug is not empty or searchQuery|default('') is not empty %}
                                     <a class="text-xs font-bold text-primary transition-colors hover:text-primary-glow" href="{{ filterResetUrl }}">Сбросить</a>
                                 {% endif %}
@@ -146,7 +146,7 @@
                 </aside>
 
                 <div class="min-w-0">
-                    <div class="mb-6 rounded-2xl bg-card p-5 shadow-premium" data-reveal data-reveal-delay="350">
+                    <div class="mb-5 rounded-2xl border border-border bg-secondary/20 p-4" data-reveal data-reveal-delay="350">
                         <div class="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
                             <form class="relative w-full xl:max-w-md" method="get" action="{{ currentCatalogPath }}#catalog">
                                 {% if currentSort != 'default' %}
@@ -241,7 +241,7 @@
                         </div>
                     {% endif %}
 
-                    <div class="{% if currentView == 'list' %}flex flex-col gap-4{% else %}grid auto-rows-fr gap-6 sm:grid-cols-2 xl:grid-cols-3{% endif %}">
+                    <div class="{% if currentView == 'list' %}flex flex-col gap-4{% else %}grid auto-rows-fr grid-cols-2 gap-3 md:gap-5 xl:grid-cols-3{% endif %}">
                         {% for product in products %}
                             {% include 'components/product/card.html.twig' with { product: product, viewMode: currentView, revealDelay: loop.index0 * 100 } only %}
                         {% else %}

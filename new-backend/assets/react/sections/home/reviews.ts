@@ -19,8 +19,10 @@ export function mountHomeReviews() {
     const nextButton = root.querySelector<HTMLButtonElement>('[data-reviews-next]');
     const lightbox = root.querySelector<HTMLElement>('[data-reviews-lightbox]');
     const lightboxImage = lightbox?.querySelector<HTMLImageElement>('[data-reviews-lightbox-image]');
+    const lightboxClose = lightbox?.querySelector<HTMLButtonElement>('[data-reviews-lightbox-close]');
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     let currentIndex = 0;
+    let lightboxTrigger: HTMLButtonElement | null = null;
 
     if (cards.length === 0) {
       return;
@@ -86,7 +88,7 @@ export function mountHomeReviews() {
       update();
     };
 
-    const openLightbox = (image: string) => {
+    const openLightbox = (image: string, trigger: HTMLButtonElement) => {
       if (!lightbox || !lightboxImage) {
         return;
       }
@@ -105,7 +107,8 @@ export function mountHomeReviews() {
       lightbox.setAttribute('aria-hidden', 'false');
       document.documentElement.classList.add('overflow-hidden');
       document.body.classList.add('overflow-hidden');
-      lightbox.focus();
+      lightboxTrigger = trigger;
+      lightboxClose?.focus();
 
       requestAnimationFrame(() => {
         lightbox.style.opacity = '1';
@@ -128,6 +131,8 @@ export function mountHomeReviews() {
       lightboxImage.style.transition = '';
       document.documentElement.classList.remove('overflow-hidden');
       document.body.classList.remove('overflow-hidden');
+      lightboxTrigger?.focus();
+      lightboxTrigger = null;
     };
 
     previousButton?.addEventListener('click', () => show(currentIndex - 1));
@@ -143,15 +148,25 @@ export function mountHomeReviews() {
       button.addEventListener('click', () => {
         const image = button.dataset.lightboxImage;
         if (image) {
-          openLightbox(image);
+          openLightbox(image, button);
         }
       });
     });
 
-    lightbox?.addEventListener('click', closeLightbox);
+    lightboxClose?.addEventListener('click', closeLightbox);
+    lightbox?.addEventListener('click', (event) => {
+      if (event.target === lightbox) {
+        closeLightbox();
+      }
+    });
     window.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') {
         closeLightbox();
+      }
+
+      if (event.key === 'Tab' && lightbox && !lightbox.classList.contains('hidden')) {
+        event.preventDefault();
+        lightboxClose?.focus();
       }
     });
 

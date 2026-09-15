@@ -2,7 +2,7 @@
     <div class="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
         {% for certificate in certificates %}
             <a
-                class="group rounded-2xl bg-card p-6 shadow-premium transition-all duration-300 hover:-translate-y-1 hover:shadow-premium-lg"
+                class="group rounded-2xl border border-border bg-card p-5 transition-colors hover:border-primary/40"
                 href="{{ certificate.filePath }}"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -16,7 +16,7 @@
                         <path d="M16 17H8"></path>
                     </svg>
                 </div>
-                <h2 class="mb-2 text-lg font-bold text-foreground transition-colors group-hover:text-primary">{{ certificate.title }}</h2>
+                <h2 class="mb-2 text-lg font-medium text-foreground transition-colors group-hover:text-primary">{{ certificate.title }}</h2>
                 {% if certificate.productName %}
                     <p class="mb-3 text-sm font-semibold text-primary">{{ certificate.productName }}</p>
                 {% endif %}

@@ -21,9 +21,11 @@
             </a>
         </div>
 
-        <div class="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+        <div class="-mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-3 md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 lg:grid-cols-3">
             {% for post in posts %}
-                {% include 'components/blog/home-card.html.twig' with { post: post, revealDelay: loop.index0 * 150 } only %}
+                <div class="w-[83%] shrink-0 snap-start md:w-auto">
+                    {% include 'components/blog/home-card.html.twig' with { post: post, revealDelay: loop.index0 * 150 } only %}
+                </div>
             {% endfor %}
         </div>
     </div>
