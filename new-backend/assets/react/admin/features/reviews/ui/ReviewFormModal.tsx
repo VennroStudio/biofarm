@@ -56,11 +56,11 @@ export function ReviewFormModal({
           <input className={inputClass} value={form.user_name} onChange={(event) => setForm({ ...form, user_name: event.target.value })} />
         </Field>
         <div className="space-y-2">
-          <p className="text-sm font-semibold text-[#26382d]">Рейтинг</p>
+          <p className="text-sm font-semibold text-[#294555]">Рейтинг</p>
           <div className="flex gap-1">
             {[1, 2, 3, 4, 5].map((star) => (
               <button key={star} type="button" className="p-1" onClick={() => setForm({ ...form, rating: star })}>
-                <Star className={`h-6 w-6 ${star <= form.rating ? 'fill-[#e5a11a] text-[#e5a11a]' : 'text-[#d9dece]'}`} />
+                <Star className={`h-6 w-6 ${star <= form.rating ? 'fill-[#e5a11a] text-[#e5a11a]' : 'text-[#cfe2de]'}`} />
               </button>
             ))}
           </div>
@@ -76,7 +76,7 @@ export function ReviewFormModal({
           </select>
         </Field>
         <div className="space-y-2">
-          <p className="text-sm font-semibold text-[#26382d]">Фотографии</p>
+          <p className="text-sm font-semibold text-[#294555]">Фотографии</p>
           <div className="flex flex-wrap gap-2">
             <ImageUploader scope="reviews" onUploaded={onAddImage} />
           </div>
@@ -97,7 +97,7 @@ export function ReviewFormModal({
             </div>
           )}
         </div>
-        <label className="flex items-center gap-2 text-sm font-semibold text-[#26382d]">
+        <label className="flex items-center gap-2 text-sm font-semibold text-[#294555]">
           <input type="checkbox" checked={form.is_approved} onChange={(event) => setForm({ ...form, is_approved: event.target.checked })} />
           Одобрен
         </label>

@@ -41,7 +41,7 @@ export function UsersTable({ users, onTogglePartner, onEdit }: Props) {
             <TableRow key={user.id}>
               <TableCell>
                 <div className="flex items-center gap-3">
-                  <span className="grid h-10 w-10 place-items-center rounded-full bg-[#eef1e8] font-semibold text-[#2f7d4b]">
+                  <span className="grid h-10 w-10 place-items-center rounded-full bg-[#eaf5f1] font-semibold text-[#2e8175]">
                     {user.name.charAt(0).toUpperCase()}
                   </span>
                   <div>
@@ -52,14 +52,14 @@ export function UsersTable({ users, onTogglePartner, onEdit }: Props) {
               </TableCell>
               <TableCell>
                 <div className="space-y-1 text-sm">
-                  <p className="flex items-center gap-2"><Mail className="h-3 w-3 text-[#789083]" />{user.email}</p>
-                  {user.phone && <p className="flex items-center gap-2"><Phone className="h-3 w-3 text-[#789083]" />{user.phone}</p>}
+                  <p className="flex items-center gap-2"><Mail className="h-3 w-3 text-[#5f7580]" />{user.email}</p>
+                  {user.phone && <p className="flex items-center gap-2"><Phone className="h-3 w-3 text-[#5f7580]" />{user.phone}</p>}
                 </div>
               </TableCell>
               <TableCell><Badge tone={user.is_partner ? 'green' : 'gray'}>{user.is_partner ? 'Партнёр' : 'Пользователь'}</Badge></TableCell>
-              <TableCell className="font-semibold text-[#2f7d4b]">{formatMoney(user.bonus_balance)}</TableCell>
+              <TableCell className="font-semibold text-[#2e8175]">{formatMoney(user.bonus_balance)}</TableCell>
               <TableCell>
-                <span className="flex items-center gap-2 text-sm text-[#789083]">
+                <span className="flex items-center gap-2 text-sm text-[#5f7580]">
                   <Calendar className="h-3 w-3" />
                   {formatDate(user.created_at)}
                 </span>

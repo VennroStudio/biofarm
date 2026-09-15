@@ -47,9 +47,9 @@ export function DashboardStatsGrid({ stats }: Props) {
           <Card key={card.title} className="p-6">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-sm text-[#789083]">{card.title}</p>
-                <p className="mt-1 text-2xl font-bold text-[#26382d]">{card.value}</p>
-                <p className="mt-1 text-xs text-[#789083]">{card.caption}</p>
+                <p className="text-sm text-[#5f7580]">{card.title}</p>
+                <p className="mt-1 text-2xl font-bold text-[#294555]">{card.value}</p>
+                <p className="mt-1 text-xs text-[#5f7580]">{card.caption}</p>
               </div>
               <span className={`grid h-12 w-12 place-items-center rounded-full ${card.color}`}>
                 <Icon className="h-6 w-6" />

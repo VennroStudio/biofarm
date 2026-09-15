@@ -11,7 +11,7 @@ type Props = {
 export function ProductGroupsTable({ groups, onEdit, onRemove }: Props) {
   if (groups.length === 0) {
     return (
-      <Card className="p-8 text-center text-[#789083]">
+      <Card className="p-8 text-center text-[#5f7580]">
         Группы товаров пока не добавлены
       </Card>
     );
@@ -23,8 +23,8 @@ export function ProductGroupsTable({ groups, onEdit, onRemove }: Props) {
         <Card key={group.id} className="p-5">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="font-bold text-[#1f3328]">{group.name}</h2>
-              <p className="mt-1 text-sm text-[#789083]">{group.products_count} товаров</p>
+              <h2 className="font-bold text-[#294555]">{group.name}</h2>
+              <p className="mt-1 text-sm text-[#5f7580]">{group.products_count} товаров</p>
             </div>
             <div className="flex gap-2">
               <Button size="sm" variant="outline" onClick={() => onEdit(group)} aria-label={`Изменить ${group.name}`}>

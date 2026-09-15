@@ -247,8 +247,8 @@ export function AdminSettings() {
             className={({ isActive }) =>
               `rounded-md border px-4 py-2 text-sm font-semibold transition ${
                 isActive
-                  ? 'border-[#2f7d4b] bg-[#2f7d4b] text-white'
-                  : 'border-[#d9dece] bg-white text-[#53685c] hover:border-[#2f7d4b] hover:text-[#2f7d4b]'
+                  ? 'border-[#2e8175] bg-[#2e8175] text-white'
+                  : 'border-[#cfe2de] bg-white text-[#526d78] hover:border-[#2e8175] hover:text-[#2e8175]'
               }`
             }
           >
@@ -274,7 +274,7 @@ export function AdminSettings() {
           {renderSettingsSection(activeSection, settings, setSettings)}
 
           <div className="flex items-center justify-end gap-3">
-            {saved && <span className="text-sm font-semibold text-[#2f7d4b]">Вкладка сохранена</span>}
+            {saved && <span className="text-sm font-semibold text-[#2e8175]">Вкладка сохранена</span>}
             <Button type="submit" disabled={saving}>
               <Save className="h-4 w-4" />
               {saving ? 'Сохранение...' : 'Сохранить'}

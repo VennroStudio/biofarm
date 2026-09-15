@@ -45,15 +45,15 @@ export function ProductTable({ categoryById, products, onEdit, onRemove, onToggl
                 <img src={product.image} alt={product.name} className="h-12 w-12 rounded object-cover" />
               </TableCell>
               <TableCell>
-                <p className="font-semibold text-[#26382d]">{product.name}</p>
-                <p className="text-sm text-[#789083]">{product.weight}</p>
+                <p className="font-semibold text-[#294555]">{product.name}</p>
+                <p className="text-sm text-[#5f7580]">{product.weight}</p>
               </TableCell>
               <TableCell>
                 <Badge tone="gray">{categoryById.get(product.category_id) || product.category_id}</Badge>
               </TableCell>
               <TableCell>
                 <p className="font-semibold">{formatMoney(product.price)}</p>
-                {product.old_price && <p className="text-sm text-[#789083] line-through">{formatMoney(product.old_price)}</p>}
+                {product.old_price && <p className="text-sm text-[#5f7580] line-through">{formatMoney(product.old_price)}</p>}
               </TableCell>
               <TableCell>
                 <div className="flex gap-1">

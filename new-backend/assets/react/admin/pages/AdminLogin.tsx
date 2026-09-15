@@ -1,4 +1,4 @@
-import { Lock, Mail, Shield } from 'lucide-react';
+import { Lock, Mail } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -12,6 +12,9 @@ export function AdminLogin() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const adminRoot = document.getElementById('admin-root');
+  const brandName = adminRoot?.dataset.brandName || 'БИОФАРМ';
+  const brandLogoUrl = adminRoot?.dataset.brandLogoUrl || '/uploads/images/logo.png';
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -29,19 +32,17 @@ export function AdminLogin() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#2f7d4b]/10 to-[#e5a11a]/10 p-4">
-      <Card className="w-full max-w-md border-0 p-6 shadow-[0_18px_55px_rgba(31,51,40,0.16)]">
+    <div className="flex min-h-screen items-center justify-center bg-[#eaf5f1] p-4">
+      <Card className="w-full max-w-md p-6 shadow-[0_24px_70px_rgba(41,69,85,0.12)] sm:p-8">
         <div className="mb-6 text-center">
-          <span className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-full bg-[#2f7d4b]/10 text-[#2f7d4b]">
-            <Shield className="h-8 w-8" />
-          </span>
-          <h1 className="text-2xl font-bold text-[#26382d]">Админ-панель</h1>
-          <p className="mt-1 text-sm text-[#789083]">Войдите для управления магазином</p>
+          <img src={brandLogoUrl} alt={brandName} className="mx-auto mb-5 h-12 w-auto max-w-[220px] object-contain" />
+          <h1 className="text-2xl font-semibold text-[#2e8175]">Админ-панель</h1>
+          <p className="mt-1 text-sm text-[#5f7580]">Войдите для управления магазином</p>
         </div>
         <form className="grid gap-4" onSubmit={(event) => void submit(event)}>
           <Field label="Email">
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#789083]" />
+              <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#5f7580]" />
               <input
                 className={`${inputClass} pl-10`}
                 name="email"
@@ -56,7 +57,7 @@ export function AdminLogin() {
           </Field>
           <Field label="Пароль">
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#789083]" />
+              <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#5f7580]" />
               <input
                 className={`${inputClass} pl-10`}
                 name="password"

@@ -21,7 +21,7 @@ export function AttributesTable({
 }: Props) {
   if (attributes.length === 0) {
     return (
-      <Card className="p-8 text-center text-[#789083]">
+      <Card className="p-8 text-center text-[#5f7580]">
         Атрибуты пока не добавлены
       </Card>
     );
@@ -34,11 +34,11 @@ export function AttributesTable({
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-lg font-bold text-[#1f3328]">{attribute.name}</h2>
+                <h2 className="text-lg font-bold text-[#294555]">{attribute.name}</h2>
                 <Badge tone="gray">{attribute.slug}</Badge>
                 {attribute.filter_prefix && <Badge tone="green">/{attribute.filter_prefix}/</Badge>}
               </div>
-              <p className="mt-1 text-sm text-[#789083]">
+              <p className="mt-1 text-sm text-[#5f7580]">
                 {attribute.values_count} значений, {attribute.products_count} товаров
               </p>
             </div>
@@ -58,14 +58,14 @@ export function AttributesTable({
           {attribute.values.length > 0 && (
             <div className="mt-5 grid gap-2">
               {attribute.values.map((value) => (
-                <div key={value.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-[#e4e5da] bg-[#fbfaf4] px-4 py-3">
+                <div key={value.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-[#dfece9] bg-[#f5faf8] px-4 py-3">
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="font-semibold text-[#26382d]">{value.name}</p>
+                      <p className="font-semibold text-[#294555]">{value.name}</p>
                       <Badge tone="gray">{value.slug}</Badge>
                       {!value.is_indexable && <Badge tone="gray">noindex</Badge>}
                     </div>
-                    <p className="mt-1 text-sm text-[#789083]">{value.products_count} товаров</p>
+                    <p className="mt-1 text-sm text-[#5f7580]">{value.products_count} товаров</p>
                   </div>
                   <div className="flex gap-2">
                     <Button size="sm" variant="outline" onClick={() => onEditValue(attribute, value)} aria-label={`Изменить ${value.name}`}>

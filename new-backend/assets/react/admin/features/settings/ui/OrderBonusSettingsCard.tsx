@@ -15,19 +15,19 @@ export function OrderBonusSettingsCard({ settings, onChange }: Props) {
           <ShoppingBag className="h-5 w-5" />
           Бонусы за заказ
         </h2>
-        <p className="text-sm text-[#789083]">Настройки начисления бонусов за покупки</p>
+        <p className="text-sm text-[#5f7580]">Настройки начисления бонусов за покупки</p>
       </div>
-      <div className="flex items-center justify-between rounded-lg border border-[#e4e5da] px-4 py-4">
+      <div className="flex items-center justify-between rounded-lg border border-[#dfece9] px-4 py-4">
         <div>
           <p className="flex items-center gap-2 font-semibold">
             <Power className="h-4 w-4" />
             Начисление бонусов за заказ
           </p>
-          <p className="text-sm text-[#789083]">Пользователи получают бонусы за каждый заказ</p>
+          <p className="text-sm text-[#5f7580]">Пользователи получают бонусы за каждый заказ</p>
         </div>
         <button
           type="button"
-          className={`relative h-7 w-12 rounded-full transition ${settings.order_bonus_enabled ? 'bg-[#2f7d4b]' : 'bg-[#d9dece]'}`}
+          className={`relative h-7 w-12 rounded-full transition ${settings.order_bonus_enabled ? 'bg-[#2e8175]' : 'bg-[#cfe2de]'}`}
           onClick={() => onChange({ ...settings, order_bonus_enabled: !settings.order_bonus_enabled })}
           aria-label="Переключить бонусы за заказ"
         >
@@ -53,7 +53,7 @@ export function OrderBonusSettingsCard({ settings, onChange }: Props) {
                 value={settings.order_bonus_percent}
                 onChange={(event) => onChange({ ...settings, order_bonus_percent: Number(event.target.value) })}
               />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#789083]">%</span>
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#5f7580]">%</span>
             </div>
           </Field>
           <Field
@@ -73,23 +73,23 @@ export function OrderBonusSettingsCard({ settings, onChange }: Props) {
                 value={settings.order_bonus_spend_limit_percent}
                 onChange={(event) => onChange({ ...settings, order_bonus_spend_limit_percent: Number(event.target.value) })}
               />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#789083]">%</span>
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#5f7580]">%</span>
             </div>
           </Field>
         </div>
       )}
 
-      <div className="mt-5 flex items-center justify-between rounded-lg border border-[#e4e5da] px-4 py-4">
+      <div className="mt-5 flex items-center justify-between rounded-lg border border-[#dfece9] px-4 py-4">
         <div>
           <p className="flex items-center gap-2 font-semibold">
             <Gift className="h-4 w-4" />
             Welcome-бонус
           </p>
-          <p className="text-sm text-[#789083]">Однократно начисляется после подтверждения email.</p>
+          <p className="text-sm text-[#5f7580]">Однократно начисляется после подтверждения email.</p>
         </div>
         <button
           type="button"
-          className={`relative h-7 w-12 rounded-full transition ${settings.welcome_bonus_enabled ? 'bg-[#2f7d4b]' : 'bg-[#d9dece]'}`}
+          className={`relative h-7 w-12 rounded-full transition ${settings.welcome_bonus_enabled ? 'bg-[#2e8175]' : 'bg-[#cfe2de]'}`}
           onClick={() => onChange({ ...settings, welcome_bonus_enabled: !settings.welcome_bonus_enabled })}
           aria-label="Переключить welcome-бонус"
           aria-pressed={settings.welcome_bonus_enabled}

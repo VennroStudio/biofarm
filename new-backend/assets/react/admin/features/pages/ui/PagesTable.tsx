@@ -66,20 +66,20 @@ export function PagesTable({ pages, onEdit, onRemove }: Props) {
               <TableRow key={page.id}>
                 <TableCell>
                   <div>
-                    <p className="font-semibold text-[#26382d]">{page.title}</p>
-                    <p className="mt-1 text-xs text-[#789083]">
+                    <p className="font-semibold text-[#294555]">{page.title}</p>
+                    <p className="mt-1 text-xs text-[#5f7580]">
                       {page.page_type === 'system' ? systemPageName(page) : page.template || 'basic'}
                     </p>
                   </div>
                 </TableCell>
                 <TableCell>
                   {path ? (
-                    <a className="inline-flex items-center gap-2 text-sm font-semibold text-[#2f7d4b] hover:underline" href={path} target="_blank" rel="noreferrer">
+                    <a className="inline-flex items-center gap-2 text-sm font-semibold text-[#2e8175] hover:underline" href={path} target="_blank" rel="noreferrer">
                       {path}
                       <ExternalLink className="h-3.5 w-3.5" />
                     </a>
                   ) : (
-                    <span className="text-[#789083]">—</span>
+                    <span className="text-[#5f7580]">—</span>
                   )}
                 </TableCell>
                 <TableCell>

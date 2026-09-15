@@ -68,7 +68,7 @@ export function AttributeValueFormModal({ attributeName, form, open, error, savi
         <Field label="Нижний SEO-текст">
           <textarea className={textareaClass} value={form.bottom_text} onChange={(event) => setForm({ ...form, bottom_text: event.target.value })} />
         </Field>
-        <label className="flex items-center gap-2 text-sm font-semibold text-[#26382d]">
+        <label className="flex items-center gap-2 text-sm font-semibold text-[#294555]">
           <input type="checkbox" checked={form.is_indexable} onChange={(event) => setForm({ ...form, is_indexable: event.target.checked })} />
           Индексировать значение
         </label>

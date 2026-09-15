@@ -45,7 +45,7 @@ export function AdminDashboard() {
 
   return (
     <>
-      <PageHeader title="Дашборд" subtitle="Обзор магазина BioFarm" />
+      <PageHeader title="Дашборд" subtitle="Обзор магазина БИОФАРМ" />
       <DashboardStatsGrid stats={stats} />
       <QuickActions />
       <RecentOrders orders={orders} onSelect={openOrder} />

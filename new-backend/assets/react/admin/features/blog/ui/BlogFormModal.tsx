@@ -46,12 +46,12 @@ export function BlogFormModal({ form, open, error, saving, setForm, onClose, onS
           </Field>
         </div>
         <div className="space-y-2">
-          <p className="text-sm font-semibold text-[#26382d]">Изображение</p>
+          <p className="text-sm font-semibold text-[#294555]">Изображение</p>
           <ImageUploader scope="blog" onUploaded={(url) => setForm((current) => ({ ...current, image: url }))} />
           {form.image ? (
-            <div className="grid gap-3 rounded-lg border border-[#e4e5da] bg-white p-3 md:grid-cols-[88px_1fr]">
+            <div className="grid gap-3 rounded-lg border border-[#dfece9] bg-white p-3 md:grid-cols-[88px_1fr]">
               <img src={form.image} alt={form.image_alt || form.title} className="h-20 w-20 rounded object-cover" />
-              <p className="break-all rounded-md border border-[#e4e5da] bg-[#fbfaf4] px-3 py-2 text-xs font-semibold text-[#789083]">
+              <p className="break-all rounded-md border border-[#dfece9] bg-[#f5faf8] px-3 py-2 text-xs font-semibold text-[#5f7580]">
                 {form.image}
               </p>
             </div>
@@ -85,7 +85,7 @@ export function BlogFormModal({ form, open, error, saving, setForm, onClose, onS
         <Field label="Дата публикации">
           <input className={inputClass} type="datetime-local" value={form.published_at} onChange={(event) => setForm({ ...form, published_at: event.target.value })} />
         </Field>
-        <label className="flex items-center gap-2 text-sm font-semibold text-[#26382d]">
+        <label className="flex items-center gap-2 text-sm font-semibold text-[#294555]">
           <input type="checkbox" checked={form.is_published} onChange={(event) => setForm({ ...form, is_published: event.target.checked })} />
           Опубликована
         </label>

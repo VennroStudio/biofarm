@@ -19,7 +19,7 @@ export function WithdrawalStats({ pending, processed }: Props) {
       <Card className="p-6">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="text-sm text-[#789083]">Ожидают</p>
+            <p className="text-sm text-[#5f7580]">Ожидают</p>
             <p className="text-2xl font-bold">{pending.length}</p>
           </div>
           <span className="grid h-12 w-12 place-items-center rounded-full bg-[#fff2bf] text-[#f59e0b]"><Clock className="h-6 w-6" /></span>
@@ -28,7 +28,7 @@ export function WithdrawalStats({ pending, processed }: Props) {
       <Card className="p-6">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="text-sm text-[#789083]">Сумма ожидания</p>
+            <p className="text-sm text-[#5f7580]">Сумма ожидания</p>
             <p className="text-2xl font-bold">{formatMoney(pendingAmount)}</p>
           </div>
           <span className="grid h-12 w-12 place-items-center rounded-full bg-[#dbeafe] text-[#2563eb]"><Wallet className="h-6 w-6" /></span>
@@ -37,7 +37,7 @@ export function WithdrawalStats({ pending, processed }: Props) {
       <Card className="p-6">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="text-sm text-[#789083]">Выплачено всего</p>
+            <p className="text-sm text-[#5f7580]">Выплачено всего</p>
             <p className="text-2xl font-bold">{formatMoney(approvedAmount)}</p>
           </div>
           <span className="grid h-12 w-12 place-items-center rounded-full bg-[#dcfce7] text-[#16a34a]"><CheckCircle className="h-6 w-6" /></span>

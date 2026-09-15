@@ -189,11 +189,11 @@ export function AdminProducts() {
       />
       <ErrorAlert className="mb-5">{dialogOpen || groupDialogOpen ? null : error}</ErrorAlert>
 
-      <div className="mb-5 inline-flex rounded-lg border border-[#e4e5da] bg-white p-1 shadow-sm">
+      <div className="mb-5 inline-flex rounded-lg border border-[#dfece9] bg-white p-1 shadow-sm">
         <button
           type="button"
           className={`rounded-md px-4 py-2 text-sm font-semibold transition ${
-            activeTab === 'products' ? 'bg-[#1f6b3a] text-white' : 'text-[#789083] hover:bg-[#eef1e8] hover:text-[#26382d]'
+            activeTab === 'products' ? 'bg-[#18574f] text-white' : 'text-[#5f7580] hover:bg-[#eaf5f1] hover:text-[#294555]'
           }`}
           onClick={() => setActiveTab('products')}
         >
@@ -202,7 +202,7 @@ export function AdminProducts() {
         <button
           type="button"
           className={`rounded-md px-4 py-2 text-sm font-semibold transition ${
-            activeTab === 'groups' ? 'bg-[#1f6b3a] text-white' : 'text-[#789083] hover:bg-[#eef1e8] hover:text-[#26382d]'
+            activeTab === 'groups' ? 'bg-[#18574f] text-white' : 'text-[#5f7580] hover:bg-[#eaf5f1] hover:text-[#294555]'
           }`}
           onClick={() => setActiveTab('groups')}
         >

@@ -32,7 +32,7 @@ export function SeoSettingsCard({ settings, onChange }: Props) {
           <Search className="h-5 w-5" />
           SEO и контакты
         </h2>
-        <p className="text-sm text-[#789083]">Основные данные для Open Graph и Organization JSON-LD</p>
+        <p className="text-sm text-[#5f7580]">Основные данные для Open Graph и Organization JSON-LD</p>
       </div>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
@@ -103,10 +103,10 @@ export function SeoSettingsCard({ settings, onChange }: Props) {
       </div>
 
       <div className="mt-6">
-        <div className="mb-6 rounded-lg border border-[#e4e5da] p-4">
+        <div className="mb-6 rounded-lg border border-[#dfece9] p-4">
           <div className="mb-4">
             <p className="font-semibold">SEO-шаблоны</p>
-            <p className="text-sm text-[#789083]">
+            <p className="text-sm text-[#5f7580]">
               Используются только когда у товара, категории или атрибута не заполнено собственное SEO.
               Доступные переменные: {'{name}'}, {'{h1}'}, {'{category}'}, {'{price}'}, {'{weight}'}, {'{slug}'}.
             </p>
@@ -158,15 +158,15 @@ export function SeoSettingsCard({ settings, onChange }: Props) {
           </div>
         </div>
 
-        <div className="mb-5 flex items-center justify-between rounded-lg border border-[#e4e5da] px-4 py-4">
+        <div className="mb-5 flex items-center justify-between rounded-lg border border-[#dfece9] px-4 py-4">
           <div>
             <p className="font-semibold">Яндекс.Метрика</p>
-            <p className="text-sm text-[#789083]">Подключает счетчик, если указан ID.</p>
+            <p className="text-sm text-[#5f7580]">Подключает счетчик, если указан ID.</p>
           </div>
           <button
             aria-label="Переключить Яндекс.Метрику"
             aria-pressed={settings.yandex_metrika_enabled}
-            className={`relative h-7 w-12 rounded-full transition ${settings.yandex_metrika_enabled ? 'bg-[#2f7d4b]' : 'bg-[#d9dece]'}`}
+            className={`relative h-7 w-12 rounded-full transition ${settings.yandex_metrika_enabled ? 'bg-[#2e8175]' : 'bg-[#cfe2de]'}`}
             type="button"
             onClick={() => set('yandex_metrika_enabled', !settings.yandex_metrika_enabled)}
           >
@@ -186,19 +186,19 @@ export function SeoSettingsCard({ settings, onChange }: Props) {
           </div>
         )}
 
-        <div className="rounded-lg border border-[#e4e5da] p-4">
+        <div className="rounded-lg border border-[#dfece9] p-4">
           <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="flex items-center gap-2 font-semibold">
                 <FileText className="h-4 w-4" />
                 robots.txt
               </p>
-              <p className="text-sm text-[#789083]">
+              <p className="text-sm text-[#5f7580]">
                 Полный текст файла. Можно менять порядок, добавлять User-agent, Allow, Disallow, Sitemap и комментарии.
               </p>
             </div>
             <button
-              className="inline-flex items-center gap-2 rounded-lg border border-[#e4e5da] px-3 py-2 text-sm font-semibold text-[#26392f] transition hover:border-[#2f7d4b] hover:text-[#2f7d4b]"
+              className="inline-flex items-center gap-2 rounded-lg border border-[#dfece9] px-3 py-2 text-sm font-semibold text-[#26392f] transition hover:border-[#2e8175] hover:text-[#2e8175]"
               type="button"
               onClick={() => set('robots_txt', defaultRobotsText())}
             >
@@ -214,7 +214,7 @@ export function SeoSettingsCard({ settings, onChange }: Props) {
               placeholder={defaultRobotsText()}
             />
           </Field>
-          <p className="mt-2 text-xs text-[#789083]">
+          <p className="mt-2 text-xs text-[#5f7580]">
             Если поле пустое, сайт автоматически отдаст системный robots.txt.
           </p>
         </div>

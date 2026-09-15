@@ -8,7 +8,7 @@ type Props = {
 };
 
 function toggleClass(checked: boolean) {
-  return `relative h-7 w-12 rounded-full transition ${checked ? 'bg-[#2f7d4b]' : 'bg-[#d9dece]'}`;
+  return `relative h-7 w-12 rounded-full transition ${checked ? 'bg-[#2e8175]' : 'bg-[#cfe2de]'}`;
 }
 
 export function DeliverySettingsCard({ settings, onChange }: Props) {
@@ -21,7 +21,7 @@ export function DeliverySettingsCard({ settings, onChange }: Props) {
           <Truck className="h-5 w-5" />
           Доставка и скидки
         </h2>
-        <p className="text-sm text-[#789083]">Параметры оформления заказа и серверного расчёта стоимости</p>
+        <p className="text-sm text-[#5f7580]">Параметры оформления заказа и серверного расчёта стоимости</p>
       </div>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
@@ -55,13 +55,13 @@ export function DeliverySettingsCard({ settings, onChange }: Props) {
       </div>
 
       <div className="mt-5 grid gap-4">
-        <div className="flex items-center justify-between rounded-lg border border-[#e4e5da] px-4 py-4">
+        <div className="flex items-center justify-between rounded-lg border border-[#dfece9] px-4 py-4">
           <div>
             <p className="flex items-center gap-2 font-semibold">
               <Ticket className="h-4 w-4" />
               Промокоды
             </p>
-            <p className="text-sm text-[#789083]">Показывает поле промокода в оформлении заказа и применяет скидку на бекенде.</p>
+            <p className="text-sm text-[#5f7580]">Показывает поле промокода в оформлении заказа и применяет скидку на бекенде.</p>
           </div>
           <button
             aria-label="Переключить промокоды"
@@ -74,13 +74,13 @@ export function DeliverySettingsCard({ settings, onChange }: Props) {
           </button>
         </div>
 
-        <div className="flex items-center justify-between rounded-lg border border-[#e4e5da] px-4 py-4">
+        <div className="flex items-center justify-between rounded-lg border border-[#dfece9] px-4 py-4">
           <div>
             <p className="flex items-center gap-2 font-semibold">
               <Mail className="h-4 w-4" />
               Email по заказам
             </p>
-            <p className="text-sm text-[#789083]">Отправляет покупателю письма при создании и изменении заказа.</p>
+            <p className="text-sm text-[#5f7580]">Отправляет покупателю письма при создании и изменении заказа.</p>
           </div>
           <button
             aria-label="Переключить письма по заказам"
@@ -93,12 +93,12 @@ export function DeliverySettingsCard({ settings, onChange }: Props) {
           </button>
         </div>
 
-        <div className="rounded-lg border border-[#e4e5da] px-4 py-4">
+        <div className="rounded-lg border border-[#dfece9] px-4 py-4">
           <p className="flex items-center gap-2 font-semibold">
             <Package className="h-4 w-4" />
             Зависимость от корзины
           </p>
-          <p className="text-sm text-[#789083]">
+          <p className="text-sm text-[#5f7580]">
             Если корзина выключена, промокоды, бонусы за заказ, доставка, оформление заказа и письма по заказам не показываются на сайте.
           </p>
         </div>

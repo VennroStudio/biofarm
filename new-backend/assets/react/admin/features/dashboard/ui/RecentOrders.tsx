@@ -14,8 +14,8 @@ export function RecentOrders({ orders, onSelect }: Props) {
   return (
     <Card className="mt-8 p-6">
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-[#26382d]">Последние заказы</h2>
-        <Link to="/admin/orders" className="inline-flex items-center gap-2 text-sm font-semibold text-[#26382d] hover:text-[#2f7d4b]">
+        <h2 className="text-2xl font-bold text-[#294555]">Последние заказы</h2>
+        <Link to="/admin/orders" className="inline-flex items-center gap-2 text-sm font-semibold text-[#294555] hover:text-[#2e8175]">
           Все заказы <ArrowRight className="h-4 w-4" />
         </Link>
       </div>
@@ -29,20 +29,20 @@ export function RecentOrders({ orders, onSelect }: Props) {
               <button
                 key={order.id}
                 type="button"
-                className="flex w-full items-center justify-between gap-4 rounded-lg border border-[#e4e5da] px-4 py-3 text-left transition hover:bg-[#fbfaf4]"
+                className="flex w-full items-center justify-between gap-4 rounded-lg border border-[#dfece9] px-4 py-3 text-left transition hover:bg-[#f5faf8]"
                 onClick={() => onSelect(order)}
               >
                 <div>
                   <div className="mb-1 flex flex-wrap items-center gap-2">
-                    <span className="font-semibold text-[#26382d]">{order.id}</span>
+                    <span className="font-semibold text-[#294555]">{order.id}</span>
                     <Badge tone={order.status === 'processing' ? 'green' : 'gray'}>{orderStatusLabels[order.status] ?? order.status}</Badge>
                     <Badge tone={paid ? 'green' : 'gray'}>{paid ? 'Оплачен' : 'Не оплачен'}</Badge>
                   </div>
-                  <p className="text-sm text-[#789083]">
+                  <p className="text-sm text-[#5f7580]">
                     {order.shipping_address.name || 'Клиент'} • {formatDate(order.created_at)} • {formatMoney(order.total)}
                   </p>
                 </div>
-                <ArrowRight className="h-4 w-4 text-[#789083]" />
+                <ArrowRight className="h-4 w-4 text-[#5f7580]" />
               </button>
             );
           })}

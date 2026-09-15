@@ -156,8 +156,8 @@ export function ProductFormModal({
           <input className={inputClass} value={form.ingredients} onChange={(event) => setForm({ ...form, ingredients: event.target.value })} />
         </Field>
 
-        <div className="grid gap-4 rounded-lg border border-[#e4e5da] bg-[#fbfaf4] p-4">
-          <p className="text-sm font-semibold text-[#26382d]">БАД и применение</p>
+        <div className="grid gap-4 rounded-lg border border-[#dfece9] bg-[#f5faf8] p-4">
+          <p className="text-sm font-semibold text-[#294555]">БАД и применение</p>
           <Field label="Активные компоненты">
             <textarea className={textareaClass} value={form.active_components_text} onChange={(event) => setForm({ ...form, active_components_text: event.target.value })} />
           </Field>
@@ -185,10 +185,10 @@ export function ProductFormModal({
 
         {attributes.filter((attribute) => attribute.values.length > 0).map((attribute) => (
           <div key={attribute.id} className="space-y-2">
-            <p className="text-sm font-semibold text-[#26382d]">{attribute.name}</p>
+            <p className="text-sm font-semibold text-[#294555]">{attribute.name}</p>
             <div className="grid gap-2 sm:grid-cols-2">
               {attribute.values.map((value) => (
-                <label key={value.id} className="flex items-center gap-2 rounded-md border border-[#e4e5da] bg-[#fbfaf4] px-3 py-2 text-sm font-semibold text-[#26382d]">
+                <label key={value.id} className="flex items-center gap-2 rounded-md border border-[#dfece9] bg-[#f5faf8] px-3 py-2 text-sm font-semibold text-[#294555]">
                   <input
                     type="checkbox"
                     checked={form.attribute_value_ids.includes(value.id)}
@@ -201,7 +201,7 @@ export function ProductFormModal({
           </div>
         ))}
 
-        <div className="rounded-lg border border-[#e4e5da] bg-[#fbfaf4] p-4">
+        <div className="rounded-lg border border-[#dfece9] bg-[#f5faf8] p-4">
           <Field label="Группа товаров">
             <select className={inputClass} value={form.product_group_id} onChange={(event) => setForm({ ...form, product_group_id: event.target.value })}>
               <option value="">Без группы</option>
@@ -211,11 +211,11 @@ export function ProductFormModal({
         </div>
 
         {blogPosts.length > 0 && (
-          <div className="space-y-2 rounded-lg border border-[#e4e5da] bg-[#fbfaf4] p-4">
-            <p className="text-sm font-semibold text-[#26382d]">Связанные статьи</p>
+          <div className="space-y-2 rounded-lg border border-[#dfece9] bg-[#f5faf8] p-4">
+            <p className="text-sm font-semibold text-[#294555]">Связанные статьи</p>
             <div className="grid gap-2">
               {blogPosts.map((post) => (
-                <label key={post.id} className="flex items-start gap-2 rounded-md border border-[#e4e5da] bg-white px-3 py-2 text-sm font-semibold text-[#26382d]">
+                <label key={post.id} className="flex items-start gap-2 rounded-md border border-[#dfece9] bg-white px-3 py-2 text-sm font-semibold text-[#294555]">
                   <input
                     type="checkbox"
                     className="mt-1"
@@ -224,7 +224,7 @@ export function ProductFormModal({
                   />
                   <span>
                     {post.title}
-                    <span className="block text-xs font-medium text-[#789083]">{post.is_published ? 'Опубликована' : 'Черновик'}</span>
+                    <span className="block text-xs font-medium text-[#5f7580]">{post.is_published ? 'Опубликована' : 'Черновик'}</span>
                   </span>
                 </label>
               ))}
@@ -233,11 +233,11 @@ export function ProductFormModal({
         )}
 
         {certificates.length > 0 && (
-          <div className="space-y-2 rounded-lg border border-[#e4e5da] bg-[#fbfaf4] p-4">
-            <p className="text-sm font-semibold text-[#26382d]">Сертификаты товара</p>
+          <div className="space-y-2 rounded-lg border border-[#dfece9] bg-[#f5faf8] p-4">
+            <p className="text-sm font-semibold text-[#294555]">Сертификаты товара</p>
             <div className="grid gap-2">
               {certificates.map((certificate) => (
-                <label key={certificate.id} className="flex items-start gap-2 rounded-md border border-[#e4e5da] bg-white px-3 py-2 text-sm font-semibold text-[#26382d]">
+                <label key={certificate.id} className="flex items-start gap-2 rounded-md border border-[#dfece9] bg-white px-3 py-2 text-sm font-semibold text-[#294555]">
                   <input
                     type="checkbox"
                     className="mt-1"
@@ -247,7 +247,7 @@ export function ProductFormModal({
                   <span>
                     {certificate.title}
                     {certificate.product_name && !form.certificate_ids.includes(certificate.id) && (
-                      <span className="block text-xs font-medium text-[#789083]">Сейчас привязан: {certificate.product_name}</span>
+                      <span className="block text-xs font-medium text-[#5f7580]">Сейчас привязан: {certificate.product_name}</span>
                     )}
                   </span>
                 </label>
@@ -257,21 +257,21 @@ export function ProductFormModal({
         )}
 
         <div className="space-y-2">
-          <p className="text-sm font-semibold text-[#26382d]">Изображения товара *</p>
+          <p className="text-sm font-semibold text-[#294555]">Изображения товара *</p>
           <div className="flex flex-wrap gap-2">
             <ImageUploader scope="products" onUploaded={onAddImage} />
           </div>
           {form.image_items.length > 0 && (
             <div className="mt-3 space-y-3">
               {form.image_items.map((image, index) => (
-                <div key={`${image.path}-${index}`} className="grid gap-3 rounded-lg border border-[#e4e5da] bg-white p-3 md:grid-cols-[72px_1fr]">
+                <div key={`${image.path}-${index}`} className="grid gap-3 rounded-lg border border-[#dfece9] bg-white p-3 md:grid-cols-[72px_1fr]">
                   <img src={image.path} alt={image.alt} className="h-16 w-16 rounded object-cover" />
                   <div className="grid gap-3">
                     <div className="grid gap-3 md:grid-cols-[1fr_auto]">
-                      <p className="min-h-10 break-all rounded-md border border-[#e4e5da] bg-[#fbfaf4] px-3 py-2 text-xs font-semibold text-[#789083]">
+                      <p className="min-h-10 break-all rounded-md border border-[#dfece9] bg-[#f5faf8] px-3 py-2 text-xs font-semibold text-[#5f7580]">
                         {image.path}
                       </p>
-                      <label className="flex items-center gap-2 whitespace-nowrap text-sm font-semibold text-[#26382d]">
+                      <label className="flex items-center gap-2 whitespace-nowrap text-sm font-semibold text-[#294555]">
                         <input
                           type="radio"
                           name="main-product-image"
@@ -334,7 +334,7 @@ export function ProductFormModal({
             <input className={inputClass} value={form.ozon_link} onChange={(event) => setForm({ ...form, ozon_link: event.target.value })} />
           </Field>
         </div>
-        <label className="flex items-center gap-2 text-sm font-semibold text-[#26382d]">
+        <label className="flex items-center gap-2 text-sm font-semibold text-[#294555]">
           <input type="checkbox" checked={form.is_active} onChange={(event) => setForm({ ...form, is_active: event.target.checked })} />
           Активен
         </label>

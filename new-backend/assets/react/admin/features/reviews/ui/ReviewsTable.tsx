@@ -60,7 +60,7 @@ export function ReviewsTable({ productById, reviews, onApprove, onEdit, onRemove
                     ))}
                   </div>
                 ) : (
-                  <span className="text-[#789083]">—</span>
+                  <span className="text-[#5f7580]">—</span>
                 )}
               </TableCell>
               <TableCell>

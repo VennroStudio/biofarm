@@ -25,7 +25,7 @@ export function PasswordSettingsCard({ password, error, saved, saving, setPasswo
           <Lock className="h-5 w-5" />
           Смена пароля
         </h2>
-        <p className="text-sm text-[#789083]">Измените пароль для входа в админ-панель</p>
+        <p className="text-sm text-[#5f7580]">Измените пароль для входа в админ-панель</p>
       </div>
       <form className="space-y-4" onSubmit={onSubmit}>
         <Field label="Текущий пароль">
@@ -60,7 +60,7 @@ export function PasswordSettingsCard({ password, error, saved, saving, setPasswo
             <Lock className="h-4 w-4" />
             {saving ? 'Сохранение...' : 'Сохранить'}
           </Button>
-          {saved && <span className="text-sm font-semibold text-[#2f7d4b]">Пароль изменён</span>}
+          {saved && <span className="text-sm font-semibold text-[#2e8175]">Пароль изменён</span>}
           {error && <span className="text-sm font-semibold text-[#c44747]">{error}</span>}
         </div>
       </form>

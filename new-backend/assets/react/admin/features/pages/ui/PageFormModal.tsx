@@ -71,8 +71,8 @@ export function PageFormModal({ form, open, error, saving, templates, setForm, o
           </>
         )}
 
-        <div className="rounded-lg border border-[#e4e5da] p-4">
-          <h3 className="mb-4 text-lg font-bold text-[#1f3328]">SEO</h3>
+        <div className="rounded-lg border border-[#dfece9] p-4">
+          <h3 className="mb-4 text-lg font-bold text-[#294555]">SEO</h3>
           <div className="grid gap-4 md:grid-cols-2">
             <Field label="SEO title">
               <input className={inputClass} value={form.seo_title} onChange={(event) => setForm({ ...form, seo_title: event.target.value })} />
@@ -114,7 +114,7 @@ export function PageFormModal({ form, open, error, saving, templates, setForm, o
           </Field>
         </div>
 
-        <div className="grid gap-3 rounded-lg border border-[#e4e5da] p-4 md:grid-cols-2">
+        <div className="grid gap-3 rounded-lg border border-[#dfece9] p-4 md:grid-cols-2">
           <Toggle checked={form.is_published} label="Опубликована" onChange={(checked) => setForm({ ...form, is_published: checked })} />
           <Toggle checked={form.is_indexable} label="Индексировать" onChange={(checked) => setForm({ ...form, is_indexable: checked })} />
           <Toggle checked={form.show_in_sitemap} label="Добавлять в sitemap" onChange={(checked) => setForm({ ...form, show_in_sitemap: checked })} />
@@ -128,7 +128,7 @@ export function PageFormModal({ form, open, error, saving, templates, setForm, o
 
 function Toggle({ checked, label, onChange }: { checked: boolean; label: string; onChange: (checked: boolean) => void }) {
   return (
-    <label className="flex items-center gap-2 text-sm font-semibold text-[#26382d]">
+    <label className="flex items-center gap-2 text-sm font-semibold text-[#294555]">
       <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} />
       {label}
     </label>

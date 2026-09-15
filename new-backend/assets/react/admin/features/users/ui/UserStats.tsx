@@ -15,7 +15,7 @@ export function UserStats({ users }: Props) {
           <span className="grid h-12 w-12 place-items-center rounded-full bg-[#dbeafe] text-[#2563eb]"><Users className="h-6 w-6" /></span>
           <div>
             <p className="text-2xl font-bold">{users.length}</p>
-            <p className="text-sm text-[#789083]">Всего пользователей</p>
+            <p className="text-sm text-[#5f7580]">Всего пользователей</p>
           </div>
         </div>
       </Card>
@@ -24,7 +24,7 @@ export function UserStats({ users }: Props) {
           <span className="grid h-12 w-12 place-items-center rounded-full bg-[#dcfce7] text-[#16a34a]"><Gift className="h-6 w-6" /></span>
           <div>
             <p className="text-2xl font-bold">{formatMoney(users.reduce((sum, user) => sum + user.bonus_balance, 0))}</p>
-            <p className="text-sm text-[#789083]">Всего бонусов</p>
+            <p className="text-sm text-[#5f7580]">Всего бонусов</p>
           </div>
         </div>
       </Card>
@@ -33,7 +33,7 @@ export function UserStats({ users }: Props) {
           <span className="grid h-12 w-12 place-items-center rounded-full bg-[#f3d9ff] text-[#a855f7]"><UserCheck className="h-6 w-6" /></span>
           <div>
             <p className="text-2xl font-bold">{users.filter((user) => user.is_partner).length}</p>
-            <p className="text-sm text-[#789083]">Партнёров</p>
+            <p className="text-sm text-[#5f7580]">Партнёров</p>
           </div>
         </div>
       </Card>

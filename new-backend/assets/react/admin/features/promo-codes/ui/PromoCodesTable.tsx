@@ -41,7 +41,7 @@ export function PromoCodesTable({ promoCodes, onEdit, onRemove }: Props) {
           {promoCodes.map((promoCode) => (
             <TableRow key={promoCode.id}>
               <TableCell>
-                <p className="font-bold text-[#1f3328]">{promoCode.code}</p>
+                <p className="font-bold text-[#294555]">{promoCode.code}</p>
               </TableCell>
               <TableCell>
                 {promoCode.type === 'percent' ? `${promoCode.value}%` : formatMoney(promoCode.value)}
@@ -49,7 +49,7 @@ export function PromoCodesTable({ promoCodes, onEdit, onRemove }: Props) {
               <TableCell>{promoCode.min_order_total > 0 ? formatMoney(promoCode.min_order_total) : 'Без минимума'}</TableCell>
               <TableCell>
                 <p>{promoCode.starts_at ? formatDate(promoCode.starts_at) : 'Сразу'}</p>
-                <p className="text-[#789083]">{promoCode.ends_at ? `до ${formatDate(promoCode.ends_at)}` : 'Без окончания'}</p>
+                <p className="text-[#5f7580]">{promoCode.ends_at ? `до ${formatDate(promoCode.ends_at)}` : 'Без окончания'}</p>
               </TableCell>
               <TableCell>
                 {promoCode.used_count}{promoCode.usage_limit ? ` / ${promoCode.usage_limit}` : ''}

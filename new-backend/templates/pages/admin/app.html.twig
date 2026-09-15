@@ -7,8 +7,13 @@
     <title>{{ meta.title|default('Админка БИОФАРМ') }}</title>
     <link rel="stylesheet" href="{{ vite_asset('assets/styles/app.css') }}">
 </head>
-<body class="bg-[#f6f5ee] font-sans text-[#1f3328] antialiased">
-    <main id="admin-root" class="min-h-screen"></main>
+<body class="bg-white font-sans text-[#294555] antialiased">
+    <main
+        id="admin-root"
+        class="min-h-screen"
+        data-brand-name="{{ site_setting('site_name', 'БИОФАРМ') }}"
+        data-brand-logo-url="{{ site_setting('site_logo_url', '/uploads/images/logo.png') }}"
+    ></main>
     <script type="module" src="{{ vite_asset('assets/react/admin/main.tsx') }}"></script>
 </body>
 </html>

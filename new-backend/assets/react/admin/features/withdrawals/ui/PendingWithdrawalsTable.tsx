@@ -23,7 +23,7 @@ export function PendingWithdrawalsTable({ processingId, withdrawals, onSetStatus
     <Card className="mt-6 p-6">
       <div className="mb-6">
         <h2 className="text-2xl font-bold">Заявки на рассмотрении</h2>
-        <p className="text-sm text-[#789083]">Проверьте и обработайте заявки партнёров</p>
+        <p className="text-sm text-[#5f7580]">Проверьте и обработайте заявки партнёров</p>
       </div>
       {withdrawals.length === 0 ? (
         <EmptyState>
@@ -48,7 +48,7 @@ export function PendingWithdrawalsTable({ processingId, withdrawals, onSetStatus
                 <TableRow key={withdrawal.id}>
                   <TableCell>
                     <p className="font-semibold">{withdrawal.user.name}</p>
-                    <p className="text-sm text-[#789083]">{withdrawal.user.email}</p>
+                    <p className="text-sm text-[#5f7580]">{withdrawal.user.email}</p>
                   </TableCell>
                   <TableCell>{withdrawal.user.card_number || 'Не указана'}</TableCell>
                   <TableCell className="font-semibold">{formatMoney(withdrawal.amount)}</TableCell>

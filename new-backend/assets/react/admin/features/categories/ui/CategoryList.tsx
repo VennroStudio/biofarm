@@ -29,7 +29,7 @@ export function CategoryList({ categories, productCounts, onEdit, onRemove }: Pr
 
   return (
     <Card className="overflow-hidden">
-      <div className="divide-y divide-[#e4e5da]">
+      <div className="divide-y divide-[#dfece9]">
         {roots.map((category) => renderCategory(category, byParent, productCounts, onEdit, onRemove, 0, new Set()))}
       </div>
     </Card>
@@ -85,7 +85,7 @@ function CategoryRow({
 
   return (
     <div
-      className={`group flex items-center justify-between gap-4 px-5 py-4 ${child ? 'bg-[#fbfaf4]' : 'bg-white'}`}
+      className={`group flex items-center justify-between gap-4 px-5 py-4 ${child ? 'bg-[#f5faf8]' : 'bg-white'}`}
       data-category-row="true"
       data-category-level={level}
       style={{ paddingLeft: child ? `${3 + Math.min(level - 1, 3) * 1.5}rem` : undefined }}
@@ -93,12 +93,12 @@ function CategoryRow({
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
           {child && <span className="text-[#9aa89d]">↳</span>}
-          <h3 className={`truncate font-semibold ${child ? 'text-[#53685c]' : 'text-[#26382d]'}`}>{category.name}</h3>
+          <h3 className={`truncate font-semibold ${child ? 'text-[#526d78]' : 'text-[#294555]'}`}>{category.name}</h3>
           {child && <Badge tone="gray">Подкатегория</Badge>}
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <Badge tone="gray">{productCount} товаров</Badge>
-          <span className="text-xs text-[#789083]">/{category.slug}</span>
+          <span className="text-xs text-[#5f7580]">/{category.slug}</span>
         </div>
       </div>
       <div className="flex shrink-0 gap-1 opacity-0 transition group-hover:opacity-100">

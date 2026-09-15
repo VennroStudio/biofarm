@@ -47,7 +47,7 @@ export function AttributeFormModal({ form, open, error, saving, setForm, onClose
             <input className={inputClass} type="number" value={form.sort_order} onChange={(event) => setForm({ ...form, sort_order: event.target.value })} />
           </Field>
         </div>
-        <div className="grid gap-2 text-sm font-semibold text-[#26382d]">
+        <div className="grid gap-2 text-sm font-semibold text-[#294555]">
           <label className="flex items-center gap-2">
             <input type="checkbox" checked={form.is_filterable} onChange={(event) => setForm({ ...form, is_filterable: event.target.checked })} />
             Использовать как фильтр

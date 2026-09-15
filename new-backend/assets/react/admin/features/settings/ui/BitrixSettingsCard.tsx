@@ -96,12 +96,12 @@ export function BitrixSettingsCard({ settings, onChange }: Props) {
             <MessageCircle className="h-5 w-5" />
             Bitrix24
           </h2>
-          <p className="text-sm text-[#789083]">Виджет открытой линии, чата и CRM-формы на сайте.</p>
+          <p className="text-sm text-[#5f7580]">Виджет открытой линии, чата и CRM-формы на сайте.</p>
         </div>
         <button
           aria-label="Переключить виджет Bitrix24"
           aria-pressed={settings.bitrix_widget_enabled}
-          className={`relative h-7 w-12 shrink-0 rounded-full transition ${settings.bitrix_widget_enabled ? 'bg-[#2f7d4b]' : 'bg-[#d9dece]'}`}
+          className={`relative h-7 w-12 shrink-0 rounded-full transition ${settings.bitrix_widget_enabled ? 'bg-[#2e8175]' : 'bg-[#cfe2de]'}`}
           type="button"
           onClick={() => set('bitrix_widget_enabled', !settings.bitrix_widget_enabled)}
         >
@@ -117,23 +117,23 @@ export function BitrixSettingsCard({ settings, onChange }: Props) {
           placeholder="<script>...</script>"
         />
       </Field>
-      <p className="mt-2 text-sm text-[#789083]">
+      <p className="mt-2 text-sm text-[#5f7580]">
         Код выводится перед закрывающим тегом body только если виджет включен.
       </p>
 
-      <div className="mt-6 border-t border-[#edf0e8] pt-5">
+      <div className="mt-6 border-t border-[#eaf5f1] pt-5">
         <div className="mb-4 flex items-start justify-between gap-4">
           <div>
-            <h3 className="flex items-center gap-2 text-lg font-bold text-[#1f3328]">
+            <h3 className="flex items-center gap-2 text-lg font-bold text-[#294555]">
               <PlugZap className="h-5 w-5" />
               CRM-сценарии
             </h3>
-            <p className="text-sm text-[#789083]">Форма обратной связи и заказы остаются на сайте, а в Bitrix24 отправляется копия.</p>
+            <p className="text-sm text-[#5f7580]">Форма обратной связи и заказы остаются на сайте, а в Bitrix24 отправляется копия.</p>
           </div>
           <button
             aria-label="Переключить отправку в Bitrix24 CRM"
             aria-pressed={crmEnabled}
-            className={`relative h-7 w-12 shrink-0 rounded-full transition ${crmEnabled ? 'bg-[#2f7d4b]' : 'bg-[#d9dece]'}`}
+            className={`relative h-7 w-12 shrink-0 rounded-full transition ${crmEnabled ? 'bg-[#2e8175]' : 'bg-[#cfe2de]'}`}
             type="button"
             onClick={() => setCrmEnabled((enabled) => !enabled)}
           >
@@ -157,10 +157,10 @@ export function BitrixSettingsCard({ settings, onChange }: Props) {
             placeholder={crm?.has_webhook ? 'Оставьте пустым, чтобы не менять сохраненный вебхук' : 'https://bitrix24.ru/rest/'}
           />
         </Field>
-        <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-[#789083]">
+        <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-[#5f7580]">
           {crm?.has_webhook ? <span>Сохранен: {crm.webhook_mask}</span> : <span>Вебхук еще не сохранен.</span>}
-          {saved && <span className="inline-flex items-center gap-1 font-semibold text-[#2f7d4b]"><CheckCircle2 className="h-4 w-4" />Сохранено</span>}
-          {crmTested && <span className="inline-flex items-center gap-1 font-semibold text-[#2f7d4b]"><CheckCircle2 className="h-4 w-4" />Связь есть</span>}
+          {saved && <span className="inline-flex items-center gap-1 font-semibold text-[#2e8175]"><CheckCircle2 className="h-4 w-4" />Сохранено</span>}
+          {crmTested && <span className="inline-flex items-center gap-1 font-semibold text-[#2e8175]"><CheckCircle2 className="h-4 w-4" />Связь есть</span>}
         </div>
 
         <div className="mt-4 flex flex-wrap gap-3">

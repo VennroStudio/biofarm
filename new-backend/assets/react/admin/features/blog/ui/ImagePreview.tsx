@@ -11,7 +11,7 @@ export function ImagePreview({ src, title }: Props) {
 
   if (!src || failed) {
     return (
-      <span className="grid h-12 w-12 place-items-center rounded bg-[#eef1e8] text-[#789083]">
+      <span className="grid h-12 w-12 place-items-center rounded bg-[#eaf5f1] text-[#5f7580]">
         <ImageOff className="h-4 w-4" />
       </span>
     );

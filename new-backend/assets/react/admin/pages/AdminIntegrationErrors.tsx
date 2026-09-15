@@ -82,10 +82,10 @@ export function AdminIntegrationErrors() {
           <Badge tone="gray">{errors.length} всего</Badge>
         </div>
 
-        {loading && <p className="text-[#789083]">Загрузка...</p>}
+        {loading && <p className="text-[#5f7580]">Загрузка...</p>}
 
         {!loading && errors.length === 0 && (
-          <div className="rounded-md border border-dashed border-[#d9dece] px-4 py-10 text-center text-[#789083]">
+          <div className="rounded-md border border-dashed border-[#cfe2de] px-4 py-10 text-center text-[#5f7580]">
             Ошибок интеграций пока нет
           </div>
         )}
@@ -93,7 +93,7 @@ export function AdminIntegrationErrors() {
         {!loading && errors.length > 0 && (
           <div className="grid gap-3">
             {errors.map((item) => (
-              <article key={item.id} className="rounded-md border border-[#e4e5da] bg-[#fbfaf4] p-4">
+              <article key={item.id} className="rounded-md border border-[#dfece9] bg-[#f5faf8] p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="mb-2 flex flex-wrap items-center gap-2">
@@ -102,8 +102,8 @@ export function AdminIntegrationErrors() {
                       <Badge tone="blue">{scenarioLabels[item.scenario] || item.scenario}</Badge>
                       {item.http_status && <Badge tone="amber">HTTP {item.http_status}</Badge>}
                     </div>
-                    <h2 className="break-words text-base font-bold text-[#1f3328]">{item.operation}</h2>
-                    <p className="mt-1 break-words text-sm text-[#53685c]">{item.message}</p>
+                    <h2 className="break-words text-base font-bold text-[#294555]">{item.operation}</h2>
+                    <p className="mt-1 break-words text-sm text-[#526d78]">{item.message}</p>
                   </div>
                   {!item.is_read && (
                     <Button size="sm" variant="outline" disabled={saving} onClick={() => void markRead(item.id)}>
@@ -111,15 +111,15 @@ export function AdminIntegrationErrors() {
                     </Button>
                   )}
                 </div>
-                <div className="mt-3 grid gap-1 text-xs text-[#789083] md:grid-cols-3">
+                <div className="mt-3 grid gap-1 text-xs text-[#5f7580] md:grid-cols-3">
                   <span>{item.created_at}</span>
                   <span>{item.local_entity_type || 'сущность'}: {item.local_entity_id || '-'}</span>
                   <span className="inline-flex items-center gap-1"><CircleAlert className="h-3.5 w-3.5" />{item.scenario}</span>
                 </div>
                 {item.response_body && (
                   <details className="mt-3">
-                    <summary className="cursor-pointer text-sm font-semibold text-[#2f7d4b]">Ответ сервиса</summary>
-                    <pre className="mt-2 max-h-56 overflow-auto rounded-md bg-white p-3 text-xs text-[#53685c]">{item.response_body}</pre>
+                    <summary className="cursor-pointer text-sm font-semibold text-[#2e8175]">Ответ сервиса</summary>
+                    <pre className="mt-2 max-h-56 overflow-auto rounded-md bg-white p-3 text-xs text-[#526d78]">{item.response_body}</pre>
                   </details>
                 )}
               </article>

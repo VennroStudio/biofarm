@@ -42,8 +42,8 @@ type ToggleItem = {
 const items: ToggleItem[] = [
   {
     key: 'home_features_enabled',
-    label: 'Преимущества',
-    description: 'Блок с карточками преимуществ под первым экраном.',
+    label: 'Сотрудничество',
+    description: 'Блок сотрудничества и форма заявки для партнёров в нижней части главной.',
     icon: Sparkles,
   },
   {
@@ -114,23 +114,23 @@ export function HomeBlocksSettingsCard({ settings, onChange }: Props) {
           <LayoutDashboard className="h-5 w-5" />
           Блоки главной
         </h2>
-        <p className="text-sm text-[#789083]">Управляет видимостью секций на главной странице.</p>
+        <p className="text-sm text-[#5f7580]">Управляет видимостью секций на главной странице.</p>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         {items.map((item) => (
-          <div className="flex items-center justify-between gap-4 rounded-lg border border-[#e4e5da] px-4 py-4" key={item.key}>
+          <div className="flex items-center justify-between gap-4 rounded-lg border border-[#dfece9] px-4 py-4" key={item.key}>
             <div>
               <p className="flex items-center gap-2 font-semibold">
                 <item.icon className="h-4 w-4" />
                 {item.label}
               </p>
-              <p className="text-sm text-[#789083]">{item.description}</p>
+              <p className="text-sm text-[#5f7580]">{item.description}</p>
             </div>
             <button
               aria-label={item.label}
               aria-pressed={settings[item.key]}
-              className={`relative h-7 w-12 shrink-0 rounded-full transition ${settings[item.key] ? 'bg-[#2f7d4b]' : 'bg-[#d9dece]'}`}
+              className={`relative h-7 w-12 shrink-0 rounded-full transition ${settings[item.key] ? 'bg-[#2e8175]' : 'bg-[#cfe2de]'}`}
               type="button"
               onClick={() => toggle(item.key)}
             >

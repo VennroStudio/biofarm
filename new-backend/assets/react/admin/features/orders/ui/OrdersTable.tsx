@@ -52,7 +52,7 @@ export function OrdersTable({ orders, onChangePayment, onChangeStatus, onSelect 
                 <TableCell className="font-semibold">{order.id}</TableCell>
                 <TableCell>
                   <p>{order.shipping_address.name || 'Клиент'}</p>
-                  <p className="text-sm text-[#789083]">{order.shipping_address.phone || 'Телефон не указан'}</p>
+                  <p className="text-sm text-[#5f7580]">{order.shipping_address.phone || 'Телефон не указан'}</p>
                 </TableCell>
                 <TableCell>{formatDate(order.created_at)}</TableCell>
                 <TableCell className="font-semibold">{formatMoney(order.total)}</TableCell>

@@ -98,24 +98,24 @@ export function UserDetailsModal({ user, error, saving, onClose, onSave }: Props
           </Field>
         </div>
 
-        <div className="grid gap-4 rounded-lg border border-[#e4e5da] bg-[#fbfaf4] p-4 md:grid-cols-2">
+        <div className="grid gap-4 rounded-lg border border-[#dfece9] bg-[#f5faf8] p-4 md:grid-cols-2">
           <Field label="Реферальный код">
             <input className={inputClass} value={form.referralCode} onChange={(event) => setForm({ ...form, referralCode: event.target.value })} />
           </Field>
           <Field label="ID пригласившего">
             <input className={inputClass} type="number" value={form.referredByUserId} onChange={(event) => setForm({ ...form, referredByUserId: event.target.value })} />
           </Field>
-          <label className="flex items-center gap-2 text-sm font-semibold text-[#26382d]">
+          <label className="flex items-center gap-2 text-sm font-semibold text-[#294555]">
             <input type="checkbox" checked={form.isPartner} onChange={(event) => setForm({ ...form, isPartner: event.target.checked })} />
             Партнер
           </label>
-          <div className="text-sm text-[#789083]">
-            <p>Приглашено: <b className="text-[#26382d]">{user.referrals_count}</b></p>
-            <p>Оборот рефералов: <b className="text-[#26382d]">{formatMoney(user.referral_orders_total)}</b></p>
+          <div className="text-sm text-[#5f7580]">
+            <p>Приглашено: <b className="text-[#294555]">{user.referrals_count}</b></p>
+            <p>Оборот рефералов: <b className="text-[#294555]">{formatMoney(user.referral_orders_total)}</b></p>
           </div>
         </div>
 
-        <div className="grid gap-4 rounded-lg border border-[#e4e5da] bg-[#fbfaf4] p-4 md:grid-cols-[1fr_2fr]">
+        <div className="grid gap-4 rounded-lg border border-[#dfece9] bg-[#f5faf8] p-4 md:grid-cols-[1fr_2fr]">
           <Field label="Ручная корректировка бонусов">
             <input
               className={inputClass}
@@ -132,24 +132,24 @@ export function UserDetailsModal({ user, error, saving, onClose, onSave }: Props
 
         <div>
           <div className="mb-2 flex items-center justify-between">
-            <h4 className="font-semibold text-[#26382d]">История бонусов</h4>
+            <h4 className="font-semibold text-[#294555]">История бонусов</h4>
             <Badge tone="green">{formatMoney(user.bonus_balance)}</Badge>
           </div>
-          <div className="max-h-72 overflow-y-auto rounded-lg border border-[#e4e5da] bg-white">
+          <div className="max-h-72 overflow-y-auto rounded-lg border border-[#dfece9] bg-white">
             {user.bonus_transactions.length > 0 ? user.bonus_transactions.map((transaction) => (
-              <div key={transaction.id} className="grid gap-2 border-b border-[#e4e5da] p-3 text-sm last:border-b-0 md:grid-cols-[120px_1fr_auto]">
-                <span className={transaction.amount >= 0 ? 'font-semibold text-[#2f7d4b]' : 'font-semibold text-[#c24141]'}>
+              <div key={transaction.id} className="grid gap-2 border-b border-[#dfece9] p-3 text-sm last:border-b-0 md:grid-cols-[120px_1fr_auto]">
+                <span className={transaction.amount >= 0 ? 'font-semibold text-[#2e8175]' : 'font-semibold text-[#c24141]'}>
                   {transaction.amount >= 0 ? '+' : ''}{formatMoney(transaction.amount)}
                 </span>
                 <span>
                   {transaction.comment || transaction.type}
-                  {transaction.source_order_id && <span className="ml-2 text-[#789083]">Заказ {transaction.source_order_id}</span>}
-                  {transaction.source_withdrawal_id && <span className="ml-2 text-[#789083]">Выплата {transaction.source_withdrawal_id}</span>}
+                  {transaction.source_order_id && <span className="ml-2 text-[#5f7580]">Заказ {transaction.source_order_id}</span>}
+                  {transaction.source_withdrawal_id && <span className="ml-2 text-[#5f7580]">Выплата {transaction.source_withdrawal_id}</span>}
                 </span>
-                <span className="text-[#789083]">{formatDate(transaction.created_at)}</span>
+                <span className="text-[#5f7580]">{formatDate(transaction.created_at)}</span>
               </div>
             )) : (
-              <p className="p-4 text-sm text-[#789083]">Операций по бонусам пока нет</p>
+              <p className="p-4 text-sm text-[#5f7580]">Операций по бонусам пока нет</p>
             )}
           </div>
         </div>

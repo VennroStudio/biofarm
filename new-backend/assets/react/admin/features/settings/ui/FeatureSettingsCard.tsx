@@ -18,17 +18,17 @@ type ToggleProps = {
 
 function FeatureToggle({ checked, label, description, icon: Icon, onToggle }: ToggleProps) {
   return (
-    <div className="flex items-center justify-between rounded-lg border border-[#e4e5da] px-4 py-4">
+    <div className="flex items-center justify-between rounded-lg border border-[#dfece9] px-4 py-4">
       <div>
         <p className="flex items-center gap-2 font-semibold">
           <Icon className="h-4 w-4" />
           {label}
         </p>
-        <p className="text-sm text-[#789083]">{description}</p>
+        <p className="text-sm text-[#5f7580]">{description}</p>
       </div>
       <button
         type="button"
-        className={`relative h-7 w-12 rounded-full transition ${checked ? 'bg-[#2f7d4b]' : 'bg-[#d9dece]'}`}
+        className={`relative h-7 w-12 rounded-full transition ${checked ? 'bg-[#2e8175]' : 'bg-[#cfe2de]'}`}
         onClick={onToggle}
         aria-pressed={checked}
         aria-label={label}

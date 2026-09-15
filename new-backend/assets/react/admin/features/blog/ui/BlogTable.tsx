@@ -44,8 +44,8 @@ export function BlogTable({ posts, onEdit, onRemove }: Props) {
                 <ImagePreview src={post.image} title={post.title} />
               </TableCell>
               <TableCell className="min-w-[420px]">
-                <p className="line-clamp-1 font-semibold text-[#26382d]">{post.title}</p>
-                <p className="line-clamp-1 text-sm text-[#789083]">{post.excerpt}</p>
+                <p className="line-clamp-1 font-semibold text-[#294555]">{post.title}</p>
+                <p className="line-clamp-1 text-sm text-[#5f7580]">{post.excerpt}</p>
               </TableCell>
               <TableCell><Badge tone="gray">{post.category_id}</Badge></TableCell>
               <TableCell>{post.author_name}</TableCell>
@@ -56,7 +56,7 @@ export function BlogTable({ posts, onEdit, onRemove }: Props) {
                     href={`/blog/${post.slug}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="grid h-9 w-9 place-items-center rounded-md text-[#53685c] transition hover:bg-[#eef1e8]"
+                    className="grid h-9 w-9 place-items-center rounded-md text-[#526d78] transition hover:bg-[#eaf5f1]"
                     title="Открыть"
                   >
                     <Eye className="h-4 w-4" />

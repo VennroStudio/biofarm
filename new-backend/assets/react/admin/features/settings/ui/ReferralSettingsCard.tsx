@@ -15,7 +15,7 @@ export function ReferralSettingsCard({ settings, onChange }: Props) {
           <Gift className="h-5 w-5" />
           Реферальная программа
         </h2>
-        <p className="text-sm text-[#789083]">Настройки реферальной системы для партнёров</p>
+        <p className="text-sm text-[#5f7580]">Настройки реферальной системы для партнёров</p>
       </div>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div>
@@ -36,10 +36,10 @@ export function ReferralSettingsCard({ settings, onChange }: Props) {
                 value={settings.referral_percent}
                 onChange={(event) => onChange({ ...settings, referral_percent: Number(event.target.value) })}
               />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#789083]">%</span>
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#5f7580]">%</span>
             </div>
           </Field>
-          <p className="mt-2 text-xs text-[#789083]">Процент от покупок приглашённых пользователей</p>
+          <p className="mt-2 text-xs text-[#5f7580]">Процент от покупок приглашённых пользователей</p>
         </div>
       </div>
     </Card>

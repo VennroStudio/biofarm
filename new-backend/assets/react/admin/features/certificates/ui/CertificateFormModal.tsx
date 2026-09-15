@@ -61,7 +61,7 @@ export function CertificateFormModal({ form, open, products, error, saving, setF
           <Field label="Порядок">
             <input className={inputClass} type="number" value={form.sort_order} onChange={(event) => setForm({ ...form, sort_order: Number(event.target.value) })} />
           </Field>
-          <label className="flex items-center gap-3 self-end rounded-md border border-[#d9dece] bg-[#fbfaf4] px-3 py-3 text-sm font-semibold text-[#26382d]">
+          <label className="flex items-center gap-3 self-end rounded-md border border-[#cfe2de] bg-[#f5faf8] px-3 py-3 text-sm font-semibold text-[#294555]">
             <input type="checkbox" checked={form.is_active} onChange={(event) => setForm({ ...form, is_active: event.target.checked })} />
             Активен
           </label>

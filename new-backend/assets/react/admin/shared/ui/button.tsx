@@ -11,10 +11,10 @@ type ButtonProps = PropsWithChildren<ButtonHTMLAttributes<HTMLButtonElement> & {
 
 const variants: Record<ButtonVariant, string> = {
   danger: 'bg-[#b94b4b] text-white hover:bg-[#a13f3f]',
-  ghost: 'bg-transparent text-[#53685c] hover:bg-[#eef1e8]',
-  outline: 'border border-[#d9dece] bg-white text-[#26382d] hover:bg-[#f8f7f0]',
-  primary: 'bg-[#2f7d4b] text-white hover:bg-[#276b40]',
-  secondary: 'bg-[#e5f3e9] text-[#2f7d4b] hover:bg-[#d8ecdf]',
+  ghost: 'bg-transparent text-[#526d78] hover:bg-[#eaf5f1] hover:text-[#18574f]',
+  outline: 'border border-[#cfe2de] bg-white text-[#294555] hover:border-[#2e8175] hover:bg-[#f5faf8]',
+  primary: 'bg-[#2e8175] text-white hover:bg-[#236b62]',
+  secondary: 'bg-[#eaf5f1] text-[#2e8175] hover:bg-[#dcefea]',
 };
 
 const sizes: Record<ButtonSize, string> = {
@@ -27,7 +27,7 @@ export function Button({ children, className, size = 'md', type = 'button', vari
   return (
     <button
       className={cn(
-        'inline-flex items-center justify-center gap-2 rounded-md text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60',
+        'inline-flex items-center justify-center gap-2 rounded-xl text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2e8175] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60',
         variants[variant],
         sizes[size],
         className,

@@ -6,8 +6,8 @@ type BadgeTone = 'amber' | 'blue' | 'gray' | 'green' | 'red';
 const styles: Record<BadgeTone, string> = {
   amber: 'bg-[#faeed7] text-[#b36a08]',
   blue: 'bg-[#dceafe] text-[#2563eb]',
-  gray: 'bg-[#edf0e8] text-[#667368]',
-  green: 'bg-[#e5f3e9] text-[#2f7d4b]',
+  gray: 'bg-[#eaf5f1] text-[#526d78]',
+  green: 'bg-[#eaf5f1] text-[#2e8175]',
   red: 'bg-[#f7e2e2] text-[#a33d3d]',
 };
 

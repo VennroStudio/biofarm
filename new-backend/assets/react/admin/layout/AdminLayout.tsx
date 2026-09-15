@@ -19,7 +19,7 @@ import {
   Wallet,
   X,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { getStoredAdmin, getToken, logout, sessionClearedEvent } from '../api/client';
 import { settingsSections, settingsSectionPath } from '../features/settings/model/settingsSections';
@@ -48,8 +48,13 @@ export function AdminLayout() {
   const [admin, setAdmin] = useState(() => getStoredAdmin());
   const [open, setOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(() => location.pathname.startsWith('/admin/settings'));
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
   const settingsActive = location.pathname.startsWith('/admin/settings');
   const showSettingsSubnav = settingsOpen;
+  const adminRoot = document.getElementById('admin-root');
+  const brandName = adminRoot?.dataset.brandName || 'БИОФАРМ';
+  const brandLogoUrl = adminRoot?.dataset.brandLogoUrl || '/uploads/images/logo.png';
 
   useEffect(() => {
     const handleSessionCleared = () => {
@@ -61,6 +66,45 @@ export function AdminLayout() {
 
     return () => window.removeEventListener(sessionClearedEvent, handleSessionCleared);
   }, [navigate]);
+
+  useEffect(() => {
+    if (!open) {
+      return undefined;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    const menuButton = menuButtonRef.current;
+    const focusableSelector = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    document.body.style.overflow = 'hidden';
+    const animationFrame = window.requestAnimationFrame(() => {
+      mobileMenuRef.current?.querySelector<HTMLElement>(focusableSelector)?.focus();
+    });
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setOpen(false);
+        return;
+      }
+      if (event.key !== 'Tab' || !mobileMenuRef.current) return;
+      const focusable = Array.from(mobileMenuRef.current.querySelectorAll<HTMLElement>(focusableSelector));
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+      menuButton?.focus();
+    };
+  }, [open]);
 
   if (!admin || !getToken()) {
     return <Navigate to="/admin/login" replace />;
@@ -74,11 +118,13 @@ export function AdminLayout() {
   };
 
   const sidebar = (
-    <aside className="flex h-full min-h-0 w-64 flex-col border-r border-[#e4e5da] bg-[#fbfaf4]">
-      <div className="flex h-16 items-center border-b border-[#e4e5da] px-4">
-        <a href="/admin" className="text-xl font-bold text-[#1f6b3a]">BioFarm</a>
+    <aside className="flex h-full min-h-0 w-64 flex-col border-r border-[#dfece9] bg-[#eaf5f1]">
+      <div className="flex h-16 items-center border-b border-[#dfece9] px-4">
+        <a href="/admin" className="inline-flex min-w-0 items-center gap-3" aria-label={`${brandName}: админ-панель`}>
+          <img src={brandLogoUrl} alt="" className="h-9 w-auto max-w-[150px] object-contain" />
+        </a>
       </div>
-      <nav className="min-h-0 flex-1 space-y-2 overflow-y-auto px-4 py-5">
+      <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto px-3 py-4" aria-label="Разделы админ-панели">
         {links.map((link) => {
           const Icon = link.icon;
           if (link.to === '/admin/settings') {
@@ -91,10 +137,10 @@ export function AdminLayout() {
                       setOpen(false);
                       setSettingsOpen(true);
                     }}
-                    className={`flex min-w-0 flex-1 items-center gap-3 rounded-md px-3 py-3 text-sm font-semibold transition ${
+                    className={`flex min-w-0 flex-1 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${
                       settingsActive
-                        ? 'bg-[#1f6b3a] text-white'
-                        : 'text-[#789083] hover:bg-[#eef1e8] hover:text-[#26382d]'
+                        ? 'bg-white text-[#18574f] shadow-sm ring-1 ring-[#dfece9]'
+                        : 'text-[#526d78] hover:bg-white/70 hover:text-[#18574f]'
                     }`}
                   >
                     <Icon className="h-5 w-5 shrink-0" />
@@ -104,8 +150,8 @@ export function AdminLayout() {
                     type="button"
                     className={`grid h-10 w-10 place-items-center rounded-md transition ${
                       settingsActive
-                        ? 'bg-[#1f6b3a] text-white'
-                        : 'text-[#789083] hover:bg-[#eef1e8] hover:text-[#26382d]'
+                        ? 'bg-white text-[#18574f] shadow-sm'
+                        : 'text-[#526d78] hover:bg-white/70 hover:text-[#18574f]'
                     }`}
                     aria-expanded={showSettingsSubnav}
                     aria-label={showSettingsSubnav ? 'Свернуть настройки' : 'Развернуть настройки'}
@@ -125,8 +171,8 @@ export function AdminLayout() {
                         className={({ isActive }) =>
                           `block rounded-md px-3 py-2 text-sm font-semibold transition ${
                             isActive
-                              ? 'bg-[#e5f3e9] text-[#1f6b3a]'
-                              : 'text-[#789083] hover:bg-[#eef1e8] hover:text-[#26382d]'
+                              ? 'bg-white text-[#18574f] shadow-sm'
+                              : 'text-[#526d78] hover:bg-white/70 hover:text-[#18574f]'
                           }`
                         }
                       >
@@ -146,10 +192,10 @@ export function AdminLayout() {
               end={link.to === '/admin'}
               onClick={() => setOpen(false)}
               className={({ isActive }) =>
-                `flex items-center gap-3 rounded-md px-3 py-3 text-sm font-semibold transition ${
+                `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${
                   isActive
-                    ? 'bg-[#1f6b3a] text-white'
-                    : 'text-[#789083] hover:bg-[#eef1e8] hover:text-[#26382d]'
+                    ? 'bg-white text-[#18574f] shadow-sm ring-1 ring-[#dfece9]'
+                    : 'text-[#526d78] hover:bg-white/70 hover:text-[#18574f]'
                 }`
               }
             >
@@ -159,19 +205,19 @@ export function AdminLayout() {
           );
         })}
       </nav>
-      <div className="border-t border-[#e4e5da] p-4">
+      <div className="border-t border-[#dfece9] p-4">
         <div className="mb-3 flex items-center gap-3">
-          <span className="grid h-10 w-10 place-items-center rounded-full bg-[#e5f3e9] text-[#2f7d4b]">
+          <span className="grid h-10 w-10 place-items-center rounded-full bg-[#eaf5f1] text-[#2e8175]">
             <Users className="h-5 w-5" />
           </span>
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-[#26382d]">{adminName}</p>
-            <p className="truncate text-xs text-[#789083]">{adminEmail}</p>
+            <p className="truncate text-sm font-semibold text-[#294555]">{adminName}</p>
+            <p className="truncate text-xs text-[#5f7580]">{adminEmail}</p>
           </div>
         </div>
         <button
           type="button"
-          className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border border-[#d9dece] bg-white text-sm font-semibold text-[#26382d] transition hover:bg-[#f8f7f0]"
+          className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border border-[#cfe2de] bg-white text-sm font-semibold text-[#294555] transition hover:bg-[#f8f7f0]"
           onClick={signOut}
         >
           <LogOut className="h-4 w-4" />
@@ -182,13 +228,14 @@ export function AdminLayout() {
   );
 
   return (
-    <div className="min-h-screen bg-[#f6f5ee] text-[#26382d]">
+    <div className="min-h-screen bg-white text-[#294555]">
       <div className="fixed inset-y-0 left-0 z-30 hidden lg:block">{sidebar}</div>
-      <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-[#e4e5da] bg-[#fbfaf4] px-4 lg:hidden">
-        <a href="/admin" className="text-xl font-bold text-[#1f6b3a]">BioFarm</a>
+      <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-[#dfece9] bg-[#eaf5f1] px-4 lg:hidden">
+        <a href="/admin" aria-label={`${brandName}: админ-панель`}><img src={brandLogoUrl} alt="" className="h-9 w-auto max-w-[150px] object-contain" /></a>
         <button
+          ref={menuButtonRef}
           type="button"
-          className="grid h-10 w-10 place-items-center rounded-md border border-[#d9dece] bg-white"
+          className="grid h-10 w-10 place-items-center rounded-md border border-[#cfe2de] bg-white"
           onClick={() => setOpen(true)}
           aria-label="Открыть меню"
         >
@@ -198,7 +245,7 @@ export function AdminLayout() {
       {open && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <button type="button" aria-label="Закрыть меню" className="absolute inset-0 bg-[#101812]/55" onClick={() => setOpen(false)} />
-          <div className="relative h-full">
+          <div ref={mobileMenuRef} role="dialog" aria-modal="true" aria-label="Меню админ-панели" className="relative h-full w-64" tabIndex={-1}>
             {sidebar}
             <button
               type="button"
@@ -212,7 +259,7 @@ export function AdminLayout() {
         </div>
       )}
       <div className="lg:ml-64">
-        <main className="p-6">
+        <main className="mx-auto w-full max-w-[1280px] p-4 sm:p-6 lg:p-8">
           <Outlet />
         </main>
       </div>

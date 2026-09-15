@@ -80,7 +80,7 @@ export function PromoCodeFormModal({ form, open, error, saving, setForm, onClose
               placeholder="Без лимита"
             />
           </Field>
-          <label className="flex items-center gap-3 self-end rounded-md border border-[#d9dece] bg-[#fbfaf4] px-3 py-3 text-sm font-semibold text-[#26382d]">
+          <label className="flex items-center gap-3 self-end rounded-md border border-[#cfe2de] bg-[#f5faf8] px-3 py-3 text-sm font-semibold text-[#294555]">
             <input
               type="checkbox"
               checked={form.is_active}

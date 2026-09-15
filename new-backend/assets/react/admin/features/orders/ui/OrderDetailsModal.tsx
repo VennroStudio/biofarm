@@ -204,7 +204,7 @@ export function OrderDetailsModal({ order, error, saving, onClose, onSave }: Pro
             <h4 className="mb-3 font-semibold">Товары</h4>
             <div className="space-y-2">
               {order.items.map((item) => (
-                <div key={`${item.product_id}-${item.product_name}`} className="flex justify-between rounded bg-[#f6f5ee] p-3">
+                <div key={`${item.product_id}-${item.product_name}`} className="flex justify-between rounded bg-[#f7fbfa] p-3">
                   <span>{item.product_name} × {item.quantity}</span>
                   <span className="font-semibold">{formatMoney(item.price * item.quantity)}</span>
                 </div>
@@ -212,21 +212,21 @@ export function OrderDetailsModal({ order, error, saving, onClose, onSave }: Pro
             </div>
           </section>
 
-          <div className="grid gap-3 border-t border-[#e4e5da] pt-4 md:grid-cols-4">
+          <div className="grid gap-3 border-t border-[#dfece9] pt-4 md:grid-cols-4">
             <div>
-              <p className="text-sm text-[#789083]">Товары</p>
+              <p className="text-sm text-[#5f7580]">Товары</p>
               <p className="font-semibold">{formatMoney(subtotal)}</p>
             </div>
             <div>
-              <p className="text-sm text-[#789083]">Доставка</p>
+              <p className="text-sm text-[#5f7580]">Доставка</p>
               <p className="font-semibold">{formatMoney(intValue(form.deliveryCost))}</p>
             </div>
             <div>
-              <p className="text-sm text-[#789083]">Скидки и бонусы</p>
+              <p className="text-sm text-[#5f7580]">Скидки и бонусы</p>
               <p className="font-semibold">{formatMoney(intValue(form.discountAmount) + intValue(form.bonusUsed))}</p>
             </div>
             <div>
-              <p className="text-sm text-[#789083]">Итого</p>
+              <p className="text-sm text-[#5f7580]">Итого</p>
               <p className="text-xl font-bold">{formatMoney(total)}</p>
             </div>
           </div>
