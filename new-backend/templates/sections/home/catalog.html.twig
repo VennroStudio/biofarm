@@ -10,7 +10,7 @@
                 <a href="/?category={{ category.id|url_encode }}#catalog" class="rounded-full border border-border px-4 py-2 text-xs text-secondary-foreground {{ selectedCategory == category.id ? 'bg-secondary' : 'bg-white' }}" {% if selectedCategory == category.id %}aria-current="true"{% endif %}>{{ category.name }}</a>
             {% endfor %}
         </nav>
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
             {% for product in products %}
                 {% include 'components/product/card.html.twig' with { product: product } only %}
             {% else %}

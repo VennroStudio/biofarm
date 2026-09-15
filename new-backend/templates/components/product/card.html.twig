@@ -77,7 +77,7 @@
 {% else %}
     <article class="group flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-premium transition-all duration-300 hover:shadow-premium-lg" data-reveal data-reveal-duration="500" data-reveal-delay="{{ revealDelay }}">
         <a href="/product/{{ product.slug }}">
-            <div class="relative h-[235px] overflow-hidden bg-secondary">
+            <div class="relative h-[174px] overflow-hidden bg-secondary sm:h-[235px]">
                 {{ optimized_image(product.image, product.imageAlt ?: product.title, {
                     class: 'h-full w-full object-contain transition-transform duration-500 group-hover:scale-105',
                     loading: 'lazy',
@@ -96,23 +96,23 @@
             </div>
         </a>
 
-        <div class="flex flex-1 flex-col p-4">
+        <div class="flex min-w-0 flex-1 flex-col p-3 sm:p-4">
             <div class="mb-2 flex flex-col gap-1">
                 <a href="/product/{{ product.slug }}">
-                    <h3 class="line-clamp-2 min-h-[2.6rem] text-base font-medium leading-snug text-foreground transition-colors group-hover:text-primary">
+                    <h3 class="min-h-[2.6rem] break-words text-[13px] font-medium leading-snug sm:line-clamp-2 sm:text-base text-foreground transition-colors group-hover:text-primary">
                         {{ product.title }}
                     </h3>
                 </a>
                 <span class="text-xs text-muted-foreground">{{ product.weight }}</span>
             </div>
 
-            <p class="mb-3 line-clamp-2 text-xs leading-5 text-muted-foreground">{{ product.shortDescription|default('') }}</p>
+            <p class="mb-3 line-clamp-2 text-[11px] leading-4 sm:text-xs sm:leading-5 text-muted-foreground">{{ product.shortDescription|default('') }}</p>
 
             <div class="mt-auto">
-                <div class="flex min-h-10 items-center gap-2">
-                    <span class="text-xl font-semibold text-foreground">{{ product.price|money }}</span>
+                <div class="flex min-h-9 flex-wrap items-center gap-x-2 gap-y-0.5 sm:min-h-10">
+                    <span class="text-[17px] font-semibold text-foreground sm:text-xl">{{ product.price|money }}</span>
                     {% if product.oldPrice %}
-                        <span class="text-muted-foreground line-through">{{ product.oldPrice|money }}</span>
+                        <span class="text-xs text-muted-foreground line-through sm:text-sm">{{ product.oldPrice|money }}</span>
                     {% endif %}
                 </div>
 
@@ -120,7 +120,7 @@
                     <div class="mt-2 flex gap-2">
                         {% if site_feature('cart_enabled') %}
                         <button
-                            class="gradient-primary inline-flex h-10 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium text-primary-foreground ring-offset-background transition-opacity hover:opacity-95"
+                            class="gradient-primary inline-flex min-h-11 min-w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-2 py-2 text-xs sm:gap-2 sm:px-4 sm:text-sm font-medium text-primary-foreground ring-offset-background transition-opacity hover:opacity-95"
                             type="button"
                             data-catalog-cart-add
                             data-product="{{ {
