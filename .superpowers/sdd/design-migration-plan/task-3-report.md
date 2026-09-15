@@ -57,3 +57,10 @@ Result:
 Vite retained the pre-existing runtime-resolved `/assets/images/design/production.webp` warning. The check itself completed all three stages successfully. The surrounding temporary Docker-config shell wrapper then returned exit code 1 because `status` is a read-only zsh variable; that happened after the successful build and is unrelated to frontend output.
 
 `git diff --check` also passed. Browser automation was intentionally not run in this task; root owns browser verification of login, navigation, cart and validation.
+
+## Review fixes
+
+- Added the fixed 80px header offset locally to every Task 3 mounted React state and Twig fallback/standalone state. The compact 40–48px content spacing now starts below the header; no global layout offset was added.
+- Completed the profile tabs pattern with roving `tabIndex`, ArrowLeft/ArrowRight/Home/End selection and focus movement, stable tab/panel IDs, `aria-controls`, `aria-labelledby`, a focusable `tabpanel`, and screen-reader names that remain available on icon-only mobile tabs.
+- Moved initial `OrderDetailsDialog` focus to its Close button. Initial `Shift+Tab` now wraps to the last focusable control through the existing trap instead of reaching the page behind the modal.
+- Re-ran the Node 22 Docker `npm run check` after the final review fixes: TypeScript and ESLint passed, and Vite built 1904 modules in 1.81s. The same pre-existing runtime-resolved `production.webp` warning remains.

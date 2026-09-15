@@ -72,7 +72,7 @@ function LoginPage({ registrationEnabled }: { registrationEnabled: boolean }) {
   }
 
   return (
-    <section className="bg-secondary/30 py-12 md:py-16">
+    <section className="bg-secondary/30 pb-12 pt-[128px] md:pb-16">
       <div className="container mx-auto max-w-md px-4">
         <Card>
           <CardHeader className="pb-2 text-center">

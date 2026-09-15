@@ -32,7 +32,7 @@ import { OrderDetailsDialog } from './components/OrderDetailsDialog';
 import { OrdersPanel } from './components/OrdersPanel';
 import { ProfileDetailsCard } from './components/ProfileDetailsCard';
 import { ProfileStats } from './components/ProfileStats';
-import { TabButton } from './components/ProfileTabs';
+import { TabButton, TabPanel } from './components/ProfileTabs';
 import { ReferralPanel } from './components/ReferralPanel';
 import type { ProfileTab } from './types';
 
@@ -207,7 +207,7 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, withdrawa
 
   if (loading) {
     return (
-      <section className="flex min-h-[60vh] items-center justify-center bg-secondary/30 py-12">
+      <section className="flex min-h-[60vh] items-center justify-center bg-secondary/30 pb-12 pt-[128px]">
         <p className="text-muted-foreground">Загрузка...</p>
       </section>
     );
@@ -218,7 +218,7 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, withdrawa
   }
 
   return (
-    <section className="bg-secondary/30 py-10 md:py-12">
+    <section className="bg-secondary/30 pb-10 pt-[120px] md:pb-12 md:pt-[128px]">
       <div className="container mx-auto max-w-7xl px-4 sm:px-6">
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
@@ -237,80 +237,90 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, withdrawa
 
         <div className="space-y-6">
           <div className="flex max-w-full flex-wrap rounded-xl border border-border bg-card p-1 shadow-sm" role="tablist" aria-label="Разделы личного кабинета">
-            <TabButton active={tab === 'profile'} onClick={() => setTab('profile')}>
+            <TabButton active={tab === 'profile'} controls="profile-tabpanel" id="profile-tab" onClick={() => setTab('profile')}>
               <User className="h-4 w-4" />
-              <span className="hidden sm:inline">Профиль</span>
+              <span className="sr-only sm:not-sr-only">Профиль</span>
             </TabButton>
             {cartEnabled && (
-              <TabButton active={tab === 'orders'} onClick={() => setTab('orders')}>
+              <TabButton active={tab === 'orders'} controls="orders-tabpanel" id="orders-tab" onClick={() => setTab('orders')}>
                 <Package className="h-4 w-4" />
-                <span className="hidden sm:inline">Заказы</span>
+                <span className="sr-only sm:not-sr-only">Заказы</span>
               </TabButton>
             )}
             {cartEnabled && (
-              <TabButton active={tab === 'addresses'} onClick={() => setTab('addresses')}>
+              <TabButton active={tab === 'addresses'} controls="addresses-tabpanel" id="addresses-tab" onClick={() => setTab('addresses')}>
                 <MapPin className="h-4 w-4" />
-                <span className="hidden sm:inline">Адреса</span>
+                <span className="sr-only sm:not-sr-only">Адреса</span>
               </TabButton>
             )}
             {user.isPartner && referralEnabled && (
-              <TabButton active={tab === 'referral'} onClick={() => setTab('referral')}>
+              <TabButton active={tab === 'referral'} controls="referral-tabpanel" id="referral-tab" onClick={() => setTab('referral')}>
                 <Gift className="h-4 w-4" />
-                <span className="hidden sm:inline">Рефералы</span>
+                <span className="sr-only sm:not-sr-only">Рефералы</span>
               </TabButton>
             )}
             {favoritesEnabled && (
-              <TabButton active={tab === 'favorites'} onClick={() => setTab('favorites')}>
+              <TabButton active={tab === 'favorites'} controls="favorites-tabpanel" id="favorites-tab" onClick={() => setTab('favorites')}>
                 <Heart className="h-4 w-4" />
-                <span className="hidden sm:inline">Избранное</span>
+                <span className="sr-only sm:not-sr-only">Избранное</span>
               </TabButton>
             )}
           </div>
 
-          {tab === 'profile' && (
-            <ProfileDetailsCard
-              editCardNumber={editCardNumber}
-              editName={editName}
-              editPhone={editPhone}
-              isEditing={isEditing}
-              setEditCardNumber={setEditCardNumber}
-              setEditName={setEditName}
-              setEditPhone={setEditPhone}
-              user={user}
-              onSave={() => void handleSaveProfile()}
-              onStartEdit={() => setIsEditing(true)}
-            />
+          <TabPanel active={tab === 'profile'} id="profile-tabpanel" labelledBy="profile-tab">
+              <ProfileDetailsCard
+                editCardNumber={editCardNumber}
+                editName={editName}
+                editPhone={editPhone}
+                isEditing={isEditing}
+                setEditCardNumber={setEditCardNumber}
+                setEditName={setEditName}
+                setEditPhone={setEditPhone}
+                user={user}
+                onSave={() => void handleSaveProfile()}
+                onStartEdit={() => setIsEditing(true)}
+              />
+          </TabPanel>
+
+          {cartEnabled && (
+            <TabPanel active={tab === 'orders'} id="orders-tabpanel" labelledBy="orders-tab">
+              <OrdersPanel orders={orders} onSelectOrder={setSelectedOrder} />
+            </TabPanel>
           )}
 
-          {cartEnabled && tab === 'orders' && <OrdersPanel orders={orders} onSelectOrder={setSelectedOrder} />}
-
-          {cartEnabled && tab === 'addresses' && (
-            <AddressesPanel
-              addresses={addresses}
-              user={user}
-              onDelete={(id) => handleDeleteAddress(id)}
-              onSave={(address, id) => handleSaveAddress(address, id)}
-            />
+          {cartEnabled && (
+            <TabPanel active={tab === 'addresses'} id="addresses-tabpanel" labelledBy="addresses-tab">
+              <AddressesPanel
+                addresses={addresses}
+                user={user}
+                onDelete={(id) => handleDeleteAddress(id)}
+                onSave={(address, id) => handleSaveAddress(address, id)}
+              />
+            </TabPanel>
           )}
 
-          {favoritesEnabled && tab === 'favorites' && (
-            <FavoritesPanel favorites={favorites} onRemove={(product) => void handleRemoveFavorite(product)} />
+          {favoritesEnabled && (
+            <TabPanel active={tab === 'favorites'} id="favorites-tabpanel" labelledBy="favorites-tab">
+              <FavoritesPanel favorites={favorites} onRemove={(product) => void handleRemoveFavorite(product)} />
+            </TabPanel>
           )}
 
-          {user.isPartner && referralEnabled && tab === 'referral' && (
-            <ReferralPanel
-              copied={copied}
-              referralCode={referralCode}
-              referralInfo={referralInfo}
-              referralOrders={referralOrders}
-              setWithdrawalAmount={setWithdrawalAmount}
-              withdrawalAmount={withdrawalAmount}
-              withdrawals={withdrawals}
-              withdrawalsEnabled={withdrawalsEnabled}
-              onCopyReferralLink={() => void copyReferralLink()}
-              onSelectOrder={setSelectedOrder}
-              onWithdrawal={(event) => void handleWithdrawal(event)}
-            />
+          {user.isPartner && referralEnabled && (
+            <TabPanel active={tab === 'referral'} id="referral-tabpanel" labelledBy="referral-tab">
+              <ReferralPanel
+                copied={copied}
+                referralCode={referralCode}
+                referralInfo={referralInfo}
+                referralOrders={referralOrders}
+                setWithdrawalAmount={setWithdrawalAmount}
+                withdrawalAmount={withdrawalAmount}
+                withdrawals={withdrawals}
+                withdrawalsEnabled={withdrawalsEnabled}
+                onCopyReferralLink={() => void copyReferralLink()}
+                onSelectOrder={setSelectedOrder}
+                onWithdrawal={(event) => void handleWithdrawal(event)}
+              />
+            </TabPanel>
           )}
         </div>
       </div>

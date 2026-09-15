@@ -170,7 +170,7 @@ function CheckoutPage({
   }
 
   return (
-    <section className="bg-secondary/30 py-10 md:py-12">
+    <section className="bg-secondary/30 pb-10 pt-[120px] md:pb-12 md:pt-[128px]">
       <div className="container mx-auto max-w-7xl px-4 sm:px-6">
         <h1 className="mb-6 text-3xl font-normal tracking-tight text-primary md:text-4xl">Оформление заказа</h1>
 

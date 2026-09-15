@@ -14,7 +14,7 @@ export function OrderDetailsDialog({ order, onClose }: { order: SiteOrder | null
     const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    dialogRef.current?.focus();
+    dialogRef.current?.querySelector<HTMLButtonElement>('[data-dialog-close]')?.focus();
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') {
@@ -74,7 +74,7 @@ export function OrderDetailsDialog({ order, onClose }: { order: SiteOrder | null
       >
         <div className="mb-6 flex items-center justify-between gap-4">
           <h2 className="text-2xl font-normal tracking-tight text-primary" id="order-details-title">Заказ {order.id}</h2>
-          <Button size="sm" variant="outline" onClick={onClose}>Закрыть</Button>
+          <Button data-dialog-close size="sm" variant="outline" onClick={onClose}>Закрыть</Button>
         </div>
 
         <div className="space-y-6">
