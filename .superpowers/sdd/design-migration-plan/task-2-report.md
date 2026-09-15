@@ -27,3 +27,7 @@
 - Check blog rails at 320–430px widths and the featured card transition into the rail.
 - Check the product sticky column with long variant labels and long BAD copy.
 - Check the review photo dialog close control, Tab containment, Escape/backdrop close, and focus restoration.
+
+## Review follow-up
+
+- Replaced the stale light `text-accent` foreground on product weight and the shared catalog eyebrow with readable `text-primary`. Remaining `text-accent-foreground` uses in Task 2 are paired with an `bg-accent` surface or occur only as hover-state foregrounds.
