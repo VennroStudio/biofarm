@@ -1,67 +1,98 @@
-import { CheckCircle, Home, Package, User } from 'lucide-react';
-import { createRoot } from 'react-dom/client';
-import { Card, CardContent, LinkButton } from '../../site/ui';
-
+import { createRoot } from "react-dom/client";
+import { useEffect, useState } from "react";
+import { payment, startPayment, type PaymentState } from "../../site/payment";
+import { clearCart, readCart } from "../../site/cart";
+import { Section, buttonClass, money } from "../../program/shared";
 function OrderSuccessPage() {
-  const params = new URLSearchParams(window.location.search);
-  const orderId = params.get('order') || 'Не указан';
-
-  return (
-    <section className="flex min-h-[60vh] items-center justify-center bg-secondary/30 pb-12 pt-[128px] md:pb-16">
-      <div className="container mx-auto px-4">
-        <Card className="text-center">
-          <CardContent className="px-6 pb-8 pt-8">
-            <div className="mb-6">
-              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
-                <CheckCircle className="h-10 w-10 text-green-600" />
-              </div>
-            </div>
-
-            <h1 className="mb-2 text-3xl font-normal tracking-tight text-primary">Заказ оформлен!</h1>
-            <p className="mb-6 text-muted-foreground">
-              Спасибо за ваш заказ. Мы уже начали его обработку.
-            </p>
-
-            <div className="mb-6 rounded-lg bg-muted/50 p-4">
-              <p className="text-sm text-muted-foreground">Номер заказа</p>
-              <p className="text-xl font-bold text-primary">{orderId}</p>
-            </div>
-
-            <div className="mb-6 space-y-3 text-left">
-              <div className="flex items-start gap-3 rounded-lg bg-background p-3">
-                <Package className="mt-0.5 h-5 w-5 text-primary" />
-                <div>
-                  <p className="font-medium">Что дальше?</p>
-                  <p className="text-sm text-muted-foreground">
-                    Менеджер свяжется с вами для подтверждения заказа и уточнения деталей доставки.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <LinkButton className="flex-1" href="/profile">
-                <User className="h-4 w-4" />
-                Мои заказы
-              </LinkButton>
-              <LinkButton className="flex-1" href="/" variant="outline">
-                <Home className="h-4 w-4" />
-                На главную
-              </LinkButton>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </section>
-  );
-}
-
-export function mountOrderSuccessPage() {
-  document.querySelectorAll<HTMLElement>('[data-react-island="order-success-page"]').forEach((root) => {
-    if (root.dataset.mounted === 'true') {
-      return;
+    const id = new URLSearchParams(location.search).get("order") || "";
+    const [state, setState] = useState<PaymentState | null>(null);
+    const [error, setError] = useState("");
+    const [busy, setBusy] = useState(false);
+    useEffect(() => {
+        let stopped = false;
+        let timer: number;
+        let attempts = 0;
+        async function check() {
+            try {
+                const data = await payment(id);
+                if (stopped) return;
+                setState(data);
+                if (data.orderPaymentStatus === "completed") {
+                    if (sessionStorage.getItem(`biofarm_order_cart_${id}`) === JSON.stringify(readCart())) {
+                        clearCart();
+                        sessionStorage.removeItem("biofarm_offer_id");
+                        sessionStorage.removeItem("biofarm_offer_promo");
+                    }
+                    sessionStorage.removeItem("biofarm_checkout_order");
+                } else if (++attempts < 8 && data.configured) timer = window.setTimeout(() => void check(), 4000);
+            } catch (e) {
+                if (!stopped) setError(String(e));
+            }
+        }
+        if (id) void check();
+        return () => {
+            stopped = true;
+            window.clearTimeout(timer);
+        };
+    }, [id]);
+    async function retry() {
+        setBusy(true);
+        setError("");
+        try {
+            const current = await payment(id);
+            if (current.orderPaymentStatus === "completed") {
+                setState(current);
+                if (sessionStorage.getItem(`biofarm_order_cart_${id}`) === JSON.stringify(readCart())) clearCart();
+                sessionStorage.removeItem("biofarm_checkout_order");
+            } else setState(await startPayment(id));
+        } catch (e) {
+            setError(String(e));
+        } finally {
+            setBusy(false);
+        }
     }
-    root.dataset.mounted = 'true';
-    createRoot(root).render(<OrderSuccessPage />);
-  });
+    return (
+        <main className="mx-auto max-w-3xl px-4 pb-16 pt-32">
+            <Section title={state?.orderPaymentStatus === "completed" ? "Оплата подтверждена" : "Заказ сохранён"}>
+                <p className="break-all">Номер заказа: {id || "не указан"}</p>
+                {state && (
+                    <>
+                        <p>{money(state.amountMinor)}</p>
+                        <p>
+                            {state.orderPaymentStatus === "completed"
+                                ? "Платёж проверен сервером."
+                                : !state.configured
+                                  ? "Онлайн-оплата пока не настроена. Заказ сохранён."
+                                  : state.orderPaymentStatus === "refunded"
+                                    ? "Оплата возвращена."
+                                    : "Подтверждение оплаты пока не получено. Корзина сохранена."}
+                        </p>
+                    </>
+                )}
+                {error && <p role="alert">{error}</p>}
+                {id && state?.orderPaymentStatus !== "completed" && state?.orderPaymentStatus !== "refunded" && (
+                    <button className={buttonClass} disabled={busy} onClick={() => void retry()}>
+                        Повторить оплату / проверить подключение
+                    </button>
+                )}
+                <div className="flex gap-6">
+                    <a href="/profile" className="underline">
+                        Мои заказы
+                    </a>
+                    <a href="/catalog" className="underline">
+                        В каталог
+                    </a>
+                </div>
+            </Section>
+        </main>
+    );
+}
+export function mountOrderSuccessPage() {
+    document.querySelectorAll<HTMLElement>('[data-react-island="order-success-page"]').forEach((root) => {
+        if (root.dataset.mounted === "true") {
+            return;
+        }
+        root.dataset.mounted = "true";
+        createRoot(root).render(<OrderSuccessPage />);
+    });
 }

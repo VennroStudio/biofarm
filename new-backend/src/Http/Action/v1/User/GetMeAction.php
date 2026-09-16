@@ -6,6 +6,7 @@ namespace App\Http\Action\v1\User;
 
 use App\Components\Http\Middleware\Identity\RequestIdentity;
 use App\Components\Http\Response\JsonDataResponse;
+use App\Modules\Program\Service\ProgramService;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 use Override;
@@ -17,6 +18,7 @@ final readonly class GetMeAction implements RequestHandlerInterface
 {
     public function __construct(
         private Connection $connection,
+        private ProgramService $program,
     ) {}
 
     /**
@@ -26,6 +28,7 @@ final readonly class GetMeAction implements RequestHandlerInterface
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
         $identity = RequestIdentity::get($request);
+        $this->program->dashboard($identity->id);
 
         return new JsonDataResponse($this->user($identity->id));
     }

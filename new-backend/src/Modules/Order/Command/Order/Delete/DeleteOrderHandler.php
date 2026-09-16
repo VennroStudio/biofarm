@@ -10,11 +10,13 @@ use App\Modules\Order\Entity\Order\OrderRepository;
 use App\Modules\Order\Entity\OrderItem\OrderItemRepository;
 use App\Modules\Order\Permission\OrderPermission;
 use App\Modules\Order\Service\OrderPermissionService;
+use App\Modules\Program\Service\ProgramService;
 use App\Modules\User\Entity\User\Fields\Enums\UserRole;
 
 final readonly class DeleteOrderHandler
 {
     public function __construct(
+        private ProgramService $program,
         private OrderRepository $orderRepository,
         private OrderItemRepository $orderItemRepository,
         private OrderPermissionService $permissionService,
@@ -24,6 +26,7 @@ final readonly class DeleteOrderHandler
 
     public function handle(DeleteOrderCommand $command): void
     {
+        $this->program->assertMutable($command->orderId);
         $this->permissionService->checkRole(
             currentUserRole: UserRole::from($command->currentUserRole),
             action: OrderPermission::DELETE,

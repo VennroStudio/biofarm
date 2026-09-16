@@ -12,6 +12,7 @@ use App\Modules\Order\Entity\Order\OrderRepository;
 use App\Modules\Order\Service\OrderBonusApplier;
 use App\Modules\Order\Service\OrderEmailNotifier;
 use App\Modules\Order\Service\OrderStatusGuard;
+use App\Modules\Program\Service\ProgramService;
 use DateMalformedStringException;
 use Doctrine\DBAL\Exception;
 use Override;
@@ -22,6 +23,7 @@ use Psr\Http\Server\RequestHandlerInterface;
 final readonly class UpdateOrderDetailsAction implements RequestHandlerInterface
 {
     public function __construct(
+        private ProgramService $program,
         private OrderRepository $repository,
         private OrderBonusApplier $bonusApplier,
         private OrderEmailNotifier $emailNotifier,
@@ -37,40 +39,51 @@ final readonly class UpdateOrderDetailsAction implements RequestHandlerInterface
     #[Override]
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        $order = $this->repository->getById(Route::getArgument($request, 'id'));
-        $payload = (array)$request->getParsedBody();
+        $order = $this->program->atomic(function () use ($request) {
+            $order = $this->repository->getById(Route::getArgument($request, 'id'));
+            $payload = (array)$request->getParsedBody();
 
-        $subtotal = $this->intPayload($payload, ['subtotal'], $order->subtotal);
-        $deliveryCost = $this->intPayload($payload, ['deliveryCost', 'delivery_cost'], $order->deliveryCost);
-        $discountAmount = $this->intPayload($payload, ['discountAmount', 'discount_amount'], $order->discountAmount);
-        $bonusUsed = $this->intPayload($payload, ['bonusUsed', 'bonus_used'], $order->bonusUsed);
-        $total = max(0, $subtotal + $deliveryCost - $discountAmount - $bonusUsed);
+            $subtotal = $this->intPayload($payload, ['subtotal'], $order->subtotal);
+            $deliveryCost = $this->intPayload($payload, ['deliveryCost', 'delivery_cost'], $order->deliveryCost);
+            $discountAmount = $this->intPayload($payload, ['discountAmount', 'discount_amount'], $order->discountAmount);
+            $bonusUsed = $this->intPayload($payload, ['bonusUsed', 'bonus_used'], $order->bonusUsed);
+            $amountChanged = $subtotal !== $order->subtotal || $deliveryCost !== $order->deliveryCost || $discountAmount !== $order->discountAmount || $bonusUsed !== $order->bonusUsed;
+            $total = $this->intPayload($payload, ['total'], $amountChanged ? max(0, $subtotal + $deliveryCost - $discountAmount - $bonusUsed) : $order->total);
+            $userId = $this->nullableIntPayload($payload, ['userId', 'user_id'], $order->userId);
+            $promoCode = $this->nullableStringPayload($payload, ['promoCode', 'promo_code'], $order->promoCode);
+            $referredBy = $this->nullableStringPayload($payload, ['referredBy', 'referred_by'], $order->referredBy);
+            $bonusEarned = $this->intPayload($payload, ['bonusEarned', 'bonus_earned'], $order->bonusEarned);
+            $paymentMethod = $this->stringPayload($payload, ['paymentMethod', 'payment_method'], $order->paymentMethod);
+            $status = $this->statusGuard->orderStatus($this->stringPayload($payload, ['status'], $order->status));
+            $paymentStatus = $this->statusGuard->paymentStatus($this->stringPayload($payload, ['paymentStatus', 'payment_status'], $order->paymentStatus));
+            $this->statusGuard->adminFinancialTerms($order, compact('total', 'subtotal', 'deliveryCost', 'discountAmount', 'bonusUsed', 'userId', 'promoCode', 'referredBy', 'bonusEarned', 'paymentMethod'), $payload);
+            $this->statusGuard->adminTransition($order, $status, $paymentStatus);
 
-        $order->edit(
-            userId: $this->nullableIntPayload($payload, ['userId', 'user_id'], $order->userId),
-            status: $this->statusGuard->orderStatus($this->stringPayload($payload, ['status'], $order->status)),
-            paymentStatus: $this->statusGuard->paymentStatus($this->stringPayload($payload, ['paymentStatus', 'payment_status'], $order->paymentStatus)),
-            total: $total,
-            subtotal: $subtotal,
-            deliveryMethod: $this->nullableStringPayload($payload, ['deliveryMethod', 'delivery_method'], $order->deliveryMethod),
-            deliveryCost: $deliveryCost,
-            discountAmount: $discountAmount,
-            promoCode: $this->nullableStringPayload($payload, ['promoCode', 'promo_code'], $order->promoCode),
-            bonusUsed: $bonusUsed,
-            bonusEarned: $this->intPayload($payload, ['bonusEarned', 'bonus_earned'], $order->bonusEarned),
-            shippingAddress: $this->shippingAddress($payload, $order->shippingAddress),
-            paymentMethod: $this->stringPayload($payload, ['paymentMethod', 'payment_method'], $order->paymentMethod),
-            trackingNumber: $this->nullableStringPayload($payload, ['trackingNumber', 'tracking_number'], $order->trackingNumber),
-            referredBy: $this->nullableStringPayload($payload, ['referredBy', 'referred_by'], $order->referredBy),
-        );
+            $order->edit(
+                userId: $userId,
+                status: $status,
+                paymentStatus: $paymentStatus,
+                total: $total,
+                subtotal: $subtotal,
+                deliveryMethod: $this->nullableStringPayload($payload, ['deliveryMethod', 'delivery_method'], $order->deliveryMethod),
+                deliveryCost: $deliveryCost,
+                discountAmount: $discountAmount,
+                promoCode: $promoCode,
+                bonusUsed: $bonusUsed,
+                bonusEarned: $bonusEarned,
+                shippingAddress: $this->shippingAddress($payload, $order->shippingAddress),
+                paymentMethod: $paymentMethod,
+                trackingNumber: $this->nullableStringPayload($payload, ['trackingNumber', 'tracking_number'], $order->trackingNumber),
+                referredBy: $referredBy,
+            );
 
-        if ($order->paymentStatus === 'completed') {
             $this->bonusApplier->apply($order);
-        }
 
-        $this->cacher->deleteTag('orders');
-        $this->cacher->delete('order_by_id_' . $order->id);
-        $this->flusher->flush();
+            $this->cacher->deleteTag('orders');
+            $this->cacher->delete('order_by_id_' . $order->id);
+            $this->flusher->flush();
+            return $order;
+        });
         $this->emailNotifier->updated($order);
 
         return new JsonDataSuccessResponse(1, 200);

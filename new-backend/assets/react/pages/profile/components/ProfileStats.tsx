@@ -36,7 +36,7 @@ export function ProfileStats({ orders, referralInfo, user }: Props) {
         </CardContent>
       </Card>
 
-      {user.isPartner && (
+      {user.isPartner && referralInfo && (
         <Card>
           <CardContent className="flex items-center gap-4 p-6">
             <div className="rounded-full bg-green-100 p-3">

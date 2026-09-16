@@ -1,3 +1,4 @@
+import { AdminProgram } from './pages/AdminProgram';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { getToken } from './api/client';
@@ -55,6 +56,7 @@ export function AdminApp() {
           <Route path="faq" element={<AdminFaq />} />
           <Route path="blog" element={<AdminBlog />} />
           <Route path="reviews" element={<AdminReviews />} />
+          <Route path="program" element={<AdminProgram />} />
           <Route path="users" element={<AdminUsers />} />
           <Route path="withdrawals" element={<AdminWithdrawals />} />
           <Route path="integration-errors" element={<AdminIntegrationErrors />} />

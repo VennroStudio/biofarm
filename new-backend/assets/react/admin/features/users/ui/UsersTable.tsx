@@ -46,7 +46,7 @@ export function UsersTable({ users, onTogglePartner, onEdit }: Props) {
                   </span>
                   <div>
                     <p className="font-semibold">{user.name}</p>
-                    {user.referred_by_user_id && <Badge tone="gray" className="mt-1">Реферал</Badge>}
+                    {user.referred_by_user_id && <><Badge tone="gray" className="mt-1">Реферал</Badge><p className="text-xs">Пригласивший: {user.parent_name || user.referred_by_user_id}</p></>}
                   </div>
                 </div>
               </TableCell>

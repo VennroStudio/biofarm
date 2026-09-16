@@ -25,6 +25,7 @@ import { getStoredAdmin, getToken, logout, sessionClearedEvent } from '../api/cl
 import { settingsSections, settingsSectionPath } from '../features/settings/model/settingsSections';
 
 const links = [
+  { to: '/admin/program', label: 'Партнёрская программа', icon: Users },
   { to: '/admin', label: 'Дашборд', icon: LayoutDashboard },
   { to: '/admin/products', label: 'Товары', icon: Package },
   { to: '/admin/categories', label: 'Категории', icon: FolderTree },

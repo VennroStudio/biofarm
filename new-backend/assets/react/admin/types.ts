@@ -246,6 +246,7 @@ export type Order = {
 };
 
 export type AdminCustomer = {
+  parent_name?: string | null;
   id: number;
   first_name: string;
   last_name: string;

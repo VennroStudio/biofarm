@@ -9,9 +9,7 @@ use App\Components\Exception\DomainExceptionModule;
 use App\Components\Flusher\FlusherInterface;
 use App\Components\Id\ReadableIdGenerator;
 use App\Components\Setting\SiteSettings;
-use App\Modules\Bonus\Entity\BonusTransaction\BonusTransaction;
 use App\Modules\Bonus\Entity\BonusTransaction\BonusTransactionRepository;
-use App\Modules\Bonus\Entity\BonusTransaction\Fields\Enums\BonusTransactionType;
 use App\Modules\Order\Entity\Order\Order;
 use App\Modules\Order\Entity\Order\OrderRepository;
 use App\Modules\Order\Entity\OrderItem\OrderItem;
@@ -20,6 +18,8 @@ use App\Modules\Order\Permission\OrderPermission;
 use App\Modules\Order\Service\Bitrix24OrderSyncer;
 use App\Modules\Order\Service\OrderEmailNotifier;
 use App\Modules\Order\Service\OrderPermissionService;
+use App\Modules\PartnerOffer\Service\PartnerPromoService;
+use App\Modules\Program\Service\ProgramService;
 use App\Modules\User\Entity\User\Fields\Enums\UserRole;
 use App\Modules\User\Entity\UserProfile\UserProfile;
 use App\Modules\User\Entity\UserProfile\UserProfileRepository;
@@ -28,11 +28,12 @@ use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 use Random\RandomException;
-use Throwable;
 
 final readonly class CreateOrderHandler
 {
     public function __construct(
+        private ProgramService $program,
+        private PartnerPromoService $partnerPromo,
         private OrderRepository $orderRepository,
         private OrderItemRepository $orderItemRepository,
         private ReadableIdGenerator $idGenerator,
@@ -53,7 +54,7 @@ final readonly class CreateOrderHandler
      * @throws Exception
      * @throws RandomException
      */
-    public function handle(CreateOrderCommand $command): array
+    public function handle(CreateOrderCommand $command, bool $notify = true): array
     {
         $this->permissionService->checkRole(
             currentUserRole: UserRole::from($command->currentUserRole),
@@ -91,8 +92,8 @@ final readonly class CreateOrderHandler
             referredBy: $this->resolveReferredBy($command),
         );
 
-        $this->connection->beginTransaction();
-        try {
+        $this->program->atomic(function () use ($order, $orderId, $command, $calculation): void {
+            $this->partnerPromo->validateCheckout($calculation['promo_code'], $calculation['items'], $command->userId, $command->useBonuses, $calculation['discount_amount']);
             $this->orderRepository->add($order);
 
             foreach ($calculation['items'] as $item) {
@@ -102,17 +103,6 @@ final readonly class CreateOrderHandler
                     productName: $item['product_name'],
                     price: $item['price'],
                     quantity: $item['quantity'],
-                ));
-            }
-
-            if ($command->userId !== null && $calculation['buyer_profile'] !== null && $calculation['bonus_used'] > 0) {
-                $calculation['buyer_profile']->addBonus(-$calculation['bonus_used']);
-                $this->bonusRepository->add(BonusTransaction::create(
-                    userId: $command->userId,
-                    amount: -$calculation['bonus_used'],
-                    type: BonusTransactionType::MANUAL_ADJUSTMENT,
-                    sourceOrderId: $orderId,
-                    comment: 'Списание бонусов за заказ',
                 ));
             }
 
@@ -129,14 +119,15 @@ final readonly class CreateOrderHandler
 
             $this->cacher->deleteTag('orders');
             $this->flusher->flush();
-            $this->connection->commit();
-        } catch (Throwable $e) {
-            $this->connection->rollBack();
-            throw $e;
-        }
+            $this->program->captureOrder($orderId);
+            if ($order->paymentStatus === 'completed') {
+                $this->program->settleOrder($orderId);
+            }
+        });
 
-        $this->emailNotifier->created($order);
-        $this->bitrix24OrderSyncer->created($order, $calculation['items']);
+        if ($notify) {
+            $this->notifyCreated($orderId);
+        }
 
         return [
             'id'              => $orderId,
@@ -150,19 +141,24 @@ final readonly class CreateOrderHandler
         ];
     }
 
+    public function notifyCreated(string $orderId): void
+    {
+        $order = $this->orderRepository->getById($orderId);
+        $items = $this->connection->fetchAllAssociative('SELECT product_id,product_name,price,quantity FROM order_items WHERE order_id=?', [$orderId]);
+        $this->emailNotifier->created($order);
+        $this->bitrix24OrderSyncer->created($order, $items);
+    }
+
     private function resolveReferredBy(CreateOrderCommand $command): ?string
     {
         if (!$this->settings->bool('referral_enabled')) {
             return null;
         }
 
-        $referredBy = trim((string)$command->referredBy);
-        if ($referredBy !== '') {
-            return $referredBy;
-        }
-
         if ($command->userId === null) {
-            return null;
+            $code = trim((string)$command->referredBy);
+            $referrer = ctype_digit($code) ? $this->profileRepository->findByUserId((int)$code) : $this->profileRepository->findByReferralCode($code);
+            return $referrer === null ? null : ($referrer->referralCode ?: (string)$referrer->userId);
         }
 
         $profile = $this->profileRepository->findByUserId($command->userId);
@@ -224,7 +220,7 @@ final readonly class CreateOrderHandler
         $buyerProfile = $command->userId !== null
             ? $this->profileRepository->findByUserId($command->userId)
             : null;
-        $bonusUsed = $this->bonusUsed($command, $baseTotal, $buyerProfile);
+        $bonusUsed = $this->bonusUsed($command, max(0, $subtotal - $promo['discount_amount']), $buyerProfile);
 
         return [
             'subtotal'        => $subtotal,
@@ -483,6 +479,6 @@ final readonly class CreateOrderHandler
 
         $limit = (int)floor($baseTotal * max(0, min(100, $this->settings->int('order_bonus_spend_limit_percent', 30))) / 100);
 
-        return min(max(0, $profile->bonusBalance), $baseTotal, $limit);
+        return min(intdiv($this->program->shoppingAvailable($profile->userId), 100), $baseTotal, $limit);
     }
 }

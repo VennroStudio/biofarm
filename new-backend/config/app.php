@@ -13,6 +13,10 @@ return static function (ContainerInterface $container): App {
     $middleware = require __DIR__ . '/../config/middleware.php';
     $middleware($app);
 
+    foreach (['program', 'payments', 'offers'] as $routes) {
+        (require __DIR__ . '/routes/' . $routes . '.php')($app);
+    }
+
     /** @var callable(App<ContainerInterface>): void $webRoutes */
     $webRoutes = require __DIR__ . '/../config/routes/web.php';
     $webRoutes($app);

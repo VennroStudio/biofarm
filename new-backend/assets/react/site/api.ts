@@ -1,5 +1,10 @@
 import type { CartItem } from './cart';
 
+export function getReferralCode(): string | undefined {
+ try { const saved=JSON.parse(window.localStorage.getItem('biofarm_referral')||'null');if(saved&&typeof saved.code==='string'&&Number(saved.expiresAt)>Date.now())return saved.code; } catch { /* Invalid storage is discarded. */ }
+ window.localStorage.removeItem('biofarm_referral');window.localStorage.removeItem('referralCode');return undefined;
+}
+
 const tokenKey = 'biofarm_access_token';
 const userKey = 'biofarm_user';
 let refreshPromise: Promise<string | null> | null = null;
@@ -185,7 +190,7 @@ async function refreshAccessToken(failedToken: string): Promise<string | null> {
   return refreshPromise;
 }
 
-async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
+export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   let token = getToken();
   const isAuthRequest = path.startsWith('/v1/auth/');
   const headers = new Headers(options.headers);
@@ -538,11 +543,9 @@ export async function createOrder(
   useBonuses: boolean,
   promoCode?: string,
 ) {
-  const referralCode = window.localStorage.getItem('referralCode') || undefined;
+  const referralCode = getReferralCode();
   const storedUser = getStoredUser();
-  const data = await request('/v1/orders/create', {
-    method: 'POST',
-    body: {
+  const body = {
       userId: storedUser?.id ? Number(storedUser.id) : null,
       items: cart.map((item) => ({
         productId: item.product.id,
@@ -554,9 +557,18 @@ export async function createOrder(
       useBonuses,
       promoCode: promoCode?.trim() || undefined,
       referredBy: referralCode,
-    },
+      offerId: window.sessionStorage.getItem('biofarm_offer_id') || undefined,
+  };
+  const fingerprint = JSON.stringify(body);
+  const previous = window.sessionStorage.getItem('biofarm_checkout_request');
+  const saved = previous ? JSON.parse(previous) as { key: string; fingerprint: string } : null;
+  const key = saved?.fingerprint === fingerprint ? saved.key : crypto.randomUUID();
+  window.sessionStorage.setItem('biofarm_checkout_request', JSON.stringify({key, fingerprint}));
+  const data = await request('/v1/orders/create', {
+    method: 'POST', headers: {'Idempotency-Key': key}, body,
   });
 
+  if (isRecord(data) && data.id && data.paymentAccessToken) window.sessionStorage.setItem(`biofarm_payment_${data.id}`, String(data.paymentAccessToken));
   return mapOrder({
     ...(isRecord(data) ? data : {}),
     items: cart.map((item) => ({

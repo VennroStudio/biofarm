@@ -1,3 +1,4 @@
+import { getReferralCode } from '../../site/referral';
 import { ArrowRight, Eye, EyeOff, Lock, Mail, User } from 'lucide-react';
 import { createRoot } from 'react-dom/client';
 import { type FormEvent, useMemo, useState } from 'react';
@@ -57,7 +58,7 @@ function LoginPage({ registrationEnabled }: { registrationEnabled: boolean }) {
 
     setIsLoading(true);
     try {
-      const referralCode = window.localStorage.getItem('referralCode') || undefined;
+      const referralCode = getReferralCode();
       await register(registerEmail, registerPassword, registerName, referralCode);
       if (referralCode) {
         window.localStorage.removeItem('referralCode');

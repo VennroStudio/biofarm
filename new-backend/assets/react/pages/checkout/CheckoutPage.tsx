@@ -1,9 +1,12 @@
+import type { Dashboard } from '../../program/shared';
+import { startPayment } from '../../site/payment';
 import { CreditCard, Mail, MapPin, Phone, Truck, User } from 'lucide-react';
 import { createRoot } from 'react-dom/client';
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
-import { cartTotal, clearCart, readCart, type CartItem } from '../../site/cart';
+import { cartTotal, readCart, type CartItem } from '../../site/cart';
 import {
   createOrder,
+  request,
   getStoredUser,
   getToken,
   getUserAddresses,
@@ -49,11 +52,11 @@ function CheckoutPage({
   cdekDeliveryPrice,
   freeDeliveryThreshold,
   orderBonusEnabled,
-  orderBonusPercent,
   orderBonusSpendLimitPercent,
   postDeliveryPrice,
   promoCodesEnabled,
 }: CheckoutPageProps) {
+  const [program, setProgram] = useState<Dashboard | null>(null);
   const [cart] = useState<CartItem[]>(() => readCart());
   const [user, setUser] = useState<SiteUser | null>(() => (getToken() ? getStoredUser() : null));
   const [isLoading, setIsLoading] = useState(false);
@@ -61,7 +64,7 @@ function CheckoutPage({
   const [useBonuses, setUseBonuses] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [deliveryMethod, setDeliveryMethod] = useState('cdek');
-  const [promoCode, setPromoCode] = useState('');
+  const [promoCode, setPromoCode] = useState(() => sessionStorage.getItem('biofarm_offer_promo') || '');
   const [form, setForm] = useState<ShippingAddress>(() => emptyAddress(getToken() ? getStoredUser() : null));
   const [addresses, setAddresses] = useState<UserAddress[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState('');
@@ -71,10 +74,10 @@ function CheckoutPage({
   const cdekDeliveryCost = deliveryCostFor(cdekDeliveryPrice);
   const postDeliveryCost = deliveryCostFor(postDeliveryPrice);
   const deliveryCost = deliveryMethod === 'post' ? postDeliveryCost : cdekDeliveryCost;
-  const maxBonusSpend = Math.floor((total + deliveryCost) * (orderBonusSpendLimitPercent / 100));
+  const maxBonusSpend = Math.floor(total * (orderBonusSpendLimitPercent / 100));
   const bonusDiscount = useBonuses && user && orderBonusEnabled ? Math.min(user.bonusBalance, maxBonusSpend) : 0;
   const finalTotal = total + deliveryCost - bonusDiscount;
-  const orderBonus = user && orderBonusEnabled ? Math.floor(total * (orderBonusPercent / 100)) : 0;
+  const orderBonus = user && orderBonusEnabled && program && !promoCode ? Math.floor(Math.max(0, total - bonusDiscount) * program.rates.buyerBps / 100) / 100 : 0;
 
   useEffect(() => {
     if (cart.length === 0) {
@@ -86,6 +89,7 @@ function CheckoutPage({
       return;
     }
 
+    void request<Dashboard>('/v1/program').then(setProgram).catch(() => undefined);
     void Promise.all([refreshUser(), getUserAddresses()]).then(([updatedUser, loadedAddresses]) => {
       if (updatedUser) {
         setUser(updatedUser);
@@ -147,6 +151,8 @@ function CheckoutPage({
       return;
     }
 
+    const saved = sessionStorage.getItem('biofarm_checkout_order');
+    if (saved) { window.location.href = `/order-success?order=${encodeURIComponent(saved)}`; return; }
     setIsLoading(true);
     try {
       const order = await createOrder(
@@ -157,7 +163,10 @@ function CheckoutPage({
         useBonuses,
         promoCodesEnabled ? promoCode : undefined,
       );
-      clearCart();
+      if (!order) throw new Error('Не удалось получить номер заказа');
+      sessionStorage.setItem('biofarm_checkout_order', order.id);
+      sessionStorage.setItem(`biofarm_order_cart_${order.id}`, JSON.stringify(cart));
+      try { const state = await startPayment(order.id); if (state.confirmationUrl) return; } catch { /* Saved order can retry payment on its own page. */ }
       window.location.href = `/order-success?order=${encodeURIComponent(order?.id || '')}`;
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : 'Попробуйте еще раз');
@@ -173,6 +182,7 @@ function CheckoutPage({
   return (
     <section className="bg-secondary/30 pb-10 pt-[120px] md:pb-12 md:pt-[128px]">
       <div className="container mx-auto px-4 sm:px-6">
+        <p className="mb-3 text-sm">Бонусы рассчитываются от оплаченных товаров после скидок и списания бонусов, без доставки. Итог и исключения определяет сервер.</p>
         <h1 className="mb-6 text-3xl font-normal tracking-tight text-primary md:text-4xl">Оформление заказа</h1>
 
         <form onSubmit={handleSubmit}>

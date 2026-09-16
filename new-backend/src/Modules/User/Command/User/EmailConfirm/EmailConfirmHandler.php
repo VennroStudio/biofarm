@@ -8,11 +8,8 @@ use App\Components\Cacher\Cacher;
 use App\Components\Exception\DomainExceptionModule;
 use App\Components\Flusher\FlusherInterface;
 use App\Components\Setting\SiteSettings;
-use App\Modules\Bonus\Entity\BonusTransaction\BonusTransaction;
 use App\Modules\Bonus\Entity\BonusTransaction\BonusTransactionRepository;
-use App\Modules\Bonus\Entity\BonusTransaction\Fields\Enums\BonusTransactionType;
 use App\Modules\User\Entity\User\UserRepository;
-use App\Modules\User\Entity\UserProfile\UserProfile;
 use App\Modules\User\Entity\UserProfile\UserProfileRepository;
 use App\Modules\User\Entity\UserToken\Fields\Enums\UserTokenType;
 use App\Modules\User\Entity\UserToken\UserToken;
@@ -49,49 +46,10 @@ final readonly class EmailConfirmHandler
         $user = $this->userRepository->getById($userToken->userId);
 
         $user->activate();
-        $this->applyWelcomeBonus((int)$user->id);
 
         $this->cacher->delete('user_identity_' . $user->id);
 
         $this->flusher->flush();
-    }
-
-    /**
-     * @throws DateMalformedStringException
-     * @throws Exception
-     */
-    private function applyWelcomeBonus(int $userId): void
-    {
-        $amount = $this->settings->int('welcome_bonus_amount');
-        if (!$this->settings->bool('welcome_bonus_enabled') || $amount <= 0) {
-            return;
-        }
-
-        $alreadyApplied = (int)$this->connection->fetchOne(
-            'SELECT COUNT(*) FROM bonus_transactions WHERE user_id = :user_id AND type = :type',
-            ['user_id' => $userId, 'type' => BonusTransactionType::WELCOME_BONUS->value],
-        ) > 0;
-
-        if ($alreadyApplied) {
-            return;
-        }
-
-        $profile = $this->profileRepository->findByUserId($userId);
-        if ($profile === null) {
-            $profile = UserProfile::create(
-                userId: $userId,
-                referralCode: 'bf-' . $userId,
-            );
-            $this->profileRepository->add($profile);
-        }
-
-        $profile->addBonus($amount);
-        $this->bonusRepository->add(BonusTransaction::create(
-            userId: $userId,
-            amount: $amount,
-            type: BonusTransactionType::WELCOME_BONUS,
-            comment: 'Welcome-бонус за подтверждение email',
-        ));
     }
 
     /**

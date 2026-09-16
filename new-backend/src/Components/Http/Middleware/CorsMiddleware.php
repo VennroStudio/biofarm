@@ -14,7 +14,7 @@ use Slim\Psr7\Response;
 final readonly class CorsMiddleware implements MiddlewareInterface
 {
     private const string ALLOWED_METHODS = 'GET, POST, PUT, PATCH, DELETE, OPTIONS';
-    private const string ALLOWED_HEADERS = 'Content-Type, Authorization, Accept, X-Requested-With';
+    private const string ALLOWED_HEADERS = 'Content-Type, Authorization, Accept, X-Requested-With, Idempotency-Key, X-Order-Token';
     private const int PREFLIGHT_MAX_AGE = 86400;
 
     #[Override]

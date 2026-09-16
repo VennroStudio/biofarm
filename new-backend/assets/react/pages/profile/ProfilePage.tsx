@@ -1,28 +1,22 @@
 import { Gift, Heart, LogOut, MapPin, Package, User } from 'lucide-react';
 import { createRoot } from 'react-dom/client';
-import { type FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   clearAuth,
-  createWithdrawal,
   deleteUserAddress,
   getFavorites,
   getOrders,
-  getReferralInfo,
-  getReferralOrders,
   getStoredUser,
   getToken,
   getUserAddresses,
-  getWithdrawals,
   refreshUser,
   saveUserAddress,
   updateProfile,
   type FavoriteProduct,
-  type ReferralInfo,
   type ShippingAddress,
   type SiteOrder,
   type SiteUser,
   type UserAddress,
-  type WithdrawalRequest,
 } from '../../site/api';
 import { loadFavoriteIds, toggleFavorite } from '../../site/favorites';
 import { Button } from '../../site/ui';
@@ -54,11 +48,6 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, withdrawa
   const [orders, setOrders] = useState<SiteOrder[]>([]);
   const [addresses, setAddresses] = useState<UserAddress[]>([]);
   const [favorites, setFavorites] = useState<FavoriteProduct[]>([]);
-  const [referralOrders, setReferralOrders] = useState<SiteOrder[]>([]);
-  const [referralInfo, setReferralInfo] = useState<ReferralInfo | null>(null);
-  const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([]);
-  const [withdrawalAmount, setWithdrawalAmount] = useState('');
-  const [copied, setCopied] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(user?.name || '');
   const [editPhone, setEditPhone] = useState(user?.phone || '');
@@ -66,10 +55,6 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, withdrawa
   const [selectedOrder, setSelectedOrder] = useState<SiteOrder | null>(null);
   const [notice, setNotice] = useState('');
 
-  const referralCode = useMemo(
-    () => referralInfo?.referralCode || user?.referralCode || user?.id || '',
-    [referralInfo?.referralCode, user?.id, user?.referralCode],
-  );
   const closeOrderDetails = useCallback(() => setSelectedOrder(null), []);
 
   useEffect(() => {
@@ -101,16 +86,7 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, withdrawa
           setFavorites(await getFavorites());
         }
 
-        if (freshUser.isPartner && referralEnabled) {
-          const [info, refOrders, userWithdrawals] = await Promise.all([
-            getReferralInfo(),
-            getReferralOrders(),
-            withdrawalsEnabled ? getWithdrawals() : Promise.resolve([]),
-          ]);
-          setReferralInfo(info);
-          setReferralOrders(refOrders);
-          setWithdrawals(userWithdrawals);
-        }
+
       })
       .catch((error: unknown) => {
         if (!getToken()) {
@@ -128,18 +104,6 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, withdrawa
     window.location.href = '/';
   }
 
-  async function copyReferralLink() {
-    try {
-      const link = `${window.location.origin}?ref=${referralCode}`;
-      await navigator.clipboard.writeText(link);
-      setCopied(true);
-      setNotice('Ссылка скопирована!');
-      window.setTimeout(() => setCopied(false), 2000);
-    } catch (error) {
-      setNotice(messageFromError(error, 'Не удалось скопировать ссылку'));
-    }
-  }
-
   async function handleSaveProfile() {
     try {
       const updated = await updateProfile({ cardNumber: editCardNumber, name: editName, phone: editPhone });
@@ -150,31 +114,6 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, withdrawa
       }
     } catch (error) {
       setNotice(messageFromError(error, 'Не удалось сохранить профиль'));
-    }
-  }
-
-  async function handleWithdrawal(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const amount = Number(withdrawalAmount);
-    if (!Number.isFinite(amount) || amount <= 0) {
-      setNotice('Укажите сумму вывода');
-      return;
-    }
-
-    try {
-      await createWithdrawal(amount);
-      const [freshUser, userWithdrawals] = await Promise.all([
-        refreshUser(),
-        withdrawalsEnabled ? getWithdrawals() : Promise.resolve([]),
-      ]);
-      if (freshUser) {
-        setUser(freshUser);
-      }
-      setWithdrawals(userWithdrawals);
-      setWithdrawalAmount('');
-      setNotice('Заявка на вывод создана');
-    } catch (error) {
-      setNotice(messageFromError(error, 'Не удалось создать заявку на вывод'));
     }
   }
 
@@ -237,7 +176,7 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, withdrawa
 
         {notice && <p className="mb-4 rounded bg-green-50 p-3 text-sm text-green-700">{notice}</p>}
 
-        <ProfileStats orders={orders} referralInfo={referralInfo} user={user} />
+        <ProfileStats orders={orders} referralInfo={null} user={user} />
 
         <div className="grid items-start gap-6 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-10">
           <TabList>
@@ -257,10 +196,10 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, withdrawa
                 <span>Адреса</span>
               </TabButton>
             )}
-            {user.isPartner && referralEnabled && (
+            {referralEnabled && (
               <TabButton active={tab === 'referral'} controls="referral-tabpanel" id="referral-tab" onClick={() => setTab('referral')}>
                 <Gift className="h-4 w-4" />
-                <span>Рефералы</span>
+                <span>{user.isPartner ? 'Партнёрская программа' : 'Реферальная программа'}</span>
               </TabButton>
             )}
             {favoritesEnabled && (
@@ -310,21 +249,9 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, withdrawa
               </TabPanel>
             )}
 
-            {user.isPartner && referralEnabled && (
+            {referralEnabled && (
               <TabPanel active={tab === 'referral'} id="referral-tabpanel" labelledBy="referral-tab">
-                <ReferralPanel
-                  copied={copied}
-                  referralCode={referralCode}
-                  referralInfo={referralInfo}
-                  referralOrders={referralOrders}
-                  setWithdrawalAmount={setWithdrawalAmount}
-                  withdrawalAmount={withdrawalAmount}
-                  withdrawals={withdrawals}
-                  withdrawalsEnabled={withdrawalsEnabled}
-                  onCopyReferralLink={() => void copyReferralLink()}
-                  onSelectOrder={setSelectedOrder}
-                  onWithdrawal={(event) => void handleWithdrawal(event)}
-                />
+                <ReferralPanel withdrawalsEnabled={withdrawalsEnabled} />
               </TabPanel>
             )}
           </div>

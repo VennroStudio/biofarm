@@ -32,16 +32,10 @@ export function AdminUsers() {
     ));
   }, [users, search]);
 
-  async function togglePartner(user: AdminCustomer) {
+  async function togglePartner() {
     setError(null);
     try {
-      await usersApi.update(user.id, {
-        name: user.name,
-        phone: user.phone,
-        cardNumber: user.card_number,
-        bonusBalance: user.bonus_balance,
-        isPartner: !user.is_partner,
-      });
+      window.location.href = '/admin/program';
       await load();
     } catch (toggleError) {
       setError(messageFromError(toggleError, 'Не удалось изменить статус пользователя'));
@@ -84,7 +78,7 @@ export function AdminUsers() {
         <UsersTable
           users={filteredUsers}
           onEdit={openUser}
-          onTogglePartner={(user) => void togglePartner(user)}
+          onTogglePartner={() => void togglePartner()}
         />
       </Card>
 

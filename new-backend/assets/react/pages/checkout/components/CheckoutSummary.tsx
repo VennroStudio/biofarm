@@ -96,7 +96,7 @@ export function CheckoutSummary({
         {orderBonus > 0 && (
           <div className="flex items-center gap-2 rounded bg-green-50 p-2 text-sm text-green-600">
             <CheckCircle className="h-4 w-4" />
-            + {orderBonus} бонусов за заказ
+            До {orderBonus.toFixed(2)} бонусов; итог определяет сервер
           </div>
         )}
 

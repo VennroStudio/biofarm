@@ -12,6 +12,7 @@ use App\Modules\Order\Entity\Order\OrderRepository;
 use App\Modules\Order\Service\OrderBonusApplier;
 use App\Modules\Order\Service\OrderEmailNotifier;
 use App\Modules\Order\Service\OrderStatusGuard;
+use App\Modules\Program\Service\ProgramService;
 use DateMalformedStringException;
 use Doctrine\DBAL\Exception;
 use Override;
@@ -22,6 +23,7 @@ use Psr\Http\Server\RequestHandlerInterface;
 final readonly class UpdateOrderPaymentStatusAction implements RequestHandlerInterface
 {
     public function __construct(
+        private ProgramService $program,
         private OrderRepository $repository,
         private OrderBonusApplier $bonusApplier,
         private OrderEmailNotifier $emailNotifier,
@@ -37,17 +39,18 @@ final readonly class UpdateOrderPaymentStatusAction implements RequestHandlerInt
     #[Override]
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        $order = $this->repository->getById(Route::getArgument($request, 'id'));
-        $payload = (array)$request->getParsedBody();
-        $order->updatePaymentStatus($this->statusGuard->paymentStatus((string)($payload['paymentStatus'] ?? $payload['payment_status'] ?? $order->paymentStatus)));
-
-        if ($order->paymentStatus === 'completed') {
+        $order = $this->program->atomic(function () use ($request) {
+            $order = $this->repository->getById(Route::getArgument($request, 'id'));
+            $payload = (array)$request->getParsedBody();
+            $paymentStatus = $this->statusGuard->paymentStatus((string)($payload['paymentStatus'] ?? $payload['payment_status'] ?? $order->paymentStatus));
+            $this->statusGuard->adminTransition($order, $order->status, $paymentStatus);
+            $order->updatePaymentStatus($paymentStatus);
             $this->bonusApplier->apply($order);
-        }
-
-        $this->cacher->deleteTag('orders');
-        $this->cacher->delete('order_by_id_' . $order->id);
-        $this->flusher->flush();
+            $this->cacher->deleteTag('orders');
+            $this->cacher->delete('order_by_id_' . $order->id);
+            $this->flusher->flush();
+            return $order;
+        });
         $this->emailNotifier->updated($order);
 
         return new JsonDataSuccessResponse(1, 200);

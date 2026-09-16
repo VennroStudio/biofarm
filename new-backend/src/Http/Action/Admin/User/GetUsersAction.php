@@ -58,6 +58,7 @@ final readonly class GetUsersAction implements RequestHandlerInterface
                 'COALESCE(up.is_partner, 0) AS is_partner',
                 'up.referral_code',
                 'up.referred_by_user_id',
+                "(SELECT CONCAT(parent.first_name, ' ', parent.last_name) FROM users parent WHERE parent.id=up.referred_by_user_id) AS parent_name",
                 '(SELECT COUNT(rp.user_id) FROM user_profiles rp WHERE rp.referred_by_user_id = u.id) AS referrals_count',
                 '(SELECT COALESCE(SUM(o.total), 0) FROM orders o WHERE o.referred_by = up.referral_code OR o.referred_by = CAST(u.id AS CHAR)) AS referral_orders_total',
                 "(SELECT JSON_ARRAYAGG(JSON_OBJECT(
@@ -91,6 +92,9 @@ final readonly class GetUsersAction implements RequestHandlerInterface
             'is_partner'            => (bool)(int)$row['is_partner'],
             'referral_code'         => $row['referral_code'],
             'referred_by_user_id'   => $row['referred_by_user_id'] !== null ? (int)$row['referred_by_user_id'] : null,
+            'is_referral'           => $row['referred_by_user_id'] !== null,
+            'isReferral'            => $row['referred_by_user_id'] !== null,
+            'parent_name'           => $row['parent_name'],
             'referrals_count'       => (int)$row['referrals_count'],
             'referral_orders_total' => (int)$row['referral_orders_total'],
             'bonus_transactions'    => self::bonusTransactions($row['bonus_transactions']),

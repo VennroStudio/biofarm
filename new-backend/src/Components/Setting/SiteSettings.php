@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Components\Setting;
 
+use App\Modules\Program\Service\ProgramService;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 
@@ -16,7 +17,7 @@ final class SiteSettings
         'withdrawals_enabled'                => false,
         'favorites_enabled'                  => true,
         'order_bonus_enabled'                => true,
-        'order_bonus_percent'                => 5,
+        'order_bonus_percent'                => 1,
         'order_bonus_spend_limit_percent'    => 30,
         'welcome_bonus_enabled'              => false,
         'welcome_bonus_amount'               => 0,
@@ -40,7 +41,7 @@ final class SiteSettings
         'bitrix_widget_enabled'              => false,
         'bitrix_widget_code'                 => '',
         'bitrix_crm_enabled'                 => false,
-        'referral_percent'                   => 5,
+        'referral_percent'                   => 1,
         'seo_product_title_template'         => '{name} — купить натуральный продукт БИОФАРМ',
         'seo_product_description_template'   => '{name}: описание, состав, цена и сертификаты качества. Натуральная продукция БИОФАРМ с доставкой по России.',
         'seo_category_title_template'        => '{h1} — БИОФАРМ',
@@ -97,7 +98,7 @@ final class SiteSettings
     {
         return array_values(array_filter(
             self::keys(),
-            static fn (string $key): bool => $key !== 'bitrix_crm_enabled',
+            static fn (string $key): bool => !\in_array($key, ['bitrix_crm_enabled', 'welcome_bonus_enabled', 'welcome_bonus_amount', 'order_bonus_percent', 'referral_percent'], true),
         ));
     }
 
@@ -178,6 +179,12 @@ final class SiteSettings
             $settings[$key] = self::normalize(json_decode((string)$row['value'], true));
         }
 
+        // Public promises and checkout previews use the same rates as financial snapshots.
+        $rules = new ProgramService($this->connection)->settings();
+        $settings['order_bonus_percent'] = $rules['buyerBps'] / 100;
+        $settings['referral_percent'] = $rules['levelsBps'][0] / 100;
+        $settings['welcome_bonus_enabled'] = false;
+        $settings['welcome_bonus_amount'] = 0;
         $this->settings = $settings;
 
         return $settings;

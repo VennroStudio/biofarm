@@ -6,15 +6,16 @@ namespace App\Http\Action\Admin\User;
 
 use App\Components\Exception\DomainExceptionModule;
 use App\Components\Flusher\FlusherInterface;
+use App\Components\Http\Middleware\Identity\RequestIdentity;
 use App\Components\Http\Response\JsonDataSuccessResponse;
 use App\Components\Router\Route;
-use App\Modules\Bonus\Entity\BonusTransaction\BonusTransaction;
 use App\Modules\Bonus\Entity\BonusTransaction\BonusTransactionRepository;
-use App\Modules\Bonus\Entity\BonusTransaction\Fields\Enums\BonusTransactionType;
+use App\Modules\Program\Service\ProgramService;
 use App\Modules\User\Entity\User\UserRepository;
 use App\Modules\User\Entity\UserProfile\UserProfile;
 use App\Modules\User\Entity\UserProfile\UserProfileRepository;
 use DateMalformedStringException;
+use DomainException;
 use Override;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -23,6 +24,7 @@ use Psr\Http\Server\RequestHandlerInterface;
 final readonly class UpdateUserProfileAction implements RequestHandlerInterface
 {
     public function __construct(
+        private ProgramService $program,
         private UserRepository $userRepository,
         private UserProfileRepository $profileRepository,
         private BonusTransactionRepository $bonusTransactionRepository,
@@ -67,30 +69,29 @@ final readonly class UpdateUserProfileAction implements RequestHandlerInterface
             }
         }
 
+        $partner = (bool)$this->payloadValue($payload, 'isPartner', 'is_partner', $profile->isPartner);
+        $treeChanged = $partner !== $profile->isPartner || $referredByUserId !== $profile->referredByUserId;
+        if ($treeChanged && trim((string)($payload['reason'] ?? '')) === '') {
+            throw new DomainException('Reason required for tree changes');
+        }
         $profile->edit(
             phone: $this->nullableString($this->payloadValue($payload, 'phone', 'phone', $profile->phone)),
             cardNumber: $this->nullableString($this->payloadValue($payload, 'cardNumber', 'card_number', $profile->cardNumber)),
-            isPartner: (bool)$this->payloadValue($payload, 'isPartner', 'is_partner', $profile->isPartner),
+            isPartner: $profile->isPartner,
             referralCode: $referralCode,
-            referredByUserId: $referredByUserId,
+            referredByUserId: $profile->referredByUserId,
         );
 
-        if (\array_key_exists('bonusBalance', $payload) || \array_key_exists('bonus_balance', $payload)) {
-            $profile->changeBonusBalance((int)$this->payloadValue($payload, 'bonusBalance', 'bonus_balance', 0));
+        if (\array_key_exists('bonusBalance', $payload) || \array_key_exists('bonus_balance', $payload) || !empty($payload['bonusAdjustment']) || !empty($payload['bonus_adjustment'])) {
+            throw new DomainExceptionModule('program', 'Use audited program adjustments', 1, status: 409);
         }
 
-        $bonusAdjustment = (int)$this->payloadValue($payload, 'bonusAdjustment', 'bonus_adjustment', 0);
-        if ($bonusAdjustment !== 0) {
-            $profile->addBonus($bonusAdjustment);
-            $this->bonusTransactionRepository->add(BonusTransaction::create(
-                userId: $userId,
-                amount: $bonusAdjustment,
-                type: BonusTransactionType::MANUAL_ADJUSTMENT,
-                comment: $this->nullableString($this->payloadValue($payload, 'bonusComment', 'bonus_comment', null)),
-            ));
-        }
-
-        $this->flusher->flush();
+        $this->program->atomic(function () use ($treeChanged, $userId, $referredByUserId, $partner, $request, $payload): void {
+            $this->flusher->flush();
+            if ($treeChanged) {
+                $this->program->changeTree($userId, $referredByUserId, $partner, RequestIdentity::get($request)->id, (string)$payload['reason']);
+            }
+        });
 
         return new JsonDataSuccessResponse(1, 200);
     }

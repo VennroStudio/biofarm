@@ -1,156 +1,338 @@
-import { Check, ChevronRight, Copy, Package } from 'lucide-react';
-import type { FormEvent } from 'react';
-import type { ReferralInfo, SiteOrder, WithdrawalRequest } from '../../../site/api';
-import { formatDate, formatMoney } from '../../../site/format';
-import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label } from '../../../site/ui';
-import { isPaid, OrderBadge } from './orderDisplay';
-
-type Props = {
-  copied: boolean;
-  onCopyReferralLink: () => void;
-  onSelectOrder: (order: SiteOrder) => void;
-  onWithdrawal: (event: FormEvent<HTMLFormElement>) => void;
-  referralCode: string;
-  referralInfo: ReferralInfo | null;
-  referralOrders: SiteOrder[];
-  setWithdrawalAmount: (value: string) => void;
-  withdrawalAmount: string;
-  withdrawals: WithdrawalRequest[];
-  withdrawalsEnabled: boolean;
-};
-
-export function ReferralPanel({
-  copied,
-  onCopyReferralLink,
-  onSelectOrder,
-  onWithdrawal,
-  referralCode,
-  referralInfo,
-  referralOrders,
-  setWithdrawalAmount,
-  withdrawalAmount,
-  withdrawals,
-  withdrawalsEnabled,
-}: Props) {
-  return (
-    <div className="grid gap-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Реферальная программа</CardTitle>
-          <CardDescription>
-            Приглашайте друзей и получайте {referralInfo?.referralPercent || 5}% от их покупок
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
-            <Label className="text-sm font-medium" htmlFor="referral-link">Ваша реферальная ссылка</Label>
-            <div className="mt-2 flex gap-2">
-              <Input className="bg-background" id="referral-link" readOnly value={`${window.location.origin}?ref=${referralCode}`} />
-              <Button aria-label="Скопировать реферальную ссылку" variant="outline" onClick={onCopyReferralLink}>
-                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-              </Button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="rounded-lg bg-muted/50 p-4 text-center">
-              <p className="text-2xl font-bold text-green-600">{formatMoney(referralInfo?.totalEarnings || 0)}</p>
-              <p className="text-sm text-muted-foreground">Заработано всего</p>
-            </div>
-            <div className="rounded-lg bg-muted/50 p-4 text-center">
-              <p className="text-2xl font-semibold text-primary">{formatMoney(referralInfo?.pendingEarnings || 0)}</p>
-              <p className="text-sm text-muted-foreground">Ожидает начисления</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {withdrawalsEnabled && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Вывод бонусов</CardTitle>
-            <CardDescription>Создайте заявку на выплату партнерских начислений</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <form className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto]" onSubmit={onWithdrawal}>
-              <Input
-                aria-label="Сумма вывода бонусов"
-                min="1"
-                placeholder="Сумма"
-                type="number"
-                value={withdrawalAmount}
-                onChange={(event) => setWithdrawalAmount(event.target.value)}
-              />
-              <Button type="submit">Создать заявку</Button>
-            </form>
-            {withdrawals.length > 0 && (
-              <div className="space-y-2">
-                {withdrawals.map((withdrawal) => (
-                  <div className="flex items-center justify-between rounded border p-3" key={withdrawal.id}>
-                    <span>{formatMoney(withdrawal.amount)}</span>
-                    <span className="text-sm text-muted-foreground">{formatDate(withdrawal.createdAt)}</span>
-                    <Badge variant={withdrawal.status === 'approved' ? 'default' : 'secondary'}>{withdrawal.status}</Badge>
-                  </div>
-                ))}
-              </div>
+import { useEffect, useState, type FormEvent } from "react";
+import { request } from "../../../site/api";
+import { readCart } from "../../../site/cart";
+import {
+    Section,
+    Field,
+    LinkQR,
+    Rows,
+    Pager,
+    money,
+    inputClass,
+    buttonClass,
+    type Dashboard,
+    type Listing,
+} from "../../../program/shared";
+export function ReferralPanel({ withdrawalsEnabled }: { withdrawalsEnabled: boolean }) {
+    const [data, setData] = useState<Dashboard | null>(null);
+    const [tab, setTab] = useState("team");
+    const [page, setPage] = useState(1);
+    const [list, setList] = useState<Listing>({ items: [], page: 1, limit: 25 });
+    const [error, setError] = useState("");
+    const [busy, setBusy] = useState(false);
+    const [revision, setRevision] = useState(0);
+    const [offerUrl, setOfferUrl] = useState("");
+    useEffect(() => {
+        let live = true;
+        void request<Dashboard>("/v1/program")
+            .then((d) => {
+                if (live) setData(d);
+            })
+            .catch((e) => setError(String(e)));
+        return () => {
+            live = false;
+        };
+    }, [revision]);
+    useEffect(() => {
+        let live = true;
+        void request<Listing>(`/v1/program/${tab}?page=${page}`)
+            .then((d) => {
+                if (live) setList(d);
+            })
+            .catch((e) => setError(String(e)));
+        return () => {
+            live = false;
+        };
+    }, [tab, page, revision]);
+    async function submit(
+        event: FormEvent<HTMLFormElement>,
+        path: string,
+        body: (f: FormData) => Record<string, unknown>,
+    ) {
+        event.preventDefault();
+        const form = event.currentTarget;
+        setBusy(true);
+        setError("");
+        try {
+            const result = await request<{ url?: string }>(`/v1/program/${path}`, {
+                method: "POST",
+                body: body(new FormData(form)),
+            });
+            if (result?.url) setOfferUrl(result.url);
+            form.reset();
+            setRevision((n) => n + 1);
+        } catch (e) {
+            setError(String(e));
+        } finally {
+            setBusy(false);
+        }
+    }
+    if (!data) return <p role="status">{error || "Загрузка программы…"}</p>;
+    const columns: Record<string, [string, string][]> = {
+        team: [
+            ["id", "ID"],
+            ["first_name", "Имя"],
+            ["last_name", "Фамилия"],
+            ["depth", "Уровень"],
+            ["is_partner", "Партнёр"],
+            ["referred_by_user_id", "Пригласивший ID"],
+        ],
+        ledger: [
+            ["created_at", "Дата"],
+            ["kind", "Операция"],
+            ["wallet", "Счёт"],
+            ["state", "Состояние"],
+            ["order_id", "Заказ"],
+            ["amount_minor", "Сумма"],
+            ["details", "Детали"],
+        ],
+        sales: [
+            ["id", "Заказ"],
+            ["status", "Состояние"],
+            ["delivered_at", "Доставлен"],
+            ["goods_minor", "Оплачено за товары"],
+            ["earned_minor", "Мои комиссии"],
+        ],
+        withdrawals: [
+            ["id", "Заявка"],
+            ["created_at", "Дата"],
+            ["amount_minor", "Сумма"],
+            ["status", "Состояние"],
+            ["reason", "Причина"],
+            ["reference", "Подтверждение"],
+        ],
+        offers: [
+            ["title", "Название"],
+            ["expires_at", "Срок"],
+            ["visits", "Просмотры"],
+            ["orders_count", "Заказы"],
+            ["paid_count", "Оплачено"],
+        ],
+        "promo-requests": [
+            ["created_at", "Дата"],
+            ["status", "Состояние"],
+            ["reason", "Причина"],
+            ["code", "Код"],
+            ["value", "Скидка %"],
+            ["rules", "Ограничения"],
+        ],
+    };
+    return (
+        <div className="space-y-6">
+            {error && (
+                <p role="alert" className="rounded-lg bg-red-50 p-3 text-red-700">
+                    {error}
+                </p>
             )}
-          </CardContent>
-        </Card>
-      )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Заказы рефералов</CardTitle>
-          <CardDescription>Все заказы ваших приглашенных пользователей</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {referralOrders.length === 0 ? (
-            <div className="py-12 text-center">
-              <Package className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-              <p className="text-muted-foreground">У ваших рефералов пока нет заказов</p>
+            <Section title={data.identity.isPartner ? "Партнёрская программа" : "Реферальная программа"}>
+                <p>
+                    Участие бесплатно. Начисления — после подтверждённой оплаты; доступность — после доставки и
+                    удержания {data.rates.holdDays} дней.
+                </p>
+                <p>
+                    Уровни: {data.rates.levelsBps.map((n) => `${n / 100}%`).join(" / ")}. Ближайшему партнёру:{" "}
+                    {data.rates.partnerBps / 100}%. Покупателю: {data.rates.buyerBps / 100}%.
+                </p>
+                <LinkQR url={`${window.location.origin}/?ref=${encodeURIComponent(data.identity.referralCode)}`} />
+            </Section>
+            <div className="grid gap-4 xl:grid-cols-2">
+                {(["shopping", "commission"] as const).map((wallet) => (
+                    <Section key={wallet} title={wallet === "shopping" ? "Покупательские бонусы" : "Денежные комиссии"}>
+                        {(
+                            [
+                                ["availableMinor", "Доступно"],
+                                ["pendingMinor", "На удержании"],
+                                ["reservedMinor", "Зарезервировано"],
+                                ["debtMinor", "Долг"],
+                            ] as const
+                        ).map(([key, title]) => (
+                            <div key={key} className="flex justify-between gap-3">
+                                <span>{title}</span>
+                                <strong>{money(data.balances[wallet][key])}</strong>
+                            </div>
+                        ))}
+                    </Section>
+                ))}
             </div>
-          ) : (
-            <div className="space-y-4">
-              {referralOrders.map((order) => {
-                const earned = isPaid(order)
-                  ? order.bonusEarned
-                  : Math.floor(order.total * ((referralInfo?.referralPercent || 5) / 100));
-
-                return (
-                  <button
-                    className="flex w-full cursor-pointer items-center justify-between rounded-lg border p-4 text-left transition-colors hover:bg-muted/50"
-                    key={order.id}
-                    type="button"
-                    onClick={() => onSelectOrder(order)}
-                  >
-                    <div className="flex-1">
-                      <div className="mb-1 flex flex-wrap items-center gap-3">
-                        <span className="font-medium">Заказ #{order.id}</span>
-                        <OrderBadge order={order} />
-                        <Badge className={isPaid(order) ? 'bg-green-500 hover:bg-green-600' : ''} variant={isPaid(order) ? 'default' : 'outline'}>
-                          {isPaid(order) ? 'Оплачен' : 'Не оплачен'}
-                        </Badge>
-                        {earned > 0 && (
-                          <Badge
-                            className={isPaid(order) ? 'border-green-300 bg-green-100 text-green-700' : 'border-orange-300 bg-orange-100 text-orange-700'}
-                            variant="outline"
-                          >
-                            +{formatMoney(earned)}
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {formatDate(order.createdAt)} • {formatMoney(order.total)}
-                      </p>
-                    </div>
-                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
+            {withdrawalsEnabled && (
+                <Section title="Заявка на ручную выплату">
+                    <p className="text-sm">
+                        Минимум {money(data.rates.minimumWithdrawalMinor)}. Одобрение заявки не означает перевод.
+                    </p>
+                    <form
+                        className="grid gap-3 sm:grid-cols-2"
+                        onSubmit={(e) =>
+                            void submit(e, "withdrawals", (f) => ({
+                                amount: String(f.get("amount")),
+                                details: {
+                                    bank: f.get("bank"),
+                                    recipient: f.get("recipient"),
+                                    account: f.get("account"),
+                                },
+                            }))
+                        }
+                    >
+                        <Field name="Сумма, ₽">
+                            <input
+                                className={inputClass}
+                                name="amount"
+                                type="number"
+                                min={Math.max(0.01, data.rates.minimumWithdrawalMinor / 100)}
+                                max={data.balances.commission.availableMinor / 100}
+                                step="0.01"
+                                required
+                            />
+                        </Field>
+                        {[
+                            ["bank", "Банк"],
+                            ["recipient", "Получатель"],
+                            ["account", "Счёт получателя"],
+                        ].map(([name, title]) => (
+                            <Field key={name} name={title}>
+                                <input className={inputClass} name={name} required />
+                            </Field>
+                        ))}
+                        <button className={buttonClass} disabled={busy || data.balances.commission.availableMinor <= 0}>
+                            Отправить заявку
+                        </button>
+                    </form>
+                </Section>
+            )}
+            {data.identity.isPartner && (
+                <>
+                    <Section title="Создать предложение из текущей корзины">
+                        <p>
+                            Добавьте товары в{" "}
+                            <a className="underline" href="/catalog">
+                                каталоге
+                            </a>
+                            . Будут использованы товары и количества текущей корзины; цены проверяются при открытии
+                            предложения.
+                        </p>
+                        <ul>
+                            {readCart().map((i) => (
+                                <li key={i.product.id}>
+                                    {i.product.name} × {i.quantity}
+                                </li>
+                            ))}
+                        </ul>
+                        <form
+                            className="grid gap-3 sm:grid-cols-2"
+                            onSubmit={(e) =>
+                                void submit(e, "offers", (f) => ({
+                                    title: f.get("title"),
+                                    promoCode: f.get("promoCode") || undefined,
+                                    expiresAt: f.get("expiresAt")
+                                        ? new Date(String(f.get("expiresAt"))).toISOString()
+                                        : undefined,
+                                    items: readCart().map((i) => ({ productId: i.product.id, quantity: i.quantity })),
+                                }))
+                            }
+                        >
+                            <Field name="Название">
+                                <input className={inputClass} name="title" required />
+                            </Field>
+                            <Field name="Промокод">
+                                <input className={inputClass} name="promoCode" />
+                            </Field>
+                            <Field name="Действует до">
+                                <input className={inputClass} type="datetime-local" name="expiresAt" />
+                            </Field>
+                            <button disabled={busy || !readCart().length} className={buttonClass}>
+                                Создать предложение
+                            </button>
+                        </form>
+                        {offerUrl && <LinkQR url={offerUrl} />}
+                    </Section>
+                    <Section title="Запрос промокода">
+                        <form
+                            className="grid gap-3"
+                            onSubmit={(e) =>
+                                void submit(e, "promo-requests", (f) => ({
+                                    description: f.get("description"),
+                                    percent: Number(f.get("percent")),
+                                }))
+                            }
+                        >
+                            <Field name="Описание акции">
+                                <textarea className={inputClass} name="description" required />
+                            </Field>
+                            <Field name="Желаемая скидка, %">
+                                <input
+                                    className={inputClass}
+                                    name="percent"
+                                    type="number"
+                                    min="1"
+                                    max={data.rates.maxPromoPercent}
+                                    required
+                                />
+                            </Field>
+                            <button className={buttonClass} disabled={busy}>
+                                Отправить запрос
+                            </button>
+                        </form>
+                    </Section>
+                </>
+            )}
+            <Section title="История и команда">
+                <div className="flex flex-wrap gap-2">
+                    {[
+                        ["team", "Команда"],
+                        ["sales", "Продажи"],
+                        ["ledger", "Операции"],
+                        ...(withdrawalsEnabled ? [["withdrawals", "Выплаты"]] : []),
+                        ...(data.identity.isPartner
+                            ? [
+                                  ["offers", "Предложения"],
+                                  ["promo-requests", "Промокоды"],
+                              ]
+                            : []),
+                    ].map(([key, title]) => (
+                        <button
+                            type="button"
+                            aria-pressed={tab === key}
+                            className={tab === key ? buttonClass : "rounded-lg border p-2 text-sm"}
+                            key={key}
+                            onClick={() => {
+                                setTab(key);
+                                setPage(1);
+                            }}
+                        >
+                            {title}
+                        </button>
+                    ))}
+                </div>
+                <Rows
+                    rows={list.items}
+                    columns={columns[tab]}
+                    actions={
+                        tab === "offers"
+                            ? (row) => (
+                                  <>
+                                      <LinkQR url={String(row.url)} />
+                                      <button
+                                          className={buttonClass}
+                                          disabled={!row.is_active || busy}
+                                          onClick={() => {
+                                              setBusy(true);
+                                              void request(`/v1/program/offers/${row.id}`, {
+                                                  method: "PATCH",
+                                                  body: { isActive: false },
+                                              })
+                                                  .then(() => setRevision((n) => n + 1))
+                                                  .catch((e) => setError(String(e)))
+                                                  .finally(() => setBusy(false));
+                                          }}
+                                      >
+                                          Отключить
+                                      </button>
+                                  </>
+                              )
+                            : undefined
+                    }
+                />
+                <Pager page={page} setPage={setPage} hasMore={list.items.length === list.limit} />
+            </Section>
+        </div>
+    );
 }

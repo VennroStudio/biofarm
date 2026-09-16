@@ -62,7 +62,7 @@ class UserProfile
         $this->bonusBalance = $bonusBalance;
         $this->isPartner = $isPartner;
         $this->referralCode = $referralCode;
-        $this->referredByUserId = $referredByUserId;
+        $this->referredByUserId = $isPartner ? null : $referredByUserId;
         $this->createdAt = UtcClock::now();
     }
 
@@ -103,7 +103,7 @@ class UserProfile
         $this->cardNumber = $cardNumber;
         $this->isPartner = $isPartner;
         $this->referralCode = $referralCode;
-        $this->referredByUserId = $referredByUserId;
+        $this->referredByUserId = $isPartner ? null : $referredByUserId;
         $this->touch();
     }
 
@@ -117,6 +117,9 @@ class UserProfile
         }
 
         $this->isPartner = $isPartner;
+        if ($isPartner) {
+            $this->referredByUserId = null;
+        }
         $this->touch();
     }
 

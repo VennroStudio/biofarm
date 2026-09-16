@@ -82,6 +82,11 @@ export function readCart(): CartItem[] {
 }
 
 export function writeCart(cart: CartItem[]) {
+  if (cart.length === 0) {
+    window.sessionStorage.removeItem('biofarm_checkout_request');
+    window.sessionStorage.removeItem('biofarm_offer_id');
+    window.sessionStorage.removeItem('biofarm_offer_promo');
+  }
   window.localStorage.setItem(storageKey, JSON.stringify(cart));
   window.localStorage.removeItem(legacyStorageKey);
   notifyCartUpdated();
@@ -128,6 +133,9 @@ export function removeFromCart(productId: number) {
 }
 
 export function clearCart() {
+  window.sessionStorage.removeItem('biofarm_checkout_request');
+    window.sessionStorage.removeItem('biofarm_offer_id');
+  window.sessionStorage.removeItem('biofarm_offer_promo');
   window.localStorage.removeItem(storageKey);
   window.localStorage.removeItem(legacyStorageKey);
   notifyCartUpdated();

@@ -16,15 +16,16 @@ final readonly class LoyaltyPageView
         public PageMetaView $meta,
         public bool $cartEnabled,
         public bool $orderBonusEnabled,
-        public int $orderBonusPercent,
+        public float $orderBonusPercent,
         public int $orderBonusSpendLimitPercent,
         public bool $promoCodesEnabled,
         public bool $referralEnabled,
-        public int $referralPercent,
+        public float $referralPercent,
         public bool $welcomeBonusEnabled,
         public int $welcomeBonusAmount,
         public int $freeDeliveryThreshold,
         public bool $withdrawalsEnabled,
         public array $faqItems,
+        public array $programRules = [],
     ) {}
 }

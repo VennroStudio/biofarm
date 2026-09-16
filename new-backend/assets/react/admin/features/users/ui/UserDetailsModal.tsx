@@ -50,7 +50,7 @@ export function UserDetailsModal({ user, error, saving, onClose, onSave }: Props
     if (!user) {
       return;
     }
-    const adjustment = Number(form.bonusAdjustment || 0);
+
 
     await onSave(user, {
       firstName: form.firstName,
@@ -58,10 +58,6 @@ export function UserDetailsModal({ user, error, saving, onClose, onSave }: Props
       phone: form.phone || null,
       cardNumber: form.cardNumber || null,
       referralCode: form.referralCode || null,
-      referredByUserId: form.referredByUserId ? Number(form.referredByUserId) : null,
-      isPartner: form.isPartner,
-      bonusAdjustment: adjustment,
-      bonusComment: form.bonusComment || null,
     });
   }
 
@@ -102,33 +98,14 @@ export function UserDetailsModal({ user, error, saving, onClose, onSave }: Props
           <Field label="Реферальный код">
             <input className={inputClass} value={form.referralCode} onChange={(event) => setForm({ ...form, referralCode: event.target.value })} />
           </Field>
-          <Field label="ID пригласившего">
-            <input className={inputClass} type="number" value={form.referredByUserId} onChange={(event) => setForm({ ...form, referredByUserId: event.target.value })} />
-          </Field>
-          <label className="flex items-center gap-2 text-sm font-semibold text-[#294555]">
-            <input type="checkbox" checked={form.isPartner} onChange={(event) => setForm({ ...form, isPartner: event.target.checked })} />
-            Партнер
-          </label>
+          <a href="/admin/program" className="underline">Управлять командой и статусом партнёра</a>
           <div className="text-sm text-[#5f7580]">
             <p>Приглашено: <b className="text-[#294555]">{user.referrals_count}</b></p>
             <p>Оборот рефералов: <b className="text-[#294555]">{formatMoney(user.referral_orders_total)}</b></p>
           </div>
         </div>
 
-        <div className="grid gap-4 rounded-lg border border-[#dfece9] bg-[#f5faf8] p-4 md:grid-cols-[1fr_2fr]">
-          <Field label="Ручная корректировка бонусов">
-            <input
-              className={inputClass}
-              type="number"
-              value={form.bonusAdjustment}
-              onChange={(event) => setForm({ ...form, bonusAdjustment: event.target.value })}
-              placeholder="-100 или 250"
-            />
-          </Field>
-          <Field label="Комментарий">
-            <input className={inputClass} value={form.bonusComment} onChange={(event) => setForm({ ...form, bonusComment: event.target.value })} />
-          </Field>
-        </div>
+        <a className="underline" href="/admin/program">Корректировки балансов с обязательной причиной — в журнале программы</a>
 
         <div>
           <div className="mb-2 flex items-center justify-between">

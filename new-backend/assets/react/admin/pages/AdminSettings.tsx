@@ -163,7 +163,7 @@ function renderSettingsSection(section: SettingsSectionId, settings: Settings, s
     case 'loyalty':
       return (
         <>
-          <ReferralSettingsCard settings={settings} onChange={setSettings} />
+          <ReferralSettingsCard />
           <OrderBonusSettingsCard settings={settings} onChange={setSettings} />
         </>
       );

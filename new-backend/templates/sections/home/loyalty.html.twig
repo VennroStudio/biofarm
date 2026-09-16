@@ -8,7 +8,7 @@
             </div>
             <div class="grid gap-5 sm:grid-cols-3">
                 {% if site_feature('order_bonus_enabled') %}
-                    <div class="border-border sm:border-r sm:pr-4"><h3 class="mb-1 text-sm font-medium">{{ site_setting('order_bonus_percent', 5) }}% бонусами</h3><p class="text-xs leading-relaxed text-muted-foreground">Бонусы начисляются после заказа и доступны для оплаты следующих покупок.</p></div>
+                    <div class="border-border sm:border-r sm:pr-4"><h3 class="mb-1 text-sm font-medium">{{ site_setting('order_bonus_percent', 1) }}% бонусами</h3><p class="text-xs leading-relaxed text-muted-foreground">Бонусы начисляются после оплаты. Срок доступности и история — в личном кабинете.</p></div>
                 {% endif %}
                 {% if site_feature('promo_codes_enabled') %}
                     <div class="border-border sm:border-r sm:pr-4"><h3 class="mb-1 text-sm font-medium">Промокоды</h3><p class="text-xs leading-relaxed text-muted-foreground">Скидочные коды можно применить при оформлении заказа в корзине.</p></div>

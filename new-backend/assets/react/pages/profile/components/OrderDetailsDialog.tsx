@@ -73,7 +73,8 @@ export function OrderDetailsDialog({ order, onClose }: { order: SiteOrder | null
         tabIndex={-1}
       >
         <div className="mb-6 flex items-center justify-between gap-4">
-          <h2 className="text-2xl font-normal tracking-tight text-primary" id="order-details-title">Заказ {order.id}</h2>
+          {order.paymentStatus === 'pending' && <a className="rounded-lg bg-primary p-3 text-white" href={`/order-success?order=${encodeURIComponent(order.id)}`}>Оплатить заказ</a>}
+        <h2 className="text-2xl font-normal tracking-tight text-primary" id="order-details-title">Заказ {order.id}</h2>
           <Button data-dialog-close size="sm" variant="outline" onClick={onClose}>Закрыть</Button>
         </div>
 

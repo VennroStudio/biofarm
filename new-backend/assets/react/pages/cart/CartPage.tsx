@@ -1,9 +1,11 @@
+import type { Dashboard } from '../../program/shared';
+import { OfferImport } from './OfferImport';
 import { ArrowRight, Minus, Plus, ShoppingBag, ShoppingCart, Trash2 } from 'lucide-react';
 import { createRoot } from 'react-dom/client';
 import { useEffect, useMemo, useState } from 'react';
 import { cartTotal, readCart, removeFromCart, updateQuantity, type CartItem } from '../../site/cart';
 import { formatMoney, pluralProduct } from '../../site/format';
-import { getStoredUser } from '../../site/api';
+import { getStoredUser, getToken, request } from '../../site/api';
 import { Button, Card, CardContent, CardFooter, CardHeader, CardTitle, LinkButton, Separator } from '../../site/ui';
 
 function useCartState() {
@@ -52,20 +54,22 @@ type CartPageProps = {
   orderBonusPercent: number;
 };
 
-function CartPage({ cdekDeliveryPrice, freeDeliveryThreshold, orderBonusEnabled, orderBonusPercent }: CartPageProps) {
+function CartPage({ cdekDeliveryPrice, freeDeliveryThreshold, orderBonusEnabled }: CartPageProps) {
+  const [program,setProgram] = useState<Dashboard|null>(null);
+  useEffect(() => { if(getToken()) void request<Dashboard>('/v1/program').then(setProgram).catch(()=>undefined); }, []);
   const cart = useCartState();
   const user = getStoredUser();
   const total = useMemo(() => cartTotal(cart), [cart]);
   const deliveryCost = total >= freeDeliveryThreshold ? 0 : cdekDeliveryPrice;
   const finalTotal = total + deliveryCost;
-  const orderBonus = orderBonusEnabled ? Math.floor(total * (orderBonusPercent / 100)) : 0;
+  const orderBonus = orderBonusEnabled && program ? Math.floor(total * program.rates.buyerBps / 100) / 100 : 0;
 
   if (cart.length === 0) {
-    return <CartEmpty />;
+    return <><OfferImport /><CartEmpty /></>;
   }
 
   return (
-    <section className="bg-secondary/30 pb-10 pt-[120px] md:pb-12 md:pt-[128px]">
+    <><OfferImport /><section className="bg-secondary/30 pb-10 pt-[120px] md:pb-12 md:pt-[128px]">
       <div className="container mx-auto px-4 sm:px-6">
         <h1 className="mb-6 flex flex-wrap items-center gap-3 text-3xl font-normal tracking-tight text-primary md:text-4xl">
           <ShoppingCart className="h-8 w-8" />
@@ -179,7 +183,7 @@ function CartPage({ cdekDeliveryPrice, freeDeliveryThreshold, orderBonusEnabled,
                 </div>
                 {orderBonus > 0 && (
                   <div className="rounded bg-green-50 p-2 text-sm text-green-600">
-                    + {orderBonus} бонусов за заказ
+                    До {orderBonus.toFixed(2)} бонусов; итог после скидок и исключений
                   </div>
                 )}
               </CardContent>
@@ -196,7 +200,7 @@ function CartPage({ cdekDeliveryPrice, freeDeliveryThreshold, orderBonusEnabled,
           </div>
         </div>
       </div>
-    </section>
+    </section></>
   );
 }
 

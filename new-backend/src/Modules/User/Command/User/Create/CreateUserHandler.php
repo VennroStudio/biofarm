@@ -131,7 +131,7 @@ final readonly class CreateUserHandler
         if (ctype_digit($referredBy)) {
             $userId = (int)$referredBy;
 
-            return $userId > 0 ? $userId : null;
+            return $userId > 0 && $this->profileRepository->findByUserId($userId) !== null ? $userId : null;
         }
 
         return $this->profileRepository->findByReferralCode($referredBy)?->userId;

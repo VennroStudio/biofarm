@@ -4,89 +4,28 @@ declare(strict_types=1);
 
 namespace App\Http\Action\v1\User;
 
-use App\Components\Exception\DomainExceptionModule;
 use App\Components\Http\Middleware\Identity\RequestIdentity;
 use App\Components\Http\Response\JsonDataResponse;
-use App\Components\Setting\SiteSettings;
+use App\Modules\Program\Service\ProgramService;
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\Exception;
-use Override;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
 final readonly class GetReferralInfoAction implements RequestHandlerInterface
 {
-    public function __construct(
-        private Connection $connection,
-        private SiteSettings $settings,
-    ) {}
+    public function __construct(private ProgramService $program, private Connection $connection) {}
 
-    /**
-     * @throws Exception
-     */
-    #[Override]
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        if (!$this->settings->bool('referral_enabled')) {
-            throw new DomainExceptionModule('user', 'error.referral_disabled', 37, status: 403);
-        }
-
-        $identity = RequestIdentity::get($request);
-        $referralPercent = (int)$this->settings->get('referral_percent', 5);
-        $profile = $this->profile($identity->id);
-        $referralCode = $profile['referral_code'] !== null ? (string)$profile['referral_code'] : 'bf-' . $identity->id;
-
-        $referredUsers = (int)$this->connection->fetchOne(
-            'SELECT COUNT(user_id) FROM user_profiles WHERE referred_by_user_id = :userId',
-            ['userId' => $identity->id],
-        );
-
-        $totalEarnings = (int)$this->connection->fetchOne(
-            "SELECT COALESCE(SUM(amount), 0) FROM bonus_transactions WHERE user_id = :userId AND type = 'referral_bonus'",
-            ['userId' => $identity->id],
-        );
-
-        $pendingEarnings = (int)$this->connection->fetchOne(
-            "SELECT COALESCE(SUM(FLOOR(total * :percent / 100)), 0)
-             FROM orders
-             WHERE referred_by IN (:idRef, :codeRef)
-               AND payment_status <> 'completed'",
-            [
-                'percent' => $referralPercent,
-                'idRef'   => (string)$identity->id,
-                'codeRef' => $referralCode,
-            ],
-        );
-
+        $id = RequestIdentity::get($request)->id;
+        $dashboard = $this->program->dashboard($id);
         return new JsonDataResponse([
-            'referred_users'   => $referredUsers,
-            'total_earnings'   => $totalEarnings,
-            'pending_earnings' => $pendingEarnings,
-            'referral_percent' => $referralPercent,
-            'referral_code'    => $referralCode,
+            'referred_users'   => (int)$this->connection->fetchOne('SELECT COUNT(*) FROM user_profiles WHERE referred_by_user_id=?', [$id]),
+            'total_earnings'   => (int)$this->connection->fetchOne("SELECT COALESCE(SUM(amount_minor),0) FROM program_ledger WHERE user_id=? AND wallet='commission' AND kind IN ('level_1','level_2','level_3','level_4','partner','refund') AND state IN ('available','pending')", [$id]) / 100,
+            'pending_earnings' => $dashboard['balances']['commission']['pendingMinor'] / 100,
+            'referral_percent' => $dashboard['rates']['levelsBps'][0] / 100,
+            'referral_code'    => $dashboard['identity']['referralCode'],
         ]);
-    }
-
-    /**
-     * @return array{referral_code: string|null}
-     * @throws Exception
-     */
-    private function profile(int $userId): array
-    {
-        $row = $this->connection->createQueryBuilder()
-            ->select('referral_code')
-            ->from('user_profiles')
-            ->where('user_id = :userId')
-            ->setParameter('userId', $userId)
-            ->setMaxResults(1)
-            ->executeQuery()
-            ->fetchAssociative();
-
-        if ($row === false) {
-            return ['referral_code' => null];
-        }
-
-        return ['referral_code' => $row['referral_code'] !== null ? (string)$row['referral_code'] : null];
     }
 }
