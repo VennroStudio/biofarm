@@ -64,7 +64,7 @@ function CheckoutPage({
   const [useBonuses, setUseBonuses] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [deliveryMethod, setDeliveryMethod] = useState('cdek');
-  const [promoCode, setPromoCode] = useState(() => sessionStorage.getItem('biofarm_offer_promo') || '');
+  const [promoCode, setPromoCode] = useState('');
   const [form, setForm] = useState<ShippingAddress>(() => emptyAddress(getToken() ? getStoredUser() : null));
   const [addresses, setAddresses] = useState<UserAddress[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState('');

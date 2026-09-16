@@ -37,7 +37,7 @@ final class ProgramService
     public function settings(): array
     {
         $value = $this->db->fetchOne("SELECT payload FROM program_locks WHERE id='settings'");
-        return $value === false ? ProgramMath::rules([]) : $this->decode($value);
+        return ProgramMath::rules([], $value === false ? [] : $this->decode($value));
     }
 
     public function updateSettings(array $input, int $actor): array
@@ -72,44 +72,22 @@ final class ProgramService
             }
             $rules = $this->settings();
             $buyer = $o['user_id'] === null ? null : (int)$o['user_id'];
-            $parent = null;
-            if ($buyer !== null) {
-                $p = $this->db->fetchAssociative('SELECT * FROM user_profiles WHERE user_id=?', [$buyer]);
-                $parent = empty($p['is_partner']) ? ($p['referred_by_user_id'] ?? null) : null;
-            } elseif (!empty($o['referred_by'])) {
-                $parent = $this->db->fetchOne('SELECT user_id FROM user_profiles WHERE referral_code=? OR user_id=? LIMIT 1', [$o['referred_by'], ctype_digit($o['referred_by']) ? (int)$o['referred_by'] : 0]) ?: null;
-            }
+            $profile = $buyer === null ? null : $this->db->fetchAssociative('SELECT * FROM user_profiles WHERE user_id=?', [$buyer]);
             $flags = new SiteSettings($this->db);
-            if (!$flags->bool('referral_enabled')) {
-                $parent = null;
+            $parent = null;
+            $provisional = false;
+            if ($flags->bool('referral_enabled') && empty($profile['is_partner'])) {
+                $parent = $profile['referred_by_user_id'] ?? null;
+                if ($parent === null && !empty($o['referred_by'])) {
+                    $parent = $this->referrer((string)$o['referred_by']);
+                    $parent = $this->safeParent($buyer, $parent);
+                    $provisional = $buyer !== null && $parent !== null;
+                }
             }
-            $recipients = [];
-            $seen = $buyer === null ? [] : [$buyer => true];
-            $depth = 0;
-            while ($parent !== null) {
-                $id = (int)$parent;
-                if (isset($seen[$id])) {
-                    throw new DomainException('Referral cycle');
-                }
-                $seen[$id] = true;
-                $p = $this->db->fetchAssociative('SELECT user_id,is_partner,referred_by_user_id FROM user_profiles WHERE user_id=?', [$id]);
-                if (!$p) {
-                    throw new DomainException('Referrer not found');
-                }
-                if ($depth < 4) {
-                    $recipients[] = ['userId' => $id, 'wallet' => 'commission', 'kind' => 'level_' . ($depth + 1), 'bps' => $rules['levelsBps'][$depth]];
-                }
-                if ($p['is_partner']) {
-                    $recipients[] = ['userId' => $id, 'wallet' => 'commission', 'kind' => 'partner', 'bps' => $rules['partnerBps']];
-                    break;
-                }
-                ++$depth;
-                $parent = $p['referred_by_user_id'];
-            }
+            $address = json_decode($o['shipping_address'] ?? '{}', true) ?: [];
+            $email = $buyer === null ? mb_strtolower(trim((string)($address['email'] ?? ''))) : '';
+            $recipients = $this->recipients($buyer, $parent === null ? null : (int)$parent, $rules, $flags->bool('order_bonus_enabled'), $email);
             if ($buyer !== null) {
-                if ($flags->bool('order_bonus_enabled')) {
-                    $recipients[] = ['userId' => $buyer, 'wallet' => 'shopping', 'kind' => 'buyer', 'bps' => $rules['buyerBps']];
-                }
                 $this->opening($buyer);
             }
             $rows = $this->db->fetchAllAssociative('SELECT * FROM order_items WHERE order_id=? ORDER BY id', [$orderId]);
@@ -149,9 +127,67 @@ final class ProgramService
                 $this->entry('spend:' . $orderId, $buyer, 'shopping', -$spent, 'order_spending', $orderId, 'reserved');
                 $this->syncProfile($buyer);
             }
-            $snapshot = ['items' => $items, 'rules' => $rules, 'totalMinor' => (int)$o['total'] * 100, 'deliveryMinor' => (int)$o['delivery_cost'] * 100, 'deliveryRefunded' => false, 'bonusMinor' => $spent, 'recipients' => $recipients];
+            $snapshot = ['provisionalReferral' => $provisional, 'referralParentId' => $parent, 'items' => $items, 'rules' => $rules, 'totalMinor' => (int)$o['total'] * 100, 'deliveryMinor' => (int)$o['delivery_cost'] * 100, 'deliveryRefunded' => false, 'bonusMinor' => $spent, 'recipients' => $recipients];
             $this->db->insert('program_orders', ['id' => $orderId, 'buyer_id' => $buyer, 'status' => 'pending', 'snapshot' => $this->json($snapshot), 'delivered_at' => null]);
         });
+    }
+
+    private function referrer(string $code): ?int
+    {
+        $id = $this->db->fetchOne('SELECT p.user_id FROM user_profiles p JOIN users u ON u.id=p.user_id WHERE (p.referral_code=? OR p.user_id=?) AND u.deleted_at IS NULL AND u.status=1 LIMIT 1', [$code, ctype_digit($code) ? (int)$code : 0]);
+        return $id === false ? null : (int)$id;
+    }
+
+    private function safeParent(?int $buyer, ?int $parent): ?int
+    {
+        $seen = $buyer === null ? [] : [$buyer => true];
+        $cursor = $parent;
+        while ($cursor !== null) {
+            if (isset($seen[$cursor])) {
+                return null;
+            }
+            $seen[$cursor] = true;
+            $row = $this->db->fetchAssociative('SELECT referred_by_user_id FROM user_profiles WHERE user_id=?', [$cursor]);
+            if (!$row) {
+                return null;
+            }
+            $cursor = $row['referred_by_user_id'] === null ? null : (int)$row['referred_by_user_id'];
+        }
+        return $parent;
+    }
+
+    private function recipients(?int $buyer, ?int $parent, array $rules, bool $buyerBonus, string $guestEmail = ''): array
+    {
+        $result = [];
+        $seen = $buyer === null ? [] : [$buyer => true];
+        $depth = 0;
+        while ($parent !== null) {
+            $id = (int)$parent;
+            if (isset($seen[$id])) {
+                throw new DomainException('Referral cycle');
+            }
+            $seen[$id] = true;
+            $p = $this->db->fetchAssociative('SELECT user_id,is_partner,referred_by_user_id FROM user_profiles WHERE user_id=?', [$id]);
+            if (!$p) {
+                throw new DomainException('Referrer not found');
+            }
+            $ownPurchase = $guestEmail !== '' && $guestEmail === mb_strtolower(trim((string)$this->db->fetchOne('SELECT email FROM users WHERE id=?', [$id])));
+            if ($depth < 4 && !$ownPurchase) {
+                $result[] = ['userId' => $id, 'wallet' => 'commission', 'kind' => 'level_' . ($depth + 1), 'bps' => $rules['levelsBps'][$depth]];
+            }
+            if ($p['is_partner']) {
+                if (!$ownPurchase) {
+                    $result[] = ['userId' => $id, 'wallet' => 'commission', 'kind' => 'partner', 'bps' => $rules['partnerBps']];
+                }
+                break;
+            }
+            ++$depth;
+            $parent = $p['referred_by_user_id'] === null ? null : (int)$p['referred_by_user_id'];
+        }
+        if ($buyer !== null && $buyerBonus) {
+            $result[] = ['userId' => $buyer, 'wallet' => 'shopping', 'kind' => 'buyer', 'bps' => $rules['buyerBps']];
+        }
+        return $result;
     }
 
     public function settleOrder(string $orderId): void
@@ -167,12 +203,45 @@ final class ProgramService
                 throw new DomainException('Payment is not confirmed');
             }
             $s = $this->decode($o['snapshot']);
+            // Only a previously unbound buyer may be attached by checkout. The first
+            // confirmed payment wins; pending orders never replace an existing team.
+            if (($s['provisionalReferral'] ?? false) && $o['buyer_id'] !== null) {
+                $buyer = (int)$o['buyer_id'];
+                $profile = $this->db->fetchAssociative('SELECT * FROM user_profiles WHERE user_id=?', [$buyer]);
+                $parent = empty($profile['is_partner']) ? ($profile['referred_by_user_id'] ?? null) : null;
+                if (empty($profile['is_partner']) && $parent === null) {
+                    $candidate = $this->referrer((string)$s['referralParentId']);
+                    $parent = $this->safeParent($buyer, $candidate);
+                    if ($parent !== null) {
+                        $this->db->update('user_profiles', ['referred_by_user_id' => $parent], ['user_id' => $buyer]);
+                        $this->audit($buyer, 'referral_attached', ['userId' => $buyer, 'parentId' => $parent, 'orderId' => $orderId]);
+                    }
+                }
+                // Two pending baskets can name different partners. Once a payment
+                // establishes the team, later payments use that team at captured rates.
+                if ($parent !== $s['referralParentId']) {
+                    $buyerBonus = in_array('buyer', array_column($s['recipients'], 'kind'), true);
+                    $s['recipients'] = $this->recipients($buyer, $parent === null ? null : (int)$parent, $s['rules'], $buyerBonus);
+                    foreach ($s['items'] as &$item) {
+                        $factor = $s['rules']['products'][(string)$item['productId']] ?? 10000;
+                        $item['rewards'] = [];
+                        foreach ($s['recipients'] as $recipient) {
+                            $recipient['amountMinor'] = intdiv(intdiv($item['paidMinor'] * $factor, 10000) * $recipient['bps'], 10000);
+                            $item['rewards'][] = $recipient;
+                        }
+                    }
+                    unset($item);
+                }
+                $s['referralParentId'] = $parent;
+                $s['provisionalReferral'] = false;
+                $this->db->update('program_orders', ['snapshot' => $this->json($s)], ['id' => $orderId]);
+            }
             $at = $o['delivered_at'] === null ? null : new DateTimeImmutable($o['delivered_at'])->modify('+' . $s['rules']['holdDays'] . ' days')->format('Y-m-d H:i:s');
             $this->db->update('program_ledger', ['state' => 'available'], ['id' => 'spend:' . $orderId]);
             foreach ($s['items'] as $item) {
                 foreach ($item['rewards'] as $r) {
                     $this->opening($r['userId']);
-                    $this->entry('reward:' . $item['itemId'] . ':' . $r['kind'], $r['userId'], $r['wallet'], $r['amountMinor'], $r['kind'], $orderId, 'pending', ['itemId' => $item['itemId']], $at);
+                    $this->entry('reward:' . $item['itemId'] . ':' . $r['kind'], $r['userId'], $r['wallet'], $r['amountMinor'], $r['kind'], $orderId, 'pending', ['itemId' => $item['itemId'], 'productName' => $item['description'], 'basisMinor' => $item['paidMinor'], 'productFactorBps' => $s['rules']['products'][(string)$item['productId']] ?? 10000, 'rateBps' => $r['bps']], $at);
                 }
             }
             $this->db->update('program_orders', ['status' => 'paid'], ['id' => $orderId]);

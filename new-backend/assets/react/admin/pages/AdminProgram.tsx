@@ -115,16 +115,6 @@ export function AdminProgram() {
             ["reference", "Подтверждение"],
             ["reason", "Причина"],
         ],
-        "promo-requests": [
-            ["id", "ID"],
-            ["user_id", "Партнёр"],
-            ["status", "Состояние"],
-            ["request", "Запрос"],
-            ["code", "Код"],
-            ["value", "Скидка %"],
-            ["reason", "Причина"],
-            ["rules", "Ограничения"],
-        ],
     };
     return (
         <div className="space-y-6">
@@ -137,7 +127,6 @@ export function AdminProgram() {
                     ["ledger", "Журнал"],
                     ["audit", "Аудит"],
                     ["withdrawals", "Выплаты"],
-                    ["promo-requests", "Промокоды"],
                     ["payments", "Оплата и возвраты"],
                 ].map(([key, title]) => (
                     <button
@@ -165,7 +154,7 @@ export function AdminProgram() {
                         rows={list.items}
                         columns={columns[tab]}
                         actions={
-                            ["users", "withdrawals", "promo-requests"].includes(tab)
+                            ["users", "withdrawals"].includes(tab)
                                 ? (row) => (
                                       <button className={buttonClass} onClick={() => setSelected(row)}>
                                           Управление
@@ -265,82 +254,6 @@ export function AdminProgram() {
                             </button>
                         </form>
                     )}
-                    {tab === "promo-requests" && (
-                        <form
-                            className="grid gap-3 sm:grid-cols-2"
-                            onSubmit={(e) =>
-                                void form(
-                                    e,
-                                    `${base}/promo-requests/${selected.id}`,
-                                    (f) => ({
-                                        status: value(f, "status"),
-                                        reason: value(f, "reason"),
-                                        code: value(f, "code"),
-                                        percent: num(f, "percent"),
-                                        usageLimit: num(f, "usageLimit"),
-                                        minOrderTotal: num(f, "minOrderTotal"),
-                                        expiresAt: value(f, "expiresAt")
-                                            ? new Date(value(f, "expiresAt")).toISOString()
-                                            : undefined,
-                                        rules: {
-                                            productIds: value(f, "productIds")
-                                                .split(",")
-                                                .map(Number)
-                                                .filter((n) => n > 0),
-                                            budgetMinor: Math.round(num(f, "budget") * 100),
-                                            perUserLimit: num(f, "perUserLimit"),
-                                            firstOrderOnly: f.get("firstOrderOnly") === "on",
-                                            allowBonuses: f.get("allowBonuses") === "on",
-                                            allowSaleProducts: f.get("allowSaleProducts") === "on",
-                                        },
-                                    }),
-                                    "PATCH",
-                                )
-                            }
-                        >
-                            <Field name="Решение">
-                                <select className={inputClass} name="status">
-                                    <option value="approved">Утвердить</option>
-                                    <option value="rejected">Отклонить</option>
-                                </select>
-                            </Field>
-                            <Field name="Причина">
-                                <input className={inputClass} name="reason" required />
-                            </Field>
-                            {[
-                                ["code", "Код A-Z, 0-9, _ и -", "text"],
-                                ["percent", "Скидка, %", "number"],
-                                ["usageLimit", "Всего применений", "number"],
-                                ["minOrderTotal", "Минимальный заказ, ₽", "number"],
-                                ["expiresAt", "Срок действия", "datetime-local"],
-                                ["productIds", "ID товаров через запятую (пусто — все)", "text"],
-                                ["budget", "Бюджет скидок, ₽", "number"],
-                                ["perUserLimit", "Применений на покупателя", "number"],
-                            ].map(([key, title, type]) => (
-                                <Field key={key} name={title}>
-                                    <input
-                                        className={inputClass}
-                                        name={key}
-                                        type={type}
-                                        min="0"
-                                        max={key === "percent" ? rates?.maxPromoPercent : undefined}
-                                    />
-                                </Field>
-                            ))}
-                            {[
-                                ["firstOrderOnly", "Только первый заказ"],
-                                ["allowBonuses", "Разрешить бонусы"],
-                                ["allowSaleProducts", "Разрешить акционные товары"],
-                            ].map(([key, title]) => (
-                                <label key={key}>
-                                    <input type="checkbox" name={key} /> {title}
-                                </label>
-                            ))}
-                            <button className={buttonClass} disabled={busy}>
-                                Сохранить решение
-                            </button>
-                        </form>
-                    )}
                 </Section>
             )}
             {tab === "settings" && rates && (
@@ -360,7 +273,6 @@ export function AdminProgram() {
                                         capBps: Math.round(num(f, "cap") * 100),
                                         holdDays: num(f, "hold"),
                                         minimumWithdrawalMinor: Math.round(num(f, "minimum") * 100),
-                                        maxPromoPercent: num(f, "promo"),
                                         products: Object.fromEntries(
                                             value(f, "products")
                                                 .split("\n")
@@ -379,10 +291,9 @@ export function AdminProgram() {
                                 ...rates.levelsBps.map((n, i) => [`level${i}`, `Уровень ${i + 1}, %`, n / 100]),
                                 ["partner", "Ближайший партнёр, %", rates.partnerBps / 100],
                                 ["buyer", "Покупателю, %", rates.buyerBps / 100],
-                                ["cap", "Потолок, %", rates.capBps / 100],
+                                ["cap", "Лимит вознаграждений, %", rates.capBps / 100],
                                 ["hold", "Удержание после доставки, дней", rates.holdDays],
                                 ["minimum", "Минимальная выплата, ₽", rates.minimumWithdrawalMinor / 100],
-                                ["promo", "Максимум промокода, %", rates.maxPromoPercent],
                             ].map(([key, title, n]) => (
                                 <Field key={key} name={String(title)}>
                                     <input
@@ -411,20 +322,25 @@ export function AdminProgram() {
                         </form>
                     </Section>
                     <Section title="Симулятор максимального полного распределения">
-                        <p>Расчёт для всех четырёх предков, ближайшего партнёра и покупателя.</p>
+                        <p>Максимальные вознаграждения для четырёх уровней, партнёра и покупателя. Скидки и списанные бонусы учитываются отдельно. Без введённых расходов прибыль не рассчитывается.</p>
                         <form
                             className="flex flex-wrap gap-3"
                             onSubmit={(e) => {
                                 e.preventDefault();
                                 const f = new FormData(e.currentTarget);
-                                void mutate(`${base}/simulate`, { amount: value(f, "base") })
+                                void mutate(`${base}/simulate`, { amount: value(f, "base"), discountAmount: value(f, "discount") || "0", bonusAmount: value(f, "spent") || "0", costAmount: value(f, "costs") })
                                     .then((r) => setSimulation(r || null))
                                     .catch(() => {});
                             }}
                         >
-                            <Field name="Оплаченные товары после скидок и бонусов, ₽">
+                            <Field name="Стоимость товаров до скидки и бонусов, ₽">
                                 <input className={inputClass} name="base" type="number" min="0" step="0.01" required />
                             </Field>
+                            {[["discount", "Скидка магазина, ₽"], ["spent", "Списание бонусов, ₽"], ["costs", "Себестоимость и все расходы на заказ, ₽"]].map(([name, title]) => (
+                                <Field key={name} name={title}>
+                                    <input className={inputClass} name={name} type="number" min="0" step="0.01" placeholder={name === "costs" ? "Не указаны" : "0"} />
+                                </Field>
+                            ))}
                             <button className={buttonClass} disabled={busy}>
                                 Рассчитать
                             </button>
@@ -435,12 +351,19 @@ export function AdminProgram() {
                                     id: key,
                                     name:
                                         {
-                                            basisMinor: "База",
+                                            grossMinor: "Стоимость товаров",
+                                            discountMinor: "Скидка магазина",
+                                            spentBonusMinor: "Списанные бонусы",
+                                            basisMinor: "База начислений",
+                                            totalIncentivesMinor: "Скидка + списание бонусов + вознаграждения",
+                                            remainingBeforeCostsMinor: "Остаток до себестоимости и расходов",
+                                            costMinor: "Указанные расходы",
+                                            remainingAfterCostsMinor: "Остаток после указанных расходов",
                                             levelsMinor: "Четыре уровня",
                                             partnerMinor: "Партнёр",
-                                            buyerMinor: "Покупатель",
-                                            totalMinor: "Всего",
-                                            capMinor: "Потолок",
+                                            buyerMinor: "Резерв на новые бонусы покупателя",
+                                            totalMinor: "Все вознаграждения",
+                                            capMinor: "Лимит вознаграждений",
                                         }[key] || key,
                                     result: Array.isArray(v) ? v.map((n) => money(n)).join(" / ") : money(v),
                                 }))}

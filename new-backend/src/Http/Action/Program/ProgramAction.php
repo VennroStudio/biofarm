@@ -74,9 +74,6 @@ final readonly class ProgramAction implements RequestHandlerInterface
     private function simulate(array $body): array
     {
         $r = ProgramMath::rules((array)($body['rates'] ?? []), $this->program->settings());
-        $basis = ProgramMath::minor($body['amount'] ?? '0');
-        $rates = [...$r['levelsBps'], $r['partnerBps'], $r['buyerBps']];
-        $amounts = array_map(static fn (int $bps): int => intdiv($basis * $bps, 10000), $rates);
-        return ['basisMinor' => $basis, 'levelsMinor' => \array_slice($amounts, 0, 4), 'partnerMinor' => $amounts[4], 'buyerMinor' => $amounts[5], 'totalMinor' => array_sum($amounts), 'capMinor' => intdiv($basis * $r['capBps'], 10000)];
+        return ProgramMath::simulate($body, $r);
     }
 }

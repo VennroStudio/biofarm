@@ -7,7 +7,6 @@ type Offer = {
     id: string;
     title: string;
     items: CartItem[];
-    promoCode?: string;
     referralCode: string;
     expiresAt?: string;
 };
@@ -33,7 +32,6 @@ export function OfferImport() {
         }
         writeCart(cart);
         sessionStorage.setItem("biofarm_offer_id", String(offer.id));
-        sessionStorage.setItem("biofarm_offer_promo", offer.promoCode || "");
         rememberReferral(offer.referralCode);
         setDone(true);
     }

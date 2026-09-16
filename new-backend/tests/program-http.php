@@ -65,7 +65,12 @@ try {
         if ($token !== null) {
             $r = $r->withHeader('Authorization', 'Bearer ' . $token);
         }
-        $response = $app->handle($r);
+        try {
+            $response = $app->handle($r);
+        } catch (\Slim\Exception\HttpNotFoundException $e) {
+            ok($expected === 404, $method . ' ' . $url . ' unexpectedly missing');
+            return null;
+        }
         $raw = (string)$response->getBody();
         $json = json_decode($raw, true);
         ok($response->getStatusCode() === $expected, $method . ' ' . $url . ' expected ' . $expected . ' got ' . $response->getStatusCode() . ' ' . substr($raw, 0, 500));
@@ -178,19 +183,64 @@ try {
     $registered = (int)$db->fetchOne('SELECT id FROM users WHERE email=?', [$registrationEmail]);
     ok((int)$db->fetchOne('SELECT referred_by_user_id FROM user_profiles WHERE user_id=?', [$registered]) === $ids[5], 'registration attaches referral');
     ok((int)$db->fetchOne('SELECT bonus_balance FROM user_profiles WHERE user_id=?', [$registered]) === 0, 'no welcome balance');
-    $promo = $call('POST', '/v1/program/promo-requests', ['description' => 'Проверка ограниченного промокода', 'percent' => 3], $tokens[1]);
+    // Removed partner promo endpoints must stay unavailable; ordinary shop codes still work.
+    $call('POST', '/v1/program/promo-requests', ['description' => 'Removed', 'percent' => 3], $tokens[1], 410);
+    $call('GET', '/admin/api/program/promo-requests', [], $admin, 410);
     $promoCode = 'TEST-' . strtoupper($suffix);
-    $call('PATCH', '/admin/api/program/promo-requests/' . $promo['id'], ['status' => 'approved', 'reason' => 'Интеграционная проверка', 'code' => $promoCode, 'percent' => 3, 'usageLimit' => 2, 'minOrderTotal' => 0, 'expiresAt' => gmdate('c', time() + 86400), 'rules' => ['firstOrderOnly' => true, 'allowSaleProducts' => true]], $admin);
+    $shopPromo = $call('POST', '/admin/api/promo-codes', ['code' => $promoCode, 'type' => 'percent', 'value' => 3, 'usage_limit' => 1], $admin, 201);
     $promoBody = $body;
     unset($promoBody['offerId']);
     $promoBody['promoCode'] = $promoCode;
     $promoOrder = $call('POST', '/v1/orders/create', $promoBody, $tokens[2], 201);
-    $call('POST', '/v1/orders/create', $promoBody, $tokens[2], 422);
+    ok((int)$db->fetchOne('SELECT discount_amount FROM orders WHERE id=?', [$promoOrder['id']]) > 0, 'ordinary shop promo discount still works');
+    $exhausted = $call('POST', '/v1/orders/create', $promoBody, $tokens[2], 201);
+    ok((int)$db->fetchOne('SELECT discount_amount FROM orders WHERE id=?', [$exhausted['id']]) === 0, 'exhausted ordinary code gives no discount');
     $program->cancelOrder($promoOrder['id']);
     $db->update('orders', ['status' => 'cancelled'], ['id' => $promoOrder['id']]);
-    ok((int)$db->fetchOne('SELECT used_count FROM promo_codes WHERE code=?', [$promoCode]) === 0, 'cancel releases promo usage');
+    ok((int)$db->fetchOne('SELECT used_count FROM promo_codes WHERE code=?', [$promoCode]) === 0, 'cancel releases ordinary promo usage');
     $program->cancelOrder($promoOrder['id']);
     $call('POST', '/v1/orders/create', $promoBody, $tokens[2], 201);
+
+    $retiredCode = 'OLD-PARTNER-' . strtoupper($suffix);
+    $retired = $call('POST', '/admin/api/promo-codes', ['code' => $retiredCode, 'type' => 'percent', 'value' => 3], $admin, 201);
+    $db->insert('partner_promo_requests', ['id' => bin2hex(random_bytes(16)), 'user_id' => $ids[1], 'status' => 'approved', 'request' => '{}', 'rules' => '{}', 'promo_code_id' => $retired['id'], 'created_at' => gmdate('Y-m-d H:i:s'), 'updated_at' => gmdate('Y-m-d H:i:s')]);
+    $retiredBody = $promoBody;
+    $retiredBody['promoCode'] = $retiredCode;
+    $call('POST', '/v1/orders/create', $retiredBody, $tokens[2], 422);
+    $noPromoOffer = $call('POST', '/v1/program/offers', ['title' => 'Без автопромокода', 'promoCode' => $retiredCode, 'items' => [['productId' => $product, 'quantity' => 1]]], $tokens[1]);
+    ok(!array_key_exists('promoCode', $call('GET', '/v1/offers/' . $noPromoOffer['id'])), 'QR no longer imports a promo');
+    $sim = $call('POST', '/admin/api/program/simulate', ['amount' => '10000', 'discountAmount' => '1000', 'costAmount' => '5000'], $admin);
+    ok($sim['totalIncentivesMinor'] === 136000 && $sim['remainingAfterCostsMinor'] === 364000, 'simulator includes all supplied costs');
+    ok(!array_key_exists('maxPromoPercent', $call('GET', '/admin/api/program/settings', [], $admin)), 'partner promo setting retired');
+
+    // Existing unbound account follows the first valid link, even with another partner's QR.
+    $db->update('user_profiles', ['referred_by_user_id' => null], ['user_id' => $ids[2]]);
+    $firstTouch = $body + ['referredBy' => 'test-' . $suffix . '-3'];
+    $unbound = $call('POST', '/v1/orders/create', $firstTouch, $tokens[2], 201);
+    $qrOnly = $call('POST', '/v1/orders/create', $body, $tokens[2], 201);
+    $getSnapshot = static fn ($id) => json_decode($db->fetchOne('SELECT snapshot FROM program_orders WHERE id=?', [$id]), true);
+    ok((int)$getSnapshot($unbound['id'])['recipients'][0]['userId'] === $ids[3], 'first touch wins over QR owner');
+    ok((int)$getSnapshot($qrOnly['id'])['recipients'][0]['userId'] === $ids[1], 'QR works for registered unbound buyer');
+    ok($db->fetchOne('SELECT referred_by_user_id FROM user_profiles WHERE user_id=?', [$ids[2]]) === null, 'pending orders do not bind');
+    $confirmPayment = static function (string $id) use ($call, $db, $tokens, &$provider): void {
+        $call('POST', '/v1/payments/' . $id, [], $tokens[2]);
+        $providerId = $db->fetchOne("SELECT provider_id FROM payment_operations WHERE order_id=? AND kind='payment'", [$id]);
+        $provider[$providerId]['status'] = 'succeeded';
+        $provider[$providerId]['paid'] = true;
+        $call('POST', '/webhooks/yookassa', ['event' => 'payment.succeeded', 'object' => ['id' => $providerId]]);
+    };
+    $confirmPayment($unbound['id']);
+    ok((int)$db->fetchOne('SELECT referred_by_user_id FROM user_profiles WHERE user_id=?', [$ids[2]]) === $ids[3], 'confirmed payment binds customer');
+    $confirmPayment($qrOnly['id']);
+    ok((int)$getSnapshot($qrOnly['id'])['recipients'][0]['userId'] === $ids[3], 'later payment preserves established team');
+    $bound = $call('POST', '/v1/orders/create', $body, $tokens[2], 201);
+    ok((int)$getSnapshot($bound['id'])['recipients'][0]['userId'] === $ids[3], 'QR never overwrites existing team');
+    $guestFirst = $call('POST', '/v1/orders/create', $firstTouch, null, 201);
+    ok((int)$getSnapshot($guestFirst['id'])['recipients'][0]['userId'] === $ids[3], 'guest uses same first-touch priority');
+    $selfBody = $body;
+    $selfBody['shippingAddress']['email'] = 'program-' . $suffix . '-1@example.test';
+    $selfOrder = $call('POST', '/v1/orders/create', $selfBody, null, 201);
+    ok(!in_array($ids[1], array_column($getSnapshot($selfOrder['id'])['recipients'], 'userId'), true), 'guest self purchase excludes own commission');
 
     echo "PASS program HTTP: {$checks} assertions, 8 test users, real routes and database; provider mocked; fixtures rolled back\n";
 } finally {

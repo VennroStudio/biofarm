@@ -3,6 +3,7 @@
 declare(strict_types=1);
 use App\Components\Http\Middleware\Identity\Authenticate;
 use App\Components\Http\Middleware\Identity\RequireAdmin;
+use App\Components\Http\Response\JsonDataResponse;
 use App\Components\Router\StaticRouteGroup as Group;
 use App\Http\Action\v1\PartnerOffer\OfferAction;
 use App\Http\Action\v1\PartnerOffer\ValidateReferralAction;
@@ -16,13 +17,14 @@ return static function (App $app): void {
         $group->get('/offers', OfferAction::class);
         $group->post('/offers', OfferAction::class);
         $group->patch('/offers/{id}', OfferAction::class);
-        $group->get('/promo-requests', OfferAction::class);
-        $group->post('/promo-requests', OfferAction::class);
     }));
     $group->add(Authenticate::class);
-    $admin = $app->group('/admin/api/program', new Group(static function (RouteCollectorProxy $group): void {
-        $group->get('/promo-requests', OfferAction::class);
-        $group->patch('/promo-requests/{id}', OfferAction::class);
-    }));
-    $admin->add(RequireAdmin::class)->add(Authenticate::class);
+    // Explicit tombstones also prevent the admin SPA catch-all from returning HTML.
+    foreach (['/v1/program', '/admin/api/program'] as $base) {
+        $route = $app->map(['GET', 'POST', 'PATCH'], $base . '/promo-requests[/{id}]', fn () => new JsonDataResponse(['message' => 'Промокоды партнёрской программы удалены.'], 410));
+        if (str_starts_with($base, '/admin')) {
+            $route->add(RequireAdmin::class);
+        }
+        $route->add(Authenticate::class);
+    }
 };

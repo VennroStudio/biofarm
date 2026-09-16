@@ -47,12 +47,8 @@ final readonly class OfferService
         if ($expires !== null && ($expires === false || $expires <= time())) {
             throw new DomainExceptionModule('program', 'Срок предложения должен быть в будущем.', 6, status: 422);
         }
-        $promo = mb_strtoupper(trim((string)($payload['promoCode'] ?? '')));
-        if ($promo !== '' && !$this->db->fetchOne('SELECT id FROM promo_codes WHERE code=? AND is_active=1', [$promo])) {
-            throw new DomainExceptionModule('program', 'Промокод не найден или выключен.', 7, status: 422);
-        }
         $id = bin2hex(random_bytes(24));
-        $this->db->insert('partner_offers', ['id' => $id, 'user_id' => $user, 'title' => $title, 'items' => json_encode(array_values($items), JSON_THROW_ON_ERROR), 'promo_code' => $promo ?: null, 'expires_at' => $expires ? gmdate('Y-m-d H:i:s', $expires) : null, 'is_active' => 1, 'visits' => 0, 'created_at' => gmdate('Y-m-d H:i:s')]);
+        $this->db->insert('partner_offers', ['id' => $id, 'user_id' => $user, 'title' => $title, 'items' => json_encode(array_values($items), JSON_THROW_ON_ERROR), 'promo_code' => null, 'expires_at' => $expires ? gmdate('Y-m-d H:i:s', $expires) : null, 'is_active' => 1, 'visits' => 0, 'created_at' => gmdate('Y-m-d H:i:s')]);
         return ['id' => $id, 'url' => '/cart?offer=' . $id];
     }
 
@@ -61,6 +57,7 @@ final readonly class OfferService
         $this->assertPartner($user);
         $rows = $this->db->fetchAllAssociative("SELECT o.*, (SELECT COUNT(*) FROM partner_offer_orders po WHERE po.offer_id=o.id) AS orders_count,(SELECT COUNT(*) FROM partner_offer_orders po JOIN orders x ON BINARY x.id=BINARY po.order_id WHERE po.offer_id=o.id AND x.payment_status='completed') AS paid_count FROM partner_offers o WHERE user_id=? ORDER BY created_at DESC LIMIT 25 OFFSET " . (max(0, $page - 1) * 25), [$user]);
         foreach ($rows as &$row) {
+            unset($row['promo_code']);
             $row['items'] = json_decode($row['items'], true, 512, JSON_THROW_ON_ERROR);
             $row['url'] = '/cart?offer=' . $row['id'];
         }
@@ -93,7 +90,7 @@ final readonly class OfferService
         if ($visit) {
             $this->db->executeStatement('UPDATE partner_offers SET visits=visits+1 WHERE id=?', [$id]);
         }
-        return ['id' => $id, 'title' => $row['title'], 'items' => $items, 'promoCode' => $row['promo_code'], 'referralCode' => $row['referral_code'], 'expiresAt' => $row['expires_at']];
+        return ['id' => $id, 'title' => $row['title'], 'items' => $items, 'referralCode' => $row['referral_code'], 'expiresAt' => $row['expires_at']];
     }
 
     public function recordOrder(string $id,string $order): void

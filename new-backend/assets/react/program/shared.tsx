@@ -9,7 +9,6 @@ export type Rates = {
     capBps: number;
     holdDays: number;
     minimumWithdrawalMinor: number;
-    maxPromoPercent: number;
     products: Record<string, number>;
 };
 export type Dashboard = {

@@ -73,7 +73,12 @@ final readonly class CreateOrderAction implements RequestHandlerInterface
         $offerId = trim((string)($payload['offerId'] ?? ''));
         if ($offerId !== '') {
             $offer = $this->offers->read($offerId, false);
-            $payload['referredBy'] = $offer['referralCode'];
+            // A QR basket is a fallback source; preserve an earlier valid invitation.
+            $code = trim((string)($payload['referredBy'] ?? ''));
+            $valid = $code !== '' && $this->connection->fetchOne('SELECT p.user_id FROM user_profiles p JOIN users u ON u.id=p.user_id WHERE (p.referral_code=? OR p.user_id=?) AND u.deleted_at IS NULL AND u.status=1 LIMIT 1', [$code, ctype_digit($code) ? (int)$code : 0]);
+            if (!$valid) {
+                $payload['referredBy'] = $offer['referralCode'];
+            }
         }
 
         if (!$this->settings->bool('cart_enabled')) {

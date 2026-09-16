@@ -93,7 +93,7 @@ final readonly class CreateOrderHandler
         );
 
         $this->program->atomic(function () use ($order, $orderId, $command, $calculation): void {
-            $this->partnerPromo->validateCheckout($calculation['promo_code'], $calculation['items'], $command->userId, $command->useBonuses, $calculation['discount_amount']);
+            $this->partnerPromo->validateCheckout($calculation['promo_code']);
             $this->orderRepository->add($order);
 
             foreach ($calculation['items'] as $item) {
@@ -155,20 +155,17 @@ final readonly class CreateOrderHandler
             return null;
         }
 
-        if ($command->userId === null) {
-            $code = trim((string)$command->referredBy);
-            $referrer = ctype_digit($code) ? $this->profileRepository->findByUserId((int)$code) : $this->profileRepository->findByReferralCode($code);
-            return $referrer === null ? null : ($referrer->referralCode ?: (string)$referrer->userId);
-        }
-
-        $profile = $this->profileRepository->findByUserId($command->userId);
-        if ($profile === null || $profile->referredByUserId === null) {
+        $profile = $command->userId === null ? null : $this->profileRepository->findByUserId($command->userId);
+        if ($profile?->isPartner) {
             return null;
         }
-
-        $referrerProfile = $this->profileRepository->findByUserId($profile->referredByUserId);
-
-        return $referrerProfile?->referralCode ?: (string)$profile->referredByUserId;
+        if ($profile?->referredByUserId !== null) {
+            $referrerProfile = $this->profileRepository->findByUserId($profile->referredByUserId);
+            return $referrerProfile?->referralCode ?: (string)$profile->referredByUserId;
+        }
+        $code = trim((string)$command->referredBy);
+        $referrer = ctype_digit($code) ? $this->profileRepository->findByUserId((int)$code) : $this->profileRepository->findByReferralCode($code);
+        return $referrer === null ? null : ($referrer->referralCode ?: (string)$referrer->userId);
     }
 
     /**

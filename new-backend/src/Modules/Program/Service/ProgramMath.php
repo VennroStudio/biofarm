@@ -55,14 +55,33 @@ final class ProgramMath
         return intdiv($amount * ($previous + $quantity), $total) - intdiv($amount * $previous, $total);
     }
 
+    /** Conservative full-chain estimate; costs are supplied explicitly, never guessed. */
+    public static function simulate(array $input, array $rules): array
+    {
+        $gross = self::minor($input['amount'] ?? '0');
+        $discount = self::minor($input['discountAmount'] ?? '0');
+        $spent = self::minor($input['bonusAmount'] ?? '0');
+        $costs = isset($input['costAmount']) && $input['costAmount'] !== '' ? self::minor($input['costAmount']) : null;
+        $basis = $gross - $discount - $spent;
+        if ($basis < 0) {
+            throw new DomainException('Скидка и списание бонусов превышают стоимость товаров.');
+        }
+        $amounts = array_map(static fn (int $bps): int => intdiv($basis * $bps, 10000), [...$rules['levelsBps'], $rules['partnerBps'], $rules['buyerBps']]);
+        $total = array_sum($amounts);
+        $result = ['grossMinor' => $gross, 'discountMinor' => $discount, 'spentBonusMinor' => $spent, 'basisMinor' => $basis, 'levelsMinor' => \array_slice($amounts, 0, 4), 'partnerMinor' => $amounts[4], 'buyerMinor' => $amounts[5], 'totalMinor' => $total, 'capMinor' => intdiv($basis * $rules['capBps'], 10000), 'totalIncentivesMinor' => $discount + $spent + $total, 'remainingBeforeCostsMinor' => $basis - $total];
+        if ($costs !== null) {
+            $result['costMinor'] = $costs;
+            $result['remainingAfterCostsMinor'] = $basis - $total - $costs;
+        }
+        return $result;
+    }
+
     public static function rules(array $input, array $current = []): array
     {
-        $rules = array_replace(['levelsBps' => [100, 50, 25, 25], 'partnerBps' => 100, 'buyerBps' => 100, 'capBps' => 400, 'holdDays' => 14, 'minimumWithdrawalMinor' => 10000, 'products' => [], 'maxPromoPercent' => 20], $current, $input);
-        if (array_diff(array_keys($input), ['levelsBps', 'partnerBps', 'buyerBps', 'capBps', 'holdDays', 'minimumWithdrawalMinor', 'products', 'maxPromoPercent']) !== []) {
+        unset($current['maxPromoPercent']); // Historical settings remain readable.
+        $rules = array_replace(['levelsBps' => [100, 50, 25, 25], 'partnerBps' => 100, 'buyerBps' => 100, 'capBps' => 400, 'holdDays' => 14, 'minimumWithdrawalMinor' => 10000, 'products' => []], $current, $input);
+        if (array_diff(array_keys($input), ['levelsBps', 'partnerBps', 'buyerBps', 'capBps', 'holdDays', 'minimumWithdrawalMinor', 'products']) !== []) {
             throw new DomainException('Unknown program setting');
-        }
-        if (!\is_int($rules['maxPromoPercent']) || $rules['maxPromoPercent'] < 0 || $rules['maxPromoPercent'] > 100) {
-            throw new DomainException('Invalid maximum promo percentage');
         }
         if (!\is_array($rules['products']) || !\is_array($rules['levelsBps']) || !array_is_list($rules['levelsBps']) || \count($rules['levelsBps']) !== 4) {
             throw new DomainException('Exactly four level rates required');

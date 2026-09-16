@@ -36,9 +36,9 @@ foreach (['cart_enabled', 'referral_enabled', 'order_bonus_enabled', 'withdrawal
 }
 $db->executeStatement('CREATE TABLE promo_code_redemptions (order_id TEXT, promo_code_id INTEGER)');
 $db->executeStatement('CREATE TABLE payment_operations (id TEXT PRIMARY KEY, order_id TEXT, kind TEXT, status TEXT)');
-$db->executeStatement('CREATE TABLE users (id INTEGER PRIMARY KEY,first_name TEXT,last_name TEXT)');
+$db->executeStatement('CREATE TABLE users (id INTEGER PRIMARY KEY,first_name TEXT,last_name TEXT,email TEXT,status INTEGER DEFAULT 1,deleted_at TEXT)');
 $db->executeStatement('CREATE TABLE user_profiles (user_id INTEGER PRIMARY KEY,bonus_balance INTEGER,is_partner INTEGER,referred_by_user_id INTEGER,referral_code TEXT)');
-$db->executeStatement('CREATE TABLE orders (id TEXT PRIMARY KEY,user_id INTEGER,total INTEGER,discount_amount INTEGER,bonus_used INTEGER,delivery_cost INTEGER,payment_status TEXT,referred_by TEXT,promo_code TEXT,status TEXT,updated_at TEXT)');
+$db->executeStatement('CREATE TABLE orders (id TEXT PRIMARY KEY,user_id INTEGER,total INTEGER,discount_amount INTEGER,bonus_used INTEGER,delivery_cost INTEGER,payment_status TEXT,referred_by TEXT,promo_code TEXT,status TEXT,updated_at TEXT,shipping_address TEXT)');
 $db->executeStatement('CREATE TABLE order_items (id INTEGER PRIMARY KEY AUTOINCREMENT,order_id TEXT,product_id INTEGER,product_name TEXT,price INTEGER,quantity INTEGER)');
 $now = new DateTimeImmutable('2026-09-17 12:00:00', new DateTimeZone('UTC'));
 $p = new ProgramService($db, static function () use (&$now) {return $now; });
@@ -62,6 +62,11 @@ function paid($db, $p, string $id): void
 check(ProgramMath::allocate(5, [1 => 3, 2 => 3, 3 => 3]) === [1 => 2, 2 => 2, 3 => 1], 'allocation');
 fails(static fn () => ProgramMath::rules(['buyerBps' => 500]), 'budget cap');
 check(ProgramMath::minor('0.25') === 25, 'decimal');
+$simulation = ProgramMath::simulate(['amount' => '10000', 'discountAmount' => '1000', 'costAmount' => '5000'], ProgramMath::rules([]));
+check($simulation['basisMinor'] === 900000 && $simulation['totalMinor'] === 36000, 'simulation net reward base');
+check($simulation['totalIncentivesMinor'] === 136000, 'simulation includes shop discount and rewards');
+check($simulation['remainingAfterCostsMinor'] === 364000, 'simulation subtracts supplied operating costs');
+fails(static fn () => ProgramMath::simulate(['amount' => '100', 'discountAmount' => '101'], ProgramMath::rules([])), 'discount cannot exceed goods');
 $item = order($db, $p, 'A', 7, 300, 10000, 1, 1000);
 check($p->shoppingAvailable(7) === 70000, 'spending reserved');
 check((int)$db->fetchOne("SELECT COUNT(*) FROM program_ledger WHERE kind='buyer'") === 0, 'no prepayment reward');
@@ -145,6 +150,44 @@ foreach (['review_required', 'retry_required'] as $uncertain) {
 }
 $db->update('payment_operations', ['status' => 'canceled'], ['id' => 'inflight']);
 $p->cancelOrder('INFLIGHT');
+// An existing unbound customer earns for the QR owner, but joins only on payment.
+$db->insert('users', ['id' => 8, 'first_name' => 'Unbound', 'email' => 'unbound@example.test']);
+$db->insert('user_profiles', ['user_id' => 8, 'bonus_balance' => 0, 'is_partner' => 0, 'referral_code' => 'bf-8']);
+order($db, $p, 'UNBOUND', 8);
+$unbound = json_decode($db->fetchOne("SELECT snapshot FROM program_orders WHERE id='UNBOUND'"), true);
+check(array_column($unbound['recipients'], 'userId') === [1, 1, 8], 'unbound QR buyer must reward the partner');
+check($db->fetchOne('SELECT referred_by_user_id FROM user_profiles WHERE user_id=8') === null, 'unpaid order does not bind customer');
+paid($db, $p, 'UNBOUND');
+check((int)$db->fetchOne('SELECT referred_by_user_id FROM user_profiles WHERE user_id=8') === 1, 'paid QR order binds existing customer');
+check($p->dashboard(1)['balances']['commission']['pendingMinor'] > 0, 'QR partner gets commissions');
+// Self-links and links from descendants must not prevent a normal purchase or create cycles.
+$db->insert('users', ['id' => 9, 'first_name' => 'Cycle', 'email' => 'cycle@example.test']);
+$db->insert('user_profiles', ['user_id' => 9, 'bonus_balance' => 0, 'is_partner' => 0, 'referral_code' => 'bf-9']);
+order($db, $p, 'SELF-LINK', 9);
+$p->cancelOrder('SELF-LINK');
+$db->insert('users', ['id' => 10, 'first_name' => 'Child']);
+$db->insert('user_profiles', ['user_id' => 10, 'bonus_balance' => 0, 'is_partner' => 0, 'referral_code' => 'bf-10', 'referred_by_user_id' => 9]);
+foreach (['bf-9', 'bf-10'] as $code) {
+    $id = 'CYCLE-' . $code;
+    $db->insert('orders', ['id' => $id, 'user_id' => 9, 'total' => 1000, 'discount_amount' => 0, 'bonus_used' => 0, 'delivery_cost' => 0, 'payment_status' => 'pending', 'referred_by' => $code]);
+    $db->insert('order_items', ['order_id' => $id, 'product_id' => 1, 'product_name' => 'Test', 'price' => 1000, 'quantity' => 1]);
+    $p->captureOrder($id);
+    paid($db, $p, $id);
+    check($db->fetchOne('SELECT referred_by_user_id FROM user_profiles WHERE user_id=9') === null, 'self or descendant link cannot bind');
+    check((int)$db->fetchOne("SELECT COUNT(*) FROM program_ledger WHERE order_id=? AND wallet='commission'", [$id]) === 0, 'no commission for cyclic invitation');
+}
+order($db, $p, 'BECAME-PARTNER', 9);
+$p->changeTree(9, null, true, 1, 'Promotion while order pending');
+paid($db, $p, 'BECAME-PARTNER');
+check($db->fetchOne('SELECT referred_by_user_id FROM user_profiles WHERE user_id=9') === null, 'payment must not reattach promoted partner');
+check((int)$db->fetchOne("SELECT COUNT(*) FROM program_ledger WHERE order_id='BECAME-PARTNER' AND wallet='commission'") === 0, 'no former team reward for provisional promoted buyer');
+// A guest must not receive a cash commission on their own purchase.
+$db->update('users', ['email' => 'partner@example.test'], ['id' => 1]);
+$db->insert('orders', ['id' => 'SELF', 'user_id' => null, 'total' => 1000, 'discount_amount' => 0, 'bonus_used' => 0, 'delivery_cost' => 0, 'payment_status' => 'pending', 'referred_by' => 'bf-1', 'shipping_address' => json_encode(['email' => 'PARTNER@example.test'])]);
+$db->insert('order_items', ['order_id' => 'SELF', 'product_id' => 1, 'product_name' => 'Test', 'price' => 1000, 'quantity' => 1]);
+$p->captureOrder('SELF');
+paid($db, $p, 'SELF');
+check((int)$db->fetchOne("SELECT COUNT(*) FROM program_ledger WHERE order_id='SELF' AND wallet='commission' AND user_id=1") === 0, 'guest self referral must not pay buyer');
 $db->update('site_settings', ['value' => 'false'], ['key' => 'referral_enabled']);
 order($db, $p, 'NOREF');
 $noRef = json_decode($db->fetchOne("SELECT snapshot FROM program_orders WHERE id='NOREF'"), true);

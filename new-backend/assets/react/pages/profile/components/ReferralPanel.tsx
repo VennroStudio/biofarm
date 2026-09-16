@@ -108,14 +108,6 @@ export function ReferralPanel({ withdrawalsEnabled }: { withdrawalsEnabled: bool
             ["orders_count", "Заказы"],
             ["paid_count", "Оплачено"],
         ],
-        "promo-requests": [
-            ["created_at", "Дата"],
-            ["status", "Состояние"],
-            ["reason", "Причина"],
-            ["code", "Код"],
-            ["value", "Скидка %"],
-            ["rules", "Ограничения"],
-        ],
     };
     return (
         <div className="space-y-6">
@@ -221,7 +213,6 @@ export function ReferralPanel({ withdrawalsEnabled }: { withdrawalsEnabled: bool
                             onSubmit={(e) =>
                                 void submit(e, "offers", (f) => ({
                                     title: f.get("title"),
-                                    promoCode: f.get("promoCode") || undefined,
                                     expiresAt: f.get("expiresAt")
                                         ? new Date(String(f.get("expiresAt"))).toISOString()
                                         : undefined,
@@ -232,9 +223,6 @@ export function ReferralPanel({ withdrawalsEnabled }: { withdrawalsEnabled: bool
                             <Field name="Название">
                                 <input className={inputClass} name="title" required />
                             </Field>
-                            <Field name="Промокод">
-                                <input className={inputClass} name="promoCode" />
-                            </Field>
                             <Field name="Действует до">
                                 <input className={inputClass} type="datetime-local" name="expiresAt" />
                             </Field>
@@ -243,34 +231,6 @@ export function ReferralPanel({ withdrawalsEnabled }: { withdrawalsEnabled: bool
                             </button>
                         </form>
                         {offerUrl && <LinkQR url={offerUrl} />}
-                    </Section>
-                    <Section title="Запрос промокода">
-                        <form
-                            className="grid gap-3"
-                            onSubmit={(e) =>
-                                void submit(e, "promo-requests", (f) => ({
-                                    description: f.get("description"),
-                                    percent: Number(f.get("percent")),
-                                }))
-                            }
-                        >
-                            <Field name="Описание акции">
-                                <textarea className={inputClass} name="description" required />
-                            </Field>
-                            <Field name="Желаемая скидка, %">
-                                <input
-                                    className={inputClass}
-                                    name="percent"
-                                    type="number"
-                                    min="1"
-                                    max={data.rates.maxPromoPercent}
-                                    required
-                                />
-                            </Field>
-                            <button className={buttonClass} disabled={busy}>
-                                Отправить запрос
-                            </button>
-                        </form>
                     </Section>
                 </>
             )}
@@ -281,12 +241,7 @@ export function ReferralPanel({ withdrawalsEnabled }: { withdrawalsEnabled: bool
                         ["sales", "Продажи"],
                         ["ledger", "Операции"],
                         ...(withdrawalsEnabled ? [["withdrawals", "Выплаты"]] : []),
-                        ...(data.identity.isPartner
-                            ? [
-                                  ["offers", "Предложения"],
-                                  ["promo-requests", "Промокоды"],
-                              ]
-                            : []),
+                        ...(data.identity.isPartner ? [["offers", "Предложения"]] : []),
                     ].map(([key, title]) => (
                         <button
                             type="button"
