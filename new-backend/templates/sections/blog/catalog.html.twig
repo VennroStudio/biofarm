@@ -1,118 +1,105 @@
-<section class="pb-12 pt-28 md:pb-16">
+<section class="pb-16 pt-28 md:pb-24 md:pt-32">
     <div class="container mx-auto px-5 md:px-8 lg:px-12">
-        <div class="mb-8 rounded-2xl border border-border bg-secondary/40 p-6 md:p-8">
-            <span class="mb-3 inline-block text-xs uppercase tracking-widest text-primary">
-                Полезные статьи
-            </span>
-            <h1 class="mb-3 text-3xl font-normal text-primary md:text-5xl">
-                Блог BioFarm
-            </h1>
-            <p class="max-w-2xl text-muted-foreground">
-                Советы экспертов, рецепты и интересные факты о натуральных продуктах
-            </p>
-        </div>
+        <header class="mb-8 grid items-end gap-5 border-b border-border pb-8 md:grid-cols-[1fr_auto] md:gap-12 md:pb-10">
+            <div>
+                <div class="mb-4 flex items-center gap-3 text-xs uppercase tracking-[0.18em] text-primary">
+                    <span class="h-px w-9 bg-primary" aria-hidden="true"></span>
+                    Полезные статьи
+                </div>
+                <h1 class="text-5xl font-normal leading-none tracking-tight text-foreground md:text-6xl lg:text-7xl">Блог <span class="text-primary">BioFarm</span></h1>
+            </div>
+            <p class="max-w-sm text-base leading-relaxed text-muted-foreground md:pb-1 md:text-lg">Советы, рецепты и интересные факты о натуральных продуктах.</p>
+        </header>
 
-        <div class="mb-8 flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 md:flex-row">
-            <form class="relative max-w-md flex-1" action="/blog" method="get">
-                {% if page.selectedCategory != 'Все' %}
-                    <input type="hidden" name="category" value="{{ page.selectedCategory }}">
-                {% endif %}
-                <svg class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <path d="m21 21-4.3-4.3"></path>
-                </svg>
-                <input
-                    type="search"
-                    name="q"
-                    value="{{ page.searchQuery }}"
-                    placeholder="Поиск статей..."
-                    class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 pl-10 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:text-sm"
-                >
-            </form>
-            <div class="flex flex-wrap gap-2">
+        <div class="mb-8 flex flex-col gap-5 rounded-3xl bg-secondary/50 p-4 md:p-5 xl:flex-row xl:items-center xl:justify-between">
+            <nav aria-label="Категории статей" class="flex flex-wrap gap-2">
                 {% for category in page.categories %}
-                    <a
-                        href="{{ page.categoryUrls[category] }}"
-                        class="inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-md px-3 text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 {{ page.selectedCategory == category ? 'gradient-primary text-primary-foreground hover:bg-primary/90' : 'border border-input bg-background hover:bg-accent hover:text-accent-foreground' }}"
-                    >
+                    <a href="{{ page.categoryUrls[category] }}" {% if page.selectedCategory == category %}aria-current="page"{% endif %}
+                       class="inline-flex min-h-11 items-center justify-center rounded-full px-5 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 {{ page.selectedCategory == category ? 'bg-primary text-primary-foreground' : 'bg-white/70 text-foreground hover:bg-white' }}">
                         {{ category }}
                     </a>
                 {% endfor %}
-            </div>
+            </nav>
+            <form class="flex w-full items-center gap-2 rounded-full border border-border bg-white py-1.5 pl-4 pr-1.5 xl:w-80 xl:shrink-0" action="/blog" method="get" role="search">
+                {% if page.selectedCategory != 'Все' %}
+                    <input type="hidden" name="category" value="{{ page.selectedCategory }}">
+                {% endif %}
+                <label for="blog-search" class="sr-only">Поиск статей</label>
+                <input id="blog-search" type="search" name="q" value="{{ page.searchQuery }}" placeholder="Найти статью" class="min-w-0 flex-1 bg-transparent py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary">
+                <button type="submit" aria-label="Найти статьи" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary text-primary transition-colors hover:bg-primary hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                    <svg class="h-4 w-4" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="7.5"/><path d="m16 16 5 5"/></svg>
+                </button>
+            </form>
         </div>
 
         {% if page.posts is empty %}
-            <div class="py-20 text-center">
-                <p class="text-lg text-muted-foreground">
-                    Статьи не найдены. Попробуйте изменить параметры поиска.
-                </p>
+            <div class="rounded-3xl border border-dashed border-border px-6 py-20 text-center">
+                <h2 class="mb-3 text-2xl font-normal text-foreground">Статьи не найдены</h2>
+                <p class="text-muted-foreground">Попробуйте изменить параметры поиска.</p>
+                <a href="/blog" class="mt-6 inline-flex rounded-full bg-primary px-6 py-3 text-sm text-white">Все статьи</a>
             </div>
         {% else %}
-            {% if page.featuredPost %}
-                {% include 'components/blog/featured-card.html.twig' with { post: page.featuredPost } only %}
+            {% if page.searchQuery or page.selectedCategory != 'Все' %}
+                <div class="mb-6 flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
+                    <p>{{ page.searchQuery ? 'Поиск: «' ~ page.searchQuery ~ '»' : page.selectedCategory }} <span class="ml-2 text-primary">{{ page.totalPosts }}</span></p>
+                    <a href="/blog" class="text-primary underline underline-offset-4">Сбросить фильтры</a>
+                </div>
             {% endif %}
 
-            <div class="-mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-3 md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0 lg:grid-cols-3">
-                {% for post in page.otherPosts %}
-                    <div class="w-[83%] shrink-0 snap-start md:w-auto">
+            {% if page.featuredPost %}
+                <div class="grid gap-5 {{ page.otherPosts is not empty ? 'lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]' : '' }}">
+                    {% include 'components/blog/featured-card.html.twig' with { post: page.featuredPost } only %}
+                    {% if page.otherPosts is not empty %}
+                        <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-1">
+                            {% for post in page.otherPosts|slice(0, 2) %}
+                                {% include 'components/blog/grid-card.html.twig' with { post: post, compact: true } only %}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            {% set remainingPosts = page.featuredPost ? page.otherPosts|slice(2) : page.otherPosts %}
+            {% if remainingPosts is not empty %}
+                <div class="mb-6 flex items-end justify-between gap-4 {{ page.featuredPost ? 'mt-14 md:mt-20' : 'mt-8' }}">
+                    <h2 class="text-3xl font-normal tracking-tight text-foreground md:text-4xl">{{ page.featuredPost ? 'Ещё в блоге' : 'Статьи' }}</h2>
+                    <span class="pb-1 text-xs text-muted-foreground">Страница {{ page.currentPage }} из {{ page.totalPages }}</span>
+                </div>
+                <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                    {% for post in remainingPosts %}
                         {% include 'components/blog/grid-card.html.twig' with { post: post } only %}
-                    </div>
-                {% endfor %}
-            </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
 
             {% if page.totalPages > 1 %}
-                <div class="mt-12">
-                    <nav role="navigation" aria-label="pagination" class="mx-auto flex w-full justify-center">
-                        <ul class="flex flex-row items-center gap-1">
+                <nav aria-label="Страницы блога" class="mt-12 border-t border-border pt-8">
+                    <ul class="flex flex-wrap items-center justify-center gap-2">
+                        <li>
+                            {% if page.previousPageUrl %}
+                                <a href="{{ page.previousPageUrl }}" aria-label="Предыдущая страница" class="inline-flex h-11 items-center justify-center rounded-full border border-border px-4 text-sm transition-colors hover:bg-secondary">Назад</a>
+                            {% else %}
+                                <span aria-disabled="true" class="inline-flex h-11 items-center justify-center rounded-full border border-border px-4 text-sm text-muted-foreground opacity-50">Назад</span>
+                            {% endif %}
+                        </li>
+                        {% for item in page.paginationItems %}
                             <li>
-                                <a
-                                    href="{{ page.previousPageUrl ?: '#' }}"
-                                    aria-label="Go to previous page"
-                                    class="inline-flex h-10 items-center justify-center gap-1 whitespace-nowrap rounded-md px-4 py-2 pl-2.5 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 {{ page.previousPageUrl ? '' : 'pointer-events-none opacity-50' }}"
-                                >
-                                    <svg class="h-4 w-4" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="m15 18-6-6 6-6"></path>
-                                    </svg>
-                                    <span>Previous</span>
-                                </a>
+                                {% if item.type == 'ellipsis' %}
+                                    <span class="flex h-11 w-8 items-center justify-center" aria-label="Пропущенные страницы">…</span>
+                                {% else %}
+                                    <a href="{{ item.url }}" {% if item.current %}aria-current="page"{% endif %} class="inline-flex h-11 w-11 items-center justify-center rounded-full text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary {{ item.current ? 'bg-primary text-white' : 'hover:bg-secondary' }}">{{ item.page }}</a>
+                                {% endif %}
                             </li>
-                            {% for item in page.paginationItems %}
-                                <li>
-                                    {% if item.type == 'ellipsis' %}
-                                        <span class="flex h-9 w-9 items-center justify-center" aria-hidden="true">
-                                            <svg class="h-4 w-4" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <circle cx="12" cy="12" r="1"></circle>
-                                                <circle cx="19" cy="12" r="1"></circle>
-                                                <circle cx="5" cy="12" r="1"></circle>
-                                            </svg>
-                                            <span class="sr-only">More pages</span>
-                                        </span>
-                                    {% else %}
-                                        <a
-                                            href="{{ item.url }}"
-                                            aria-current="{{ item.current ? 'page' : 'false' }}"
-                                            class="inline-flex h-10 w-10 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 {{ item.current ? 'border border-input bg-background hover:bg-accent hover:text-accent-foreground' : 'hover:bg-accent hover:text-accent-foreground' }}"
-                                        >
-                                            {{ item.page }}
-                                        </a>
-                                    {% endif %}
-                                </li>
-                            {% endfor %}
-                            <li>
-                                <a
-                                    href="{{ page.nextPageUrl ?: '#' }}"
-                                    aria-label="Go to next page"
-                                    class="inline-flex h-10 items-center justify-center gap-1 whitespace-nowrap rounded-md px-4 py-2 pr-2.5 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 {{ page.nextPageUrl ? '' : 'pointer-events-none opacity-50' }}"
-                                >
-                                    <span>Next</span>
-                                    <svg class="h-4 w-4" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="m9 18 6-6-6-6"></path>
-                                    </svg>
-                                </a>
-                            </li>
-                        </ul>
-                    </nav>
-                </div>
+                        {% endfor %}
+                        <li>
+                            {% if page.nextPageUrl %}
+                                <a href="{{ page.nextPageUrl }}" aria-label="Следующая страница" class="inline-flex h-11 items-center justify-center rounded-full border border-border px-4 text-sm transition-colors hover:bg-secondary">Далее</a>
+                            {% else %}
+                                <span aria-disabled="true" class="inline-flex h-11 items-center justify-center rounded-full border border-border px-4 text-sm text-muted-foreground opacity-50">Далее</span>
+                            {% endif %}
+                        </li>
+                    </ul>
+                </nav>
             {% endif %}
         {% endif %}
     </div>

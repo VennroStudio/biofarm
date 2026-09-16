@@ -11,6 +11,8 @@ import { mountOrderSuccessPage } from './pages/order-success/OrderSuccessPage';
 import { mountProfilePage } from './pages/profile/ProfilePage';
 import { mountHomeReviews } from './sections/home/reviews';
 import { mountHomeVideo } from './sections/home/video';
+import { mountCatalogFilter } from './sections/product/catalog';
+import { mountProductDetail } from './sections/product/detail';
 import { mountReferralHandler } from './site/referral';
 
 mountReferralHandler();
@@ -21,6 +23,8 @@ mountProductGallery();
 mountProductCart();
 mountRevealEffects();
 mountHomeVideo();
+mountCatalogFilter();
+mountProductDetail();
 mountHomeReviews();
 mountCartPage();
 mountCheckoutPage();

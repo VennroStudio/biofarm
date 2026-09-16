@@ -1,0 +1,38 @@
+[
+  {
+    "id": 34,
+    "slug": "ekstrakt-kory-osiny",
+    "name": "Экстракт коры осины",
+    "title": "Экстракт коры осины",
+    "image": "/uploads/products/imported/cacca953dc6fe531541acad59de8180c5b555a21.webp",
+    "price": 912,
+    "weight": "130 гр"
+  },
+  {
+    "id": 35,
+    "slug": "miks-ekstraktov-lopuha-osiny-i-zeleni-sibirskoy-pihty",
+    "name": "Микс экстрактов лопуха, осины и зелени сибирской пихты",
+    "title": "Микс экстрактов лопуха, осины и зелени сибирской пихты",
+    "image": "/uploads/products/imported/6e47f342afa940ffcbcbeb6c461ff7ce945ad069.webp",
+    "price": 1339,
+    "weight": "130 гр"
+  },
+  {
+    "id": 29,
+    "slug": "rodiola-rozovaya",
+    "name": "Родиола розовая",
+    "title": "Родиола розовая",
+    "image": "/uploads/products/imported/37555f9a98f099ba0c88f27f265800ba749643d5.webp",
+    "price": 1191,
+    "weight": "60 капсул"
+  },
+  {
+    "id": 32,
+    "slug": "chaga-berezovaya-s-kletochnym-sokom-sibirskoy-pihty",
+    "name": "Чага березовая с клеточным соком сибирской пихты",
+    "title": "Чага березовая с клеточным соком сибирской пихты",
+    "image": "/uploads/products/imported/001e7a5dffb439c121ac8fa98694fa5952801239.webp",
+    "price": 980,
+    "weight": "60 капсул"
+  }
+]

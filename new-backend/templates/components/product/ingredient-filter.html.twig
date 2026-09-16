@@ -1,0 +1,39 @@
+<dialog id="ingredient-filter" data-ingredient-dialog aria-labelledby="ingredient-filter-title" aria-describedby="ingredient-filter-description" class="m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-2xl overflow-hidden rounded-3xl border border-border bg-white p-0 text-foreground shadow-xl backdrop:bg-foreground/40 backdrop:backdrop-blur-sm">
+    <form method="get" action="{{ action }}#catalog" class="flex max-h-[calc(100dvh-2rem)] flex-col">
+        {% if query is not empty %}<input type="hidden" name="q" value="{{ query }}">{% endif %}
+        {% if sort != 'default' %}<input type="hidden" name="sort" value="{{ sort }}">{% endif %}
+        {% if view != 'grid' %}<input type="hidden" name="view" value="{{ view }}">{% endif %}
+        {% if purpose is not empty %}<input type="hidden" name="dlya" value="{{ purpose }}">{% endif %}
+        <div class="flex shrink-0 items-start justify-between gap-4 border-b border-border p-5 md:px-7 md:py-6">
+            <div>
+                <h2 id="ingredient-filter-title" class="text-2xl font-normal text-primary md:text-3xl">Состав</h2>
+                <p id="ingredient-filter-description" class="mt-2 text-sm text-muted-foreground">Выберите компонент продукта</p>
+            </div>
+            <button type="button" data-filter-close autofocus aria-label="Закрыть фильтр" class="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border text-primary hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg>
+            </button>
+        </div>
+        <div class="min-h-0 overflow-y-auto overscroll-contain" data-filter-options>
+        <fieldset class="min-w-0 p-5 md:p-7">
+            <legend class="sr-only">Компонент продукта</legend>
+            <div class="grid gap-2 sm:grid-cols-2">
+                <label class="flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border border-border p-3 text-sm transition-colors has-[:checked]:border-primary has-[:checked]:bg-secondary hover:bg-secondary/40">
+                    <input type="radio" name="sostav" value="" class="h-4 w-4 shrink-0 accent-primary" {% if not activeSlug %}checked{% endif %}>
+                    <span>Любой состав</span>
+                </label>
+                {% for component in components %}
+                    <label class="flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border border-border p-3 text-sm transition-colors has-[:checked]:border-primary has-[:checked]:bg-secondary hover:bg-secondary/40">
+                        <input type="radio" name="sostav" value="{{ component.slug }}" class="h-4 w-4 shrink-0 accent-primary" {% if activeSlug == component.slug %}checked{% endif %}>
+                        <span class="min-w-0 flex-1">{{ component.name }}</span>
+                        <span class="text-xs text-muted-foreground">{{ component.productsCount }}</span>
+                    </label>
+                {% endfor %}
+            </div>
+        </fieldset>
+        </div>
+        <div class="flex shrink-0 flex-col-reverse items-stretch justify-between gap-2 border-t border-border bg-white p-5 sm:flex-row sm:items-center md:px-7">
+            <button type="button" data-filter-clear class="min-h-11 px-1 text-sm font-medium text-primary underline-offset-4 hover:underline">Сбросить</button>
+            <button type="submit" class="min-h-12 rounded-full bg-primary px-5 text-sm md:px-7 font-medium text-white transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Показать товары</button>
+        </div>
+    </form>
+</dialog>

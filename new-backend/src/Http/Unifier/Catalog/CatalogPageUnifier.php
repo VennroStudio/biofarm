@@ -102,6 +102,13 @@ final readonly class CatalogPageUnifier
         );
         $componentFilters = $this->catalogData->componentFilters($category, $query, $activePurposeSlug);
         $purposeFilters = $this->catalogData->purposeFilters($category, $query, $activeComponentSlug);
+        // Keep selected facets removable even when the current search has no matches.
+        if ($componentContext !== null && !in_array($activeComponentSlug, array_column($componentFilters, 'slug'), true)) {
+            $componentFilters[] = new CatalogFacetView($activeComponentSlug, $componentContext['name'], 0);
+        }
+        if ($purposeContext !== null && !in_array($activePurposeSlug, array_column($purposeFilters, 'slug'), true)) {
+            $purposeFilters[] = new CatalogFacetView($activePurposeSlug, $purposeContext['name'], 0);
+        }
         $hasQueryFacet = !$useFacetSeo && ($this->hasSlug($filterComponentSlug) || $this->hasSlug($filterPurposeSlug));
         $hasMultipleFacets = $this->hasSlug($filterComponentSlug) && $this->hasSlug($filterPurposeSlug);
         $hasUnknownContext = ($category !== null && $categoryContext === null)
@@ -150,6 +157,8 @@ final readonly class CatalogPageUnifier
             categories: $categories,
             categoriesTotal: $categoriesTotal,
             catalogPath: $catalogPath,
+            filterAction: $categoryPath,
+            allPurposeUrl: $this->catalogUrl($categoryPath, $query, $sort, $view, 1, $activeComponentSlug, null),
             catalogEyebrow: $copy['eyebrow'],
             catalogH1: $copy['h1'],
             catalogLead: $copy['lead'],
@@ -505,7 +514,7 @@ final readonly class CatalogPageUnifier
         return [
             'eyebrow'     => 'Натуральные продукты',
             'h1'          => 'Каталог товаров',
-            'lead'        => 'Экологически чистые продукты с собственных ферм. Без пестицидов, без ГМО — только природа.',
+            'lead'        => 'Растительные экстракты и капсулы БИОФАРМ. Выберите продукты по составу и назначению.',
             'title'       => 'Каталог товаров — БИОФАРМ',
             'description' => 'Каталог натуральной продукции БИОФАРМ.',
             'introText'   => null,

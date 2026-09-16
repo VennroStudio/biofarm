@@ -47,6 +47,11 @@ final readonly class HomePageUnifier
     {
         $products = $this->catalogData->products($selectedCategory, 4);
         $categories = $this->catalogData->categories();
+        $purposes = $this->catalogData->purposeFilters(null);
+        $purposeUrls = [];
+        foreach ($purposes as $purpose) {
+            $purposeUrls[$purpose->slug] = '/catalog/dlya/' . rawurlencode($purpose->slug) . '#catalog';
+        }
 
         return new HomePageView(
             meta: $this->pages->applySystem('home', new PageMetaView(
@@ -68,6 +73,8 @@ final readonly class HomePageUnifier
             featuredProduct: $products[0] ?? null,
             categories: $categories,
             categoriesTotal: $this->catalogData->countProducts(),
+            purposes: $purposes,
+            purposeUrls: $purposeUrls,
             blogPosts: $this->blogPosts(),
             certificates: $this->certificates(),
             reviews: $this->reviews(),

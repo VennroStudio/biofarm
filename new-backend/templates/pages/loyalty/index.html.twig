@@ -17,14 +17,14 @@
     <section class="bg-background py-10 md:py-12">
         <div class="container mx-auto px-5 md:px-8 lg:px-12">
             {% if not page.cartEnabled %}
-                <div class="mx-auto max-w-3xl rounded-2xl bg-card p-8 text-center shadow-premium">
+                <div class="mx-auto rounded-2xl bg-card p-8 text-center shadow-premium">
                     <h2 class="mb-3 font-display text-3xl font-bold text-foreground">Программа временно недоступна</h2>
                     <p class="text-muted-foreground">
                         Оформление заказов сейчас отключено, поэтому бонусы и промокоды временно не применяются.
                     </p>
                 </div>
             {% else %}
-                <div class="mx-auto grid max-w-6xl gap-5 md:grid-cols-2 lg:grid-cols-4">
+                <div class="mx-auto grid gap-5 md:grid-cols-2 lg:grid-cols-4">
                     {% if page.orderBonusEnabled %}
                         <div class="rounded-2xl border border-border bg-card p-5">
                             <p class="mb-2 text-sm font-semibold text-secondary">За заказ</p>

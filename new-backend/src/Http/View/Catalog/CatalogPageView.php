@@ -28,6 +28,8 @@ final readonly class CatalogPageView
         public array $categories,
         public int $categoriesTotal,
         public string $catalogPath,
+        public string $filterAction,
+        public string $allPurposeUrl,
         public string $catalogEyebrow,
         public string $catalogH1,
         public string $catalogLead,

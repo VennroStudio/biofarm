@@ -1,4 +1,4 @@
-import { type KeyboardEvent, type ReactNode } from 'react';
+import { type KeyboardEvent, type ReactNode, useEffect, useState } from 'react';
 import { cn } from '../../../site/ui';
 
 type Props = {
@@ -10,7 +10,10 @@ type Props = {
 };
 
 function handleTabKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
-  if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
+  const vertical = event.currentTarget.parentElement?.getAttribute('aria-orientation') === 'vertical';
+  const previousKey = vertical ? 'ArrowUp' : 'ArrowLeft';
+  const nextKey = vertical ? 'ArrowDown' : 'ArrowRight';
+  if (![previousKey, nextKey, 'Home', 'End'].includes(event.key)) {
     return;
   }
 
@@ -25,9 +28,30 @@ function handleTabKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
     ? 0
     : event.key === 'End'
       ? tabs.length - 1
-      : (currentIndex + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
-  tabs[nextIndex].focus();
+      : (currentIndex + (event.key === nextKey ? 1 : -1) + tabs.length) % tabs.length;
+  tabs[nextIndex].focus({ preventScroll: vertical });
   tabs[nextIndex].click();
+}
+
+export function TabList({ children }: { children: ReactNode }) {
+  const [vertical, setVertical] = useState(() => window.matchMedia('(min-width: 1024px)').matches);
+  useEffect(() => {
+    const media = window.matchMedia('(min-width: 1024px)');
+    const onChange = (event: MediaQueryListEvent) => setVertical(event.matches);
+    media.addEventListener('change', onChange);
+    return () => media.removeEventListener('change', onChange);
+  }, []);
+
+  return (
+    <div
+      aria-label="Разделы личного кабинета"
+      aria-orientation={vertical ? 'vertical' : 'horizontal'}
+      className="flex min-w-0 max-w-full gap-1 overflow-x-auto rounded-2xl border border-border bg-card p-1.5 shadow-sm lg:sticky lg:top-28 lg:flex-col lg:overflow-visible"
+      role="tablist"
+    >
+      {children}
+    </div>
+  );
 }
 
 export function TabButton({ active, children, controls, id, onClick }: Props) {
@@ -36,7 +60,7 @@ export function TabButton({ active, children, controls, id, onClick }: Props) {
       aria-controls={controls}
       aria-selected={active}
       className={cn(
-        'inline-flex min-h-10 items-center justify-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+        'inline-flex min-h-12 shrink-0 items-center justify-center gap-3 whitespace-nowrap rounded-xl px-4 py-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset lg:justify-start lg:whitespace-normal lg:text-left',
         active ? 'bg-secondary text-secondary-foreground' : 'text-muted-foreground hover:bg-secondary/60 hover:text-foreground',
       )}
       id={id}

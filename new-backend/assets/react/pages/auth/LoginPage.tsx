@@ -73,14 +73,14 @@ function LoginPage({ registrationEnabled }: { registrationEnabled: boolean }) {
 
   return (
     <section className="bg-secondary/30 pb-12 pt-[128px] md:pb-16">
-      <div className="container mx-auto max-w-md px-4">
+      <div className="container mx-auto px-4">
         <Card>
           <CardHeader className="pb-2 text-center">
             <h1 className="text-3xl font-normal tracking-tight text-primary">Личный кабинет</h1>
             <CardDescription>{cardDescription}</CardDescription>
           </CardHeader>
 
-          <CardContent>
+          <CardContent className="mx-auto w-full max-w-xl">
             {registrationEnabled && (
               <div className="mb-6 grid w-full grid-cols-2 rounded-xl border border-border bg-secondary p-1">
                 <button

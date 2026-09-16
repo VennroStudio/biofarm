@@ -1,55 +1,41 @@
-<article class="mb-16">
-    <a href="/blog/{{ post.slug }}" class="group block">
-        <div class="mb-6 grid overflow-hidden rounded-2xl border border-border bg-secondary/20 transition-colors hover:border-primary/40 lg:grid-cols-2 lg:gap-6">
-            <div class="relative aspect-[4/3] overflow-hidden lg:aspect-auto">
-                {{ optimized_image(post.image, post.imageAlt ?: post.title, {
-                    class: 'h-full w-full object-cover transition-transform duration-700 group-hover:scale-105',
-                    loading: 'eager',
-                    decoding: 'async'
-                }) }}
-                <span class="absolute left-6 top-6 rounded-full bg-accent px-4 py-2 font-medium text-accent-foreground">
-                    {{ post.category }}
-                </span>
+<article class="h-full">
+    <a href="/blog/{{ post.slug }}" class="group flex h-full flex-col overflow-hidden rounded-3xl bg-secondary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4">
+        <div class="relative min-h-64 flex-1 overflow-hidden md:min-h-80">
+            {{ optimized_image(post.image, post.imageAlt ?: post.title, {
+                class: 'absolute inset-0 h-full w-full object-cover transition-transform duration-700 motion-safe:group-hover:scale-105',
+                loading: 'eager',
+                fetchpriority: 'high',
+                decoding: 'async'
+            }) }}
+            <span class="absolute left-5 top-5 rounded-full bg-white px-4 py-2 text-xs uppercase tracking-widest text-primary md:left-7 md:top-7">
+                {{ post.category }}
+            </span>
+        </div>
+        <div class="p-6 md:p-8 xl:p-10">
+            <div class="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground md:text-sm">
+                <span>{{ post.date }}</span>
+                <span aria-hidden="true">·</span>
+                <span>{{ post.readTime }} мин чтения</span>
             </div>
-            <div class="flex flex-col justify-center p-8 lg:p-12">
-                <div class="mb-4 flex items-center gap-4 text-sm text-muted-foreground">
-                    <div class="flex items-center gap-2">
-                        <svg class="h-4 w-4" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M8 2v4"></path>
-                            <path d="M16 2v4"></path>
-                            <rect width="18" height="18" x="3" y="4" rx="2"></rect>
-                            <path d="M3 10h18"></path>
-                        </svg>
-                        {{ post.date }}
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <svg class="h-4 w-4" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <path d="M12 6v6l4 2"></path>
-                        </svg>
-                        {{ post.readTime }} мин
-                    </div>
-                </div>
-                <h2 class="mb-4 text-2xl font-normal text-primary transition-colors md:text-3xl">
-                    {{ post.title }}
-                </h2>
-                <p class="mb-6 line-clamp-3 text-lg text-muted-foreground">
-                    {{ post.excerpt }}
-                </p>
-                <div class="flex items-center gap-4">
+            <h2 class="max-w-3xl text-3xl font-normal leading-tight tracking-tight text-foreground transition-colors group-hover:text-primary md:text-4xl">
+                {{ post.title }}
+            </h2>
+            <p class="mt-4 max-w-3xl text-base leading-relaxed text-muted-foreground md:text-lg">{{ post.excerpt }}</p>
+            <div class="mt-7 flex items-center justify-between gap-4 border-t border-primary/15 pt-5">
+                <div class="flex min-w-0 items-center gap-3">
                     {% if post.authorAvatar %}
                         {{ optimized_image(post.authorAvatar, post.authorName, {
-                            class: 'h-12 w-12 rounded-full object-cover',
+                            class: 'h-10 w-10 shrink-0 rounded-full object-cover',
                             loading: 'lazy',
                             decoding: 'async'
                         }) }}
-                    {% else %}
-                        <span class="h-12 w-12 rounded-full bg-muted" aria-hidden="true"></span>
                     {% endif %}
-                    <span class="font-medium text-foreground">
-                        {{ post.authorName }}
-                    </span>
+                    <span class="text-sm text-foreground">{{ post.authorName }}</span>
                 </div>
+                <span class="flex shrink-0 items-center gap-3 text-sm text-primary">
+                    Читать статью
+                    <svg class="h-5 w-5 transition-transform group-hover:translate-x-1" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </span>
             </div>
         </div>
     </a>

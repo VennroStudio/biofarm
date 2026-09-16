@@ -8,9 +8,8 @@ export default {
     container: {
       center: true,
       padding: '2rem',
-      screens: {
-        '2xl': '1280px',
-      },
+      // Keep page containers fluid at every viewport width.
+      screens: {},
     },
     extend: {
       fontFamily: {

@@ -7,7 +7,7 @@
 {% block content %}
     {% include 'sections/home/hero.html.twig' with { products: page.heroProducts } only %}
     {% if site_feature('home_catalog_enabled') %}
-        {% include 'sections/home/categories.html.twig' with { categories: page.categories } only %}
+        {% include 'sections/home/categories.html.twig' with { purposes: page.purposes, purposeUrls: page.purposeUrls } only %}
         {% include 'sections/home/catalog.html.twig' with {
             products: page.products,
             categories: page.categories,

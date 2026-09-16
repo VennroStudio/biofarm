@@ -1,30 +1,78 @@
-<section id="about" class="relative overflow-hidden py-8 md:py-12">
-    <div class="container relative z-10 mx-auto px-5 md:px-8 lg:px-12">
-        <div class="max-w-none" data-reveal data-reveal-duration="800">
-            <span class="mb-4 inline-block text-xs uppercase tracking-widest text-primary">
-                О компании
-            </span>
-            <h2 class="mb-5 text-3xl font-normal text-primary md:text-[42px]">
-                Натуральные продукты из лаборатории БИОФАРМ
-            </h2>
+<section id="about" class="py-8 md:py-12" data-home-video-root>
+    <div class="container mx-auto px-5 md:px-8 lg:px-12">
+        <div class="overflow-hidden rounded-3xl border border-border bg-secondary/70">
+            <div class="grid gap-6 p-5 md:p-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-stretch lg:gap-10 lg:p-10">
+                <div>
+                    <span class="mb-5 inline-flex items-center gap-3 text-xs uppercase tracking-widest text-primary">
+                        <span class="h-px w-8 bg-primary/50" aria-hidden="true"></span>О компании
+                    </span>
+                    <h2 class="mb-6 text-3xl font-normal leading-[1.12] text-primary md:text-[42px] 2xl:text-5xl">
+                        Натуральные продукты из лаборатории БИОФАРМ
+                    </h2>
+                    <p class="text-base leading-relaxed text-foreground">
+                        <strong class="font-semibold">«Биофарм»</strong> — институт изучения
+                        биологически активных веществ. Мы работаем на стыке науки и природы: изучаем
+                        компоненты растений Сибири и создаём продукты на основе природных
+                        биокомплексов, чтобы раскрывать их потенциал для поддержания здоровья.
+                    </p>
+                    <div class="mt-6 flex flex-wrap gap-3">
+                        {% if site_feature('home_video_enabled') %}
+                            <a href="#production" class="inline-flex min-h-11 items-center gap-3 rounded-lg border border-primary/20 bg-white/80 px-4 text-sm font-medium text-primary transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                                Наше производство <span aria-hidden="true">↗</span>
+                            </a>
+                        {% endif %}
+                        {% if site_feature('home_certificates_enabled') %}
+                            <a href="/certificates" class="inline-flex min-h-11 items-center gap-3 px-2 text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                                Документы и сертификаты <span aria-hidden="true">→</span>
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
 
-            <div class="grid gap-5 text-sm leading-relaxed text-muted-foreground md:grid-cols-2">
-                <p class="mb-4">
-                    <strong class="text-foreground">«Биофарм»</strong> — институт изучения
-                    биологически активных веществ. Мы работаем на стыке науки и природы: изучаем
-                    компоненты растений Сибири и создаём продукты на основе природных
-                    биокомплексов, чтобы раскрывать их потенциал для поддержания здоровья.
-                </p>
+                <button type="button" class="group relative block aspect-[16/10] w-full overflow-hidden rounded-2xl bg-secondary-foreground text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary focus-visible:ring-offset-4 focus-visible:ring-offset-secondary lg:aspect-auto lg:min-h-[320px]" data-home-video-open aria-label="Смотреть видео о БИОФАРМ">
+                    <img src="/assets/images/home/hero-poster.jpg" alt="" class="absolute inset-0 h-full w-full scale-[1.2] object-cover transition-transform duration-700 motion-safe:group-hover:scale-[1.25]" loading="lazy" decoding="async">
+                    <span class="absolute inset-0 bg-black/20 transition-colors group-hover:bg-black/30" aria-hidden="true"></span>
+                    <span class="absolute left-4 top-4 rounded-full border border-white/30 bg-black/25 px-3 py-2 text-[10px] uppercase tracking-[0.16em] backdrop-blur-sm md:left-6 md:top-6 md:text-xs">Знакомство с БИОФАРМ</span>
+                    <span class="absolute inset-0 flex items-center justify-center" aria-hidden="true">
+                        <span class="flex h-16 w-16 items-center justify-center rounded-full border border-white/50 bg-white/95 text-primary shadow-lg transition-transform motion-safe:group-hover:scale-110 md:h-20 md:w-20">
+                            <svg class="ml-1 h-6 w-6 md:h-7 md:w-7" viewBox="0 0 24 24" fill="currentColor"><path d="m8 5 11 7-11 7Z"/></svg>
+                        </span>
+                    </span>
+                    <span class="absolute bottom-4 left-4 right-4 flex items-center justify-between gap-3 rounded-xl bg-black/40 px-4 py-3 text-left backdrop-blur-sm md:bottom-6 md:left-6 md:right-6">
+                        <span class="hidden text-sm font-medium md:block md:text-base">Природа. Наука. БИОФАРМ.</span>
+                        <span class="shrink-0 text-xs text-white/90">Смотреть видео ↗</span>
+                    </span>
+                </button>
+            </div>
 
-                <p class="mb-4">
+            <div class="grid gap-4 border-t border-primary/10 bg-white/70 p-5 md:p-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-10 lg:px-10 lg:py-7">
+                <div>
+                    <p class="mb-2 text-xs uppercase tracking-widest text-primary">Наше сырьё</p>
+                    <h3 class="text-2xl font-normal text-primary md:text-3xl">Сила сибирских растений</h3>
+                </div>
+                <p class="text-sm leading-relaxed text-muted-foreground">
                     Сибирь — регион экстремальных температур: летом до <strong class="text-foreground">+45</strong>,
                     зимой до <strong class="text-foreground">-55</strong>. Чтобы выживать в таких
                     условиях, местные травы и деревья накапливают защитные вещества с выраженными
                     антиоксидантными свойствами. Особое место занимает
-                    <strong class="text-foreground"> сибирская пихта</strong> — «жемчужина» тайги,
+                    <strong class="text-foreground">сибирская пихта</strong> — «жемчужина» тайги,
                     богатая биологически активными соединениями, витаминами и микроэлементами.
                 </p>
             </div>
         </div>
     </div>
+
+    <div data-react-island="home-video" data-root-selector="[data-home-video-root]" data-modal-selector="[data-modal='home-about-video']" hidden></div>
+    {% embed 'components/ui/modal.html.twig' with {
+        id: 'home-about-video',
+        eyebrow: 'О компании',
+        title: 'Знакомство с БИОФАРМ',
+    } only %}
+        {% block body %}
+            <video class="aspect-video w-full rounded-lg bg-black" controls playsinline preload="none" poster="/assets/images/home/hero-poster.jpg" aria-label="Видео о БИОФАРМ" data-home-video-player>
+                <source src="/uploads/videos/biofarm.mp4" type="video/mp4">
+                Ваш браузер не поддерживает видео. <a href="/uploads/videos/biofarm.mp4">Открыть видеоролик</a>.
+            </video>
+        {% endblock %}
+    {% endembed %}
 </section>

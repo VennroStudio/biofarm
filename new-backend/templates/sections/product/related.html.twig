@@ -8,7 +8,6 @@
                 {% for product in products %}
                     {% include 'components/product/card.html.twig' with {
                         product: product,
-                        revealDelay: loop.index0 * 100,
                     } only %}
                 {% endfor %}
             </div>

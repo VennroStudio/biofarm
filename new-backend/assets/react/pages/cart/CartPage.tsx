@@ -66,7 +66,7 @@ function CartPage({ cdekDeliveryPrice, freeDeliveryThreshold, orderBonusEnabled,
 
   return (
     <section className="bg-secondary/30 pb-10 pt-[120px] md:pb-12 md:pt-[128px]">
-      <div className="container mx-auto max-w-7xl px-4 sm:px-6">
+      <div className="container mx-auto px-4 sm:px-6">
         <h1 className="mb-6 flex flex-wrap items-center gap-3 text-3xl font-normal tracking-tight text-primary md:text-4xl">
           <ShoppingCart className="h-8 w-8" />
           Корзина

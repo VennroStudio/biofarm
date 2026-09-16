@@ -32,7 +32,7 @@ import { OrderDetailsDialog } from './components/OrderDetailsDialog';
 import { OrdersPanel } from './components/OrdersPanel';
 import { ProfileDetailsCard } from './components/ProfileDetailsCard';
 import { ProfileStats } from './components/ProfileStats';
-import { TabButton, TabPanel } from './components/ProfileTabs';
+import { TabButton, TabList, TabPanel } from './components/ProfileTabs';
 import { ReferralPanel } from './components/ReferralPanel';
 import type { ProfileTab } from './types';
 
@@ -219,7 +219,7 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, withdrawa
 
   return (
     <section className="bg-secondary/30 pb-10 pt-[120px] md:pb-12 md:pt-[128px]">
-      <div className="container mx-auto max-w-7xl px-4 sm:px-6">
+      <div className="container mx-auto px-4 sm:px-6">
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-normal tracking-tight text-primary md:text-4xl">Личный кабинет</h1>
@@ -235,93 +235,95 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, withdrawa
 
         <ProfileStats orders={orders} referralInfo={referralInfo} user={user} />
 
-        <div className="space-y-6">
-          <div className="flex max-w-full flex-wrap rounded-xl border border-border bg-card p-1 shadow-sm" role="tablist" aria-label="Разделы личного кабинета">
+        <div className="grid items-start gap-6 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-10">
+          <TabList>
             <TabButton active={tab === 'profile'} controls="profile-tabpanel" id="profile-tab" onClick={() => setTab('profile')}>
               <User className="h-4 w-4" />
-              <span className="sr-only sm:not-sr-only">Профиль</span>
+              <span>Профиль</span>
             </TabButton>
             {cartEnabled && (
               <TabButton active={tab === 'orders'} controls="orders-tabpanel" id="orders-tab" onClick={() => setTab('orders')}>
                 <Package className="h-4 w-4" />
-                <span className="sr-only sm:not-sr-only">Заказы</span>
+                <span>Заказы</span>
               </TabButton>
             )}
             {cartEnabled && (
               <TabButton active={tab === 'addresses'} controls="addresses-tabpanel" id="addresses-tab" onClick={() => setTab('addresses')}>
                 <MapPin className="h-4 w-4" />
-                <span className="sr-only sm:not-sr-only">Адреса</span>
+                <span>Адреса</span>
               </TabButton>
             )}
             {user.isPartner && referralEnabled && (
               <TabButton active={tab === 'referral'} controls="referral-tabpanel" id="referral-tab" onClick={() => setTab('referral')}>
                 <Gift className="h-4 w-4" />
-                <span className="sr-only sm:not-sr-only">Рефералы</span>
+                <span>Рефералы</span>
               </TabButton>
             )}
             {favoritesEnabled && (
               <TabButton active={tab === 'favorites'} controls="favorites-tabpanel" id="favorites-tab" onClick={() => setTab('favorites')}>
                 <Heart className="h-4 w-4" />
-                <span className="sr-only sm:not-sr-only">Избранное</span>
+                <span>Избранное</span>
               </TabButton>
             )}
+          </TabList>
+
+          <div className="min-w-0">
+            <TabPanel active={tab === 'profile'} id="profile-tabpanel" labelledBy="profile-tab">
+                <ProfileDetailsCard
+                  editCardNumber={editCardNumber}
+                  editName={editName}
+                  editPhone={editPhone}
+                  isEditing={isEditing}
+                  setEditCardNumber={setEditCardNumber}
+                  setEditName={setEditName}
+                  setEditPhone={setEditPhone}
+                  user={user}
+                  onSave={() => void handleSaveProfile()}
+                  onStartEdit={() => setIsEditing(true)}
+                />
+            </TabPanel>
+
+            {cartEnabled && (
+              <TabPanel active={tab === 'orders'} id="orders-tabpanel" labelledBy="orders-tab">
+                <OrdersPanel orders={orders} onSelectOrder={setSelectedOrder} />
+              </TabPanel>
+            )}
+
+            {cartEnabled && (
+              <TabPanel active={tab === 'addresses'} id="addresses-tabpanel" labelledBy="addresses-tab">
+                <AddressesPanel
+                  addresses={addresses}
+                  user={user}
+                  onDelete={(id) => handleDeleteAddress(id)}
+                  onSave={(address, id) => handleSaveAddress(address, id)}
+                />
+              </TabPanel>
+            )}
+
+            {favoritesEnabled && (
+              <TabPanel active={tab === 'favorites'} id="favorites-tabpanel" labelledBy="favorites-tab">
+                <FavoritesPanel favorites={favorites} onRemove={(product) => void handleRemoveFavorite(product)} />
+              </TabPanel>
+            )}
+
+            {user.isPartner && referralEnabled && (
+              <TabPanel active={tab === 'referral'} id="referral-tabpanel" labelledBy="referral-tab">
+                <ReferralPanel
+                  copied={copied}
+                  referralCode={referralCode}
+                  referralInfo={referralInfo}
+                  referralOrders={referralOrders}
+                  setWithdrawalAmount={setWithdrawalAmount}
+                  withdrawalAmount={withdrawalAmount}
+                  withdrawals={withdrawals}
+                  withdrawalsEnabled={withdrawalsEnabled}
+                  onCopyReferralLink={() => void copyReferralLink()}
+                  onSelectOrder={setSelectedOrder}
+                  onWithdrawal={(event) => void handleWithdrawal(event)}
+                />
+              </TabPanel>
+            )}
           </div>
-
-          <TabPanel active={tab === 'profile'} id="profile-tabpanel" labelledBy="profile-tab">
-              <ProfileDetailsCard
-                editCardNumber={editCardNumber}
-                editName={editName}
-                editPhone={editPhone}
-                isEditing={isEditing}
-                setEditCardNumber={setEditCardNumber}
-                setEditName={setEditName}
-                setEditPhone={setEditPhone}
-                user={user}
-                onSave={() => void handleSaveProfile()}
-                onStartEdit={() => setIsEditing(true)}
-              />
-          </TabPanel>
-
-          {cartEnabled && (
-            <TabPanel active={tab === 'orders'} id="orders-tabpanel" labelledBy="orders-tab">
-              <OrdersPanel orders={orders} onSelectOrder={setSelectedOrder} />
-            </TabPanel>
-          )}
-
-          {cartEnabled && (
-            <TabPanel active={tab === 'addresses'} id="addresses-tabpanel" labelledBy="addresses-tab">
-              <AddressesPanel
-                addresses={addresses}
-                user={user}
-                onDelete={(id) => handleDeleteAddress(id)}
-                onSave={(address, id) => handleSaveAddress(address, id)}
-              />
-            </TabPanel>
-          )}
-
-          {favoritesEnabled && (
-            <TabPanel active={tab === 'favorites'} id="favorites-tabpanel" labelledBy="favorites-tab">
-              <FavoritesPanel favorites={favorites} onRemove={(product) => void handleRemoveFavorite(product)} />
-            </TabPanel>
-          )}
-
-          {user.isPartner && referralEnabled && (
-            <TabPanel active={tab === 'referral'} id="referral-tabpanel" labelledBy="referral-tab">
-              <ReferralPanel
-                copied={copied}
-                referralCode={referralCode}
-                referralInfo={referralInfo}
-                referralOrders={referralOrders}
-                setWithdrawalAmount={setWithdrawalAmount}
-                withdrawalAmount={withdrawalAmount}
-                withdrawals={withdrawals}
-                withdrawalsEnabled={withdrawalsEnabled}
-                onCopyReferralLink={() => void copyReferralLink()}
-                onSelectOrder={setSelectedOrder}
-                onWithdrawal={(event) => void handleWithdrawal(event)}
-              />
-            </TabPanel>
-          )}
         </div>
       </div>
 

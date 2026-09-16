@@ -1,0 +1,55 @@
+{# Line icons follow the installed Lucide icon set (ISC); organ outlines share its stroke style. #}
+<svg class="h-8 w-8 md:h-9 md:w-9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+{% if slug == 'immunitet' %}
+    <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>
+    <path d="m9 12 2 2 4-4"/>
+{% elseif slug == 'mozg' %}
+    <path d="M12 18V5"/>
+    <path d="M15 13a4.17 4.17 0 0 1-3-4 4.17 4.17 0 0 1-3 4"/>
+    <path d="M17.598 6.5A3 3 0 1 0 12 5a3 3 0 1 0-5.598 1.5"/>
+    <path d="M17.997 5.125a4 4 0 0 1 2.526 5.77"/>
+    <path d="M18 18a4 4 0 0 0 2-7.464"/>
+    <path d="M19.967 17.483A4 4 0 1 1 12 18a4 4 0 1 1-7.967-.517"/>
+    <path d="M6 18a4 4 0 0 1-2-7.464"/>
+    <path d="M6.003 5.125a4 4 0 0 0-2.526 5.77"/>
+{% elseif slug == 'serdtse-i-sosudy' %}
+    <path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/>
+    <path d="M3.22 13H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/>
+{% elseif slug == 'energiya' %}
+    <path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/>
+{% elseif slug == 'muzhskoe-zdorove' %}
+    <path d="M16 3h5v5"/>
+    <path d="m21 3-6.75 6.75"/>
+    <circle cx="10" cy="14" r="6"/>
+{% elseif slug == 'zhenskoe-zdorove' %}
+    <path d="M12 15v7"/>
+    <path d="M9 19h6"/>
+    <circle cx="12" cy="9" r="6"/>
+{% elseif slug == 'dykhanie' %}
+    <path d="M12.8 19.6A2 2 0 1 0 14 16H2"/>
+    <path d="M17.5 8a2.5 2.5 0 1 1 2 4H2"/>
+    <path d="M9.8 4.4A2 2 0 1 1 11 8H2"/>
+{% elseif slug == 'nervnaya-sistema' %}
+    <path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/>
+{% elseif slug == 'antioksidantnaya-zaschita' %}
+    <path d="M14 9.536V7a4 4 0 0 1 4-4h1.5a.5.5 0 0 1 .5.5V5a4 4 0 0 1-4 4 4 4 0 0 0-4 4c0 2 1 3 1 5a5 5 0 0 1-1 3"/>
+    <path d="M4 9a5 5 0 0 1 8 4 5 5 0 0 1-8-4"/>
+    <path d="M5 21h14"/>
+{% elseif slug == 'antiparazitarnaya-programma' %}
+    <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>
+    <path d="M9 12h6"/>
+    <path d="M12 9v6"/>
+{% elseif slug == 'all' %}
+    <path d="M12 3v18"/>
+    <path d="M3 12h18"/>
+    <rect x="3" y="3" width="18" height="18" rx="2"/>
+{% elseif slug == 'pechen' %}
+    <path d="M3 7c2-4 6-4 9-3l8 1c2 .5 2 3 0 5l-7 5c-2 1-3-1-4 0l-4 5c-1 1-3 0-3-2V9c0-1 0-2 1-2Z"/><path d="M12 4c-2 3-2 7-1 10m2-5 5-1"/>
+{% elseif slug == 'pishchevarenie' %}
+    <path d="M11 3v5c0 2 2 3 4 1 3-3 6 0 6 4 0 5-4 8-8 8-3 0-4-3-6-3-2 0-3 1-3 3H2c0-4 2-6 5-6 2 0 3 1 4 0 2-2-3-3-3-6V3"/>
+{% elseif slug == 'podzheludochnaya' %}
+    <path d="M3 15c0-3 3-5 6-4l3-2 3 1 3-2c2 0 4 2 3 4-1 2-3 2-5 2l-3 2-3-1c-3 3-7 3-7 0Z"/><path d="m7 14 10-3M8 4v3m3-3v2"/>
+{% else %}
+    <path d="M20 4c-9-2-16 1-16 8a7 7 0 0 0 7 7c7 0 10-7 9-15Z"/><path d="m3 21 12-12"/>
+{% endif %}
+</svg>

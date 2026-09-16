@@ -8,7 +8,7 @@ function OrderSuccessPage() {
 
   return (
     <section className="flex min-h-[60vh] items-center justify-center bg-secondary/30 pb-12 pt-[128px] md:pb-16">
-      <div className="container mx-auto max-w-lg px-4">
+      <div className="container mx-auto px-4">
         <Card className="text-center">
           <CardContent className="px-6 pb-8 pt-8">
             <div className="mb-6">

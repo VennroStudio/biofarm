@@ -2,5 +2,7 @@
 
 {% block content %}
     {% include 'sections/content/page-hero.html.twig' with { page: page } only %}
-    {% include 'sections/content/rich-text.html.twig' with { content: page.page.content|default(null) } only %}
+    <div class="container mx-auto px-5 md:px-8 lg:px-12">
+        {% include 'sections/content/rich-text.html.twig' with { content: page.page.content|default(null) } only %}
+    </div>
 {% endblock %}

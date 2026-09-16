@@ -9,23 +9,36 @@
 {% set currentCatalogPath = catalogPath|default('/catalog') %}
 {% set catalogEyebrow = catalogEyebrow|default('Натуральные продукты') %}
 {% set catalogH1 = catalogH1|default('Каталог товаров') %}
-{% set catalogLead = catalogLead|default('Экологически чистые продукты с собственных ферм. Без пестицидов, без ГМО — только природа.') %}
+{% set catalogLead = catalogLead|default('Растительные экстракты и капсулы БИОФАРМ. Выберите продукты по составу и назначению.') %}
 {% set activeComponentSlug = activeComponentSlug|default(null) %}
 {% set activePurposeSlug = activePurposeSlug|default(null) %}
 
 {% if isCatalogPage %}
-    <section class="border-b border-border bg-secondary/40 pb-8 pt-28 md:pb-10">
+    <section class="pb-4 pt-28 md:pb-6">
         <div class="container mx-auto px-5 md:px-8 lg:px-12">
-            <span class="mb-3 inline-block text-xs uppercase tracking-widest text-primary" data-reveal data-reveal-delay="0">{{ catalogEyebrow }}</span>
-            <h1 class="mb-4 text-3xl font-normal text-primary md:text-5xl" data-reveal data-reveal-delay="100">{{ catalogH1 }}</h1>
-            <p class="mx-auto max-w-2xl text-muted-foreground" data-reveal data-reveal-delay="200">
-                {{ catalogLead }}
-            </p>
+            <nav class="mb-6 flex gap-2 text-xs text-muted-foreground" aria-label="Хлебные крошки"><a href="/" class="hover:text-primary">Главная</a><span aria-hidden="true">/</span><span>Каталог</span></nav>
+            <div class="grid gap-6 rounded-3xl bg-secondary/70 p-6 md:grid-cols-[1.1fr_0.9fr] md:items-end md:p-8 lg:p-10">
+                <div>
+                    <span class="mb-4 block text-xs uppercase tracking-[0.15em] text-primary">{{ catalogEyebrow }}</span>
+                    <h1 class="text-4xl font-normal leading-tight text-primary md:text-5xl xl:text-6xl">{{ catalogH1 }}</h1>
+                </div>
+                <div class="md:border-l md:border-primary/15 md:pl-8">
+                    <p class="text-sm leading-relaxed text-foreground md:text-base">{{ catalogLead }}</p>
+                    <a href="#catalog" class="mt-5 inline-flex min-h-11 items-center gap-4 text-sm font-medium text-primary">Выбрать продукт <span aria-hidden="true">↓</span></a>
+                </div>
+            </div>
+            <nav class="mt-6 flex gap-2 overflow-x-auto pb-2 md:flex-wrap" aria-label="Категории товаров">
+                <a class="inline-flex min-h-12 shrink-0 items-center gap-3 rounded-full border px-5 text-sm transition-colors {{ not hasActiveCategory ? 'border-primary bg-primary text-white' : 'border-border bg-white text-foreground hover:border-primary/40' }}" href="{{ allCategoryUrl }}" {% if not hasActiveCategory %}aria-current="true"{% endif %}>Все товары <span class="text-xs opacity-70">{{ categoriesTotal }}</span></a>
+                {% for category in categories %}
+                    {% set isActiveCategory = hasActiveCategory and activeCategory == category.id %}
+                    <a class="inline-flex min-h-12 shrink-0 items-center gap-3 rounded-full border px-5 text-sm transition-colors {{ isActiveCategory ? 'border-primary bg-primary text-white' : 'border-border bg-white text-foreground hover:border-primary/40' }}" href="{{ categoryUrls[category.id] }}" {% if isActiveCategory %}aria-current="true"{% endif %}>{% if category.parentSlug is not empty %}<span aria-hidden="true">↳</span>{% endif %}{{ category.name }} <span class="text-xs opacity-70">{{ category.productsCount }}</span></a>
+                {% endfor %}
+            </nav>
         </div>
     </section>
 {% endif %}
 
-<section id="catalog" class="scroll-mt-24 {% if isCatalogPage %}py-8 md:py-10{% else %}py-12{% endif %}">
+<section {% if not isCatalogPage %}id="catalog"{% endif %} class="scroll-mt-24 {% if isCatalogPage %}py-8 md:py-10{% else %}py-12{% endif %}">
     <div class="container mx-auto px-5 md:px-8 lg:px-12">
         {% if not isCatalogPage %}
             <div class="mx-auto mb-12 max-w-2xl text-center" data-reveal data-reveal-duration="600">
@@ -39,114 +52,16 @@
         {% endif %}
 
         {% if isCatalogPage %}
-            {% set filterResetUrl = hasActiveCategory and categoryUrls[activeCategory] is defined ? categoryUrls[activeCategory] : allCategoryUrl %}
-            <div class="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)] lg:items-start">
-                <aside class="space-y-5 lg:sticky lg:top-28" data-reveal data-reveal-delay="300">
-                    <div class="rounded-2xl border border-border bg-card p-4">
-                        <h2 class="mb-3 text-xl font-normal text-primary">Категории</h2>
-                        <nav class="space-y-1" aria-label="Категории товаров">
-                            <a
-                                class="flex min-h-11 items-center justify-between gap-3 rounded-lg px-3 text-sm font-bold transition-colors {% if not hasActiveCategory %}bg-primary text-primary-foreground{% else %}text-foreground hover:bg-secondary{% endif %}"
-                                href="{{ allCategoryUrl }}"
-                                {% if not hasActiveCategory %}aria-current="true"{% endif %}
-                            >
-                                <span>Все товары</span>
-                                <span class="text-xs {% if not hasActiveCategory %}text-primary-foreground/80{% else %}text-muted-foreground{% endif %}">{{ categoriesTotal }}</span>
-                            </a>
-                            {% for category in categories %}
-                                {% set isActiveCategory = hasActiveCategory and activeCategory == category.id %}
-                                <a
-                                    class="flex min-h-11 items-center justify-between gap-3 rounded-lg px-3 text-sm font-bold transition-colors {% if category.parentSlug is not empty %}ml-4 border-l border-border pl-4{% endif %} {% if isActiveCategory %}bg-primary text-primary-foreground{% else %}text-foreground hover:bg-secondary{% endif %}"
-                                    href="{{ categoryUrls[category.id] }}"
-                                    {% if isActiveCategory %}aria-current="true"{% endif %}
-                                >
-                                    <span>{{ category.name }}</span>
-                                    <span class="text-xs {% if isActiveCategory %}text-primary-foreground/80{% else %}text-muted-foreground{% endif %}">{{ category.productsCount }}</span>
-                                </a>
-                            {% endfor %}
-                        </nav>
-                    </div>
-
-                    {% if componentFilters|default([]) is not empty or purposeFilters|default([]) is not empty %}
-                        <div class="rounded-2xl border border-border bg-card p-4">
-                            <div class="mb-4 flex items-center justify-between gap-3">
-                                <h2 class="text-xl font-normal text-primary">Фильтры</h2>
-                                {% if activeComponentSlug is not empty or activePurposeSlug is not empty or searchQuery|default('') is not empty %}
-                                    <a class="text-xs font-bold text-primary transition-colors hover:text-primary-glow" href="{{ filterResetUrl }}">Сбросить</a>
-                                {% endif %}
-                            </div>
-
-                            <div class="space-y-3">
-                                {% if componentFilters|default([]) is not empty %}
-                                    <details class="group rounded-xl border border-border bg-background px-4 py-3" open>
-                                        <summary class="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-bold text-foreground">
-                                            Состав
-                                            <svg class="h-4 w-4 transition-transform group-open:rotate-180" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                                <path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-                                            </svg>
-                                        </summary>
-                                        <div class="mt-3 space-y-2">
-                                            {% for component in componentFilters %}
-                                                {% set isActiveFacet = activeComponentSlug == component.slug %}
-                                                <a
-                                                    class="flex min-h-9 items-center gap-3 rounded-lg px-2 text-sm transition-colors {% if isActiveFacet %}bg-primary/10 text-foreground{% else %}text-muted-foreground hover:bg-secondary hover:text-foreground{% endif %}"
-                                                    href="{{ componentFilterUrls[component.slug] }}"
-                                                    role="checkbox"
-                                                    aria-checked="{{ isActiveFacet ? 'true' : 'false' }}"
-                                                >
-                                                    <span class="grid h-5 w-5 shrink-0 place-items-center rounded border {% if isActiveFacet %}border-primary bg-primary text-primary-foreground{% else %}border-border bg-card{% endif %}">
-                                                        {% if isActiveFacet %}
-                                                            <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                                                <path d="M5 12.5 9.5 17 19 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
-                                                            </svg>
-                                                        {% endif %}
-                                                    </span>
-                                                    <span class="min-w-0 flex-1">{{ component.name }}</span>
-                                                    <span class="text-xs text-muted-foreground">{{ component.productsCount }}</span>
-                                                </a>
-                                            {% endfor %}
-                                        </div>
-                                    </details>
-                                {% endif %}
-
-                                {% if purposeFilters|default([]) is not empty %}
-                                    <details class="group rounded-xl border border-border bg-background px-4 py-3" open>
-                                        <summary class="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-bold text-foreground">
-                                            Для чего
-                                            <svg class="h-4 w-4 transition-transform group-open:rotate-180" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                                <path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-                                            </svg>
-                                        </summary>
-                                        <div class="mt-3 space-y-2">
-                                            {% for purpose in purposeFilters %}
-                                                {% set isActiveFacet = activePurposeSlug == purpose.slug %}
-                                                <a
-                                                    class="flex min-h-9 items-center gap-3 rounded-lg px-2 text-sm transition-colors {% if isActiveFacet %}bg-primary/10 text-foreground{% else %}text-muted-foreground hover:bg-secondary hover:text-foreground{% endif %}"
-                                                    href="{{ purposeFilterUrls[purpose.slug] }}"
-                                                    role="checkbox"
-                                                    aria-checked="{{ isActiveFacet ? 'true' : 'false' }}"
-                                                >
-                                                    <span class="grid h-5 w-5 shrink-0 place-items-center rounded border {% if isActiveFacet %}border-primary bg-primary text-primary-foreground{% else %}border-border bg-card{% endif %}">
-                                                        {% if isActiveFacet %}
-                                                            <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                                                <path d="M5 12.5 9.5 17 19 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
-                                                            </svg>
-                                                        {% endif %}
-                                                    </span>
-                                                    <span class="min-w-0 flex-1">{{ purpose.name }}</span>
-                                                    <span class="text-xs text-muted-foreground">{{ purpose.productsCount }}</span>
-                                                </a>
-                                            {% endfor %}
-                                        </div>
-                                    </details>
-                                {% endif %}
-                            </div>
-                        </div>
-                    {% endif %}
-                </aside>
-
+            {% include 'components/product/purpose-tiles.html.twig' with { purposes: purposeFilters, urls: purposeFilterUrls, activeSlug: activePurposeSlug, allUrl: allPurposeUrl } only %}
+            <div id="catalog" class="mt-8 scroll-mt-24 md:mt-10" data-catalog-filter-root>
+                <span hidden data-react-island="catalog-filter" data-root-selector="[data-catalog-filter-root]"></span>
+                {% include 'components/product/ingredient-filter.html.twig' with {
+                    components: componentFilters, activeSlug: activeComponentSlug,
+                    action: filterAction, purpose: activePurposeSlug, query: searchQuery,
+                    sort: currentSort, view: currentView
+                } only %}
                 <div class="min-w-0">
-                    <div class="mb-5 rounded-2xl border border-border bg-secondary/20 p-4" data-reveal data-reveal-delay="350">
+                    <div class="mb-6 border-b border-border pb-5">
                         <div class="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
                             <form class="relative w-full xl:max-w-md" method="get" action="{{ currentCatalogPath }}#catalog">
                                 {% if currentSort != 'default' %}
@@ -165,7 +80,7 @@
                                     <path d="m21 21-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
                                 </svg>
                                 <input
-                                    class="h-10 w-full rounded-md border border-input bg-background px-3 py-2 pl-10 text-sm font-medium text-foreground outline-none transition-shadow placeholder:text-muted-foreground focus:ring-2 focus:ring-ring/30"
+                                    class="h-12 w-full rounded-full border border-input bg-secondary/30 px-3 py-2 pl-10 text-sm font-medium text-foreground outline-none transition-shadow placeholder:text-muted-foreground focus:ring-2 focus:ring-ring/30"
                                     type="search"
                                     name="q"
                                     value="{{ searchQuery|default('') }}"
@@ -175,6 +90,10 @@
                             </form>
 
                             <div class="flex flex-wrap items-center gap-3">
+                                <button type="button" data-filter-open aria-haspopup="dialog" aria-controls="ingredient-filter" aria-expanded="false" class="inline-flex min-h-12 items-center gap-3 rounded-full border px-5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring {{ activeComponentSlug ? 'border-primary bg-secondary text-primary' : 'border-border bg-white text-foreground hover:border-primary' }}">
+                                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M4 7h6m4 0h6M4 17h10m4 0h2"/><circle cx="12" cy="7" r="2"/><circle cx="16" cy="17" r="2"/></svg>
+                                    Состав{% if activeComponentSlug %}<span class="grid h-5 w-5 place-items-center rounded-full bg-primary text-xs text-white">1</span>{% endif %}
+                                </button>
                                 <form class="relative" method="get" action="{{ currentCatalogPath }}#catalog">
                                     {% if searchQuery|default('') is not empty %}
                                         <input type="hidden" name="q" value="{{ searchQuery }}">
@@ -192,7 +111,7 @@
                                         <path d="M4 7h16M7 12h10M10 17h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
                                     </svg>
                                     <select
-                                        class="h-10 w-48 cursor-pointer appearance-none rounded-md border border-input bg-background py-2 pl-10 pr-8 text-sm font-medium text-foreground outline-none transition-shadow focus:ring-2 focus:ring-ring/30"
+                                        class="h-12 w-48 cursor-pointer appearance-none rounded-full border border-input bg-background py-2 pl-10 pr-8 text-sm font-medium text-foreground outline-none transition-shadow focus:ring-2 focus:ring-ring/30"
                                         name="sort"
                                         aria-label="Сортировка товаров"
                                         onchange="this.form.submit()"
@@ -207,7 +126,7 @@
 
                                 <div class="flex gap-1" aria-label="Вид каталога">
                                     <a
-                                        class="inline-grid h-10 w-10 place-items-center rounded-lg border transition-colors {% if currentView == 'grid' %}border-primary bg-primary text-primary-foreground{% else %}border-border bg-background text-foreground hover:bg-secondary{% endif %}"
+                                        class="inline-grid h-12 w-12 place-items-center rounded-full border transition-colors {% if currentView == 'grid' %}border-primary bg-primary text-primary-foreground{% else %}border-border bg-background text-foreground hover:bg-secondary{% endif %}"
                                         href="{{ viewUrls.grid }}"
                                         aria-label="Показать сеткой"
                                         {% if currentView == 'grid' %}aria-current="true"{% endif %}
@@ -217,7 +136,7 @@
                                         </svg>
                                     </a>
                                     <a
-                                        class="inline-grid h-10 w-10 place-items-center rounded-lg border transition-colors {% if currentView == 'list' %}border-primary bg-primary text-primary-foreground{% else %}border-border bg-background text-foreground hover:bg-secondary{% endif %}"
+                                        class="inline-grid h-12 w-12 place-items-center rounded-full border transition-colors {% if currentView == 'list' %}border-primary bg-primary text-primary-foreground{% else %}border-border bg-background text-foreground hover:bg-secondary{% endif %}"
                                         href="{{ viewUrls.list }}"
                                         aria-label="Показать списком"
                                         {% if currentView == 'list' %}aria-current="true"{% endif %}
@@ -231,9 +150,15 @@
                         </div>
                     </div>
 
-                    <p class="mb-6 text-muted-foreground">
-                        Найдено товаров: <strong class="font-semibold text-foreground">{{ productsTotal }}</strong>
-                    </p>
+                    <div class="mb-6 flex flex-wrap items-center gap-3">
+                        <p class="mr-auto text-sm text-muted-foreground">Найдено товаров: <strong class="font-semibold text-foreground">{{ productsTotal }}</strong></p>
+                        {% for component in componentFilters %}
+                            {% if component.slug == activeComponentSlug %}<a href="{{ componentFilterUrls[component.slug] }}" class="inline-flex min-h-9 items-center gap-3 rounded-full bg-secondary px-4 text-xs text-primary" aria-label="Убрать состав: {{ component.name }}">{{ component.name }} <span aria-hidden="true">×</span></a>{% endif %}
+                        {% endfor %}
+                        {% for purpose in purposeFilters %}
+                            {% if purpose.slug == activePurposeSlug %}<a href="{{ purposeFilterUrls[purpose.slug] }}" class="inline-flex min-h-9 items-center gap-3 rounded-full bg-secondary px-4 text-xs text-primary" aria-label="Убрать назначение: {{ purpose.name }}">{{ purpose.name }} <span aria-hidden="true">×</span></a>{% endif %}
+                        {% endfor %}
+                    </div>
 
                     {% if introText|default(null) is not empty %}
                         <div class="prose prose-sm mb-8 max-w-none text-muted-foreground prose-p:my-2 prose-strong:text-foreground" data-reveal data-reveal-delay="350">
@@ -241,9 +166,9 @@
                         </div>
                     {% endif %}
 
-                    <div class="{% if currentView == 'list' %}flex flex-col gap-4{% else %}grid auto-rows-fr grid-cols-2 gap-3 md:gap-5 xl:grid-cols-3{% endif %}">
+                    <div class="{% if currentView == 'list' %}flex flex-col gap-4{% else %}grid auto-rows-fr grid-cols-2 gap-3 md:gap-5 md:grid-cols-3 xl:grid-cols-4{% endif %}">
                         {% for product in products %}
-                            {% include 'components/product/card.html.twig' with { product: product, viewMode: currentView, revealDelay: loop.index0 * 100 } only %}
+                            {% include 'components/product/card.html.twig' with { product: product, viewMode: currentView } only %}
                         {% else %}
                             {% include 'components/ui/empty-state.html.twig' with {
                                 title: 'Товары не найдены',
@@ -260,12 +185,12 @@
                             {% if previousPageUrl %}
                                 <a class="inline-flex min-h-10 items-center justify-center gap-1 rounded-md px-3 text-sm font-medium text-foreground transition-colors hover:bg-card" href="{{ previousPageUrl }}">
                                     <span aria-hidden="true">‹</span>
-                                    Previous
+                                    Назад
                                 </a>
                             {% else %}
                                 <span class="inline-flex min-h-10 items-center justify-center gap-1 rounded-md px-3 text-sm font-medium text-muted-foreground opacity-50" aria-disabled="true">
                                     <span aria-hidden="true">‹</span>
-                                    Previous
+                                    Назад
                                 </span>
                             {% endif %}
 
@@ -284,12 +209,12 @@
 
                             {% if nextPageUrl %}
                                 <a class="inline-flex min-h-10 items-center justify-center gap-1 rounded-md px-3 text-sm font-medium text-foreground transition-colors hover:bg-card" href="{{ nextPageUrl }}">
-                                    Next
+                                    Вперёд
                                     <span aria-hidden="true">›</span>
                                 </a>
                             {% else %}
                                 <span class="inline-flex min-h-10 items-center justify-center gap-1 rounded-md px-3 text-sm font-medium text-muted-foreground opacity-50" aria-disabled="true">
-                                    Next
+                                    Вперёд
                                     <span aria-hidden="true">›</span>
                                 </span>
                             {% endif %}
@@ -297,7 +222,7 @@
                     {% endif %}
 
                     {% if bottomText|default(null) is not empty %}
-                        <div class="prose prose-sm mx-auto mt-12 max-w-4xl text-muted-foreground prose-p:my-2 prose-strong:text-foreground" data-reveal data-reveal-delay="200">
+                        <div class="prose prose-sm mt-12 rounded-3xl bg-secondary/40 p-6 md:p-8 text-muted-foreground prose-p:my-2 prose-strong:text-foreground" data-reveal data-reveal-delay="200">
                             {{ bottomText|raw }}
                         </div>
                     {% endif %}
@@ -325,7 +250,7 @@
 
             <div class="grid auto-rows-fr gap-8 sm:grid-cols-2 lg:grid-cols-3">
                 {% for product in products %}
-                    {% include 'components/product/card.html.twig' with { product: product, viewMode: currentView, revealDelay: loop.index0 * 100 } only %}
+                    {% include 'components/product/card.html.twig' with { product: product, viewMode: currentView } only %}
                 {% else %}
                     {% include 'components/ui/empty-state.html.twig' with {
                         title: 'Товары пока не добавлены',

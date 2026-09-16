@@ -57,6 +57,9 @@
     </main>
 
     {% include 'components/layout/footer.html.twig' only %}
+    {% if site_feature('favorites_enabled') %}
+        {% include 'components/product/favorite-notice.html.twig' only %}
+    {% endif %}
 
     {% block javascripts %}
         <script type="module" src="{{ vite_asset('assets/react/mount.tsx') }}"></script>

@@ -259,7 +259,7 @@ export function AdminLayout() {
         </div>
       )}
       <div className="lg:ml-64">
-        <main className="mx-auto w-full max-w-[1280px] p-4 sm:p-6 lg:p-8">
+        <main className="w-full min-w-0 p-4 sm:p-6 lg:p-8">
           <Outlet />
         </main>
       </div>

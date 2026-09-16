@@ -1,0 +1,9 @@
+{
+  "key": "home-final",
+  "file": "01-home.png",
+  "refs": [
+    "/Users/viktor/Projects/myProjects/biofarm/design-previews/biofarm-v7/references/home-before-label-correction.png",
+    "/Users/viktor/Projects/myProjects/biofarm/new-backend/public/uploads/products/imported/6e47f342afa940ffcbcbeb6c461ff7ce945ad069.webp"
+  ],
+  "prompt": "Use case: precise-object-edit. IMAGE1 is finished BIOFARM homepage. Preserve entire image1, ALL layout, headings, colors, plant photos, testimonials with real attachment photos, all four form fields, product prices and all other packages EXACTLY unchanged. ONE LOCAL CORRECTION ONLY: in Popular products fourth/rightmost product card, the BLUE-label low wide BLACK jar wrongly says Экстракт коры осины. Replace that jar's LABEL ARTWORK with the authentic MIX label on IMAGE2 (source product photograph). Preserve jar shape, size, position and black lid, preserve BLUE wave color and original graphic icon layout of IMAGE2. Correct long product label heading says \"ЭКСТРАКТ КОНЦЕНТРИРОВАННЫЙ. МИКС: КОРЕНЬ ЛОПУХА, КОРА ОСИНЫ, ПИХТА СИБИРСКАЯ\", weight130гр. Product card caption remains \"Микс: корень лопуха, кора осины и пихта\",130г,1339₽. Do NOT alter other sections or add/change anything. Output same full-page aspect ratio and resolution as image1."
+}

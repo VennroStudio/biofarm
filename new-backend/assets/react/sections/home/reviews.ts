@@ -20,7 +20,6 @@ export function mountHomeReviews() {
     const lightbox = root.querySelector<HTMLElement>('[data-reviews-lightbox]');
     const lightboxImage = lightbox?.querySelector<HTMLImageElement>('[data-reviews-lightbox-image]');
     const lightboxClose = lightbox?.querySelector<HTMLButtonElement>('[data-reviews-lightbox-close]');
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     let currentIndex = 0;
     let lightboxTrigger: HTMLButtonElement | null = null;
 
@@ -47,39 +46,10 @@ export function mountHomeReviews() {
         const order = visibleIndexes.get(index);
         card.hidden = order === undefined;
         card.style.order = order === undefined ? '' : String(order);
-
-        if (order === undefined) {
-          card.style.opacity = '';
-          card.style.transform = '';
-          card.style.transition = '';
-          card.style.transitionDelay = '';
-        }
       });
 
       dots.forEach((dot, index) => {
         setDotState(dot, index === currentIndex);
-      });
-
-      if (reduceMotion) {
-        return;
-      }
-
-      const visibleCards = cards.filter((card) => !card.hidden);
-
-      visibleCards.forEach((card) => {
-        const order = Number(card.style.order || 0);
-
-        card.style.opacity = '0';
-        card.style.transform = 'translate3d(0, 30px, 0)';
-        card.style.transition = 'opacity 600ms ease, transform 600ms ease';
-        card.style.transitionDelay = `${200 + order * 150}ms`;
-      });
-
-      requestAnimationFrame(() => {
-        visibleCards.forEach((card) => {
-          card.style.opacity = '1';
-          card.style.transform = 'translate3d(0, 0, 0)';
-        });
       });
     };
 

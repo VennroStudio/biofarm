@@ -10,17 +10,18 @@ function HomeVideo({ modalElement, rootElement }: Props) {
   useEffect(() => {
     const openButton = rootElement.querySelector<HTMLButtonElement>('[data-home-video-open]');
     const frame = modalElement.querySelector<HTMLIFrameElement>('[data-home-video-frame]');
+    const player = modalElement.querySelector<HTMLVideoElement>('[data-home-video-player]');
     const dialog = modalElement.querySelector<HTMLElement>('[data-modal-dialog]');
     const closeButton = modalElement.querySelector<HTMLButtonElement>('[data-modal-close]');
-    if (!openButton || !frame || !dialog || !closeButton) {
+    if (!openButton || (!frame && !player) || !dialog || !closeButton) {
       return undefined;
     }
 
-    const focusableSelector = 'a[href], button:not([disabled]), iframe, input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    const focusableSelector = 'a[href], button:not([disabled]), iframe, video[controls], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
     const open = () => {
-      const src = frame.dataset.src;
-      if (src && frame.src !== src) {
+      const src = frame?.dataset.src;
+      if (frame && src && frame.src !== src) {
         frame.src = src;
       }
 
@@ -30,6 +31,10 @@ function HomeVideo({ modalElement, rootElement }: Props) {
       dialog.style.transform = 'scale(0.95)';
       dialog.style.transition = 'opacity 200ms ease, transform 200ms ease';
       modalElement.hidden = false;
+      if (player) {
+        // Native controls remain available if autoplay is blocked.
+        void player.play().catch(() => undefined);
+      }
       document.documentElement.classList.add('overflow-hidden');
       document.body.classList.add('overflow-hidden');
 
@@ -48,7 +53,11 @@ function HomeVideo({ modalElement, rootElement }: Props) {
       dialog.style.opacity = '';
       dialog.style.transform = '';
       dialog.style.transition = '';
-      frame.removeAttribute('src');
+      frame?.removeAttribute('src');
+      if (player) {
+        player.pause();
+        player.currentTime = 0;
+      }
       document.documentElement.classList.remove('overflow-hidden');
       document.body.classList.remove('overflow-hidden');
       openButton.focus();
