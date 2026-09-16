@@ -113,6 +113,10 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, withdrawa
         }
       })
       .catch((error: unknown) => {
+        if (!getToken()) {
+          window.location.href = '/login?redirect=/profile';
+          return;
+        }
         console.error('Failed to load profile page', error);
         setNotice(messageFromError(error, 'Не удалось загрузить личный кабинет'));
       })

@@ -3,7 +3,6 @@ import { createRoot } from 'react-dom/client';
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { cartTotal, clearCart, readCart, type CartItem } from '../../site/cart';
 import {
-  clearAuth,
   createOrder,
   getStoredUser,
   getToken,
@@ -113,9 +112,11 @@ function CheckoutPage({
         }
       }
     }).catch(() => {
-      clearAuth();
-      setUser(null);
-      setUseBonuses(false);
+      if (!getToken()) {
+        setUser(null);
+        setUseBonuses(false);
+      }
+      setError('Не удалось загрузить данные аккаунта. Обновите страницу, чтобы повторить попытку.');
     });
   }, [cart.length]);
 

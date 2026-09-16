@@ -2,6 +2,7 @@ import type { CartItem } from './cart';
 
 const tokenKey = 'biofarm_access_token';
 const userKey = 'biofarm_user';
+let refreshPromise: Promise<string | null> | null = null;
 
 type RequestOptions = Omit<RequestInit, 'body'> & {
   body?: FormData | Record<string, unknown> | null;
@@ -134,8 +135,59 @@ export function clearAuth() {
   window.localStorage.removeItem(userKey);
 }
 
+async function refreshAccessToken(failedToken: string): Promise<string | null> {
+  const refresh = async () => {
+    // A different request/tab may already have refreshed or cleared the session.
+    if (getToken() !== failedToken) {
+      return getToken();
+    }
+
+    const response = await fetch('/v1/auth/refresh', {
+      method: 'POST',
+      credentials: 'same-origin',
+    });
+
+    if (getToken() !== failedToken) {
+      return getToken();
+    }
+
+    // The endpoint returns 422 when the refresh cookie is missing.
+    if (response.status === 401 || response.status === 422) {
+      clearAuth();
+      return null;
+    }
+
+    if (!response.ok) {
+      throw new Error('Не удалось продлить вход. Попробуйте ещё раз.');
+    }
+
+    const payload: unknown = await response.json();
+    if (!isRecord(payload) || !isRecord(payload.data) || typeof payload.data.access_token !== 'string' || !payload.data.access_token) {
+      throw new Error('Не удалось продлить вход. Попробуйте ещё раз.');
+    }
+
+    // Do not restore credentials if the user logged out while reading the response.
+    if (getToken() !== failedToken) {
+      return getToken();
+    }
+
+    window.localStorage.setItem(tokenKey, payload.data.access_token);
+    return payload.data.access_token;
+  };
+
+  if (!refreshPromise) {
+    // Refresh cookies rotate, so only one tab may use the current cookie at a time.
+    refreshPromise = Promise.resolve(navigator.locks
+      ? navigator.locks.request('biofarm-site-token-refresh', refresh)
+      : refresh()).finally(() => { refreshPromise = null; });
+  }
+
+  return refreshPromise;
+}
+
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const token = getToken();
+  let token = getToken();
+  const isAuthRequest = path.startsWith('/v1/auth/');
   const headers = new Headers(options.headers);
 
   if (token) {
@@ -150,13 +202,23 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     body = JSON.stringify(options.body);
   }
 
-  const response = await fetch(path, { ...options, body, headers });
+  const send = () => fetch(path, { ...options, body, headers, credentials: 'same-origin' });
+  let response = await send();
+
+  if (response.status === 401 && token && !isAuthRequest) {
+    token = await refreshAccessToken(token);
+    if (token) {
+      headers.set('Authorization', `Bearer ${token}`);
+      response = await send();
+    }
+  }
+
   const contentType = response.headers.get('content-type') || '';
   const payload = contentType.includes('application/json')
     ? ((await response.json()) as ApiEnvelope<T> | ApiErrorEnvelope)
     : null;
 
-  if (response.status === 401) {
+  if (response.status === 401 && !isAuthRequest && token && getToken() === token) {
     clearAuth();
   }
 
