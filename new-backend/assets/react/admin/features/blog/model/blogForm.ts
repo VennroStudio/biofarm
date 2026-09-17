@@ -73,3 +73,20 @@ export function blogPayloadFromForm(form: BlogForm) {
     publishedAt: form.published_at || null,
   };
 }
+
+export type BlogFormIssue = { field: keyof BlogForm; message: string };
+
+export function blogFormIssue(form: BlogForm): BlogFormIssue | null {
+  for (const [field, message] of [
+    ['title', 'Укажите заголовок статьи.'],
+    ['category_id', 'Укажите категорию статьи.'],
+    ['author_name', 'Укажите имя автора.'],
+    ['image', 'Добавьте обложку статьи.'],
+    ['excerpt', 'Заполните краткое описание.'],
+  ] as const) {
+    if (!form[field].trim()) return { field, message };
+  }
+  if (!form.content.replace(/<[^>]*>/g, '').replace(/&nbsp;|&#160;|&#x[aA]0;/g, ' ').trim()) return { field: 'content', message: 'Добавьте текст статьи.' };
+  if (!Number.isSafeInteger(Number(form.read_time)) || Number(form.read_time) <= 0) return { field: 'read_time', message: 'Укажите время чтения в минутах, целое число больше нуля.' };
+  return null;
+}

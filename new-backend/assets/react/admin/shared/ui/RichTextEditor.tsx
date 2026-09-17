@@ -9,7 +9,7 @@ import { Bold, Italic, Underline, List, ListOrdered, Link, Unlink, Undo2, Redo2 
 import { Button } from './button';
 import { inputClass } from './field';
 
-export default function RichTextEditor({ value, onChange, disabled = false }: { value: string; onChange: (html: string) => void; disabled?: boolean }) {
+export default function RichTextEditor({ value, onChange, disabled = false, label = 'Полное описание' }: { value: string; onChange: (html: string) => void; disabled?: boolean; label?: string }) {
   const [linkOpen, setLinkOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
   const [linkError, setLinkError] = useState('');
@@ -25,7 +25,7 @@ export default function RichTextEditor({ value, onChange, disabled = false }: { 
     editable: !disabled,
     editorProps: {
       attributes: {
-        role: 'textbox', 'aria-label': 'Полное описание', 'aria-multiline': 'true',
+        role: 'textbox', 'aria-label': label, 'aria-multiline': 'true',
         class: 'min-h-60 px-4 py-3 text-sm leading-relaxed text-[#294555] outline-none [&_p]:my-2 [&_h1]:text-2xl [&_h2]:text-xl [&_h3]:text-lg [&_h4]:text-base [&_h1]:font-bold [&_h2]:font-bold [&_h3]:font-bold [&_h4]:font-bold [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_a]:text-[#2e8175] [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:pl-4 [&_table]:w-full [&_td]:border [&_td]:p-2 [&_th]:border [&_th]:p-2 [&_img]:max-w-full [&_pre]:whitespace-pre-wrap',
       },
     },

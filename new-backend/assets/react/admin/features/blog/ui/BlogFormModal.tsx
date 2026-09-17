@@ -1,7 +1,23 @@
-import type { Dispatch, FormEvent, SetStateAction } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState, type Dispatch, type FormEvent, type KeyboardEvent, type ReactNode, type SetStateAction } from 'react';
+import { FileText, ImageIcon, Info, Search } from 'lucide-react';
 import { ImageUploader } from '../../media/ui/ImageUploader';
 import { Button, ErrorAlert, Field, inputClass, Modal, textareaClass } from '../../../shared/ui';
-import type { BlogForm } from '../model/blogForm';
+import { blogFormIssue, type BlogForm, type BlogFormIssue } from '../model/blogForm';
+
+const RichTextEditor = lazy(() => import('../../../shared/ui/RichTextEditor'));
+const tabs = [
+  { id: 'main', title: 'Основные', icon: Info },
+  { id: 'cover', title: 'Обложка', icon: ImageIcon },
+  { id: 'content', title: 'Содержание', icon: FileText },
+  { id: 'seo', title: 'SEO', icon: Search },
+] as const;
+type Tab = typeof tabs[number]['id'];
+type TextKey = { [K in keyof BlogForm]: BlogForm[K] extends string ? K : never }[keyof BlogForm] & string;
+const issueTab = (field: BlogFormIssue['field']): Tab => field === 'image' ? 'cover' : field === 'content' || field === 'excerpt' || field === 'read_time' ? 'content' : 'main';
+
+function Group({ title, children }: { title: string; children: ReactNode }) {
+  return <section className="space-y-4 rounded-2xl border border-[#dfece9] bg-white p-4 sm:p-5"><h3 className="text-base font-semibold text-[#294555]">{title}</h3>{children}</section>;
+}
 
 type Props = {
   form: BlogForm;
@@ -14,82 +30,109 @@ type Props = {
 };
 
 export function BlogFormModal({ form, open, error, saving, setForm, onClose, onSubmit }: Props) {
-  return (
-    <Modal
-      open={open}
-      title={form.id ? 'Редактировать статью' : 'Новая статья'}
-      maxWidth="max-w-3xl"
-      onClose={onClose}
-      footer={(
-        <>
-          <Button type="button" variant="outline" onClick={onClose}>Отмена</Button>
-          <Button type="submit" form="admin-blog-form" disabled={saving || !form.title || !form.excerpt || !form.content}>
-            {saving ? 'Сохранение...' : (form.id ? 'Сохранить' : 'Опубликовать')}
-          </Button>
-        </>
-      )}
-    >
-      <form id="admin-blog-form" className="grid gap-4" onSubmit={onSubmit}>
-        <ErrorAlert>{error}</ErrorAlert>
-        <Field label="Заголовок *">
-          <input className={inputClass} value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} />
-        </Field>
-        <Field label="H1">
-          <input className={inputClass} value={form.h1} onChange={(event) => setForm({ ...form, h1: event.target.value })} placeholder="Если отличается от заголовка" />
-        </Field>
-        <div className="grid gap-4 md:grid-cols-2">
-          <Field label="Категория *">
-            <input className={inputClass} value={form.category_id} onChange={(event) => setForm({ ...form, category_id: event.target.value })} placeholder="health" />
-          </Field>
-          <Field label="Имя автора">
-            <input className={inputClass} value={form.author_name} onChange={(event) => setForm({ ...form, author_name: event.target.value })} />
-          </Field>
-        </div>
-        <div className="space-y-2">
-          <p className="text-sm font-semibold text-[#294555]">Изображение</p>
-          <ImageUploader scope="blog" onUploaded={(url) => setForm((current) => ({ ...current, image: url }))} />
-          {form.image ? (
-            <div className="grid gap-3 rounded-lg border border-[#dfece9] bg-white p-3 md:grid-cols-[88px_1fr]">
-              <img src={form.image} alt={form.image_alt || form.title} className="h-20 w-20 rounded object-cover" />
-              <p className="break-all rounded-md border border-[#dfece9] bg-[#f5faf8] px-3 py-2 text-xs font-semibold text-[#5f7580]">
-                {form.image}
-              </p>
+  const [activeTab, setActiveTab] = useState<Tab>('main');
+  const [issue, setIssue] = useState<BlogFormIssue | null>(null);
+  const [confirmClose, setConfirmClose] = useState(false);
+  const [initialForm] = useState(() => JSON.stringify(form));
+  const formRef = useRef<HTMLFormElement>(null);
+  const dirty = initialForm !== JSON.stringify(form);
+
+  useEffect(() => {
+    if (!dirty) return;
+    const beforeUnload = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ''; };
+    window.addEventListener('beforeunload', beforeUnload);
+    return () => window.removeEventListener('beforeunload', beforeUnload);
+  }, [dirty]);
+  useEffect(() => {
+    if (!issue) return;
+    const frame = requestAnimationFrame(() => {
+      formRef.current?.querySelector<HTMLElement>(`[data-field="${issue.field}"]`)?.querySelector<HTMLElement>('input, textarea, [contenteditable], button')?.focus();
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [issue]);
+
+  function close() {
+    if (saving) return;
+    if (dirty) setConfirmClose(true);
+    else onClose();
+  }
+  function changeTab(tab: Tab) {
+    setActiveTab(tab);
+    formRef.current?.parentElement?.scrollTo({ top: 0 });
+  }
+  function tabKey(event: KeyboardEvent<HTMLButtonElement>, index: number) {
+    const next = event.key === 'ArrowRight' ? (index + 1) % tabs.length : event.key === 'ArrowLeft' ? (index + tabs.length - 1) % tabs.length : event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : null;
+    if (next === null) return;
+    event.preventDefault();
+    changeTab(tabs[next].id);
+    document.getElementById(`blog-tab-${tabs[next].id}`)?.focus();
+  }
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const nextIssue = blogFormIssue(form);
+    setIssue(nextIssue);
+    if (nextIssue) { changeTab(issueTab(nextIssue.field)); return; }
+    onSubmit(event);
+  }
+  const update = (field: TextKey, value: string) => setForm(current => ({ ...current, [field]: value }));
+  const text = (field: TextKey, label: string, placeholder = '', type = 'text') => <div data-field={field}><Field label={label}><input className={inputClass} type={type} min={type === 'number' ? 1 : undefined} step={type === 'number' ? 1 : undefined} value={form[field]} placeholder={placeholder} aria-invalid={issue?.field === field || undefined} onChange={event => update(field, event.target.value)} /></Field></div>;
+  const area = (field: TextKey, label: string, placeholder = '') => <div data-field={field}><Field label={label}><textarea className={textareaClass} value={form[field]} placeholder={placeholder} aria-invalid={issue?.field === field || undefined} onChange={event => update(field, event.target.value)} /></Field></div>;
+
+  return <Modal open={open} title={form.id ? 'Редактировать статью' : 'Новая статья'} maxWidth="max-w-5xl" onClose={close}
+    headerContent={<div role="tablist" aria-label="Разделы статьи" className="flex gap-1 overflow-x-auto bg-[#f5faf8] px-3 py-2 sm:px-5">
+      {tabs.map((tab, index) => <button key={tab.id} id={`blog-tab-${tab.id}`} type="button" role="tab" aria-selected={activeTab === tab.id} aria-controls={`blog-panel-${tab.id}`} tabIndex={activeTab === tab.id ? 0 : -1} onKeyDown={event => tabKey(event, index)} onClick={() => changeTab(tab.id)} className={`inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-xl px-3 py-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2e8175] ${activeTab === tab.id ? 'bg-[#2e8175] text-white shadow-sm' : 'text-[#526d78] hover:bg-[#e5f1ee]'}`}>
+        <tab.icon className="h-4 w-4" />{tab.title}{issue && issueTab(issue.field) === tab.id && <span className="h-2 w-2 rounded-full bg-red-400" aria-label="Есть ошибка" />}
+      </button>)}
+    </div>}
+    footer={confirmClose ? <div className="flex w-full flex-wrap items-center justify-end gap-2"><p className="mr-auto text-sm text-[#294555]">Закрыть окно без сохранения изменений?</p><Button variant="outline" onClick={() => setConfirmClose(false)}>Продолжить редактирование</Button><Button variant="danger" onClick={onClose}>Закрыть без сохранения</Button></div> : <>
+      <span className="mr-auto self-center text-xs text-[#5f7580]">{dirty ? 'Есть несохранённые изменения' : 'Все вкладки сохраняются вместе'}</span>
+      <Button variant="outline" disabled={saving} onClick={close}>Отмена</Button>
+      <Button type="submit" form="admin-blog-form" disabled={saving}>{saving ? 'Сохранение…' : form.id ? 'Сохранить' : form.is_published ? 'Опубликовать' : 'Сохранить черновик'}</Button>
+    </>}
+  >
+    <form ref={formRef} id="admin-blog-form" noValidate onSubmit={submit} className="min-h-[min(25rem,45dvh)] space-y-4">
+      <ErrorAlert>{issue?.message || error}</ErrorAlert>
+      <fieldset disabled={saving} className="min-w-0">
+        <div role="tabpanel" id={`blog-panel-${activeTab}`} aria-labelledby={`blog-tab-${activeTab}`} className="space-y-5">
+          {activeTab === 'main' && <>
+            <Group title="Основная информация">
+              {text('title', 'Заголовок *')}
+              <div className="grid gap-4 sm:grid-cols-2">{text('category_id', 'Категория *', 'Например, health')}{text('author_name', 'Имя автора *')}</div>
+            </Group>
+            <Group title="Публикация">
+              {text('published_at', 'Дата публикации', '', 'datetime-local')}
+              <label className="flex items-start gap-3 rounded-xl bg-[#f5faf8] p-3 text-sm text-[#294555]"><input type="checkbox" className="mt-1 accent-[#2e8175]" checked={form.is_published} onChange={event => setForm(current => ({ ...current, is_published: event.target.checked }))} /><span><strong>Опубликована</strong><span className="mt-1 block text-xs text-[#5f7580]">Выключите, чтобы сохранить статью как черновик.</span></span></label>
+            </Group>
+          </>}
+          {activeTab === 'cover' && <Group title="Обложка статьи">
+            <div data-field="image" className="space-y-4">
+              <p className="text-sm text-[#5f7580]">Изображение для карточки в блоге и страницы статьи. *</p>
+              <ImageUploader scope="blog" onUploaded={url => setForm(current => ({ ...current, image: url }))} />
+              {form.image ? <div className="space-y-3 rounded-xl border border-[#dfece9] p-3">
+                <img src={form.image} alt={form.image_alt || form.title} className="max-h-64 w-full rounded-lg bg-[#f5faf8] object-contain" />
+                <div className="flex flex-wrap items-center gap-3"><p className="min-w-0 flex-1 break-all text-xs text-[#5f7580]">{form.image}</p><Button variant="outline" onClick={() => update('image', '')}>Убрать обложку</Button></div>
+              </div> : <p className="rounded-xl border border-dashed border-[#cfe2de] p-8 text-center text-sm text-[#5f7580]">Обложка ещё не добавлена.</p>}
             </div>
-          ) : null}
+            {text('image_alt', 'Описание изображения (alt)', 'Кратко опишите, что изображено на обложке')}
+          </Group>}
+          {activeTab === 'content' && <>
+            <Group title="Анонс">
+              {area('excerpt', 'Краткое описание *', 'Короткий анонс для карточки статьи в блоге')}
+              {text('read_time', 'Время чтения, минут *', 'Например, 5', 'number')}
+            </Group>
+            <Group title="Текст статьи">
+              <div data-field="content" className="space-y-2"><p className="text-sm font-semibold text-[#294555]">Содержание *</p><Suspense fallback={<p className="p-4 text-sm text-[#5f7580]">Загрузка редактора…</p>}><RichTextEditor label="Содержание статьи" value={form.content} disabled={saving} onChange={html => update('content', html)} /></Suspense></div>
+            </Group>
+          </>}
+          {activeTab === 'seo' && <Group title="Поисковое оформление">
+            {text('slug', 'Адрес страницы (slug)', 'Например, kak-podderzhat-immunitet')}
+            <p className="text-xs text-[#5f7580]">Если оставить пустым, адрес сформируется из заголовка статьи.</p>
+            {text('h1', 'H1 — заголовок на странице', 'Если отличается от заголовка статьи')}
+            {text('seo_title', 'Title — заголовок в поиске')}
+            {area('seo_description', 'Description — описание в поиске')}
+          </Group>}
         </div>
-        <Field label="Alt изображения">
-          <input className={inputClass} value={form.image_alt} onChange={(event) => setForm({ ...form, image_alt: event.target.value })} />
-        </Field>
-        <Field label="Краткое описание *">
-          <textarea className={textareaClass} value={form.excerpt} onChange={(event) => setForm({ ...form, excerpt: event.target.value })} />
-        </Field>
-        <div className="grid gap-4 md:grid-cols-2">
-          <Field label="SEO title">
-            <input className={inputClass} value={form.seo_title} onChange={(event) => setForm({ ...form, seo_title: event.target.value })} />
-          </Field>
-          <Field label="SEO description">
-            <textarea className={textareaClass} value={form.seo_description} onChange={(event) => setForm({ ...form, seo_description: event.target.value })} />
-          </Field>
-        </div>
-        <Field label="Содержание *">
-          <textarea className={`${textareaClass} min-h-72`} value={form.content} onChange={(event) => setForm({ ...form, content: event.target.value })} />
-        </Field>
-        <div className="grid gap-4 md:grid-cols-2">
-          <Field label="Slug">
-            <input className={inputClass} value={form.slug} onChange={(event) => setForm({ ...form, slug: event.target.value })} />
-          </Field>
-          <Field label="Минут чтения">
-            <input className={inputClass} type="number" value={form.read_time} onChange={(event) => setForm({ ...form, read_time: event.target.value })} />
-          </Field>
-        </div>
-        <Field label="Дата публикации">
-          <input className={inputClass} type="datetime-local" value={form.published_at} onChange={(event) => setForm({ ...form, published_at: event.target.value })} />
-        </Field>
-        <label className="flex items-center gap-2 text-sm font-semibold text-[#294555]">
-          <input type="checkbox" checked={form.is_published} onChange={(event) => setForm({ ...form, is_published: event.target.checked })} />
-          Опубликована
-        </label>
-      </form>
-    </Modal>
-  );
+      </fieldset>
+    </form>
+  </Modal>;
 }

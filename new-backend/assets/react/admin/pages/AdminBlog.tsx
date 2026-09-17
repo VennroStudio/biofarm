@@ -97,7 +97,7 @@ export function AdminBlog() {
         <BlogTable posts={filteredPosts} onEdit={openEdit} onRemove={(post) => void remove(post)} />
       </Card>
 
-      <BlogFormModal
+      {dialogOpen && <BlogFormModal
         form={form}
         open={dialogOpen}
         error={dialogOpen ? error : null}
@@ -108,7 +108,7 @@ export function AdminBlog() {
           setError(null);
         }}
         onSubmit={(event) => void submit(event)}
-      />
+      />}
     </>
   );
 }
