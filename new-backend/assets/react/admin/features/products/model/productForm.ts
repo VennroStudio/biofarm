@@ -266,3 +266,24 @@ function ensureMain(items: ProductImageForm[]): ProductImageForm[] {
     is_main: index === (mainIndex >= 0 ? mainIndex : 0),
   }));
 }
+
+export type ProductFormIssue = { field: keyof ProductForm | 'images'; message: string };
+
+export function productFormIssue(form: ProductForm): ProductFormIssue | null {
+  if (!form.name.trim()) return { field: 'name', message: 'Укажите название товара.' };
+  if (!form.category_id) return { field: 'category_id', message: 'Выберите категорию.' };
+  if (!Number.isSafeInteger(Number(form.price)) || Number(form.price) <= 0) return { field: 'price', message: 'Укажите цену в целых рублях, больше нуля.' };
+  if (form.old_price && (!Number.isSafeInteger(Number(form.old_price)) || Number(form.old_price) < 0)) return { field: 'old_price', message: 'Укажите старую цену в целых рублях, не меньше нуля.' };
+  if (!form.weight.trim()) return { field: 'weight', message: 'Укажите вес или объём.' };
+  if (!form.description.replace(/<[^>]*>/g, '').replace(/&nbsp;|&#160;|&#x[aA]0;/g, ' ').trim()) return { field: 'description', message: 'Заполните полное описание товара.' };
+  if (!hasProductImage(form)) return { field: 'images', message: 'Добавьте хотя бы одну фотографию товара.' };
+  for (const field of ['wb_link', 'ozon_link'] as const) {
+    if (!form[field].trim()) continue;
+    try {
+      if (!['http:', 'https:'].includes(new URL(form[field]).protocol)) throw new Error();
+    } catch {
+      return { field, message: `Укажите полную ссылку ${field === 'wb_link' ? 'Wildberries' : 'Ozon'}, начиная с https://.` };
+    }
+  }
+  return null;
+}

@@ -147,7 +147,7 @@ export function AdminProducts() {
         />
       </Card>
 
-      <ProductFormModal
+      {dialogOpen && <ProductFormModal
         categories={categories}
         attributes={attributes}
         productGroups={productGroups}
@@ -164,7 +164,7 @@ export function AdminProducts() {
           setError(null);
         }}
         onSubmit={(event) => void submit(event)}
-      />
+      />}
     </>
   );
 }

@@ -6,13 +6,14 @@ import { Button } from './button';
 type ModalProps = PropsWithChildren<{
   description?: ReactNode;
   footer?: ReactNode;
+  headerContent?: ReactNode;
   maxWidth?: string;
   onClose: () => void;
   open: boolean;
   title: string;
 }>;
 
-export function Modal({ children, description, footer, maxWidth = 'max-w-2xl', onClose, open, title }: ModalProps) {
+export function Modal({ children, description, footer, headerContent, maxWidth = 'max-w-2xl', onClose, open, title }: ModalProps) {
   const dialogRef = useRef<HTMLElement>(null);
   const onCloseRef = useRef(onClose);
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
@@ -93,6 +94,7 @@ export function Modal({ children, description, footer, maxWidth = 'max-w-2xl', o
             <X className="h-4 w-4" />
           </Button>
         </div>
+        {headerContent && <div className="shrink-0 border-b border-[#dfece9]">{headerContent}</div>}
         <div className="overscroll-contain overflow-y-auto px-4 py-4 sm:px-6">{children}</div>
         {footer && <div className="flex flex-wrap justify-end gap-2 border-t border-[#dfece9] px-4 py-3 sm:px-6">{footer}</div>}
       </section>
