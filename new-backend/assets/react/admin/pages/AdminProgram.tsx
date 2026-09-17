@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { BookOpen, CreditCard, History, SlidersHorizontal, Wallet } from "lucide-react";
 import { request } from "../api/client";
 import {
     Section,
@@ -17,6 +18,13 @@ const base = "/admin/api/program";
 const value = (f: FormData, key: string) => String(f.get(key) || "");
 const num = (f: FormData, key: string) => Number(f.get(key));
 const defaultLedgerFilters = { sort: "created_at:desc", dateFrom: "", dateTo: "" };
+const sections = [
+    { key: "ledger", title: "Журнал", icon: BookOpen },
+    { key: "audit", title: "Аудит", icon: History },
+    { key: "withdrawals", title: "Выплаты", icon: Wallet },
+    { key: "payments", title: "Оплата и возвраты", icon: CreditCard },
+    { key: "settings", title: "Настройки", icon: SlidersHorizontal },
+];
 export function AdminProgram() {
     const [withdrawalStatus, setWithdrawalStatus] = useState("approved");
     const [tab, setTab] = useState("ledger");
@@ -129,16 +137,12 @@ export function AdminProgram() {
         <div className="space-y-6">
             <h1 className="text-3xl text-primary">Партнёрская программа</h1>
             <p>Начисления по подтверждённым оплатам. Переводы выполняются вручную.</p>
-            <div className="flex flex-wrap gap-2">
-                {[
-                    ["ledger", "Журнал"],
-                    ["audit", "Аудит"],
-                    ["withdrawals", "Выплаты"],
-                    ["payments", "Оплата и возвраты"],
-                    ["settings", "Настройки"],
-                ].map(([key, title]) => (
+            <nav aria-label="Разделы партнёрской программы" className="flex flex-wrap gap-2 rounded-2xl border border-[#dfece9] bg-[#f4faf8] p-2">
+                {sections.map(({ key, title, icon: Icon }) => (
                     <button
-                        className={tab === key ? buttonClass : "rounded-lg border p-2"}
+                        type="button"
+                        aria-pressed={tab === key}
+                        className={`inline-flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-colors focus-visible:outline-offset-2 focus-visible:outline-[#2e8175] ${tab === key ? "bg-[#2e8175] text-white shadow-sm" : "text-[#526d78] hover:bg-white hover:text-[#18574f]"}`}
                         key={key}
                         onClick={() => {
                             setTab(key);
@@ -147,10 +151,11 @@ export function AdminProgram() {
                             setList({ items: [], page: 1, limit: 25 });
                         }}
                     >
+                        <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
                         {title}
                     </button>
                 ))}
-            </div>
+            </nav>
             {error && (
                 <p role="alert" className="rounded bg-red-50 p-3 text-red-700">
                     {error}
