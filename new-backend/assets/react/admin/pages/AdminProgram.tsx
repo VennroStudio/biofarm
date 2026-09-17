@@ -11,12 +11,11 @@ import {
     Pager,
     inputClass,
     buttonClass,
-    type Rates,
     type Listing,
     type Row,
 } from "../../program/shared";
 import { auditAction, AuditDetails } from "./ProgramAudit";
-import { ProgramSettings } from "./ProgramSettings";
+import { ProgramSettings, type ProgramAdminSettings } from "./ProgramSettings";
 const base = "/admin/api/program";
 const value = (f: FormData, key: string) => String(f.get(key) || "");
 const num = (f: FormData, key: string) => Number(f.get(key));
@@ -38,14 +37,14 @@ function AdminProgramSection({ tab }: { tab: string }) {
     const [ledgerFilters, setLedgerFilters] = useState(defaultLedgerFilters);
     const [ledgerDraft, setLedgerDraft] = useState(defaultLedgerFilters);
     const [list, setList] = useState<Listing>({ items: [], page: 1, limit: 25 });
-    const [rates, setRates] = useState<Rates | null>(null);
+    const [rates, setRates] = useState<ProgramAdminSettings | null>(null);
     const [error, setError] = useState("");
     const [notice, setNotice] = useState("");
     const [revision, setRevision] = useState(0);
     const [busy, setBusy] = useState(false);
     const [selected, setSelected] = useState<Row | null>(null);
     useEffect(() => {
-        void request<Rates>(`${base}/settings`)
+        void request<ProgramAdminSettings>(`${base}/settings`)
             .then(setRates)
             .catch((e) => setError(String(e)));
     }, [revision]);

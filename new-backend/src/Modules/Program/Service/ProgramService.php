@@ -64,14 +64,29 @@ final class ProgramService
         return ProgramMath::rules([], $value === false ? [] : $this->decode($value));
     }
 
+    public function adminSettings(): array
+    {
+        return $this->settings() + ['bonusSpendLimitPercent' => new SiteSettings($this->db)->int('order_bonus_spend_limit_percent', 30)];
+    }
+
     public function updateSettings(array $input, int $actor): array
     {
         return $this->atomic(function () use ($input, $actor) {
+            $hasSpendLimit = array_key_exists('bonusSpendLimitPercent', $input);
+            $spendLimit = $input['bonusSpendLimitPercent'] ?? null;
+            if ($hasSpendLimit && (!\is_int($spendLimit) || $spendLimit < 0 || $spendLimit > 100)) {
+                throw new DomainException('Лимит списания бонусов должен быть целым числом от 0 до 100.');
+            }
+            unset($input['bonusSpendLimitPercent']);
             $rules = ProgramMath::rules($input, $this->settings());
+            if ($hasSpendLimit) {
+                $this->db->executeStatement('DELETE FROM site_settings WHERE `key`=?', ['order_bonus_spend_limit_percent']);
+                $this->db->executeStatement('INSERT INTO site_settings (`key`, value) VALUES (?, ?)', ['order_bonus_spend_limit_percent', $this->json(['value' => $spendLimit])]);
+            }
             $this->db->insert('program_rules', ['id' => bin2hex(random_bytes(16)), 'payload' => $this->json($rules), 'created_at' => $this->now()]);
             $this->db->delete('program_locks', ['id' => 'settings']);
             $this->db->insert('program_locks', ['id' => 'settings', 'payload' => $this->json($rules)]);
-            $this->audit($actor, 'settings', $rules);
+            $this->audit($actor, 'settings', $rules + ($hasSpendLimit ? ['bonusSpendLimitPercent' => $spendLimit] : []));
             return $rules;
         });
     }

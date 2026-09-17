@@ -146,6 +146,22 @@ $r1 = order($db, $p, 'RESERVE', 7, 500, 1000);
 fails(static fn () => order($db, $p, 'OVER', 7, 1000, 1000), 'concurrent spend excludes reserves');
 $p->cancelOrder('RESERVE');
 check((int)$db->fetchOne("SELECT COUNT(*) FROM program_ledger WHERE kind='legacy_opening' AND wallet='commission'") === 0, 'old bonuses never commission');
+check($p->adminSettings()['bonusSpendLimitPercent'] === 30, 'spend limit defaults to existing checkout default');
+$p->updateSettings(['bonusSpendLimitPercent' => 45], 1);
+check($p->adminSettings()['bonusSpendLimitPercent'] === 45, 'admin settings read saved spend limit');
+check(new App\Components\Setting\SiteSettings($db)->int('order_bonus_spend_limit_percent') === 45, 'checkout reads same saved spend limit');
+$p->updateSettings(['holdDays' => 14], 1);
+check($p->adminSettings()['bonusSpendLimitPercent'] === 45, 'partial rules update preserves spend limit');
+fails(static fn () => $p->updateSettings(['bonusSpendLimitPercent' => 20, 'buyerBps' => 10001], 1), 'invalid rates reject combined save');
+check($p->adminSettings()['bonusSpendLimitPercent'] === 45, 'invalid rules do not partially save spend limit');
+foreach ([-1, 101, 1.5, null, '30'] as $invalidLimit) {
+    fails(static fn () => $p->updateSettings(['bonusSpendLimitPercent' => $invalidLimit, 'holdDays' => 0], 1), 'invalid spend limit rejected');
+    check($p->settings()['holdDays'] === 14, 'invalid spend limit leaves rules unchanged');
+}
+foreach ([0, 100, 30] as $validLimit) {
+    $p->updateSettings(['bonusSpendLimitPercent' => $validLimit], 1);
+    check($p->adminSettings()['bonusSpendLimitPercent'] === $validLimit, 'spend limit accepts boundaries');
+}
 $before = $p->settings();
 fails(static fn () => $p->updateSettings(['buyerBps' => 10001, 'holdDays' => 0], 1), 'invalid partial settings');
 check($p->settings() === $before, 'settings atomic rollback');

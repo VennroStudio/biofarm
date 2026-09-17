@@ -2,7 +2,9 @@ import { useState, type FormEvent } from "react";
 import { request } from "../api/client";
 import { Section, Field, money, inputClass, buttonClass, type Rates, type Row } from "../../program/shared";
 
-type Setting = { key: keyof Rates; title: string; paths: string[]; hint: string; example: string; divisor: number; max?: number; min?: number; step?: string };
+export type ProgramAdminSettings = Rates & { bonusSpendLimitPercent: number };
+
+type Setting = { key: keyof ProgramAdminSettings; title: string; paths: string[]; hint: string; example: string; divisor: number; max?: number; min?: number; step?: string };
 const percent = (bps: number) => new Intl.NumberFormat("ru-RU").format(bps / 100);
 const scenarios = {
     partner_customer: { title: "Реферал партнёра покупает", path: "Партнёр → Реферал партнёра", buyer: "Реферал партнёра", direct: "Партнёр — комиссия за своего реферала", partner: "", bonus: "" },
@@ -12,7 +14,7 @@ const scenarios = {
 };
 type Scenario = keyof typeof scenarios;
 
-export function ProgramSettings({ rates, busy, onSave }: { rates: Rates; busy: boolean; onSave: (body: Record<string, unknown>) => Promise<unknown> }) {
+export function ProgramSettings({ rates, busy, onSave }: { rates: ProgramAdminSettings; busy: boolean; onSave: (body: Record<string, unknown>) => Promise<unknown> }) {
     const [scenario, setScenario] = useState<Scenario>("team_customer");
     const [simulation, setSimulation] = useState<{ data: Row; scenario: Scenario } | null>(null);
     const [calculating, setCalculating] = useState(false);
@@ -27,6 +29,7 @@ export function ProgramSettings({ rates, busy, onSave }: { rates: Rates; busy: b
         { title: "Бонусы", description: "Баллы для покупок в магазине. Их нельзя вывести деньгами.", fields: [
             { key: "referralBonusBps", title: "Бонусы обычному покупателю за приглашённого, %", paths: ["Обычный покупатель → Реферал обычного покупателя"], hint: "Пригласивший не является партнёром или участником команды. С покупки его реферала пригласившему начисляются покупательские бонусы. Денежных комиссий другим участникам нет.", example: `Покупка реферала на 10 000 ₽ → пригласившему обычному покупателю ${money(rates.referralBonusBps * 100)} бонусами.`, divisor: 100, max: 100 },
             { key: "buyerBps", title: "Бонусы за собственную покупку, %", paths: ["Зарегистрированный покупатель → Его оплаченный заказ"], hint: "Получает сам покупатель, независимо от того, кто его пригласил. При покупке без регистрации эти бонусы не начисляются.", example: `Покупка 10 000 ₽ → покупателю ${money(rates.buyerBps * 100)} бонусами, если бонусы за заказ включены.`, divisor: 100, max: 100 },
+            { key: "bonusSpendLimitPercent", title: "Лимит списания бонусов, %", paths: ["Покупатель → Оплата заказа накопленными бонусами"], hint: "Какую часть стоимости товаров после скидок можно оплатить бонусами. Доставка оплачивается деньгами. Списание также ограничено доступным бонусным балансом.", example: `Товары после скидок стоят 10 000 ₽ → можно списать до ${money(rates.bonusSpendLimitPercent * 10000)} бонусами (${rates.bonusSpendLimitPercent}%).`, divisor: 1, max: 100, step: "1" },
         ] },
         { title: "Выплаты", description: "Когда начисления становятся доступны и какую сумму можно запросить к выводу. Денежный перевод выполняет администратор вручную.", fields: [
             { key: "holdDays", title: "Ожидание после доставки, дней", paths: ["Оплата → Доставка → Ожидание → Доступный баланс"], hint: "Срок начинается после подтверждения доставки. Применяется и к комиссиям, и к покупательским бонусам.", example: `При значении 14 начисление станет доступно через 14 дней после доставки.`, divisor: 1, max: 3650, step: "1" },

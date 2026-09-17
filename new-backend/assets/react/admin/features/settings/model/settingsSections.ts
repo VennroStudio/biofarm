@@ -27,11 +27,6 @@ export const settingsSections = [
     subtitle: 'Доставка, промокоды и письма по заказам',
   },
   {
-    id: 'loyalty',
-    label: 'Лояльность',
-    subtitle: 'Реферальная программа и бонусы',
-  },
-  {
     id: 'security',
     label: 'Безопасность',
     subtitle: 'Смена пароля администратора',

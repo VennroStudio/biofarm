@@ -1,4 +1,4 @@
-import { Gift, House, PlugZap, Save, Search, ShieldCheck, SlidersHorizontal, Truck } from 'lucide-react';
+import { House, PlugZap, Save, Search, ShieldCheck, SlidersHorizontal, Truck } from 'lucide-react';
 import { PaymentIntegrationCard } from '../features/settings/ui/PaymentIntegrationCard';
 import { AdminIntegrationErrors } from './AdminIntegrationErrors';
 import { FormEvent, useState } from 'react';
@@ -15,16 +15,14 @@ import { BitrixSettingsCard } from '../features/settings/ui/BitrixSettingsCard';
 import { DeliverySettingsCard } from '../features/settings/ui/DeliverySettingsCard';
 import { FeatureSettingsCard } from '../features/settings/ui/FeatureSettingsCard';
 import { HomeBlocksSettingsCard } from '../features/settings/ui/HomeBlocksSettingsCard';
-import { OrderBonusSettingsCard } from '../features/settings/ui/OrderBonusSettingsCard';
 import { PasswordSettingsCard, type PasswordForm } from '../features/settings/ui/PasswordSettingsCard';
-import { ReferralSettingsCard } from '../features/settings/ui/ReferralSettingsCard';
 import { SeoSettingsCard } from '../features/settings/ui/SeoSettingsCard';
 import { useLoadOnMount } from '../hooks/useLoadOnMount';
 import { messageFromError } from '../shared/lib';
 import { Button, ErrorAlert, PageHeader } from '../shared/ui';
 import type { Settings } from '../types';
 
-const sectionIcons = { features: SlidersHorizontal, home: House, seo: Search, integrations: PlugZap, orders: Truck, loyalty: Gift, security: ShieldCheck };
+const sectionIcons = { features: SlidersHorizontal, home: House, seo: Search, integrations: PlugZap, orders: Truck, security: ShieldCheck };
 
 const defaults: Settings = {
   referral_percent: 5,
@@ -135,14 +133,6 @@ const sectionSettingsKeys: Record<SaveableSettingsSectionId, readonly WritableSe
     'promo_codes_enabled',
     'order_emails_enabled',
   ],
-  loyalty: [
-    'referral_percent',
-    'order_bonus_enabled',
-    'order_bonus_percent',
-    'order_bonus_spend_limit_percent',
-    'welcome_bonus_enabled',
-    'welcome_bonus_amount',
-  ],
 };
 
 function pickSectionSettings(settings: Settings, section: SaveableSettingsSectionId): Partial<Settings> {
@@ -164,13 +154,6 @@ function renderSettingsSection(section: SettingsSectionId, settings: Settings, s
       return <BitrixSettingsCard settings={settings} onChange={setSettings} />;
     case 'orders':
       return <DeliverySettingsCard settings={settings} onChange={setSettings} />;
-    case 'loyalty':
-      return (
-        <>
-          <ReferralSettingsCard />
-          <OrderBonusSettingsCard settings={settings} onChange={setSettings} />
-        </>
-      );
     case 'security':
       return null;
   }

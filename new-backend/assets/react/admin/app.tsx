@@ -70,6 +70,7 @@ export function AdminApp() {
           <Route path="withdrawals" element={<Navigate to="/admin/program/withdrawals" replace />} />
           <Route path="integration-errors" element={<Navigate to="/admin/settings/integrations#integration-errors" replace />} />
           <Route path="settings" element={<Navigate to={settingsSectionPath(defaultSettingsSection)} replace />} />
+          <Route path="settings/loyalty" element={<Navigate to="/admin/program/settings" replace />} />
           <Route path="settings/:section" element={<AdminSettings />} />
         </Route>
         <Route path="*" element={<Navigate to="/admin" replace />} />

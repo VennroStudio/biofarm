@@ -7,6 +7,7 @@ const settings: Record<string, string> = {
   memberDirectBps: 'Участнику команды с покупок своего реферала',
   referralBonusBps: 'Бонусы за приглашённого покупателя',
   buyerBps: 'Бонусы за собственную покупку',
+  bonusSpendLimitPercent: 'Лимит списания бонусов',
   holdDays: 'Удержание после доставки',
   minimumWithdrawalMinor: 'Минимальная выплата',
   directBps: 'Общая прямая комиссия (прежняя настройка)',
@@ -47,6 +48,7 @@ export function AuditDetails({ row }: { row: Row }) {
     for (const [key, value] of Object.entries(p)) {
       let formatted: string;
       if (key === 'levelsBps' && Array.isArray(value)) formatted = value.map((rate, i) => `${i + 1}-й уровень: ${percent(rate)}`).join('; ');
+      else if (key === 'bonusSpendLimitPercent') formatted = `${String(value)} %`;
       else if (key.endsWith('Bps')) formatted = percent(value);
       else if (key === 'minimumWithdrawalMinor') formatted = money(value);
       else if (key === 'holdDays') formatted = `${String(value)} дн.`;
