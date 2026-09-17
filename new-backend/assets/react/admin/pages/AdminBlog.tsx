@@ -1,6 +1,6 @@
 import { Plus } from 'lucide-react';
 import { FormEvent, useMemo, useState } from 'react';
-import { blogApi } from '../api/resources';
+import { blogApi, blogCategoriesApi } from '../api/resources';
 import {
   blogFormFromPost,
   blogPayloadFromForm,
@@ -12,9 +12,10 @@ import { BlogTable } from '../features/blog/ui/BlogTable';
 import { useLoadOnMount } from '../hooks/useLoadOnMount';
 import { messageFromError } from '../shared/lib';
 import { Badge, Button, Card, ErrorAlert, PageHeader, SearchField } from '../shared/ui';
-import type { BlogPost } from '../types';
+import type { BlogPost, BlogCategory } from '../types';
 
 export function AdminBlog() {
+  const [categories, setCategories] = useState<BlogCategory[]>([]);
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [search, setSearch] = useState('');
   const [form, setForm] = useState<BlogForm>(emptyBlogForm);
@@ -28,15 +29,16 @@ export function AdminBlog() {
   );
 
   async function load() {
-    const result = await blogApi.list();
+    const [result, categoryResult] = await Promise.all([blogApi.list(), blogCategoriesApi.list()]);
     setPosts(result.items);
+    setCategories(categoryResult.items);
   }
 
   useLoadOnMount(load);
 
   function openCreate() {
     setError(null);
-    setForm(emptyBlogForm);
+    setForm({ ...emptyBlogForm, category_id: categories[0]?.slug ?? '' });
     setDialogOpen(true);
   }
 
@@ -81,7 +83,7 @@ export function AdminBlog() {
   return (
     <>
       <PageHeader
-        title="Блог"
+        title="Статьи"
         subtitle="Управление статьями блога"
         actions={<Button onClick={openCreate}><Plus className="h-4 w-4" />Написать статью</Button>}
       />
@@ -94,10 +96,11 @@ export function AdminBlog() {
           <Badge tone="gray">{filteredPosts.length} статей</Badge>
         </div>
 
-        <BlogTable posts={filteredPosts} onEdit={openEdit} onRemove={(post) => void remove(post)} />
+        <BlogTable categories={categories} posts={filteredPosts} onEdit={openEdit} onRemove={(post) => void remove(post)} />
       </Card>
 
       {dialogOpen && <BlogFormModal
+        categories={categories}
         form={form}
         open={dialogOpen}
         error={dialogOpen ? error : null}

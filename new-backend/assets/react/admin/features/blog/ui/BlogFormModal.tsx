@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState, type Dispatch, type FormEvent, type KeyboardEvent, type ReactNode, type SetStateAction } from 'react';
 import { FileText, ImageIcon, Info, Search } from 'lucide-react';
+import type { BlogCategory } from '../../../types';
 import { ImageUploader } from '../../media/ui/ImageUploader';
 import { Button, ErrorAlert, Field, inputClass, Modal, textareaClass } from '../../../shared/ui';
 import { blogFormIssue, type BlogForm, type BlogFormIssue } from '../model/blogForm';
@@ -21,6 +22,7 @@ function Group({ title, children }: { title: string; children: ReactNode }) {
 
 type Props = {
   form: BlogForm;
+  categories: BlogCategory[];
   open: boolean;
   error?: string | null;
   saving: boolean;
@@ -29,7 +31,7 @@ type Props = {
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 };
 
-export function BlogFormModal({ form, open, error, saving, setForm, onClose, onSubmit }: Props) {
+export function BlogFormModal({ form, categories, open, error, saving, setForm, onClose, onSubmit }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>('main');
   const [issue, setIssue] = useState<BlogFormIssue | null>(null);
   const [confirmClose, setConfirmClose] = useState(false);
@@ -46,7 +48,7 @@ export function BlogFormModal({ form, open, error, saving, setForm, onClose, onS
   useEffect(() => {
     if (!issue) return;
     const frame = requestAnimationFrame(() => {
-      formRef.current?.querySelector<HTMLElement>(`[data-field="${issue.field}"]`)?.querySelector<HTMLElement>('input, textarea, [contenteditable], button')?.focus();
+      formRef.current?.querySelector<HTMLElement>(`[data-field="${issue.field}"]`)?.querySelector<HTMLElement>('input, select, textarea, [contenteditable], button')?.focus();
     });
     return () => cancelAnimationFrame(frame);
   }, [issue]);
@@ -97,7 +99,7 @@ export function BlogFormModal({ form, open, error, saving, setForm, onClose, onS
           {activeTab === 'main' && <>
             <Group title="Основная информация">
               {text('title', 'Заголовок *')}
-              <div className="grid gap-4 sm:grid-cols-2">{text('category_id', 'Категория *', 'Например, health')}{text('author_name', 'Имя автора *')}</div>
+              <div className="grid gap-4 sm:grid-cols-2"><div data-field="category_id"><Field label="Категория *"><select className={inputClass} value={form.category_id} onChange={event => update('category_id', event.target.value)}><option value="">Выберите категорию</option>{form.category_id && !categories.some(category => category.slug === form.category_id) && <option value={form.category_id} disabled>{form.category_id} — недоступна</option>}{categories.map(category => <option key={category.id} value={category.slug}>{category.name}</option>)}</select></Field>{categories.length === 0 && <p className="mt-2 text-xs text-[#5f7580]">Сначала добавьте категорию во вкладке «Блог → Категории».</p>}</div>{text('author_name', 'Имя автора *')}</div>
             </Group>
             <Group title="Публикация">
               {text('published_at', 'Дата публикации', '', 'datetime-local')}

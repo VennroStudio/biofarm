@@ -3,6 +3,7 @@ import type {
   ApiItems,
   AttributeValue,
   BlogPost,
+  BlogCategory,
   Category,
   Certificate,
   CmsPage,
@@ -163,3 +164,10 @@ export const withdrawalsApi = {
 };
 
 export type ResourceResult<T> = ApiItems<T>;
+
+export const blogCategoriesApi = {
+  list: () => requestItems<BlogCategory>('/admin/api/blog-categories'),
+  create: (payload: Record<string, unknown>) => request('/admin/api/blog-categories', { method: 'POST', body: payload }),
+  update: (id: number, payload: Record<string, unknown>) => request(`/admin/api/blog-categories/${id}`, { method: 'PATCH', body: payload }),
+  delete: (id: number) => request(`/admin/api/blog-categories/${id}`, { method: 'DELETE' }),
+};

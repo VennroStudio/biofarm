@@ -384,3 +384,11 @@ export type MediaAsset = {
   height: number | null;
   original_name: string | null;
 };
+
+export type BlogCategory = {
+  id: number;
+  name: string;
+  slug: string;
+  sort_order: number;
+  posts_count: number;
+};

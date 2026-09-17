@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Http\Action\Admin\BlogCategory\GetBlogCategoriesAction;
+use App\Http\Action\Admin\BlogCategory\SaveBlogCategoryAction;
+use App\Http\Action\Admin\BlogCategory\DeleteBlogCategoryAction;
 use App\Components\Http\Middleware\Identity\Authenticate;
 use App\Components\Http\Middleware\Identity\RequireAdmin;
 use App\Components\Router\StaticRouteGroup as Group;
@@ -112,6 +115,11 @@ return static function (App $app): void {
                 $group->post('/attributes/{attributeId}/values', SaveAttributeValueAction::class);
                 $group->patch('/attribute-values/{id}', SaveAttributeValueAction::class);
                 $group->delete('/attribute-values/{id}', DeleteAttributeValueAction::class);
+
+                $group->get('/blog-categories', GetBlogCategoriesAction::class);
+                $group->post('/blog-categories', SaveBlogCategoryAction::class);
+                $group->patch('/blog-categories/{id:[0-9]+}', SaveBlogCategoryAction::class);
+                $group->delete('/blog-categories/{id:[0-9]+}', DeleteBlogCategoryAction::class);
 
                 $group->get('/product-groups', GetProductGroupsAction::class);
                 $group->post('/product-groups', SaveProductGroupAction::class);

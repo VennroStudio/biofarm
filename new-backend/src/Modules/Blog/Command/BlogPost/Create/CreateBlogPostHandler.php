@@ -12,6 +12,7 @@ use App\Modules\Blog\Entity\BlogPost\BlogPost;
 use App\Modules\Blog\Entity\BlogPost\BlogPostRepository;
 use App\Modules\Blog\Permission\BlogPermission;
 use App\Modules\Blog\Service\BlogPermissionService;
+use App\Modules\Blog\Service\BlogCategoryService;
 use App\Modules\User\Entity\User\Fields\Enums\UserRole;
 use DateMalformedStringException;
 use DateTimeImmutable;
@@ -21,6 +22,7 @@ final readonly class CreateBlogPostHandler
     public function __construct(
         private BlogPostRepository $blogPostRepository,
         private BlogPermissionService $permissionService,
+        private BlogCategoryService $categories,
         private SlugGenerator $slugGenerator,
         private Cacher $cacher,
         private FlusherInterface $flusher,
@@ -36,6 +38,7 @@ final readonly class CreateBlogPostHandler
             action: BlogPermission::CREATE,
         );
 
+        $this->categories->assertAvailable($command->categoryId);
         $slug = $this->slug($command->slug, $command->title);
         $this->assertSlugFree($slug);
 

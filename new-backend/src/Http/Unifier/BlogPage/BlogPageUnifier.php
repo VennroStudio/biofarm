@@ -17,13 +17,6 @@ use Doctrine\DBAL\Query\QueryBuilder;
 final readonly class BlogPageUnifier
 {
     private const int POSTS_PER_PAGE = 9;
-    private const array CATEGORIES = [
-        'Все'      => null,
-        'Советы'   => 'tips',
-        'Здоровье' => 'health',
-        'О нас'    => 'about',
-        'Рецепты'  => 'recipes',
-    ];
     private const array MONTHS = [
         1  => 'января',
         2  => 'февраля',
@@ -51,7 +44,8 @@ final readonly class BlogPageUnifier
      */
     public function unify(?string $selectedCategory = null, ?string $searchQuery = null, int $page = 1): BlogPageView
     {
-        $selectedCategory = $this->normalizeCategory($selectedCategory);
+        $categories = array_merge(['Все'], $this->connection->fetchFirstColumn('SELECT name FROM blog_categories WHERE deleted_at IS NULL ORDER BY sort_order, id'));
+        $selectedCategory = $this->normalizeCategory($selectedCategory, $categories);
         $searchQuery = trim((string)$searchQuery);
         $totalPosts = $this->countPosts($selectedCategory, $searchQuery);
         $totalPages = max(1, (int)ceil($totalPosts / self::POSTS_PER_PAGE));
@@ -81,8 +75,8 @@ final readonly class BlogPageUnifier
             posts: $posts,
             featuredPost: $featuredPost,
             otherPosts: $currentPage === 1 ? \array_slice($posts, 1) : $posts,
-            categories: array_keys(self::CATEGORIES),
-            categoryUrls: $this->categoryUrls($searchQuery),
+            categories: $categories,
+            categoryUrls: $this->categoryUrls($searchQuery, $categories),
             selectedCategory: $selectedCategory,
             searchQuery: $searchQuery,
             currentPage: $currentPage,
@@ -150,8 +144,8 @@ final readonly class BlogPageUnifier
 
         if ($selectedCategory !== 'Все') {
             $query
-                ->andWhere('bp.category_id = :category')
-                ->setParameter('category', self::CATEGORIES[$selectedCategory]);
+                ->andWhere('bc.name = :category')
+                ->setParameter('category', $selectedCategory);
         }
 
         if ($searchQuery !== '') {
@@ -163,11 +157,11 @@ final readonly class BlogPageUnifier
         return $query;
     }
 
-    private function normalizeCategory(?string $category): string
+    private function normalizeCategory(?string $category, array $categories): string
     {
         $category = trim((string)$category);
 
-        return \array_key_exists($category, self::CATEGORIES) ? $category : 'Все';
+        return \in_array($category, $categories, true) ? $category : 'Все';
     }
 
     /**
@@ -210,11 +204,11 @@ final readonly class BlogPageUnifier
     /**
      * @return array<string, string>
      */
-    private function categoryUrls(string $searchQuery): array
+    private function categoryUrls(string $searchQuery, array $categories): array
     {
         $urls = [];
 
-        foreach (array_keys(self::CATEGORIES) as $category) {
+        foreach ($categories as $category) {
             $urls[$category] = $this->pageUrl(1, $category, $searchQuery);
         }
 

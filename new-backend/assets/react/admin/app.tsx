@@ -6,6 +6,8 @@ import { AdminShopLayout } from './layout/AdminShopLayout';
 import { AdminProductGroups } from './pages/AdminProductGroups';
 import { AdminLayout } from './layout/AdminLayout';
 import { AdminAttributes } from './pages/AdminAttributes';
+import { AdminBlogLayout } from './layout/AdminBlogLayout';
+import { AdminBlogCategories } from './pages/AdminBlogCategories';
 import { AdminBlog } from './pages/AdminBlog';
 import { AdminCategories } from './pages/AdminCategories';
 import { AdminCertificates } from './pages/AdminCertificates';
@@ -62,7 +64,11 @@ export function AdminApp() {
           <Route path="promo-codes" element={<Navigate to="/admin/shop/promo-codes" replace />} />
           <Route path="certificates" element={<AdminCertificates />} />
           <Route path="faq" element={<AdminFaq />} />
-          <Route path="blog" element={<AdminBlog />} />
+          <Route path="blog" element={<AdminBlogLayout />}>
+            <Route index element={<Navigate to="articles" replace />} />
+            <Route path="articles" element={<AdminBlog />} />
+            <Route path="categories" element={<AdminBlogCategories />} />
+          </Route>
           <Route path="reviews" element={<AdminReviews />} />
           <Route path="program" element={<Navigate to="/admin/program/ledger" replace />} />
           <Route path="program/:section" element={<AdminProgram />} />

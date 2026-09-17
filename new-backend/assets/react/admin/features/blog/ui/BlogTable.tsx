@@ -10,16 +10,17 @@ import {
   TableHeaderCell,
   TableRow,
 } from '../../../shared/ui';
-import type { BlogPost } from '../../../types';
+import type { BlogPost, BlogCategory } from '../../../types';
 import { ImagePreview } from './ImagePreview';
 
 type Props = {
   posts: BlogPost[];
+  categories: BlogCategory[];
   onEdit: (post: BlogPost) => void;
   onRemove: (post: BlogPost) => void;
 };
 
-export function BlogTable({ posts, onEdit, onRemove }: Props) {
+export function BlogTable({ posts, categories, onEdit, onRemove }: Props) {
   if (posts.length === 0) {
     return <EmptyState>Статьи не найдены</EmptyState>;
   }
@@ -47,7 +48,7 @@ export function BlogTable({ posts, onEdit, onRemove }: Props) {
                 <p className="line-clamp-1 font-semibold text-[#294555]">{post.title}</p>
                 <p className="line-clamp-1 text-sm text-[#5f7580]">{post.excerpt}</p>
               </TableCell>
-              <TableCell><Badge tone="gray">{post.category_id}</Badge></TableCell>
+              <TableCell><Badge tone="gray">{categories.find(category => category.slug === post.category_id)?.name ?? post.category_id}</Badge></TableCell>
               <TableCell>{post.author_name}</TableCell>
               <TableCell>{formatDate(post.published_at || post.created_at)}</TableCell>
               <TableCell>
