@@ -14,7 +14,11 @@ import {
     type Listing,
 } from "../../../program/shared";
 import { TabButton, TabList, TabPanel } from "./ProfileTabs";
-import { Users, ShoppingBasket, Wallet, ReceiptText, Link, ListOrdered } from "lucide-react";
+import { Users, ShoppingBasket, Wallet, ReceiptText, Link, ListOrdered, QrCode, Ban } from "lucide-react";
+
+import { OfferLinkDialog } from "./OfferLinkDialog";
+
+const offerActionClass = "inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border text-primary transition-colors hover:bg-secondary focus-visible:outline-primary focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-35";
 
 export function ReferralPanel({ withdrawalsEnabled }: { withdrawalsEnabled: boolean }) {
     const [data, setData] = useState<Dashboard | null>(null);
@@ -125,6 +129,7 @@ export function ReferralPanel({ withdrawalsEnabled }: { withdrawalsEnabled: bool
     const title = tabs.find((item) => item.key === tab)?.title || "Моя команда";
     return (
         <div className="grid items-start gap-6 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-8">
+            {offerUrl && <OfferLinkDialog key={offerUrl} url={offerUrl} onClose={() => setOfferUrl("")} />}
             <TabList label="Разделы программы">
                 {tabs.map(({ key, title: tabTitle, icon: Icon }) => (
                     <TabButton key={key} id={`program-tab-${key}`} controls={`program-panel-${key}`}
@@ -249,7 +254,6 @@ export function ReferralPanel({ withdrawalsEnabled }: { withdrawalsEnabled: bool
                                             Создать ссылку и QR-код
                                         </button>
                                     </form>
-                                    {offerUrl && <LinkQR url={offerUrl} />}
                                 </Section>
                             </>
                         )}
@@ -274,28 +278,30 @@ export function ReferralPanel({ withdrawalsEnabled }: { withdrawalsEnabled: bool
                                     actions={
                                         tab === "offers"
                                             ? (row) => (
-                                                  <>
-                                                      <details>
-                                                          <summary className="cursor-pointer whitespace-nowrap text-primary">Ссылка и QR-код</summary>
-                                                          <div className="mt-3 min-w-48"><LinkQR url={String(row.url)} /></div>
-                                                      </details>
+                                                  <div className="flex flex-nowrap items-center gap-2">
+                                                      <button type="button" className={offerActionClass}
+                                                          aria-label={`Ссылка и QR-код: ${row.title}`} title="Ссылка и QR-код"
+                                                          disabled={!Number(row.is_active)} onClick={() => setOfferUrl(String(row.url))}>
+                                                          <QrCode className="h-5 w-5" aria-hidden="true" />
+                                                      </button>
                                                       <button
-                                                          className={buttonClass}
-                                                          disabled={!row.is_active || busy}
+                                                          type="button" className={`${offerActionClass} hover:border-red-200 hover:bg-red-50 hover:text-red-600`}
+                                                          aria-label={`Отключить корзину: ${row.title}`} title={Number(row.is_active) ? "Отключить корзину" : "Корзина отключена"}
+                                                          disabled={!Number(row.is_active) || busy}
                                                           onClick={() => {
                                                               setBusy(true);
                                                               void request(`/v1/program/offers/${row.id}`, {
                                                                   method: "PATCH",
                                                                   body: { isActive: false },
                                                               })
-                                                                  .then(() => setRevision((n) => n + 1))
+                                                                  .then(() => { setNotice("Корзина отключена. Ссылка больше недоступна."); setRevision((n) => n + 1); })
                                                                   .catch((e) => setError(String(e)))
                                                                   .finally(() => setBusy(false));
                                                           }}
                                                       >
-                                                          Отключить
+                                                          <Ban className="h-5 w-5" aria-hidden="true" />
                                                       </button>
-                                                  </>
+                                                  </div>
                                               )
                                             : undefined
                                     }

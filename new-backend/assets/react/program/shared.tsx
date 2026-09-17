@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import QRCode from "qrcode";
+import { Check, Copy } from "lucide-react";
 export type Row = Record<string, unknown>;
 export type Listing = { items: Row[]; page: number; limit: number };
 export type Rates = {
@@ -87,41 +88,41 @@ export function Field({ name, children }: { name: string; children: ReactNode })
         </label>
     );
 }
-export function LinkQR({ url: rawUrl }: { url: string }) {
+export function LinkQR({ url: rawUrl, centered = false }: { url: string; centered?: boolean }) {
     const url = new URL(rawUrl, window.location.origin).href;
     const [qr, setQr] = useState("");
     const [notice, setNotice] = useState("");
     useEffect(() => {
-        void QRCode.toDataURL(url, { width: 180, margin: 2 })
+        void QRCode.toDataURL(url, { width: centered ? 280 : 180, margin: 4 })
             .then(setQr)
             .catch(() => setNotice("Не удалось создать QR"));
-    }, [url]);
+    }, [url, centered]);
+    async function copyLink() {
+        try {
+            await navigator.clipboard.writeText(url);
+            setNotice("Ссылка скопирована");
+        } catch {
+            setNotice("Не удалось скопировать. Выделите ссылку и скопируйте её вручную.");
+        }
+    }
     return (
-        <div className="flex flex-wrap items-center gap-4">
-            {qr && <img src={qr} alt="QR-код ссылки" width={180} height={180} />}
+        <div className={centered ? "space-y-5" : "flex flex-wrap items-center gap-4"}>
+            {qr && <img className={centered ? "mx-auto max-w-full rounded-xl" : undefined} src={qr} alt="QR-код ссылки" width={centered ? 280 : 180} height={centered ? 280 : 180} />}
             <div className="min-w-0 flex-1 space-y-2">
-                <a className="break-all text-primary underline" href={url}>
-                    {url}
-                </a>
-                <div>
-                    <button
-                        type="button"
-                        className={buttonClass}
-                        onClick={() =>
-                            void navigator.clipboard
-                                .writeText(url)
-                                .then(() => setNotice("Скопировано"))
-                                .catch(() => setNotice("Выделите и скопируйте ссылку"))
-                        }
-                    >
-                        Скопировать ссылку
+                <div className={centered ? "flex items-center gap-3 rounded-xl border border-border bg-secondary/40 p-3" : "space-y-2"}>
+                    <a className="min-w-0 flex-1 break-all text-sm text-primary underline" href={url}>{url}</a>
+                    <button type="button" aria-label="Скопировать ссылку" title="Скопировать ссылку"
+                        className={centered ? "inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary text-white hover:bg-primary/90 focus-visible:outline-primary focus-visible:outline-offset-2" : buttonClass}
+                        onClick={() => void copyLink()}>
+                        {centered ? (notice === "Ссылка скопирована" ? <Check className="h-5 w-5" aria-hidden="true" /> : <Copy className="h-5 w-5" aria-hidden="true" />) : "Скопировать ссылку"}
                     </button>
                 </div>
-                <p role="status">{notice}</p>
+                <p role="status" className={centered ? "min-h-5 text-center text-sm text-muted-foreground" : undefined}>{notice}</p>
             </div>
         </div>
     );
 }
+
 export function Rows({
     rows,
     columns,
