@@ -1,3 +1,4 @@
+import { OfferImport } from '../cart/OfferImport';
 import type { Dashboard } from '../../program/shared';
 import { startPayment } from '../../site/payment';
 import { CreditCard, Mail, MapPin, Phone, Truck, User } from 'lucide-react';
@@ -399,15 +400,17 @@ export function mountCheckoutPage() {
     }
     root.dataset.mounted = 'true';
     createRoot(root).render((
-      <CheckoutPage
-        cdekDeliveryPrice={numberDataset(root.dataset.cdekDeliveryPrice, 350)}
-        freeDeliveryThreshold={numberDataset(root.dataset.freeDeliveryThreshold, 3000)}
-        orderBonusEnabled={root.dataset.orderBonusEnabled === 'true'}
-        orderBonusPercent={numberDataset(root.dataset.orderBonusPercent, 5)}
-        orderBonusSpendLimitPercent={numberDataset(root.dataset.orderBonusSpendLimitPercent, 30)}
-        postDeliveryPrice={numberDataset(root.dataset.postDeliveryPrice, 250)}
-        promoCodesEnabled={root.dataset.promoCodesEnabled === 'true'}
-      />
+      <OfferImport>
+        <CheckoutPage
+          cdekDeliveryPrice={numberDataset(root.dataset.cdekDeliveryPrice, 350)}
+          freeDeliveryThreshold={numberDataset(root.dataset.freeDeliveryThreshold, 3000)}
+          orderBonusEnabled={root.dataset.orderBonusEnabled === 'true'}
+          orderBonusPercent={numberDataset(root.dataset.orderBonusPercent, 5)}
+          orderBonusSpendLimitPercent={numberDataset(root.dataset.orderBonusSpendLimitPercent, 30)}
+          postDeliveryPrice={numberDataset(root.dataset.postDeliveryPrice, 250)}
+          promoCodesEnabled={root.dataset.promoCodesEnabled === 'true'}
+        />
+      </OfferImport>
     ));
   });
 }

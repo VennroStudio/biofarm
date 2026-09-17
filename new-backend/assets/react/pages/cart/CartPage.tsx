@@ -65,11 +65,11 @@ function CartPage({ cdekDeliveryPrice, freeDeliveryThreshold, orderBonusEnabled 
   const orderBonus = orderBonusEnabled && program ? Math.floor(total * program.rates.buyerBps / 100) / 100 : 0;
 
   if (cart.length === 0) {
-    return <><OfferImport /><CartEmpty /></>;
+    return <CartEmpty />;
   }
 
   return (
-    <><OfferImport /><section className="bg-secondary/30 pb-10 pt-[120px] md:pb-12 md:pt-[128px]">
+    <section className="bg-secondary/30 pb-10 pt-[120px] md:pb-12 md:pt-[128px]">
       <div className="container mx-auto px-4 sm:px-6">
         <h1 className="mb-6 flex flex-wrap items-center gap-3 text-3xl font-normal tracking-tight text-primary md:text-4xl">
           <ShoppingCart className="h-8 w-8" />
@@ -200,7 +200,7 @@ function CartPage({ cdekDeliveryPrice, freeDeliveryThreshold, orderBonusEnabled 
           </div>
         </div>
       </div>
-    </section></>
+    </section>
   );
 }
 
@@ -211,7 +211,7 @@ export function mountCartPage() {
     }
     root.dataset.mounted = 'true';
     createRoot(root).render((
-      <CartPage
+      new URLSearchParams(window.location.search).has('offer') ? <OfferImport /> : <CartPage
         cdekDeliveryPrice={numberDataset(root.dataset.cdekDeliveryPrice, 350)}
         freeDeliveryThreshold={numberDataset(root.dataset.freeDeliveryThreshold, 3000)}
         orderBonusEnabled={root.dataset.orderBonusEnabled === 'true'}

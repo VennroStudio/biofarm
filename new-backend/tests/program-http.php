@@ -126,6 +126,9 @@ try {
     $product = (int)$db->fetchOne("SELECT id FROM products WHERE is_active=1 AND deleted_at IS NULL AND availability<>'out_of_stock' AND price>0 LIMIT 1");
     ok($product > 0, 'active product');
     $offer = $call('POST', '/v1/program/offers', ['title' => 'Тестовая корзина', 'items' => [['productId' => $product, 'quantity' => 2]]], $tokens[1]);
+    ok($offer['url'] === '/checkout?offer=' . $offer['id'], 'new partner basket opens checkout directly');
+    $offers = $call('GET', '/v1/program/offers', [], $tokens[1]);
+    ok($offers['items'][0]['url'] === '/checkout?offer=' . $offer['id'], 'saved partner basket links open checkout directly');
     $public = $call('GET', '/v1/offers/' . $offer['id']);
     ok(count($public['items']) === 1, 'public shared basket');
     $body = ['items' => [['productId' => $product, 'quantity' => 2]], 'paymentMethod' => 'card', 'deliveryMethod' => 'post', 'shippingAddress' => ['name' => 'Тестовый покупатель', 'email' => 'buyer@example.test', 'phone' => '+79990000000', 'city' => 'Томск', 'address' => 'Тестовая 1', 'postalCode' => '634000'], 'offerId' => $offer['id']];

@@ -49,7 +49,7 @@ final readonly class OfferService
         }
         $id = bin2hex(random_bytes(24));
         $this->db->insert('partner_offers', ['id' => $id, 'user_id' => $user, 'title' => $title, 'items' => json_encode(array_values($items), JSON_THROW_ON_ERROR), 'promo_code' => null, 'expires_at' => $expires ? gmdate('Y-m-d H:i:s', $expires) : null, 'is_active' => 1, 'visits' => 0, 'created_at' => gmdate('Y-m-d H:i:s')]);
-        return ['id' => $id, 'url' => '/cart?offer=' . $id];
+        return ['id' => $id, 'url' => '/checkout?offer=' . $id];
     }
 
     public function listing(int $user, int $page = 1): array
@@ -59,7 +59,7 @@ final readonly class OfferService
         foreach ($rows as &$row) {
             unset($row['promo_code']);
             $row['items'] = json_decode($row['items'], true, 512, JSON_THROW_ON_ERROR);
-            $row['url'] = '/cart?offer=' . $row['id'];
+            $row['url'] = '/checkout?offer=' . $row['id'];
         }
         return ['items' => $rows, 'page' => max(1, $page), 'limit' => 25];
     }
