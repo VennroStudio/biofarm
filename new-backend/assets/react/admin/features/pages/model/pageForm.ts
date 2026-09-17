@@ -101,3 +101,12 @@ export function pagePayloadFromForm(form: PageForm) {
     sortOrder: form.sort_order ? Number(form.sort_order) : 0,
   };
 }
+
+export type PageFormIssue = { field: 'title' | 'slug_path' | 'sort_order'; message: string };
+
+export function pageFormIssue(form: PageForm): PageFormIssue | null {
+  if (!form.title.trim()) return { field: 'title', message: 'Укажите название страницы.' };
+  if (form.page_type === 'custom' && !form.slug_path.trim()) return { field: 'slug_path', message: 'Укажите адрес страницы.' };
+  if (!Number.isSafeInteger(Number(form.sort_order)) || Number(form.sort_order) < -2147483648 || Number(form.sort_order) > 2147483647) return { field: 'sort_order', message: 'Укажите корректный порядок целым числом.' };
+  return null;
+}

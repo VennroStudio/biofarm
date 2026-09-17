@@ -110,7 +110,7 @@ export function AdminPages() {
         <PagesTable pages={filteredPages} onEdit={openEdit} onRemove={(page) => void remove(page)} />
       </Card>
 
-      <PageFormModal
+      {dialogOpen && <PageFormModal
         form={form}
         open={dialogOpen}
         error={dialogOpen ? error : null}
@@ -122,7 +122,7 @@ export function AdminPages() {
           setError(null);
         }}
         onSubmit={(event) => void submit(event)}
-      />
+      />}
     </>
   );
 }
