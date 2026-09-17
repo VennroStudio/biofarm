@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Components\Http\Middleware\Identity\Authenticate;
 use App\Components\Http\Middleware\Identity\RequireAdmin;
 use App\Components\Router\StaticRouteGroup as Group;
+use App\Http\Action\Admin\Auth\RefreshAction as AdminRefreshAction;
 use App\Http\Action\Admin\Auth\LoginAction as AdminLoginAction;
 use App\Http\Action\Admin\Auth\LogoutAction as AdminLogoutAction;
 use App\Http\Action\Admin\Auth\MeAction as AdminMeAction;
@@ -62,10 +63,11 @@ return static function (App $app): void {
     $app->group('/admin', new Group(static function (RouteCollectorProxy $group): void {
         $group->group('/api', new Group(static function (RouteCollectorProxy $group): void {
             $group->post('/auth/login', AdminLoginAction::class);
+            $group->post('/auth/refresh', AdminRefreshAction::class);
+            $group->post('/auth/logout', AdminLogoutAction::class);
 
             $protected = $group->group('', new Group(static function (RouteCollectorProxy $group): void {
                 $group->get('/auth/me', AdminMeAction::class);
-                $group->post('/auth/logout', AdminLogoutAction::class);
                 $group->get('/dashboard', GetDashboardAction::class);
 
                 $group->get('/settings', GetSettingsAction::class);

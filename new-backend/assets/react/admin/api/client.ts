@@ -2,6 +2,7 @@ import type { AdminUser, ApiItems, MediaAsset } from '../types';
 
 const tokenKey = 'biofarm_admin_access_token';
 const adminKey = 'biofarm_admin_user';
+let refreshPromise: Promise<string | null> | null = null;
 export const sessionClearedEvent = 'biofarm-admin-session-cleared';
 
 type RequestOptions = Omit<RequestInit, 'body'> & {
@@ -46,8 +47,35 @@ export function clearSession() {
   window.dispatchEvent(new Event(sessionClearedEvent));
 }
 
+async function refreshAccessToken(failedToken: string): Promise<string | null> {
+  const refresh = async () => {
+    if (getToken() !== failedToken) return getToken();
+    const response = await fetch('/admin/api/auth/refresh', { method: 'POST', credentials: 'same-origin' });
+    if (getToken() !== failedToken) return getToken();
+    if ([401, 403, 422].includes(response.status)) {
+      clearSession();
+      return null;
+    }
+    if (!response.ok) throw new Error('Не удалось продлить вход в админку. Попробуйте ещё раз.');
+    const payload = await response.json() as Partial<ApiEnvelope<{ access_token?: string }>>;
+    if (!payload.data?.access_token || typeof payload.data.access_token !== 'string') {
+      throw new Error('Не удалось продлить вход в админку. Попробуйте ещё раз.');
+    }
+    if (getToken() !== failedToken) return getToken();
+    localStorage.setItem(tokenKey, payload.data.access_token);
+    return payload.data.access_token;
+  };
+  if (!refreshPromise) {
+    refreshPromise = Promise.resolve(navigator.locks
+      ? navigator.locks.request('biofarm-admin-token-refresh', refresh)
+      : refresh()).finally(() => { refreshPromise = null; });
+  }
+  return refreshPromise;
+}
+
 export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const token = getToken();
+  let token = getToken();
+  const isAuthRequest = ['/admin/api/auth/login', '/admin/api/auth/logout', '/admin/api/auth/refresh'].includes(path);
   const headers = new Headers(options.headers);
   const body = options.body;
 
@@ -63,13 +91,22 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
     normalizedBody = JSON.stringify(body);
   }
 
-  const response = await fetch(path, {
+  const send = () => fetch(path, {
     ...options,
     headers,
     body: normalizedBody,
+    credentials: 'same-origin',
   });
+  let response = await send();
 
-  if (response.status === 401) {
+  if (response.status === 401 && token && !isAuthRequest) {
+    token = await refreshAccessToken(token);
+    if (token) {
+      headers.set('Authorization', `Bearer ${token}`);
+      response = await send();
+    }
+  }
+  if (response.status === 401 && !isAuthRequest && token && getToken() === token) {
     clearSession();
   }
 
@@ -137,8 +174,8 @@ export async function me(): Promise<AdminUser> {
 }
 
 export async function logout() {
-  await request<void>('/admin/api/auth/logout', { method: 'POST' }).catch(() => undefined);
   clearSession();
+  await request<void>('/admin/api/auth/logout', { method: 'POST' }).catch(() => undefined);
 }
 
 export async function uploadImage(file: File, scope: string): Promise<MediaAsset> {

@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Action\Admin\Auth;
 
 use App\Components\Exception\AccessDeniedException;
-use App\Components\Http\Cookie\CookieContext;
-use App\Components\Http\Cookie\CookieManager;
+use App\Components\Http\Cookie\AdminSessionCookie;
 use App\Components\Http\Response\JsonDataResponse;
 use App\Components\Serializer\Denormalizer;
 use App\Components\Validator\Validator;
@@ -31,7 +30,7 @@ final readonly class LoginAction implements RequestHandlerInterface
         private Validator $validator,
         private LoginHandler $handler,
         private UserFindByEmailFetcher $userFetcher,
-        private CookieManager $cookieManager,
+        private AdminSessionCookie $cookieManager,
     ) {}
 
     /**
@@ -67,12 +66,6 @@ final readonly class LoginAction implements RequestHandlerInterface
             ],
         ]);
 
-        return $this->cookieManager->apply(
-            response: $response,
-            context: new CookieContext(
-                refreshToken: $result->refreshToken,
-                loggedIn: '1',
-            ),
-        );
+        return $this->cookieManager->apply($response, $result->refreshToken);
     }
 }
