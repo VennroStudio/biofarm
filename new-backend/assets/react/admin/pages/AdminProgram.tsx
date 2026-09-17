@@ -17,7 +17,7 @@ const value = (f: FormData, key: string) => String(f.get(key) || "");
 const num = (f: FormData, key: string) => Number(f.get(key));
 export function AdminProgram() {
     const [withdrawalStatus, setWithdrawalStatus] = useState("approved");
-    const [tab, setTab] = useState("users");
+    const [tab, setTab] = useState("settings");
     const [page, setPage] = useState(1);
     const [list, setList] = useState<Listing>({ items: [], page: 1, limit: 25 });
     const [rates, setRates] = useState<Rates | null>(null);
@@ -82,14 +82,6 @@ export function AdminProgram() {
         }
     }
     const columns: Record<string, [string, string][]> = {
-        users: [
-            ["id", "ID"],
-            ["name", "Имя"],
-            ["is_partner", "Партнёр"],
-            ["is_referral", "Реферал"],
-            ["parent_name", "Пригласивший"],
-            ["referred_by_user_id", "ID пригласившего"],
-        ],
         ledger: [
             ["created_at", "Дата"],
             ["user_id", "Пользователь"],
@@ -122,7 +114,6 @@ export function AdminProgram() {
             <p>Начисления по подтверждённым оплатам. Переводы выполняются вручную.</p>
             <div className="flex flex-wrap gap-2">
                 {[
-                    ["users", "Пользователи и команда"],
                     ["settings", "Правила и симулятор"],
                     ["ledger", "Журнал"],
                     ["audit", "Аудит"],

@@ -11,7 +11,7 @@ return static function (App $app): void {
         $admin = str_starts_with($base, '/admin');
         $routes = [['GET', ''], ['GET', '/team'], ['GET', '/ledger'], ['GET', '/sales'], ['GET', '/withdrawals'], ['POST', '/withdrawals']];
         if ($admin) {
-            $routes = [...$routes, ['GET', '/audit'], ['POST', '/adjustments'], ['GET', '/users'], ['GET', '/settings'], ['PATCH', '/settings'], ['POST', '/simulate'], ['PATCH', '/withdrawals/{id}'], ['POST', '/orders/{id}/delivered']];
+            $routes = [...$routes, ['GET', '/audit'], ['POST', '/adjustments'], ['GET', '/settings'], ['PATCH', '/settings'], ['POST', '/simulate'], ['PATCH', '/withdrawals/{id}'], ['POST', '/orders/{id}/delivered']];
         }
         foreach ($routes as [$method,$suffix]) {
             $route = $app->map([$method], $base . $suffix, ProgramAction::class);

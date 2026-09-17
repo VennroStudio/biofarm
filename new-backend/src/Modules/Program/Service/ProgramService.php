@@ -507,8 +507,6 @@ final class ProgramService
                 $orderBy = $sortColumn . ' ' . strtoupper($direction) . ', u.id ASC';
                 $sql = 'WITH RECURSIVE team AS (SELECT user_id,referred_by_user_id,is_partner,1 depth FROM user_profiles WHERE referred_by_user_id=? UNION ALL SELECT p.user_id,p.referred_by_user_id,p.is_partner,t.depth+1 FROM user_profiles p JOIN team t ON p.referred_by_user_id=t.user_id WHERE t.depth<100) SELECT u.id,u.first_name,u.last_name,TRIM(CONCAT(COALESCE(u.first_name,\'\'),\' \',COALESCE(u.last_name,\'\'))) name,TRIM(CONCAT(COALESCE(parent.first_name,\'\'),\' \',COALESCE(parent.last_name,\'\'))) parent_name,t.is_partner,t.referred_by_user_id,t.depth FROM team t JOIN users u ON u.id=t.user_id LEFT JOIN users parent ON parent.id=t.referred_by_user_id';
                 $params = [$user];
-            } elseif ($kind === 'users') {
-                $sql = 'SELECT u.id,CONCAT(u.first_name, \' \', u.last_name) name,p.is_partner,p.referred_by_user_id,CONCAT(parent.first_name, \' \', parent.last_name) parent_name FROM users u JOIN user_profiles p ON p.user_id=u.id LEFT JOIN users parent ON parent.id=p.referred_by_user_id';
             } elseif ($kind === 'sales') {
                 $sql = "SELECT o.id,o.status,o.delivered_at,o.snapshot,SUM(CASE WHEN l.state<>'void' THEN l.amount_minor ELSE 0 END) earned_minor FROM program_orders o JOIN program_ledger l ON l.order_id=o.id WHERE l.wallet='commission'" . ($user === null ? '' : ' AND l.user_id=?') . ' GROUP BY o.id,o.status,o.delivered_at,o.snapshot';
                 if ($user !== null) {
