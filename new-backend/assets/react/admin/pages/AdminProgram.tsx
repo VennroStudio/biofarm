@@ -42,7 +42,7 @@ export function AdminProgram() {
     useEffect(() => {
         if (["settings", "payments"].includes(tab)) return;
         let live = true;
-        void request<Listing>(`${base}/${tab}?page=${page}`)
+        void request<Listing>(`${base}/${tab}?page=${page}${tab === "ledger" ? "&wallet=commission" : ""}`)
             .then((d) => {
                 if (live) setList(d);
             })
@@ -90,7 +90,6 @@ export function AdminProgram() {
             ["state", "Состояние"],
             ["order_id", "Заказ"],
             ["amount_minor", "Сумма"],
-            ["details", "Детали"],
         ],
         audit: [
             ["created_at", "Дата"],
@@ -127,6 +126,7 @@ export function AdminProgram() {
                             setTab(key);
                             setPage(1);
                             setSelected(null);
+                            setList({ items: [], page: 1, limit: 25 });
                         }}
                     >
                         {title}
@@ -140,7 +140,15 @@ export function AdminProgram() {
             )}
             {notice && <p role="status">{notice}</p>}
             {!["settings", "payments"].includes(tab) && (
-                <Section title="Записи">
+                <Section title={tab === "ledger" ? "Журнал комиссий" : "Записи"}>
+                    {tab === "ledger" && (
+                        <ol className="list-decimal space-y-2 rounded-xl border border-border bg-secondary/40 py-4 pl-10 pr-5 text-sm leading-relaxed">
+                            <li><strong>Ожидает</strong> — оплата подтверждена, но начисление ещё удерживается до доставки и окончания установленного срока.</li>
+                            <li><strong>Доступно</strong> — операция учитывается в доступном балансе. <strong>Это не означает, что деньги уже выплачены.</strong></li>
+                            <li><strong>Зарезервировано</strong> — сумма временно заблокирована, например под заявку на выплату.</li>
+                            <li><strong>Отменено</strong> — операция не учитывается в балансе.</li>
+                        </ol>
+                    )}
                     <Rows
                         rows={list.items}
                         columns={columns[tab]}
@@ -326,7 +334,7 @@ export function AdminProgram() {
                         onSubmit={(e) =>
                             void form(e, `${base}/adjustments`, (f) => ({
                                 userId: num(f, "userId"),
-                                wallet: value(f, "wallet"),
+                                wallet: "commission",
                                 amountMinor: Math.round(num(f, "amount") * 100),
                                 reason: value(f, "reason"),
                             }))
@@ -335,12 +343,7 @@ export function AdminProgram() {
                         <Field name="ID пользователя">
                             <input className={inputClass} name="userId" type="number" min="1" required />
                         </Field>
-                        <Field name="Счёт">
-                            <select className={inputClass} name="wallet">
-                                <option value="shopping">Покупательские бонусы</option>
-                                <option value="commission">Денежные комиссии</option>
-                            </select>
-                        </Field>
+                        <p className="self-center text-sm">Счёт: денежные комиссии</p>
                         <Field name="Изменение, ₽ (минус — списание)">
                             <input className={inputClass} name="amount" type="number" step="0.01" required />
                         </Field>
