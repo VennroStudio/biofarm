@@ -140,7 +140,7 @@ export function ReferralPanel({ withdrawalsEnabled }: { withdrawalsEnabled: bool
                         <summary className="cursor-pointer text-primary">Условия начислений</summary>
                         <div className="mt-3 space-y-2 text-muted-foreground">
                             <p>Начисления — после подтверждённой оплаты. Доступны после доставки и удержания {data.rates.holdDays} дней.</p>
-                            <p>Четыре уровня: {data.rates.levelsBps.map((n) => `${n / 100}%`).join(" / ")}. Ближайшему партнёру: {data.rates.partnerBps / 100}%.</p>
+                            <p>Два уровня: {data.rates.levelsBps.map((n) => `${n / 100}%`).join(" / ")}. Ближайшему партнёру: {data.rates.partnerBps / 100}%.</p>
                         </div>
                     </details>
                 </OfferLinkDialog>

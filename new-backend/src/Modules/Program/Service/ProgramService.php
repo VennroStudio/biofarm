@@ -172,7 +172,7 @@ final class ProgramService
                 throw new DomainException('Referrer not found');
             }
             $ownPurchase = $guestEmail !== '' && $guestEmail === mb_strtolower(trim((string)$this->db->fetchOne('SELECT email FROM users WHERE id=?', [$id])));
-            if ($depth < 4 && !$ownPurchase) {
+            if ($depth < \count($rules['levelsBps']) && !$ownPurchase) {
                 $result[] = ['userId' => $id, 'wallet' => 'commission', 'kind' => 'level_' . ($depth + 1), 'bps' => $rules['levelsBps'][$depth]];
             }
             if ($p['is_partner']) {

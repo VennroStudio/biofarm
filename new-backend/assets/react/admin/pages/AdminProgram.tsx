@@ -266,7 +266,7 @@ export function AdminProgram() {
                                     e,
                                     `${base}/settings`,
                                     (f) => ({
-                                        levelsBps: [0, 1, 2, 3].map((i) => Math.round(num(f, `level${i}`) * 100)),
+                                        levelsBps: [0, 1].map((i) => Math.round(num(f, `level${i}`) * 100)),
                                         partnerBps: Math.round(num(f, "partner") * 100),
                                         buyerBps: Math.round(num(f, "buyer") * 100),
                                         capBps: Math.round(num(f, "cap") * 100),
@@ -321,7 +321,7 @@ export function AdminProgram() {
                         </form>
                     </Section>
                     <Section title="Симулятор максимального полного распределения">
-                        <p>Максимальные вознаграждения для четырёх уровней, партнёра и покупателя. Скидки и списанные бонусы учитываются отдельно. Без введённых расходов прибыль не рассчитывается.</p>
+                        <p>Максимальные вознаграждения для двух уровней, партнёра и покупателя. Скидки и списанные бонусы учитываются отдельно. Без введённых расходов прибыль не рассчитывается.</p>
                         <form
                             className="flex flex-wrap gap-3"
                             onSubmit={(e) => {
@@ -358,7 +358,7 @@ export function AdminProgram() {
                                             remainingBeforeCostsMinor: "Остаток до себестоимости и расходов",
                                             costMinor: "Указанные расходы",
                                             remainingAfterCostsMinor: "Остаток после указанных расходов",
-                                            levelsMinor: "Четыре уровня",
+                                            levelsMinor: "Два уровня",
                                             partnerMinor: "Партнёр",
                                             buyerMinor: "Резерв на новые бонусы покупателя",
                                             totalMinor: "Все вознаграждения",

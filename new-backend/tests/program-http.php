@@ -209,7 +209,7 @@ try {
     $call('GET', '/admin/api/program/audit', [], $admin);
     // A new guest follows the partner basket, pays without registering, and rewards its owner.
     $guestRules = $call('GET', '/admin/api/program/settings', [], $admin);
-    $call('PATCH', '/admin/api/program/settings', ['levelsBps' => [300, 100, 50, 25], 'partnerBps' => 100, 'buyerBps' => 100, 'capBps' => 1000, 'holdDays' => 14, 'products' => []], $admin);
+    $call('PATCH', '/admin/api/program/settings', ['levelsBps' => [300, 100], 'partnerBps' => 100, 'buyerBps' => 100, 'capBps' => 1000, 'holdDays' => 14, 'products' => []], $admin);
     $originalPrice = $db->fetchOne('SELECT price FROM products WHERE id=?', [$product]);
     $db->update('products', ['price' => 1000], ['id' => $product]);
     $guestBody = $body;
@@ -283,7 +283,7 @@ try {
     $noPromoOffer = $call('POST', '/v1/program/offers', ['title' => 'Без автопромокода', 'promoCode' => $retiredCode, 'items' => [['productId' => $product, 'quantity' => 1]]], $tokens[1]);
     ok(!array_key_exists('promoCode', $call('GET', '/v1/offers/' . $noPromoOffer['id'])), 'QR no longer imports a promo');
     $sim = $call('POST', '/admin/api/program/simulate', ['amount' => '10000', 'discountAmount' => '1000', 'costAmount' => '5000'], $admin);
-    ok($sim['totalIncentivesMinor'] === 136000 && $sim['remainingAfterCostsMinor'] === 364000, 'simulator includes all supplied costs');
+    ok($sim['totalIncentivesMinor'] === 131500 && $sim['remainingAfterCostsMinor'] === 368500, 'simulator includes all supplied costs');
     ok(!array_key_exists('maxPromoPercent', $call('GET', '/admin/api/program/settings', [], $admin)), 'partner promo setting retired');
 
     // Existing unbound account follows the first valid link, even with another partner's QR.

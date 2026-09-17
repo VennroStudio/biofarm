@@ -68,7 +68,7 @@ final class ProgramMath
         }
         $amounts = array_map(static fn (int $bps): int => intdiv($basis * $bps, 10000), [...$rules['levelsBps'], $rules['partnerBps'], $rules['buyerBps']]);
         $total = array_sum($amounts);
-        $result = ['grossMinor' => $gross, 'discountMinor' => $discount, 'spentBonusMinor' => $spent, 'basisMinor' => $basis, 'levelsMinor' => \array_slice($amounts, 0, 4), 'partnerMinor' => $amounts[4], 'buyerMinor' => $amounts[5], 'totalMinor' => $total, 'capMinor' => intdiv($basis * $rules['capBps'], 10000), 'totalIncentivesMinor' => $discount + $spent + $total, 'remainingBeforeCostsMinor' => $basis - $total];
+        $result = ['grossMinor' => $gross, 'discountMinor' => $discount, 'spentBonusMinor' => $spent, 'basisMinor' => $basis, 'levelsMinor' => \array_slice($amounts, 0, 2), 'partnerMinor' => $amounts[2], 'buyerMinor' => $amounts[3], 'totalMinor' => $total, 'capMinor' => intdiv($basis * $rules['capBps'], 10000), 'totalIncentivesMinor' => $discount + $spent + $total, 'remainingBeforeCostsMinor' => $basis - $total];
         if ($costs !== null) {
             $result['costMinor'] = $costs;
             $result['remainingAfterCostsMinor'] = $basis - $total - $costs;
@@ -79,12 +79,16 @@ final class ProgramMath
     public static function rules(array $input, array $current = []): array
     {
         unset($current['maxPromoPercent']); // Historical settings remain readable.
-        $rules = array_replace(['levelsBps' => [100, 50, 25, 25], 'partnerBps' => 100, 'buyerBps' => 100, 'capBps' => 400, 'holdDays' => 14, 'minimumWithdrawalMinor' => 10000, 'products' => []], $current, $input);
+        // Upgrade persisted settings; new writes must explicitly supply two rates.
+        if (isset($current['levelsBps']) && \is_array($current['levelsBps']) && array_is_list($current['levelsBps']) && \count($current['levelsBps']) === 4) {
+            $current['levelsBps'] = \array_slice($current['levelsBps'], 0, 2);
+        }
+        $rules = array_replace(['levelsBps' => [100, 50], 'partnerBps' => 100, 'buyerBps' => 100, 'capBps' => 400, 'holdDays' => 14, 'minimumWithdrawalMinor' => 10000, 'products' => []], $current, $input);
         if (array_diff(array_keys($input), ['levelsBps', 'partnerBps', 'buyerBps', 'capBps', 'holdDays', 'minimumWithdrawalMinor', 'products']) !== []) {
             throw new DomainException('Unknown program setting');
         }
-        if (!\is_array($rules['products']) || !\is_array($rules['levelsBps']) || !array_is_list($rules['levelsBps']) || \count($rules['levelsBps']) !== 4) {
-            throw new DomainException('Exactly four level rates required');
+        if (!\is_array($rules['products']) || !\is_array($rules['levelsBps']) || !array_is_list($rules['levelsBps']) || \count($rules['levelsBps']) !== 2) {
+            throw new DomainException('Exactly two level rates required');
         }
         foreach ([...$rules['levelsBps'], $rules['partnerBps'], $rules['buyerBps'], $rules['capBps']] as $rate) {
             if (!\is_int($rate) || $rate < 0 || $rate > 10000) {
