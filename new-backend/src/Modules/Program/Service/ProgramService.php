@@ -425,7 +425,7 @@ final class ProgramService
                 }return $r;
             }
             if (!\in_array($status, match ($r['status']) {
-                'pending' => ['approved', 'rejected'],'approved' => ['paid', 'rejected'],default => []
+                'pending', 'approved' => ['paid', 'rejected'],default => []
             }, true)) {
                 throw new DomainException('Invalid withdrawal transition');
             }
@@ -527,6 +527,13 @@ final class ProgramService
                     $sql .= ' AND l.created_at<?';
                     $params[] = new DateTimeImmutable($dateTo, new DateTimeZone('UTC'))->modify('+1 day')->format('Y-m-d H:i:s');
                 }
+            } elseif ($kind === 'withdrawals') {
+                $sql = "SELECT w.*, COALESCE(NULLIF(TRIM(CONCAT(COALESCE(u.first_name,''),' ',COALESCE(u.last_name,''))),''),'Имя не указано') user_name FROM program_withdrawals w LEFT JOIN users u ON u.id=w.user_id";
+                if ($user !== null) {
+                    $sql .= ' WHERE w.user_id=?';
+                    $params = [$user];
+                }
+                $orderBy = 'w.created_at DESC, w.id DESC';
             } elseif ($kind === 'sales') {
                 $sql = "SELECT o.id,o.status,o.delivered_at,o.snapshot,SUM(CASE WHEN l.state<>'void' THEN l.amount_minor ELSE 0 END) earned_minor FROM program_orders o JOIN program_ledger l ON l.order_id=o.id WHERE l.wallet='commission'" . ($user === null ? '' : ' AND l.user_id=?') . ' GROUP BY o.id,o.status,o.delivered_at,o.snapshot';
                 if ($user !== null) {

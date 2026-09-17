@@ -6,7 +6,7 @@ const quickLinks = [
   { href: '/admin/shop/products', label: 'Добавить товар', icon: Package },
   { href: '/admin/orders', label: 'Просмотреть заказы', icon: ShoppingCart },
   { href: '/admin/blog', label: 'Написать статью', icon: FileText },
-  { href: '/admin/withdrawals', label: 'Заявки на вывод', icon: Wallet },
+  { href: '/admin/program/withdrawals', label: 'Выплаты партнёрам', icon: Wallet },
 ];
 
 export function QuickActions() {

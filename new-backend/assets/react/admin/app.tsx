@@ -19,7 +19,6 @@ import { AdminPromoCodes } from './pages/AdminPromoCodes';
 import { AdminReviews } from './pages/AdminReviews';
 import { AdminSettings } from './pages/AdminSettings';
 import { AdminUsers } from './pages/AdminUsers';
-import { AdminWithdrawals } from './pages/AdminWithdrawals';
 import { defaultSettingsSection, settingsSectionPath } from './features/settings/model/settingsSections';
 
 function Guard({ children }: { children: ReactNode }) {
@@ -65,9 +64,10 @@ export function AdminApp() {
           <Route path="faq" element={<AdminFaq />} />
           <Route path="blog" element={<AdminBlog />} />
           <Route path="reviews" element={<AdminReviews />} />
-          <Route path="program" element={<AdminProgram />} />
+          <Route path="program" element={<Navigate to="/admin/program/ledger" replace />} />
+          <Route path="program/:section" element={<AdminProgram />} />
           <Route path="users" element={<AdminUsers />} />
-          <Route path="withdrawals" element={<AdminWithdrawals />} />
+          <Route path="withdrawals" element={<Navigate to="/admin/program/withdrawals" replace />} />
           <Route path="integration-errors" element={<Navigate to="/admin/settings/integrations#integration-errors" replace />} />
           <Route path="settings" element={<Navigate to={settingsSectionPath(defaultSettingsSection)} replace />} />
           <Route path="settings/:section" element={<AdminSettings />} />

@@ -113,10 +113,15 @@ check($p->dashboard(1)['balances']['commission']['availableMinor'] === 700, 'pay
 $p->updateWithdrawal($w['id'], 'rejected', null, 'fixture', 1);
 check($p->dashboard(1)['balances']['commission']['availableMinor'] === 8700, 'payout rejection');
 $w = $p->requestWithdrawal(1, '80.00', ['recipient' => 'fixture']);
-$p->updateWithdrawal($w['id'], 'approved', null, null, 1);
+fails(static fn () => $p->updateWithdrawal($w['id'], 'approved', null, null, 1), 'approval stage removed');
+fails(static fn () => $p->updateWithdrawal($w['id'], 'rejected', null, null, 1), 'rejection reason required');
+check($p->listing('withdrawals', 1)['items'][0]['user_name'] === 'Fixture 1', 'withdrawal recipient name');
+check($p->listing('withdrawals', 6)['items'] === [], 'withdrawals scoped to owner');
 fails(static fn () => $p->updateWithdrawal($w['id'], 'paid', null, null, 1), 'reference required');
 $p->updateWithdrawal($w['id'], 'paid', 'fixture-transfer-1', null, 1);
 $p->updateWithdrawal($w['id'], 'paid', 'fixture-transfer-1', null, 1);
+check($p->dashboard(1)['balances']['commission']['availableMinor'] === 700, 'direct payment is idempotent');
+fails(static fn () => $p->updateWithdrawal($w['id'], 'rejected', null, 'late rejection', 1), 'paid withdrawal cannot be rejected');
 $refund = $p->reserveRefund('A', 'refund-a', [['itemId' => $item, 'quantity' => 1]], true);
 check($refund['amountMinor'] === 905000, 'refund cash basis');
 check($p->dashboard(1)['balances']['commission']['debtMinor'] === 8000, 'refund reserve debt');

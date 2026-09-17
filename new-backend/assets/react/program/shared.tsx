@@ -136,12 +136,14 @@ export function Rows({
     columns,
     actions,
     sorting,
+    renderCell,
     loading = false,
 }: {
     rows: Row[];
     loading?: boolean;
     columns: [string, string][];
     actions?: (row: Row) => ReactNode;
+    renderCell?: (key: string, row: Row) => ReactNode;
     sorting?: { key: string; direction: "asc" | "desc"; onChange: (key: string) => void };
 }) {
     return (
@@ -162,7 +164,7 @@ export function Rows({
                         <tr key={String(row.id ?? i)}>
                             {columns.map(([key]) => (
                                 <td key={key} className="border-b p-3">
-                                    {key === "status" && row[key] === "paid" && "goods_minor" in row ? (
+                                    {renderCell?.(key, row) ?? (key === "status" && row[key] === "paid" && "goods_minor" in row ? (
                                         "Оплачено"
                                     ) : key.endsWith("_minor") ? (
                                         money(row[key])
@@ -193,7 +195,7 @@ export function Rows({
                                         )
                                     ) : (
                                         label(row[key])
-                                    )}
+                                    ))}
                                 </td>
                             ))}
                             {actions && <td className="space-y-2 border-b p-3">{actions(row)}</td>}

@@ -218,7 +218,9 @@ try {
     ok((int)$db->fetchOne('SELECT referred_by_user_id FROM user_profiles WHERE user_id=?', [$ids[4]]) === $ids[3], 'descendants retained');
     ok($snapshot === $db->fetchOne('SELECT snapshot FROM program_orders WHERE id=?', [$orderId]), 'historical rewards immutable');
     $w = $call('POST', '/v1/program/withdrawals', ['amount' => '0.01', 'details' => ['recipient' => 'Тестовые реквизиты']], $tokens[1]);
-    $call('PATCH', '/admin/api/program/withdrawals/' . $w['id'], ['status' => 'approved'], $admin);
+    $call('PATCH', '/admin/api/program/withdrawals/' . $w['id'], ['status' => 'approved'], $admin, 422);
+    $call('PATCH', '/admin/api/program/withdrawals/' . $w['id'], ['status' => 'paid'], $admin, 422);
+    $call('PATCH', '/admin/api/program/withdrawals/' . $w['id'], ['status' => 'rejected'], $admin, 422);
     $call('PATCH', '/admin/api/program/withdrawals/' . $w['id'], ['status' => 'paid', 'reference' => 'fixture-' . $suffix], $admin);
     $item = (int)$db->fetchOne('SELECT id FROM order_items WHERE order_id=?', [$orderId]);
     $refundBody = ['requestId' => 'fixture-refund-' . $suffix, 'items' => [['itemId' => $item, 'quantity' => 2]], 'refundDelivery' => true];

@@ -1,5 +1,8 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { BookOpen, History, SlidersHorizontal, Wallet } from "lucide-react";
+import { BookOpen, History, SlidersHorizontal, Wallet, Clock3, CheckCircle2, XCircle } from "lucide-react";
+import { Navigate, NavLink, useParams } from "react-router-dom";
+import { Badge } from "../shared/ui";
+import { AdminWithdrawalModal } from "./AdminWithdrawalModal";
 import { request } from "../api/client";
 import {
     Section,
@@ -24,8 +27,12 @@ const sections = [
     { key: "settings", title: "Настройки", icon: SlidersHorizontal },
 ];
 export function AdminProgram() {
-    const [withdrawalStatus, setWithdrawalStatus] = useState("approved");
-    const [tab, setTab] = useState("ledger");
+    const { section } = useParams();
+    if (!sections.some(({ key }) => key === section)) return <Navigate to="/admin/program/ledger" replace />;
+    return <AdminProgramSection key={section} tab={section!} />;
+}
+
+function AdminProgramSection({ tab }: { tab: string }) {
     const [page, setPage] = useState(1);
     const [ledgerFilters, setLedgerFilters] = useState(defaultLedgerFilters);
     const [ledgerDraft, setLedgerDraft] = useState(defaultLedgerFilters);
@@ -115,13 +122,10 @@ export function AdminProgram() {
             ["payload", "Изменения и причина"],
         ],
         withdrawals: [
-            ["id", "Заявка"],
-            ["user_id", "Пользователь"],
+            ["created_at", "Дата"],
+            ["user_name", "Пользователь"],
             ["amount_minor", "Сумма"],
             ["status", "Состояние"],
-            ["details", "Реквизиты"],
-            ["reference", "Подтверждение"],
-            ["reason", "Причина"],
         ],
     };
     return (
@@ -130,21 +134,14 @@ export function AdminProgram() {
             <p>Начисления по подтверждённым оплатам. Переводы выполняются вручную.</p>
             <nav aria-label="Разделы партнёрской программы" className="flex flex-wrap gap-2 rounded-2xl border border-[#dfece9] bg-[#f4faf8] p-2">
                 {sections.map(({ key, title, icon: Icon }) => (
-                    <button
-                        type="button"
-                        aria-pressed={tab === key}
-                        className={`inline-flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-colors focus-visible:outline-offset-2 focus-visible:outline-[#2e8175] ${tab === key ? "bg-[#2e8175] text-white shadow-sm" : "text-[#526d78] hover:bg-white hover:text-[#18574f]"}`}
+                    <NavLink
+                        to={`/admin/program/${key}`}
+                        className={({ isActive }) => `inline-flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-colors focus-visible:outline-offset-2 focus-visible:outline-[#2e8175] ${isActive ? "bg-[#2e8175] text-white shadow-sm" : "text-[#526d78] hover:bg-white hover:text-[#18574f]"}`}
                         key={key}
-                        onClick={() => {
-                            setTab(key);
-                            setPage(1);
-                            setSelected(null);
-                            setList({ items: [], page: 1, limit: 25 });
-                        }}
                     >
                         <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
                         {title}
-                    </button>
+                    </NavLink>
                 ))}
             </nav>
             {error && (
@@ -154,7 +151,7 @@ export function AdminProgram() {
             )}
             {notice && <p role="status">{notice}</p>}
             {tab !== "settings" && (
-                <Section title={tab === "ledger" ? "Журнал комиссий" : "Записи"}>
+                <Section title={tab === "ledger" ? "Журнал комиссий" : tab === "withdrawals" ? "Выплаты" : "Аудит"}>
                     {tab === "ledger" && (
                         <ol className="list-decimal space-y-2 rounded-xl border border-border bg-secondary/40 py-4 pl-10 pr-5 text-sm leading-relaxed">
                             <li><strong>Ожидает</strong> — оплата подтверждена, но начисление ещё удерживается до доставки и окончания установленного срока.</li>
@@ -196,11 +193,18 @@ export function AdminProgram() {
                     <Rows
                         rows={list.items}
                         columns={columns[tab]}
+                        renderCell={(key, row) => {
+                            if (tab !== "withdrawals" || key !== "status") return undefined;
+                            const state = String(row.status);
+                            const Icon = state === "paid" ? CheckCircle2 : state === "rejected" ? XCircle : Clock3;
+                            const title = ({ pending: "Ожидает", approved: "Ожидает перевода", paid: "Переведено", rejected: "Отказ" } as Record<string, string>)[state] ?? state;
+                            return <Badge tone={state === "paid" ? "green" : state === "rejected" ? "red" : "amber"} className="items-center gap-1.5 whitespace-nowrap"><Icon className="h-4 w-4" aria-hidden="true" />{title}</Badge>;
+                        }}
                         actions={
                             tab === "withdrawals"
                                 ? (row) => (
                                       <button className={buttonClass} onClick={() => setSelected(row)}>
-                                          Управление
+                                          Открыть
                                       </button>
                                   )
                                 : undefined
@@ -210,46 +214,13 @@ export function AdminProgram() {
                 </Section>
             )}
             {selected && tab === "withdrawals" && (
-                <Section title={`Управление: ${selected.name || selected.id}`}>
-                    <button className="underline" onClick={() => setSelected(null)}>
-                        Закрыть
-                    </button>
-                    {tab === "withdrawals" && (
-                        <form
-                            className="grid gap-3"
-                            onSubmit={(e) =>
-                                void form(
-                                    e,
-                                    `${base}/withdrawals/${selected.id}`,
-                                    (f) => ({
-                                        status: value(f, "status"),
-                                        reference: value(f, "reference"),
-                                        reason: value(f, "reason"),
-                                    }),
-                                    "PATCH",
-                                )
-                            }
-                        >
-                            <p>Одобрение только подтверждает заявку. «Выплачено» выбирайте после реального перевода.</p>
-                            <Field name="Действие">
-                                <select className={inputClass} name="status" required value={withdrawalStatus} onChange={e=>setWithdrawalStatus(e.target.value)}>
-                                    <option value="approved">Одобрить без перевода</option>
-                                    <option value="paid">Отметить выполненный перевод</option>
-                                    <option value="rejected">Отклонить и освободить резерв</option>
-                                </select>
-                            </Field>
-                            <Field name="Подтверждение перевода (обязательно для выплаты)">
-                                <input className={inputClass} name="reference" required={withdrawalStatus === "paid"} />
-                            </Field>
-                            <Field name="Причина (обязательно при отклонении)">
-                                <textarea className={inputClass} name="reason" required={withdrawalStatus === "rejected"} />
-                            </Field>
-                            <button className={buttonClass} disabled={busy}>
-                                Сохранить состояние
-                            </button>
-                        </form>
-                    )}
-                </Section>
+                <AdminWithdrawalModal key={String(selected.id)} withdrawal={selected} onClose={() => setSelected(null)}
+                    onSave={async (body) => {
+                        await request(`${base}/withdrawals/${selected.id}`, { method: "PATCH", body });
+                        setSelected(null);
+                        setNotice("Состояние выплаты сохранено");
+                        setRevision((current) => current + 1);
+                    }} />
             )}
             {tab === "settings" && rates && (
                 <ProgramSettings key={JSON.stringify(rates)} rates={rates} busy={busy}

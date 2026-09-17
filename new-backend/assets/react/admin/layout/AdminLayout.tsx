@@ -11,7 +11,6 @@ import {
   StickyNote,
   ShoppingCart,
   Users,
-  Wallet,
   X,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -29,7 +28,6 @@ const links = [
   { to: '/admin/blog', label: 'Блог', icon: FileText },
   { to: '/admin/reviews', label: 'Отзывы', icon: Star },
   { to: '/admin/users', label: 'Пользователи', icon: Users },
-  { to: '/admin/withdrawals', label: 'Заявки на вывод', icon: Wallet },
   { to: '/admin/settings', label: 'Настройки', icon: Settings },
 ];
 
