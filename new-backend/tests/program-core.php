@@ -216,4 +216,20 @@ $db->update('site_settings', ['value' => 'false'], ['key' => 'referral_enabled']
 order($db, $p, 'NOREF');
 $noRef = json_decode($db->fetchOne("SELECT snapshot FROM program_orders WHERE id='NOREF'"), true);
 check(count($noRef['recipients']) === 1, 'disabled referrals omit upstream rewards');
+// Journal filtering is applied before pagination; the end date includes the whole day.
+foreach ([[1, '2020-01-01 00:00:00', 'commission'], [5, '2020-01-01 23:59:59', 'commission'], [6, '2020-01-02 00:00:00', 'commission'], [7, '2020-01-01 12:00:00', 'shopping']] as [$uid, $at, $wallet]) {
+    $db->insert('program_ledger', ['id' => 'journal-test-' . $uid, 'user_id' => $uid, 'wallet' => $wallet, 'amount_minor' => 100, 'kind' => 'adjustment', 'state' => 'available', 'details' => '{}', 'created_at' => $at]);
+}
+$journal = $p->listing('ledger', null, limit: 100, sort: 'user_name', direction: 'asc', wallet: 'commission', dateFrom: '2020-01-01', dateTo: '2020-01-01')['items'];
+check(array_column($journal, 'user_id') === [1, 5], 'journal inclusive dates, commission filter and user sort');
+check($journal[0]['user_name'] === 'Fixture 1' && $journal[0]['participant_type'] === 'Партнёр', 'journal shows partner name');
+check($journal[1]['participant_type'] === 'Реферал', 'journal shows referral type');
+$secondPage = $p->listing('ledger', null, page: 2, limit: 1, sort: 'user_name', direction: 'desc', wallet: 'commission', dateFrom: '2020-01-01', dateTo: '2020-01-01')['items'];
+check(array_column($secondPage, 'user_id') === [1], 'journal sort across pages');
+check($p->listing('ledger', null, sort: 'created_at', direction: 'desc', wallet: 'commission', dateFrom: '2020-01-01', dateTo: '2020-01-02')['items'][0]['user_id'] === 6, 'journal latest first');
+check(count($p->listing('ledger', 5, wallet: 'commission', dateFrom: '2020-01-01', dateTo: '2020-01-02')['items']) === 1, 'date filter preserves account scope');
+fails(static fn () => $p->listing('ledger', null, sort: 'unsafe SQL'), 'journal rejects unknown sort');
+fails(static fn () => $p->listing('ledger', null, direction: 'unsafe SQL'), 'journal rejects unknown direction');
+fails(static fn () => $p->listing('ledger', null, dateFrom: '2020-02-30'), 'journal rejects invalid calendar dates');
+fails(static fn () => $p->listing('ledger', null, dateFrom: '2020-01-02', dateTo: '2020-01-01'), 'journal rejects reversed range');
 echo "program-core: all assertions passed\n";

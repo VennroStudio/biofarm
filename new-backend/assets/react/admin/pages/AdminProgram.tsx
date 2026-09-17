@@ -15,10 +15,13 @@ import {
 const base = "/admin/api/program";
 const value = (f: FormData, key: string) => String(f.get(key) || "");
 const num = (f: FormData, key: string) => Number(f.get(key));
+const defaultLedgerFilters = { sort: "created_at:desc", dateFrom: "", dateTo: "" };
 export function AdminProgram() {
     const [withdrawalStatus, setWithdrawalStatus] = useState("approved");
     const [tab, setTab] = useState("settings");
     const [page, setPage] = useState(1);
+    const [ledgerFilters, setLedgerFilters] = useState(defaultLedgerFilters);
+    const [ledgerDraft, setLedgerDraft] = useState(defaultLedgerFilters);
     const [list, setList] = useState<Listing>({ items: [], page: 1, limit: 25 });
     const [rates, setRates] = useState<Rates | null>(null);
     const [error, setError] = useState("");
@@ -42,15 +45,30 @@ export function AdminProgram() {
     useEffect(() => {
         if (["settings", "payments"].includes(tab)) return;
         let live = true;
-        void request<Listing>(`${base}/${tab}?page=${page}${tab === "ledger" ? "&wallet=commission" : ""}`)
+        const query = new URLSearchParams({ page: String(page) });
+        if (tab === "ledger") {
+            const [sort, direction] = ledgerFilters.sort.split(":");
+            query.set("wallet", "commission");
+            query.set("sort", sort);
+            query.set("direction", direction);
+            if (ledgerFilters.dateFrom) query.set("dateFrom", ledgerFilters.dateFrom);
+            if (ledgerFilters.dateTo) query.set("dateTo", ledgerFilters.dateTo);
+        }
+        void request<Listing>(`${base}/${tab}?${query}`)
             .then((d) => {
                 if (live) setList(d);
             })
-            .catch((e) => setError(String(e)));
+            .catch((e) => { if (live) setError(String(e)); });
         return () => {
             live = false;
         };
-    }, [tab, page, revision]);
+    }, [tab, page, revision, ledgerFilters]);
+    function applyLedgerFilters(filters: typeof defaultLedgerFilters) {
+        setLedgerFilters({ ...filters });
+        setPage(1);
+        setList({ items: [], page: 1, limit: 25 });
+        setError("");
+    }
     async function mutate(path: string, body: Record<string, unknown>, method = "POST") {
         setBusy(true);
         setError("");
@@ -84,8 +102,8 @@ export function AdminProgram() {
     const columns: Record<string, [string, string][]> = {
         ledger: [
             ["created_at", "Дата"],
-            ["user_id", "Пользователь"],
-            ["wallet", "Счёт"],
+            ["user_name", "Пользователь"],
+            ["participant_type", "Статус пользователя"],
             ["kind", "Операция"],
             ["state", "Состояние"],
             ["order_id", "Заказ"],
@@ -148,6 +166,36 @@ export function AdminProgram() {
                             <li><strong>Зарезервировано</strong> — сумма временно заблокирована, например под заявку на выплату.</li>
                             <li><strong>Отменено</strong> — операция не учитывается в балансе.</li>
                         </ol>
+                    )}
+                    {tab === "ledger" && (
+                        <form className="flex flex-wrap items-end gap-4" onSubmit={(event) => {
+                            event.preventDefault();
+                            if (ledgerDraft.dateFrom && ledgerDraft.dateTo && ledgerDraft.dateFrom > ledgerDraft.dateTo) {
+                                setError("Начало периода не может быть позже окончания");
+                                return;
+                            }
+                            applyLedgerFilters(ledgerDraft);
+                        }}>
+                            <Field name="Сортировка">
+                                <select className={inputClass} value={ledgerDraft.sort} onChange={(event) => setLedgerDraft({ ...ledgerDraft, sort: event.target.value })}>
+                                    <option value="created_at:desc">Сначала новые</option>
+                                    <option value="created_at:asc">Сначала старые</option>
+                                    <option value="user_name:asc">Пользователь: А—Я</option>
+                                    <option value="user_name:desc">Пользователь: Я—А</option>
+                                </select>
+                            </Field>
+                            <Field name="Дата с">
+                                <input className={inputClass} type="date" value={ledgerDraft.dateFrom} max={ledgerDraft.dateTo || undefined} onChange={(event) => setLedgerDraft({ ...ledgerDraft, dateFrom: event.target.value })} />
+                            </Field>
+                            <Field name="Дата по (включительно)">
+                                <input className={inputClass} type="date" value={ledgerDraft.dateTo} min={ledgerDraft.dateFrom || undefined} onChange={(event) => setLedgerDraft({ ...ledgerDraft, dateTo: event.target.value })} />
+                            </Field>
+                            <button className={buttonClass} type="submit">Применить</button>
+                            <button className="rounded-lg border border-border px-4 py-2 text-sm" type="button" onClick={() => {
+                                setLedgerDraft(defaultLedgerFilters);
+                                applyLedgerFilters(defaultLedgerFilters);
+                            }}>Сбросить</button>
+                        </form>
                     )}
                     <Rows
                         rows={list.items}

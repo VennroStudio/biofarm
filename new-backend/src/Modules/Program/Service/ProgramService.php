@@ -489,9 +489,9 @@ final class ProgramService
         });
     }
 
-    public function listing(string $kind, ?int $user, int $page = 1, int $limit = 25, string $sort = 'depth', string $direction = 'asc', ?string $wallet = null): array
+    public function listing(string $kind, ?int $user, int $page = 1, int $limit = 25, string $sort = 'depth', string $direction = 'asc', ?string $wallet = null, ?string $dateFrom = null, ?string $dateTo = null): array
     {
-        return $this->atomic(function () use ($kind, $user, $page, $limit, $sort, $direction, $wallet) {
+        return $this->atomic(function () use ($kind, $user, $page, $limit, $sort, $direction, $wallet, $dateFrom, $dateTo) {
             $limit = max(1, min(100, $limit));
             $offset = (max(1, $page) - 1) * $limit;
             $params = [];
@@ -507,6 +507,38 @@ final class ProgramService
                 $orderBy = $sortColumn . ' ' . strtoupper($direction) . ', u.id ASC';
                 $sql = 'WITH RECURSIVE team AS (SELECT user_id,referred_by_user_id,is_partner,1 depth FROM user_profiles WHERE referred_by_user_id=? UNION ALL SELECT p.user_id,p.referred_by_user_id,p.is_partner,t.depth+1 FROM user_profiles p JOIN team t ON p.referred_by_user_id=t.user_id WHERE t.depth<100) SELECT u.id,u.first_name,u.last_name,TRIM(CONCAT(COALESCE(u.first_name,\'\'),\' \',COALESCE(u.last_name,\'\'))) name,TRIM(CONCAT(COALESCE(parent.first_name,\'\'),\' \',COALESCE(parent.last_name,\'\'))) parent_name,t.is_partner,t.referred_by_user_id,t.depth FROM team t JOIN users u ON u.id=t.user_id LEFT JOIN users parent ON parent.id=t.referred_by_user_id';
                 $params = [$user];
+            } elseif ($kind === 'ledger') {
+                $sortColumn = match ($sort) {
+                    'depth' => 'l.id', 'user_name' => 'user_name', 'created_at' => 'l.created_at',
+                    default => throw new DomainException('Неизвестная сортировка журнала'),
+                };
+                if (!\in_array($direction, ['asc', 'desc'], true)) {
+                    throw new DomainException('Неизвестное направление сортировки');
+                }
+                $orderBy = $sort === 'depth' ? 'l.id DESC' : $sortColumn . ' ' . strtoupper($direction) . ', l.created_at DESC, l.id DESC';
+                $sql = "SELECT l.*, COALESCE(NULLIF(TRIM(CONCAT(COALESCE(u.first_name,''),' ',COALESCE(u.last_name,''))),''),'Имя не указано') user_name, CASE WHEN p.is_partner=1 THEN 'Партнёр' WHEN p.referred_by_user_id IS NOT NULL THEN 'Реферал' ELSE 'Пользователь' END participant_type FROM program_ledger l LEFT JOIN users u ON u.id=l.user_id LEFT JOIN user_profiles p ON p.user_id=l.user_id WHERE 1=1";
+                if ($user !== null) {
+                    $sql .= ' AND l.user_id=?';
+                    $params[] = $user;
+                }
+                foreach ([$dateFrom, $dateTo] as $date) {
+                    if ($date === null) continue;
+                    $parsed = DateTimeImmutable::createFromFormat('!Y-m-d', $date, new \DateTimeZone('UTC'));
+                    if (!$parsed || $parsed->format('Y-m-d') !== $date) {
+                        throw new DomainException('Укажите корректную дату в формате ГГГГ-ММ-ДД');
+                    }
+                }
+                if ($dateFrom !== null && $dateTo !== null && $dateFrom > $dateTo) {
+                    throw new DomainException('Начало периода не может быть позже окончания');
+                }
+                if ($dateFrom !== null) {
+                    $sql .= ' AND l.created_at>=?';
+                    $params[] = $dateFrom . ' 00:00:00';
+                }
+                if ($dateTo !== null) {
+                    $sql .= ' AND l.created_at<?';
+                    $params[] = new DateTimeImmutable($dateTo, new \DateTimeZone('UTC'))->modify('+1 day')->format('Y-m-d H:i:s');
+                }
             } elseif ($kind === 'sales') {
                 $sql = "SELECT o.id,o.status,o.delivered_at,o.snapshot,SUM(CASE WHEN l.state<>'void' THEN l.amount_minor ELSE 0 END) earned_minor FROM program_orders o JOIN program_ledger l ON l.order_id=o.id WHERE l.wallet='commission'" . ($user === null ? '' : ' AND l.user_id=?') . ' GROUP BY o.id,o.status,o.delivered_at,o.snapshot';
                 if ($user !== null) {
@@ -514,7 +546,7 @@ final class ProgramService
                 }
             } else {
                 $table = match ($kind) {
-                    'ledger' => 'program_ledger','withdrawals' => 'program_withdrawals','audit' => 'program_audit',default => throw new DomainException('Unknown list')
+                    'withdrawals' => 'program_withdrawals','audit' => 'program_audit',default => throw new DomainException('Unknown list')
                 };
                 $sql = 'SELECT * FROM ' . $table . ($user === null ? '' : ' WHERE user_id=?');
                 if ($user !== null) {
@@ -525,7 +557,7 @@ final class ProgramService
                 if ($kind !== 'ledger' || !\in_array($wallet, ['shopping', 'commission'], true)) {
                     throw new DomainException('Invalid ledger wallet');
                 }
-                $sql .= ($user === null ? ' WHERE' : ' AND') . ' wallet=?';
+                $sql .= ' AND l.wallet=?';
                 $params[] = $wallet;
             }
             $rows = $this->db->fetchAllAssociative($sql . ' ORDER BY ' . $orderBy . ' LIMIT ' . $limit . ' OFFSET ' . $offset, $params);
