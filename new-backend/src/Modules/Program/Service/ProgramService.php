@@ -646,6 +646,7 @@ final class ProgramService
 
     private function recipients(?int $buyer, ?int $parent, array $rules, bool $buyerBonus, string $guestEmail = ''): array
     {
+        $rules = ProgramMath::rules([], $rules);
         $result = [];
         $participants = new ProgramParticipants($this->db);
         $buyerIdentity = $buyer === null ? null : $participants->identity($buyer);
@@ -662,14 +663,14 @@ final class ProgramService
         if (new SiteSettings($this->db)->bool('referral_enabled')) {
             if ($buyerIdentity && $buyerIdentity['isTeamMember']) {
                 // A member's own purchases belong only to their explicit team partner.
-                $add($buyerIdentity['teamPartnerId'], 'commission', 'team', $rules['directBps']);
+                $add($buyerIdentity['teamPartnerId'], 'commission', 'team', $rules['partnerMemberBps']);
             } elseif ($buyerIdentity === null || !$buyerIdentity['isPartner']) {
                 if ($parent !== null && $eligible($parent)) {
                     $owner = $participants->identity($parent);
                     if ($owner['canEarnCommission']) {
-                        $add($parent, 'commission', 'direct', $rules['directBps']);
+                        $add($parent, 'commission', 'direct', $rules[$owner['isPartner'] ? 'partnerDirectBps' : 'memberDirectBps']);
                         if ($owner['isTeamMember']) {
-                            $add($owner['teamPartnerId'], 'commission', 'team', $rules['teamBps']);
+                            $add($owner['teamPartnerId'], 'commission', 'team', $rules['partnerTeamBps']);
                         }
                     } else {
                         $add($parent, 'shopping', 'referral_bonus', $rules['referralBonusBps']);

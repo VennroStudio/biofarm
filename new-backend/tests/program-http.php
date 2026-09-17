@@ -97,13 +97,26 @@ try {
     }
     $admin = $tokens[0];
     $program = $c->get(ProgramService::class);
-    $call('PATCH', '/admin/api/program/settings', ['directBps' => 100, 'teamBps' => 50, 'referralBonusBps' => 100, 'buyerBps' => 100, 'capBps' => 400], $admin);
+    $call('PATCH', '/admin/api/program/settings', ['partnerDirectBps' => 100, 'partnerMemberBps' => 100, 'memberDirectBps' => 100, 'partnerTeamBps' => 50, 'referralBonusBps' => 100, 'buyerBps' => 100], $admin);
     $call('PATCH', '/admin/api/program/settings', ['products' => ['1' => 0]], $admin, 422);
     ok(!array_key_exists('products', $call('GET', '/admin/api/program/settings', [], $admin)), 'removed product coefficients are not exposed');
     $invite = $call('GET', '/v1/program/team-invitation', [], $tokens[1]);
     foreach ([3, 4, 5] as $member) {
         $call('POST', '/v1/program/join', ['code' => $invite['code'], 'consent' => true], $tokens[$member]);
     }
+    $savedRates = $call('GET', '/admin/api/program/settings', [], $admin);
+    $call('PATCH', '/admin/api/program/settings', ['partnerDirectBps' => 200, 'partnerMemberBps' => 300, 'partnerTeamBps' => 50, 'memberDirectBps' => 400], $admin);
+    $distinct = $call('GET', '/admin/api/program/settings', [], $admin);
+    ok($distinct['partnerDirectBps'] === 200 && $distinct['partnerMemberBps'] === 300 && $distinct['memberDirectBps'] === 400 && $distinct['partnerTeamBps'] === 50, 'four commission settings round trip independently');
+    ok(!array_key_exists('capBps', $distinct), 'API does not expose a total cap');
+    $call('PATCH', '/admin/api/program/settings', ['capBps' => 400], $admin, 422);
+    ok($call('GET', '/v1/users/me/referral-info', [], $tokens[1])['referral_percent'] == 2, 'partner referral info uses partner rate');
+    ok($call('GET', '/v1/users/me/referral-info', [], $tokens[3])['referral_percent'] == 4, 'member referral info uses member rate');
+    foreach ([['partner_customer', 20000, 0], ['member_purchase', 0, 30000], ['team_customer', 40000, 5000]] as [$scenario, $direct, $partner]) {
+        $result = $call('POST', '/admin/api/program/simulate', ['scenario' => $scenario, 'amount' => '10000'], $admin);
+        ok($result['directMinor'] === $direct && $result['partnerMinor'] === $partner && !array_key_exists('capMinor', $result), 'HTTP simulator matches independent rates: ' . $scenario);
+    }
+    $call('PATCH', '/admin/api/program/settings', $savedRates, $admin);
     $program->adjust($ids[1], 'shopping', 123, 'bonus separation fixture', $ids[0]);
     $program->adjust($ids[1], 'commission', 456, 'commission separation fixture', $ids[0]);
     foreach (['shopping', 'commission'] as $wallet) {
@@ -222,7 +235,7 @@ try {
     $call('GET', '/admin/api/program/audit', [], $admin);
     // A new guest follows the partner basket, pays without registering, and rewards its owner.
     $guestRules = $call('GET', '/admin/api/program/settings', [], $admin);
-    $call('PATCH', '/admin/api/program/settings', ['directBps' => 300, 'teamBps' => 100, 'referralBonusBps' => 100, 'buyerBps' => 100, 'capBps' => 1000, 'holdDays' => 14], $admin);
+    $call('PATCH', '/admin/api/program/settings', ['partnerDirectBps' => 300, 'partnerTeamBps' => 100, 'referralBonusBps' => 100, 'buyerBps' => 100, 'holdDays' => 14], $admin);
     $originalPrice = $db->fetchOne('SELECT price FROM products WHERE id=?', [$product]);
     $db->update('products', ['price' => 1000], ['id' => $product]);
     $guestBody = $body;

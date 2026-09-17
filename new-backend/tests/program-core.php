@@ -61,13 +61,16 @@ function paid($db, $p, string $id): void
 }
 $p->joinTeam(6, $p->teamInvite(1)['code'], true);
 check(ProgramMath::allocate(5, [1 => 3, 2 => 3, 3 => 3]) === [1 => 2, 2 => 2, 3 => 1], 'allocation');
-fails(static fn () => ProgramMath::rules(['buyerBps' => 500]), 'budget cap');
+check(ProgramMath::rules(['buyerBps' => 500])['buyerBps'] === 500, 'buyer rate is not limited by a total cap');
+$converted = ProgramMath::rules([], ['directBps' => 220, 'teamBps' => 70, 'capBps' => 1]);
+check($converted['partnerDirectBps'] === 220 && $converted['partnerMemberBps'] === 220 && $converted['memberDirectBps'] === 220 && $converted['partnerTeamBps'] === 70, 'legacy shared rates split without changing saved values');
+check(!array_key_exists('capBps', $converted), 'legacy cap is discarded');
 check(ProgramMath::minor('0.25') === 25, 'decimal');
-check(ProgramMath::rules([], ['levelsBps' => [120, 60, 10, 10]])['directBps'] === 120, 'stored legacy direct rate is retained');
+check(ProgramMath::rules([], ['levelsBps' => [120, 60, 10, 10]])['partnerDirectBps'] === 120, 'stored legacy direct rate is retained');
 fails(static fn () => ProgramMath::rules(['levelsBps' => [100, 50, 25, 25]]), 'new settings cannot re-enable four levels');
 fails(static fn () => ProgramMath::rules(['levelsBps' => [100]]), 'both level rates required');
-$p->updateSettings(['teamBps' => 100], 1);
-$simulation = ProgramMath::simulate(['amount' => '10000', 'discountAmount' => '1000', 'costAmount' => '5000'], ProgramMath::rules(['teamBps' => 100]));
+$p->updateSettings(['partnerTeamBps' => 100], 1);
+$simulation = ProgramMath::simulate(['amount' => '10000', 'discountAmount' => '1000', 'costAmount' => '5000'], ProgramMath::rules(['partnerTeamBps' => 100]));
 check($simulation['basisMinor'] === 900000 && $simulation['totalMinor'] === 27000, 'simulation net reward base');
 check($simulation['directMinor'] === 9000 && $simulation['referralBonusMinor'] === 0 && $simulation['partnerMinor'] === 9000 && $simulation['buyerMinor'] === 9000, 'simulator separates direct, team and buyer rewards');
 check($simulation['totalIncentivesMinor'] === 127000, 'simulation includes shop discount and rewards');
@@ -139,7 +142,7 @@ fails(static fn () => order($db, $p, 'OVER', 7, 1000, 1000), 'concurrent spend e
 $p->cancelOrder('RESERVE');
 check((int)$db->fetchOne("SELECT COUNT(*) FROM program_ledger WHERE kind='legacy_opening' AND wallet='commission'") === 0, 'old bonuses never commission');
 $before = $p->settings();
-fails(static fn () => $p->updateSettings(['buyerBps' => 10000, 'holdDays' => 0], 1), 'invalid partial settings');
+fails(static fn () => $p->updateSettings(['buyerBps' => 10001, 'holdDays' => 0], 1), 'invalid partial settings');
 check($p->settings() === $before, 'settings atomic rollback');
 fails(static fn () => $p->updateSettings(['products' => ['1' => 0]], 1), 'removed product factors cannot be configured');
 $db->update('program_locks', ['payload' => json_encode($before + ['products' => ['1' => 0]])], ['id' => 'settings']);

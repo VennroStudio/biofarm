@@ -58,6 +58,7 @@ final class ProgramMath
     /** Conservative full-chain estimate; costs are supplied explicitly, never guessed. */
     public static function simulate(array $input, array $rules): array
     {
+        $rules = self::rules([], $rules);
         $gross = self::minor($input['amount'] ?? '0');
         $discount = self::minor($input['discountAmount'] ?? '0');
         $spent = self::minor($input['bonusAmount'] ?? '0');
@@ -68,15 +69,15 @@ final class ProgramMath
         }
         $scenario = $input['scenario'] ?? 'team_customer';
         $rates = match ($scenario) {
-            'partner_customer'  => [$rules['directBps'], 0, 0],
-            'team_customer'     => [$rules['directBps'], $rules['teamBps'], 0],
-            'member_purchase'   => [0, $rules['directBps'], 0],
+            'partner_customer'  => [$rules['partnerDirectBps'], 0, 0],
+            'team_customer'     => [$rules['memberDirectBps'], $rules['partnerTeamBps'], 0],
+            'member_purchase'   => [0, $rules['partnerMemberBps'], 0],
             'ordinary_referral' => [0, 0, $rules['referralBonusBps']],
             default             => throw new DomainException('Неизвестный сценарий'),
         };
         $amounts = array_map(static fn (int $bps): int => intdiv($basis * $bps, 10000), [...$rates, $rules['buyerBps']]);
         $total = array_sum($amounts);
-        $result = ['grossMinor' => $gross, 'discountMinor' => $discount, 'spentBonusMinor' => $spent, 'basisMinor' => $basis, 'directMinor' => $amounts[0], 'partnerMinor' => $amounts[1], 'referralBonusMinor' => $amounts[2], 'buyerMinor' => $amounts[3], 'totalMinor' => $total, 'capMinor' => intdiv($basis * $rules['capBps'], 10000), 'totalIncentivesMinor' => $discount + $spent + $total, 'remainingBeforeCostsMinor' => $basis - $total];
+        $result = ['grossMinor' => $gross, 'discountMinor' => $discount, 'spentBonusMinor' => $spent, 'basisMinor' => $basis, 'directMinor' => $amounts[0], 'partnerMinor' => $amounts[1], 'referralBonusMinor' => $amounts[2], 'buyerMinor' => $amounts[3], 'totalMinor' => $total, 'totalIncentivesMinor' => $discount + $spent + $total, 'remainingBeforeCostsMinor' => $basis - $total];
         if ($costs !== null) {
             $result['costMinor'] = $costs;
             $result['remainingAfterCostsMinor'] = $basis - $total - $costs;
@@ -86,22 +87,23 @@ final class ProgramMath
 
     public static function rules(array $input, array $current = []): array
     {
-        // Convert stored legacy settings only. New API writes use named, independent rates.
-        $current['directBps'] ??= $current['levelsBps'][0] ?? 100;
-        $current['teamBps'] ??= $current['partnerBps'] ?? 50;
-        $current['referralBonusBps'] ??= $current['directBps'];
-        unset($current['maxPromoPercent'], $current['levelsBps'], $current['partnerBps'], $current['products']);
-        $rules = array_replace(['directBps' => 100, 'teamBps' => 50, 'referralBonusBps' => 100, 'buyerBps' => 100, 'capBps' => 400, 'holdDays' => 14, 'minimumWithdrawalMinor' => 10000], $current, $input);
-        if (array_diff(array_keys($input), ['directBps', 'teamBps', 'referralBonusBps', 'buyerBps', 'capBps', 'holdDays', 'minimumWithdrawalMinor']) !== []) {
+        // Preserve saved rates when splitting the old shared direct commission.
+        $legacyDirect = $current['directBps'] ?? $current['levelsBps'][0] ?? 100;
+        $current['partnerDirectBps'] ??= $legacyDirect;
+        $current['partnerMemberBps'] ??= $legacyDirect;
+        $current['memberDirectBps'] ??= $legacyDirect;
+        $current['partnerTeamBps'] ??= $current['teamBps'] ?? $current['partnerBps'] ?? 50;
+        $current['referralBonusBps'] ??= $legacyDirect;
+        unset($current['maxPromoPercent'], $current['levelsBps'], $current['partnerBps'], $current['products'], $current['directBps'], $current['teamBps'], $current['capBps']);
+        $defaults = ['partnerDirectBps' => 100, 'partnerMemberBps' => 100, 'partnerTeamBps' => 50, 'memberDirectBps' => 100, 'referralBonusBps' => 100, 'buyerBps' => 100, 'holdDays' => 14, 'minimumWithdrawalMinor' => 10000];
+        if (array_diff(array_keys($input), array_keys($defaults)) !== []) {
             throw new DomainException('Unknown program setting');
         }
-        foreach ([$rules['directBps'], $rules['teamBps'], $rules['referralBonusBps'], $rules['buyerBps'], $rules['capBps']] as $rate) {
-            if (!\is_int($rate) || $rate < 0 || $rate > 10000) {
+        $rules = array_replace($defaults, $current, $input);
+        foreach (['partnerDirectBps', 'partnerMemberBps', 'partnerTeamBps', 'memberDirectBps', 'referralBonusBps', 'buyerBps'] as $key) {
+            if (!\is_int($rules[$key]) || $rules[$key] < 0 || $rules[$key] > 10000) {
                 throw new DomainException('Rates must be integer basis points from 0 to 10000');
             }
-        }
-        if (max($rules['directBps'] + $rules['teamBps'], $rules['referralBonusBps']) + $rules['buyerBps'] > $rules['capBps']) {
-            throw new DomainException('Maximum rewards exceed budget cap');
         }
         if (!\is_int($rules['holdDays']) || $rules['holdDays'] < 0 || $rules['holdDays'] > 3650 || !\is_int($rules['minimumWithdrawalMinor']) || $rules['minimumWithdrawalMinor'] < 1) {
             throw new DomainException('Invalid hold or withdrawal minimum');

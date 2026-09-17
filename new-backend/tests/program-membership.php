@@ -60,7 +60,7 @@ function paid($db, $p, string $id): void
     $p->settleOrder($id);
 }
 
-$p->updateSettings(['directBps' => 100, 'teamBps' => 50], 1);
+$p->updateSettings(['partnerDirectBps' => 100, 'partnerMemberBps' => 100, 'memberDirectBps' => 100, 'partnerTeamBps' => 50], 1);
 $invite = $p->teamInvite(1);
 fails(static fn () => $p->teamInvite(2), 'ordinary customer cannot invite team members');
 fails(static fn () => $p->joinTeam(2, $invite['code'], false), 'explicit consent required');
@@ -82,6 +82,26 @@ function rewards($db, string $id): array
 {
     return array_map(static fn (array $r): array => [(int)$r['user_id'], $r['wallet'], $r['kind'], (int)$r['amount_minor']], $db->fetchAllAssociative('SELECT user_id,wallet,kind,amount_minor FROM program_ledger WHERE order_id=? ORDER BY user_id,kind', [$id]));
 }
+// Independent rates: each recipient uses its own setting; no total-reward cap.
+$db->beginTransaction();
+$p->updateSettings(['partnerDirectBps' => 200, 'partnerMemberBps' => 300, 'partnerTeamBps' => 50, 'memberDirectBps' => 400], 1);
+foreach ([
+    ['RATE-MEMBER', 2, [[1, 'commission', 'team', 30000], [2, 'shopping', 'buyer', 10000]]],
+    ['RATE-MEMBER-CUSTOMER', 3, [[1, 'commission', 'team', 5000], [2, 'commission', 'direct', 40000], [3, 'shopping', 'buyer', 10000]]],
+    ['RATE-PARTNER-CUSTOMER', 5, [[1, 'commission', 'direct', 20000], [5, 'shopping', 'buyer', 10000]]],
+] as [$id, $buyer, $expected]) {
+    order($db, $p, $id, $buyer);
+    paid($db, $p, $id);
+    check(rewards($db, $id) === $expected, 'independent commission: ' . $id);
+}
+foreach ([['partner_customer', 20000, 0], ['member_purchase', 0, 30000], ['team_customer', 40000, 5000]] as [$scenario, $direct, $partner]) {
+    $result = ProgramMath::simulate(['amount' => '10000', 'scenario' => $scenario], $p->settings());
+    check($result['directMinor'] === $direct && $result['partnerMinor'] === $partner, 'simulator uses independent rates: ' . $scenario);
+    check(!array_key_exists('capMinor', $result), 'simulator has no cap');
+}
+check(!array_key_exists('capBps', $p->settings()), 'settings have no cap');
+fails(static fn () => $p->updateSettings(['capBps' => 400], 1), 'removed cap cannot be configured');
+$db->rollBack();
 order($db, $p, 'MEMBER', 2);
 paid($db, $p, 'MEMBER');
 check(rewards($db, 'MEMBER') === [[1, 'commission', 'team', 10000], [2, 'shopping', 'buyer', 10000]], 'member own purchase pays partner once');
@@ -120,11 +140,11 @@ check(!$p->identity(2)['isTeamMember'] && $p->identity(2)['isPartner'], 'promoti
 order($db, $p, 'PROMOTED', 3);
 paid($db, $p, 'PROMOTED');
 check(rewards($db, 'PROMOTED') === [[2, 'commission', 'direct', 10000], [3, 'shopping', 'buyer', 10000]], 'promoted partner keeps customers without old partner reward');
-$sim = ProgramMath::simulate(['amount' => '10000', 'scenario' => 'team_customer'], ProgramMath::rules(['directBps' => 100, 'teamBps' => 50]));
+$sim = ProgramMath::simulate(['amount' => '10000', 'scenario' => 'team_customer'], ProgramMath::rules(['partnerDirectBps' => 100, 'partnerMemberBps' => 100, 'memberDirectBps' => 100, 'partnerTeamBps' => 50]));
 check($sim['partnerMinor'] === 5000 && $sim['directMinor'] === 10000 && $sim['totalMinor'] === 25000, 'member customer earns one percent and partner half percent');
-$own = ProgramMath::simulate(['amount' => '10000', 'scenario' => 'member_purchase'], ProgramMath::rules(['directBps' => 100, 'teamBps' => 50]));
+$own = ProgramMath::simulate(['amount' => '10000', 'scenario' => 'member_purchase'], ProgramMath::rules(['partnerDirectBps' => 100, 'partnerMemberBps' => 100, 'memberDirectBps' => 100, 'partnerTeamBps' => 50]));
 check($own['partnerMinor'] === 10000, 'member own purchase keeps one percent in simulator');
-fails(static fn () => ProgramMath::rules(['directBps' => 400]), 'maximum scenario respects cap');
+check(ProgramMath::rules(['memberDirectBps' => 600])['memberDirectBps'] === 600, 'no aggregate reward cap');
 // Leaving the program stops new cash rewards, never confiscates earned cash.
 $p->adjust(2, 'commission', 50000, 'earned balance fixture', 1);
 $p->setPartnerStatus(2, false, 1, 'demotion');

@@ -144,7 +144,7 @@ export function ReferralPanel({ withdrawalsEnabled }: { withdrawalsEnabled: bool
                         <summary className="cursor-pointer text-primary">Условия начислений</summary>
                         <div className="mt-3 space-y-2 text-muted-foreground">
                             <p>Начисления — после подтверждённой оплаты. Доступны после доставки и удержания {data.rates.holdDays} дней.</p>
-                            <p>Ваша комиссия за покупателя — {data.rates.directBps / 100}%. {data.identity.isPartner ? `С личных покупок участников команды — ${data.rates.directBps / 100}%; с покупок их рефералов — ${data.rates.teamBps / 100}%.` : `Партнёру вашей команды отдельно начисляется ${data.rates.teamBps / 100}%.`}</p>
+                            <p>Ваша комиссия за покупателя — {(data.identity.isPartner ? data.rates.partnerDirectBps : data.rates.memberDirectBps) / 100}%. {data.identity.isPartner ? `С личных покупок участников команды — ${data.rates.partnerMemberBps / 100}%; с покупок их рефералов — ${data.rates.partnerTeamBps / 100}%.` : `Партнёру вашей команды отдельно начисляется ${data.rates.partnerTeamBps / 100}%.`}</p>
                         </div>
                     </details>
                 </OfferLinkDialog>

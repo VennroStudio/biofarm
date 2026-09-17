@@ -4,11 +4,12 @@ import { Check, Copy } from "lucide-react";
 export type Row = Record<string, unknown>;
 export type Listing = { items: Row[]; page: number; limit: number };
 export type Rates = {
-    directBps: number;
-    teamBps: number;
+    partnerDirectBps: number;
+    partnerMemberBps: number;
+    partnerTeamBps: number;
+    memberDirectBps: number;
     referralBonusBps: number;
     buyerBps: number;
-    capBps: number;
     holdDays: number;
     minimumWithdrawalMinor: number;
 };
