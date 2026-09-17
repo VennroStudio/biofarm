@@ -18,16 +18,16 @@ import { Navigate, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { getStoredAdmin, getToken, logout, sessionClearedEvent } from '../api/client';
 
 const links = [
-  { to: '/admin/program', label: 'Партнёрская программа', icon: Users },
   { to: '/admin', label: 'Дашборд', icon: LayoutDashboard },
-  { to: '/admin/shop', label: 'Магазин', icon: Store },
   { to: '/admin/pages', label: 'Страницы', icon: StickyNote },
-  { to: '/admin/orders', label: 'Заказы', icon: ShoppingCart },
-  { to: '/admin/certificates', label: 'Сертификаты', icon: FileCheck2 },
-  { to: '/admin/faq', label: 'FAQ', icon: HelpCircle },
   { to: '/admin/blog', label: 'Блог', icon: FileText },
+  { to: '/admin/shop', label: 'Магазин', icon: Store },
+  { to: '/admin/orders', label: 'Заказы', icon: ShoppingCart },
   { to: '/admin/reviews', label: 'Отзывы', icon: Star },
+  { to: '/admin/certificates', label: 'Сертификаты', icon: FileCheck2 },
+  { to: '/admin/faq', label: 'Вопросы', icon: HelpCircle },
   { to: '/admin/users', label: 'Пользователи', icon: Users },
+  { to: '/admin/program', label: 'Партнёрская программа', icon: Users },
   { to: '/admin/settings', label: 'Настройки', icon: Settings },
 ];
 
