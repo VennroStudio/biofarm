@@ -1,4 +1,4 @@
-import { FolderTree, Layers, Package, SlidersHorizontal } from 'lucide-react';
+import { FolderTree, Layers, Package, Percent, SlidersHorizontal } from 'lucide-react';
 import { NavLink, Outlet } from 'react-router-dom';
 
 const sections = [
@@ -6,6 +6,7 @@ const sections = [
   { path: 'attributes', label: 'Атрибуты', icon: SlidersHorizontal },
   { path: 'products', label: 'Товары', icon: Package },
   { path: 'product-groups', label: 'Группы товаров', icon: Layers },
+  { path: 'promo-codes', label: 'Промокоды', icon: Percent },
 ];
 
 export function AdminShopLayout() {

@@ -51,6 +51,7 @@ export function AdminApp() {
             <Route path="products" element={<AdminProducts />} />
             <Route path="attributes" element={<AdminAttributes />} />
             <Route path="product-groups" element={<AdminProductGroups />} />
+            <Route path="promo-codes" element={<AdminPromoCodes />} />
           </Route>
           <Route path="products" element={<Navigate to="/admin/shop/products" replace />} />
           <Route path="categories" element={<Navigate to="/admin/shop/categories" replace />} />
@@ -60,7 +61,7 @@ export function AdminApp() {
           <Route path="components" element={<Navigate to="/admin/shop/attributes" replace />} />
           <Route path="purposes" element={<Navigate to="/admin/shop/attributes" replace />} />
           <Route path="orders" element={<AdminOrders />} />
-          <Route path="promo-codes" element={<AdminPromoCodes />} />
+          <Route path="promo-codes" element={<Navigate to="/admin/shop/promo-codes" replace />} />
           <Route path="certificates" element={<AdminCertificates />} />
           <Route path="faq" element={<AdminFaq />} />
           <Route path="blog" element={<AdminBlog />} />
