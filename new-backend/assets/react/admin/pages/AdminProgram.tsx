@@ -15,6 +15,7 @@ import {
     type Listing,
     type Row,
 } from "../../program/shared";
+import { auditAction, AuditDetails } from "./ProgramAudit";
 import { ProgramSettings } from "./ProgramSettings";
 const base = "/admin/api/program";
 const value = (f: FormData, key: string) => String(f.get(key) || "");
@@ -22,7 +23,7 @@ const num = (f: FormData, key: string) => Number(f.get(key));
 const defaultLedgerFilters = { sort: "created_at:desc", dateFrom: "", dateTo: "" };
 const sections = [
     { key: "ledger", title: "Журнал", icon: BookOpen },
-    { key: "audit", title: "Аудит", icon: History },
+    { key: "audit", title: "История действий", icon: History },
     { key: "withdrawals", title: "Выплаты", icon: Wallet },
     { key: "settings", title: "Настройки", icon: SlidersHorizontal },
 ];
@@ -117,9 +118,9 @@ function AdminProgramSection({ tab }: { tab: string }) {
         ],
         audit: [
             ["created_at", "Дата"],
-            ["actor_id", "Администратор"],
+            ["actor_name", "Кто совершил"],
             ["kind", "Действие"],
-            ["payload", "Изменения и причина"],
+            ["payload", "Подробности"],
         ],
         withdrawals: [
             ["created_at", "Дата"],
@@ -151,7 +152,8 @@ function AdminProgramSection({ tab }: { tab: string }) {
             )}
             {notice && <p role="status">{notice}</p>}
             {tab !== "settings" && (
-                <Section title={tab === "ledger" ? "Журнал комиссий" : tab === "withdrawals" ? "Выплаты" : "Аудит"}>
+                <Section title={tab === "ledger" ? "Журнал комиссий" : tab === "withdrawals" ? "Выплаты" : "История действий"}>
+                    {tab === "audit" && <p className="mb-4 text-sm text-muted-foreground">Кто и когда изменил настройки, скорректировал баланс или обработал выплату. Здесь также сохраняется история вступления в команду. Свежие события — сверху.</p>}
                     {tab === "ledger" && (
                         <ol className="list-decimal space-y-2 rounded-xl border border-border bg-secondary/40 py-4 pl-10 pr-5 text-sm leading-relaxed">
                             <li><strong>Ожидает</strong> — оплата подтверждена, но начисление ещё удерживается до доставки и окончания установленного срока.</li>
@@ -190,10 +192,16 @@ function AdminProgramSection({ tab }: { tab: string }) {
                             }}>Сбросить</button>
                         </form>
                     )}
+                    <div className={tab === "audit" ? "[&_td]:align-top" : undefined}>
                     <Rows
                         rows={list.items}
                         columns={columns[tab]}
                         renderCell={(key, row) => {
+                            if (tab === "audit") {
+                                if (key === "actor_name") return String(row.actor_name || (row.actor_id == null ? "Система" : `Пользователь №${String(row.actor_id)} (имя недоступно)`));
+                                if (key === "kind") return auditAction(row);
+                                if (key === "payload") return <AuditDetails row={row} />;
+                            }
                             if (tab !== "withdrawals" || key !== "status") return undefined;
                             const state = String(row.status);
                             const Icon = state === "paid" ? CheckCircle2 : state === "rejected" ? XCircle : Clock3;
@@ -210,6 +218,7 @@ function AdminProgramSection({ tab }: { tab: string }) {
                                 : undefined
                         }
                     />
+                    </div>
                     <Pager page={page} setPage={setPage} hasMore={list.items.length === list.limit} />
                 </Section>
             )}

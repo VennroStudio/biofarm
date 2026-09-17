@@ -539,14 +539,11 @@ final class ProgramService
                 if ($user !== null) {
                     $params = [$user];
                 }
+            } elseif ($kind === 'audit' && $user === null) {
+                $sql = "SELECT a.*, NULLIF(TRIM(CONCAT(COALESCE(u.first_name,''),' ',COALESCE(u.last_name,''))),'') actor_name FROM program_audit a LEFT JOIN users u ON u.id=a.actor_id";
+                $orderBy = 'a.created_at DESC, a.id DESC';
             } else {
-                $table = match ($kind) {
-                    'withdrawals' => 'program_withdrawals','audit' => 'program_audit',default => throw new DomainException('Unknown list')
-                };
-                $sql = 'SELECT * FROM ' . $table . ($user === null ? '' : ' WHERE user_id=?');
-                if ($user !== null) {
-                    $params = [$user];
-                }
+                throw new DomainException('Unknown or unavailable list');
             }
             if ($wallet !== null) {
                 if ($kind !== 'ledger' || !\in_array($wallet, ['shopping', 'commission'], true)) {
@@ -582,6 +579,9 @@ final class ProgramService
                 }
             }
             unset($row);
+            if ($kind === 'audit') {
+                $rows = $this->auditNames($rows);
+            }
             return ['items' => $rows, 'page' => max(1, $page), 'limit' => $limit];
         });
     }
@@ -709,6 +709,58 @@ final class ProgramService
     private function lockSql(string $sql): string
     {
         return $sql . ($this->db->getDatabasePlatform() instanceof SQLitePlatform ? '' : ' FOR UPDATE');
+    }
+
+    /** Resolve names in one batch without changing the stored historical payloads. */
+    private function auditNames(array $rows): array
+    {
+        $withdrawalIds = [];
+        foreach ($rows as $row) {
+            if ($row['kind'] === 'withdrawal' && isset($row['payload']['id'])) {
+                $withdrawalIds[] = (string)$row['payload']['id'];
+            }
+        }
+        $withdrawals = [];
+        if ($withdrawalIds !== []) {
+            $placeholders = implode(',', array_fill(0, count($withdrawalIds), '?'));
+            foreach ($this->db->fetchAllAssociative('SELECT id,user_id,amount_minor FROM program_withdrawals WHERE id IN (' . $placeholders . ')', $withdrawalIds) as $withdrawal) {
+                $withdrawals[$withdrawal['id']] = $withdrawal;
+            }
+        }
+        $ids = [];
+        foreach ($rows as &$row) {
+            $payload = $row['payload'];
+            $related = [];
+            foreach (['userId', 'partnerId', 'parentId'] as $key) {
+                if (isset($payload[$key])) $related[] = (int)$payload[$key];
+            }
+            foreach (['chain', 'archivedDemoUsers'] as $key) {
+                foreach ((array)($payload[$key] ?? []) as $id) $related[] = (int)$id;
+            }
+            $withdrawal = $row['kind'] === 'withdrawal' ? ($withdrawals[$payload['id'] ?? ''] ?? null) : null;
+            if ($withdrawal !== null) {
+                $row['withdrawal_user_id'] = (int)$withdrawal['user_id'];
+                $row['withdrawal_amount_minor'] = (int)$withdrawal['amount_minor'];
+                $related[] = $row['withdrawal_user_id'];
+            }
+            $row['related_ids'] = array_values(array_unique($related));
+            $ids = [...$ids, ...$related];
+        }
+        unset($row);
+        $names = [];
+        $ids = array_values(array_unique($ids));
+        if ($ids !== []) {
+            $placeholders = implode(',', array_fill(0, count($ids), '?'));
+            foreach ($this->db->fetchAllAssociative("SELECT id, TRIM(CONCAT(COALESCE(first_name,''),' ',COALESCE(last_name,''))) name FROM users WHERE id IN (" . $placeholders . ')', $ids) as $person) {
+                $names[(int)$person['id']] = $person['name'];
+            }
+        }
+        foreach ($rows as &$row) {
+            $row['related_names'] = (object)array_intersect_key($names, array_flip($row['related_ids']));
+            unset($row['related_ids']);
+        }
+        unset($row);
+        return $rows;
     }
 
     private function audit(?int $actor, string $kind, array $payload): void

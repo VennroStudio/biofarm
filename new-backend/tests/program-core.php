@@ -251,4 +251,14 @@ fails(static fn () => $p->listing('ledger', null, sort: 'unsafe SQL'), 'journal 
 fails(static fn () => $p->listing('ledger', null, direction: 'unsafe SQL'), 'journal rejects unknown direction');
 fails(static fn () => $p->listing('ledger', null, dateFrom: '2020-02-30'), 'journal rejects invalid calendar dates');
 fails(static fn () => $p->listing('ledger', null, dateFrom: '2020-01-02', dateTo: '2020-01-01'), 'journal rejects reversed range');
+// History uses dates rather than random audit IDs and resolves the people involved.
+$db->insert('program_audit', ['id' => 'zz-old', 'actor_id' => 1, 'kind' => 'adjustment', 'payload' => '{"userId":6,"amountMinor":100,"wallet":"commission","reason":"fixture"}', 'created_at' => '2010-01-01 00:00:00']);
+$db->insert('program_audit', ['id' => 'aa-new', 'actor_id' => 1, 'kind' => 'withdrawal', 'payload' => json_encode(['id' => $w['id'], 'status' => 'paid']), 'created_at' => '2090-01-01 00:00:00']);
+$history = $p->listing('audit', null, limit: 100)['items'];
+check($history[0]['id'] === 'aa-new', 'history newest first regardless of ID');
+check($history[0]['actor_name'] === 'Fixture 1', 'history actor name');
+check(((array)$history[0]['related_names'])[1] === 'Fixture 1' && $history[0]['withdrawal_amount_minor'] === 8000, 'history payout recipient and amount');
+$oldHistory = array_values(array_filter($history, static fn ($row) => $row['id'] === 'zz-old'))[0];
+check(((array)$oldHistory['related_names'])[6] === 'Fixture 6', 'history adjustment recipient name');
+fails(static fn () => $p->listing('audit', 1), 'audit is admin only');
 echo "program-core: all assertions passed\n";
