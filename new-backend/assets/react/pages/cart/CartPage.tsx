@@ -183,7 +183,7 @@ function CartPage({ cdekDeliveryPrice, freeDeliveryThreshold, orderBonusEnabled 
                 </div>
                 {orderBonus > 0 && (
                   <div className="rounded bg-green-50 p-2 text-sm text-green-600">
-                    До {orderBonus.toFixed(2)} бонусов; итог после скидок и исключений
+                    До {orderBonus.toFixed(2)} бонусов; итог после скидок и списания бонусов
                   </div>
                 )}
               </CardContent>

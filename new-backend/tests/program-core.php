@@ -141,11 +141,13 @@ check((int)$db->fetchOne("SELECT COUNT(*) FROM program_ledger WHERE kind='legacy
 $before = $p->settings();
 fails(static fn () => $p->updateSettings(['buyerBps' => 10000, 'holdDays' => 0], 1), 'invalid partial settings');
 check($p->settings() === $before, 'settings atomic rollback');
-$p->updateSettings(['products' => ['1' => 0]], 1);
-$excluded = order($db, $p, 'EXCLUDED');
-paid($db, $p, 'EXCLUDED');
-check((int)$db->fetchOne("SELECT SUM(amount_minor) FROM program_ledger WHERE order_id='EXCLUDED' AND state='pending'") === 0, 'product exclusion');
-$p->updateSettings(['products' => [], 'holdDays' => 0], 1);
+fails(static fn () => $p->updateSettings(['products' => ['1' => 0]], 1), 'removed product factors cannot be configured');
+$db->update('program_locks', ['payload' => json_encode($before + ['products' => ['1' => 0]])], ['id' => 'settings']);
+check(!array_key_exists('products', $p->settings()), 'legacy product factors are absent from current settings');
+order($db, $p, 'FULL-BASE', 7, 0, 10000);
+paid($db, $p, 'FULL-BASE');
+check((int)$db->fetchOne("SELECT SUM(amount_minor) FROM program_ledger WHERE order_id='FULL-BASE' AND wallet='commission'") === 20000, 'legacy exclusion cannot reduce new order commissions');
+$p->updateSettings(['holdDays' => 0], 1);
 $held = order($db, $p, 'HELD', 7, 0, 1000);
 paid($db, $p, 'HELD');
 $p->reserveRefund('HELD', 'held-refund', [['itemId' => $held, 'quantity' => 1]]);

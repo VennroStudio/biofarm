@@ -11,7 +11,7 @@ export function OrderBonusSettingsCard({
         <Card className="space-y-4 p-6">
             <h2 className="text-xl">Покупательские бонусы</h2>
             <a className="underline" href="/admin/program">
-                Ставки начисления, удержание и исключения — в правилах партнёрской программы
+                Ставки начисления и удержание — в настройках партнёрской программы
             </a>
             <p>Приветственные начисления не предусмотрены.</p>
             <Field label="Лимит списания бонусов, %">

@@ -90,13 +90,10 @@ final class ProgramMath
         $current['directBps'] ??= $current['levelsBps'][0] ?? 100;
         $current['teamBps'] ??= $current['partnerBps'] ?? 50;
         $current['referralBonusBps'] ??= $current['directBps'];
-        unset($current['maxPromoPercent'], $current['levelsBps'], $current['partnerBps']);
-        $rules = array_replace(['directBps' => 100, 'teamBps' => 50, 'referralBonusBps' => 100, 'buyerBps' => 100, 'capBps' => 400, 'holdDays' => 14, 'minimumWithdrawalMinor' => 10000, 'products' => []], $current, $input);
-        if (array_diff(array_keys($input), ['directBps', 'teamBps', 'referralBonusBps', 'buyerBps', 'capBps', 'holdDays', 'minimumWithdrawalMinor', 'products']) !== []) {
+        unset($current['maxPromoPercent'], $current['levelsBps'], $current['partnerBps'], $current['products']);
+        $rules = array_replace(['directBps' => 100, 'teamBps' => 50, 'referralBonusBps' => 100, 'buyerBps' => 100, 'capBps' => 400, 'holdDays' => 14, 'minimumWithdrawalMinor' => 10000], $current, $input);
+        if (array_diff(array_keys($input), ['directBps', 'teamBps', 'referralBonusBps', 'buyerBps', 'capBps', 'holdDays', 'minimumWithdrawalMinor']) !== []) {
             throw new DomainException('Unknown program setting');
-        }
-        if (!\is_array($rules['products'])) {
-            throw new DomainException('Invalid product factors');
         }
         foreach ([$rules['directBps'], $rules['teamBps'], $rules['referralBonusBps'], $rules['buyerBps'], $rules['capBps']] as $rate) {
             if (!\is_int($rate) || $rate < 0 || $rate > 10000) {
@@ -108,11 +105,6 @@ final class ProgramMath
         }
         if (!\is_int($rules['holdDays']) || $rules['holdDays'] < 0 || $rules['holdDays'] > 3650 || !\is_int($rules['minimumWithdrawalMinor']) || $rules['minimumWithdrawalMinor'] < 1) {
             throw new DomainException('Invalid hold or withdrawal minimum');
-        }
-        foreach ($rules['products'] as $id => $factor) {
-            if ((int)$id < 1 || !\is_int($factor) || $factor < 0 || $factor > 10000) {
-                throw new DomainException('Product factors must be 0..10000 basis points');
-            }
         }
         return $rules;
     }

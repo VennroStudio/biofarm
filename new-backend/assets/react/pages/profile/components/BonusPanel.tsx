@@ -49,7 +49,7 @@ export function BonusPanel({ referralEnabled }: { referralEnabled: boolean }) {
               </div>
             ))}
           </div>
-          <p className="text-sm text-muted-foreground">Базовая ставка — {data.rates.buyerBps / 100}%. Начисление после подтверждённой оплаты; доступность — после доставки и удержания {data.rates.holdDays} дней. Размер начисления зависит от условий товара и учитывает возвраты.</p>
+          <p className="text-sm text-muted-foreground">Базовая ставка — {data.rates.buyerBps / 100}%. Начисление после подтверждённой оплаты; доступность — после доставки и удержания {data.rates.holdDays} дней. Начисления учитывают скидки, списание бонусов и возвраты.</p>
         </> : !error && <p role="status">Загрузка бонусов…</p>}
       </Section>
       {referralEnabled && data && !data.identity.canEarnCommission && <Section title="Приглашайте друзей">

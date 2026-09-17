@@ -12,13 +12,14 @@ import {
     type Listing,
     type Row,
 } from "../../program/shared";
+import { ProgramSettings } from "./ProgramSettings";
 const base = "/admin/api/program";
 const value = (f: FormData, key: string) => String(f.get(key) || "");
 const num = (f: FormData, key: string) => Number(f.get(key));
 const defaultLedgerFilters = { sort: "created_at:desc", dateFrom: "", dateTo: "" };
 export function AdminProgram() {
     const [withdrawalStatus, setWithdrawalStatus] = useState("approved");
-    const [tab, setTab] = useState("settings");
+    const [tab, setTab] = useState("ledger");
     const [page, setPage] = useState(1);
     const [ledgerFilters, setLedgerFilters] = useState(defaultLedgerFilters);
     const [ledgerDraft, setLedgerDraft] = useState(defaultLedgerFilters);
@@ -29,7 +30,6 @@ export function AdminProgram() {
     const [revision, setRevision] = useState(0);
     const [busy, setBusy] = useState(false);
     const [selected, setSelected] = useState<Row | null>(null);
-    const [simulation, setSimulation] = useState<Row | null>(null);
     const [config, setConfig] = useState<{ configured: boolean; receiptsEnabled: boolean } | null>(null);
     const [orderId, setOrderId] = useState("");
     const [order, setOrder] = useState<{ payment: Row; items: Row[]; operations: Row[] } | null>(null);
@@ -131,11 +131,11 @@ export function AdminProgram() {
             <p>Начисления по подтверждённым оплатам. Переводы выполняются вручную.</p>
             <div className="flex flex-wrap gap-2">
                 {[
-                    ["settings", "Правила и симулятор"],
                     ["ledger", "Журнал"],
                     ["audit", "Аудит"],
                     ["withdrawals", "Выплаты"],
                     ["payments", "Оплата и возвраты"],
+                    ["settings", "Настройки"],
                 ].map(([key, title]) => (
                     <button
                         className={tab === key ? buttonClass : "rounded-lg border p-2"}
@@ -256,135 +256,8 @@ export function AdminProgram() {
                 </Section>
             )}
             {tab === "settings" && rates && (
-                <>
-                    <Section title="Ставки и ограничения">
-                        <form
-                            key={revision}
-                            className="grid gap-3 sm:grid-cols-2"
-                            onSubmit={(e) =>
-                                void form(
-                                    e,
-                                    `${base}/settings`,
-                                    (f) => ({
-                                        directBps: Math.round(num(f, "direct") * 100),
-                                        teamBps: Math.round(num(f, "team") * 100),
-                                        referralBonusBps: Math.round(num(f, "referralBonus") * 100),
-                                        buyerBps: Math.round(num(f, "buyer") * 100),
-                                        capBps: Math.round(num(f, "cap") * 100),
-                                        holdDays: num(f, "hold"),
-                                        minimumWithdrawalMinor: Math.round(num(f, "minimum") * 100),
-                                        products: Object.fromEntries(
-                                            value(f, "products")
-                                                .split("\n")
-                                                .filter(Boolean)
-                                                .map((line) => {
-                                                    const [id, factor] = line.split(":");
-                                                    return [id.trim(), Math.round(Number(factor) * 100)];
-                                                }),
-                                        ),
-                                    }),
-                                    "PATCH",
-                                )
-                            }
-                        >
-                            {[
-                                ["direct", "Комиссия за своего покупателя, %", rates.directBps / 100],
-                                ["team", "Партнёру за покупателей участников команды, %", rates.teamBps / 100],
-                                ["referralBonus", "Бонусы обычному покупателю за приглашённого, %", rates.referralBonusBps / 100],
-                                ["buyer", "Покупателю, %", rates.buyerBps / 100],
-                                ["cap", "Лимит вознаграждений, %", rates.capBps / 100],
-                                ["hold", "Удержание после доставки, дней", rates.holdDays],
-                                ["minimum", "Минимальная выплата, ₽", rates.minimumWithdrawalMinor / 100],
-                            ].map(([key, title, n]) => (
-                                <Field key={key} name={String(title)}>
-                                    <input
-                                        className={inputClass}
-                                        name={String(key)}
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        defaultValue={n}
-                                        required
-                                    />
-                                </Field>
-                            ))}
-                            <Field name="Коэффициенты товаров: ID:процент, каждый с новой строки (0 — исключён; 100 — полная база)">
-                                <textarea
-                                    className={inputClass}
-                                    name="products"
-                                    defaultValue={Object.entries(rates.products)
-                                        .map(([id, n]) => `${id}:${n / 100}`)
-                                        .join("\n")}
-                                />
-                            </Field>
-                            <button className={buttonClass} disabled={busy}>
-                                Сохранить правила
-                            </button>
-                        </form>
-                    </Section>
-                    <Section title="Симулятор начислений">
-                        <p>Начисления по выбранному сценарию. Комиссия партнёру за команду включает покупки участников и их покупателей. Скидки и списанные бонусы учитываются отдельно. Без введённых расходов прибыль не рассчитывается.</p>
-                        <form
-                            className="flex flex-wrap gap-3"
-                            onSubmit={(e) => {
-                                e.preventDefault();
-                                const f = new FormData(e.currentTarget);
-                                void mutate(`${base}/simulate`, { scenario: value(f, "scenario"), amount: value(f, "base"), discountAmount: value(f, "discount") || "0", bonusAmount: value(f, "spent") || "0", costAmount: value(f, "costs") })
-                                    .then((r) => setSimulation(r || null))
-                                    .catch(() => {});
-                            }}
-                        >
-                            <Field name="Сценарий">
-                                <select className={inputClass} name="scenario" defaultValue="team_customer">
-                                    <option value="team_customer">Покупатель участника команды</option>
-                                    <option value="partner_customer">Личный покупатель партнёра</option>
-                                    <option value="member_purchase">Личная покупка участника</option>
-                                    <option value="ordinary_referral">Приглашение обычного покупателя</option>
-                                </select>
-                            </Field>
-                            <Field name="Стоимость товаров до скидки и бонусов, ₽">
-                                <input className={inputClass} name="base" type="number" min="0" step="0.01" required />
-                            </Field>
-                            {[["discount", "Скидка магазина, ₽"], ["spent", "Списание бонусов, ₽"], ["costs", "Себестоимость и все расходы на заказ, ₽"]].map(([name, title]) => (
-                                <Field key={name} name={title}>
-                                    <input className={inputClass} name={name} type="number" min="0" step="0.01" placeholder={name === "costs" ? "Не указаны" : "0"} />
-                                </Field>
-                            ))}
-                            <button className={buttonClass} disabled={busy}>
-                                Рассчитать
-                            </button>
-                        </form>
-                        {simulation && (
-                            <Rows
-                                rows={Object.entries(simulation).map(([key, v]) => ({
-                                    id: key,
-                                    name:
-                                        {
-                                            grossMinor: "Стоимость товаров",
-                                            discountMinor: "Скидка магазина",
-                                            spentBonusMinor: "Списанные бонусы",
-                                            basisMinor: "База начислений",
-                                            totalIncentivesMinor: "Скидка + списание бонусов + вознаграждения",
-                                            remainingBeforeCostsMinor: "Остаток до себестоимости и расходов",
-                                            costMinor: "Указанные расходы",
-                                            remainingAfterCostsMinor: "Остаток после указанных расходов",
-                                            directMinor: "Комиссия за своего покупателя",
-                                            referralBonusMinor: "Бонусы за приглашённого покупателя",
-                                            partnerMinor: "Комиссия партнёру за команду",
-                                            buyerMinor: "Резерв на новые бонусы покупателя",
-                                            totalMinor: "Все вознаграждения",
-                                            capMinor: "Лимит вознаграждений",
-                                        }[key] || key,
-                                    result: Array.isArray(v) ? v.map((n) => money(n)).join(" / ") : money(v),
-                                }))}
-                                columns={[
-                                    ["name", "Показатель"],
-                                    ["result", "Значение"],
-                                ]}
-                            />
-                        )}
-                    </Section>
-                </>
+                <ProgramSettings key={JSON.stringify(rates)} rates={rates} busy={busy}
+                    onSave={(body) => mutate(`${base}/settings`, body, "PATCH")} />
             )}
             {tab === "ledger" && (
                 <Section title="Корректировка с аудитом">

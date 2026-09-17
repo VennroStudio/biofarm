@@ -183,7 +183,7 @@ function CheckoutPage({
   return (
     <section className="bg-secondary/30 pb-10 pt-[120px] md:pb-12 md:pt-[128px]">
       <div className="container mx-auto px-4 sm:px-6">
-        <p className="mb-3 text-sm">Бонусы рассчитываются от оплаченных товаров после скидок и списания бонусов, без доставки. Итог и исключения определяет сервер.</p>
+        <p className="mb-3 text-sm">Бонусы рассчитываются от оплаченных товаров после скидок и списания бонусов, без доставки. </p>
         <h1 className="mb-6 text-3xl font-normal tracking-tight text-primary md:text-4xl">Оформление заказа</h1>
 
         <form onSubmit={handleSubmit}>

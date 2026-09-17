@@ -11,7 +11,6 @@ export type Rates = {
     capBps: number;
     holdDays: number;
     minimumWithdrawalMinor: number;
-    products: Record<string, number>;
 };
 export type Dashboard = {
     identity: {

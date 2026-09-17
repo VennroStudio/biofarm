@@ -136,10 +136,9 @@ final class ProgramService
                 $id = (int)$r['id'];
                 $paid = $net[$id] - $spending[$id];
                 $rewards = [];
-                $factor = $rules['products'][(string)$r['product_id']] ?? 10000;
                 foreach ($recipients as $recipient) {
                     $reward = $recipient;
-                    $reward['amountMinor'] = intdiv(intdiv($paid * $factor, 10000) * $recipient['bps'], 10000);
+                    $reward['amountMinor'] = intdiv($paid * $recipient['bps'], 10000);
                     $rewards[] = $reward;
                 }
                 $items[] = ['itemId' => $id, 'productId' => (int)$r['product_id'], 'description' => $r['product_name'], 'quantity' => (int)$r['quantity'], 'paidMinor' => $paid, 'spentMinor' => $spending[$id], 'discountMinor' => $discounts[$id], 'refundedQuantity' => 0, 'rewards' => $rewards];
@@ -196,10 +195,9 @@ final class ProgramService
                     $buyerBonus = \in_array('buyer', array_column($s['recipients'], 'kind'), true);
                     $s['recipients'] = $this->recipients($buyer, $parent === null ? null : (int)$parent, $s['rules'], $buyerBonus);
                     foreach ($s['items'] as &$item) {
-                        $factor = $s['rules']['products'][(string)$item['productId']] ?? 10000;
                         $item['rewards'] = [];
                         foreach ($s['recipients'] as $recipient) {
-                            $recipient['amountMinor'] = intdiv(intdiv($item['paidMinor'] * $factor, 10000) * $recipient['bps'], 10000);
+                            $recipient['amountMinor'] = intdiv($item['paidMinor'] * $recipient['bps'], 10000);
                             $item['rewards'][] = $recipient;
                         }
                     }
@@ -214,7 +212,7 @@ final class ProgramService
             foreach ($s['items'] as $item) {
                 foreach ($item['rewards'] as $r) {
                     $this->opening($r['userId']);
-                    $this->entry('reward:' . $item['itemId'] . ':' . $r['kind'], $r['userId'], $r['wallet'], $r['amountMinor'], $r['kind'], $orderId, 'pending', ['itemId' => $item['itemId'], 'productName' => $item['description'], 'basisMinor' => $item['paidMinor'], 'productFactorBps' => $s['rules']['products'][(string)$item['productId']] ?? 10000, 'rateBps' => $r['bps']], $at);
+                    $this->entry('reward:' . $item['itemId'] . ':' . $r['kind'], $r['userId'], $r['wallet'], $r['amountMinor'], $r['kind'], $orderId, 'pending', ['itemId' => $item['itemId'], 'productName' => $item['description'], 'basisMinor' => $item['paidMinor'], 'rateBps' => $r['bps']], $at);
                 }
             }
             $this->db->update('program_orders', ['status' => 'paid'], ['id' => $orderId]);

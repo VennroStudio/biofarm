@@ -97,7 +97,9 @@ try {
     }
     $admin = $tokens[0];
     $program = $c->get(ProgramService::class);
-    $call('PATCH', '/admin/api/program/settings', ['directBps' => 100, 'teamBps' => 50, 'referralBonusBps' => 100, 'buyerBps' => 100, 'capBps' => 400, 'products' => []], $admin);
+    $call('PATCH', '/admin/api/program/settings', ['directBps' => 100, 'teamBps' => 50, 'referralBonusBps' => 100, 'buyerBps' => 100, 'capBps' => 400], $admin);
+    $call('PATCH', '/admin/api/program/settings', ['products' => ['1' => 0]], $admin, 422);
+    ok(!array_key_exists('products', $call('GET', '/admin/api/program/settings', [], $admin)), 'removed product coefficients are not exposed');
     $invite = $call('GET', '/v1/program/team-invitation', [], $tokens[1]);
     foreach ([3, 4, 5] as $member) {
         $call('POST', '/v1/program/join', ['code' => $invite['code'], 'consent' => true], $tokens[$member]);
@@ -220,7 +222,7 @@ try {
     $call('GET', '/admin/api/program/audit', [], $admin);
     // A new guest follows the partner basket, pays without registering, and rewards its owner.
     $guestRules = $call('GET', '/admin/api/program/settings', [], $admin);
-    $call('PATCH', '/admin/api/program/settings', ['directBps' => 300, 'teamBps' => 100, 'referralBonusBps' => 100, 'buyerBps' => 100, 'capBps' => 1000, 'holdDays' => 14, 'products' => []], $admin);
+    $call('PATCH', '/admin/api/program/settings', ['directBps' => 300, 'teamBps' => 100, 'referralBonusBps' => 100, 'buyerBps' => 100, 'capBps' => 1000, 'holdDays' => 14], $admin);
     $originalPrice = $db->fetchOne('SELECT price FROM products WHERE id=?', [$product]);
     $db->update('products', ['price' => 1000], ['id' => $product]);
     $guestBody = $body;
