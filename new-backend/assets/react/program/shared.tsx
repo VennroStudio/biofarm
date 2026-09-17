@@ -126,26 +126,30 @@ export function Rows({
     rows,
     columns,
     actions,
+    sorting,
+    loading = false,
 }: {
     rows: Row[];
+    loading?: boolean;
     columns: [string, string][];
     actions?: (row: Row) => ReactNode;
+    sorting?: { key: string; direction: "asc" | "desc"; onChange: (key: string) => void };
 }) {
     return (
         <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
+            <table className="w-full text-left text-sm" aria-busy={loading}>
                 <thead>
                     <tr>
                         {columns.map(([key, title]) => (
-                            <th key={key} className="whitespace-nowrap border-b p-3">
-                                {title}
+                            <th key={key} className="whitespace-nowrap border-b p-3" scope="col" aria-sort={sorting?.key === key ? (sorting.direction === "asc" ? "ascending" : "descending") : undefined}>
+                                {sorting ? <button type="button" className="inline-flex items-center gap-2 rounded py-1 text-left hover:text-primary focus-visible:outline-primary" onClick={() => sorting.onChange(key)}>{title}<span aria-hidden="true">{sorting.key === key ? (sorting.direction === "asc" ? "↑" : "↓") : "↕"}</span></button> : title}
                             </th>
                         ))}
                         {actions && <th className="p-3">Действия</th>}
                     </tr>
                 </thead>
                 <tbody>
-                    {rows.map((row, i) => (
+                    {(loading ? [] : rows).map((row, i) => (
                         <tr key={String(row.id ?? i)}>
                             {columns.map(([key]) => (
                                 <td key={key} className="border-b p-3">
@@ -188,7 +192,8 @@ export function Rows({
                     ))}
                 </tbody>
             </table>
-            {!rows.length && <p className="p-4 text-sm text-muted-foreground">Записей пока нет</p>}
+            {loading && <p role="status" className="p-4 text-sm text-muted-foreground">Загрузка…</p>}
+            {!loading && !rows.length && <p className="p-4 text-sm text-muted-foreground">Записей пока нет</p>}
         </div>
     );
 }

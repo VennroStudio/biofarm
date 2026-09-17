@@ -33,7 +33,7 @@ function handleTabKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
   tabs[nextIndex].click();
 }
 
-export function TabList({ children }: { children: ReactNode }) {
+export function TabList({ children, label = "Разделы личного кабинета" }: { children: ReactNode; label?: string }) {
   const [vertical, setVertical] = useState(() => window.matchMedia('(min-width: 1024px)').matches);
   useEffect(() => {
     const media = window.matchMedia('(min-width: 1024px)');
@@ -44,7 +44,7 @@ export function TabList({ children }: { children: ReactNode }) {
 
   return (
     <div
-      aria-label="Разделы личного кабинета"
+      aria-label={label}
       aria-orientation={vertical ? 'vertical' : 'horizontal'}
       className="flex min-w-0 max-w-full gap-1 overflow-x-auto rounded-2xl border border-border bg-card p-1.5 shadow-sm lg:sticky lg:top-28 lg:flex-col lg:overflow-visible"
       role="tablist"

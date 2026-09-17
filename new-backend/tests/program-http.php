@@ -92,6 +92,15 @@ try {
     }
     $admin = $tokens[0];
     $buyer = $tokens[6];
+    $team = $call('GET', '/v1/program/team?sort=depth&direction=asc&limit=2&page=2', [], $tokens[1]);
+    ok(array_map('intval', array_column($team['items'], 'id')) === [$ids[4], $ids[5]], 'team sorting precedes pagination through HTTP');
+    ok($team['items'][0]['parent_name'] === 'Участник 3 Проверка', 'team returns human readable inviter');
+    $teamDesc = $call('GET', '/v1/program/team?sort=name&direction=desc&limit=1', [], $tokens[1]);
+    ok((int)$teamDesc['items'][0]['id'] === $ids[6], 'team name descending through HTTP');
+    $call('GET', '/v1/program/team?sort=unknown', [], $tokens[1], 422);
+    $call('GET', '/v1/program/team?direction=unknown', [], $tokens[1], 422);
+    ok($call('GET', '/v1/program/team?userId=' . $ids[1], [], $tokens[6])['items'] === [], 'team query cannot select another account');
+
     ok($call('GET', '/v1/referrals/test-' . $suffix . '-1')['valid'] === true, 'existing referral is public and valid');
     ok($call('GET', '/v1/referrals/missing-' . $suffix)['valid'] === false, 'unknown referral rejected');
     $db->update('users', ['deleted_at' => gmdate('Y-m-d H:i:s')], ['id' => $ids[1]]);

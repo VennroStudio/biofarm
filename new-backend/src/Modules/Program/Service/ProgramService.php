@@ -489,14 +489,23 @@ final class ProgramService
         });
     }
 
-    public function listing(string $kind, ?int $user, int $page = 1, int $limit = 25): array
+    public function listing(string $kind, ?int $user, int $page = 1, int $limit = 25, string $sort = 'depth', string $direction = 'asc'): array
     {
-        return $this->atomic(function () use ($kind, $user, $page, $limit) {
+        return $this->atomic(function () use ($kind, $user, $page, $limit, $sort, $direction) {
             $limit = max(1, min(100, $limit));
             $offset = (max(1, $page) - 1) * $limit;
             $params = [];
+            $orderBy = '1 DESC';
             if ($kind === 'team') {
-                $sql = 'WITH RECURSIVE team AS (SELECT user_id,referred_by_user_id,is_partner,1 depth FROM user_profiles WHERE referred_by_user_id=? UNION ALL SELECT p.user_id,p.referred_by_user_id,p.is_partner,t.depth+1 FROM user_profiles p JOIN team t ON p.referred_by_user_id=t.user_id WHERE t.depth<100) SELECT u.id,u.first_name,u.last_name,t.is_partner,t.referred_by_user_id,t.depth FROM team t JOIN users u ON u.id=t.user_id';
+                $sortColumn = match ($sort) {
+                    'name' => 'name', 'parent_name' => 'parent_name', 'depth' => 't.depth',
+                    default => throw new DomainException('Unknown team sort column'),
+                };
+                if (!\in_array($direction, ['asc', 'desc'], true)) {
+                    throw new DomainException('Unknown team sort direction');
+                }
+                $orderBy = $sortColumn . ' ' . strtoupper($direction) . ', u.id ASC';
+                $sql = 'WITH RECURSIVE team AS (SELECT user_id,referred_by_user_id,is_partner,1 depth FROM user_profiles WHERE referred_by_user_id=? UNION ALL SELECT p.user_id,p.referred_by_user_id,p.is_partner,t.depth+1 FROM user_profiles p JOIN team t ON p.referred_by_user_id=t.user_id WHERE t.depth<100) SELECT u.id,u.first_name,u.last_name,TRIM(CONCAT(COALESCE(u.first_name,\'\'),\' \',COALESCE(u.last_name,\'\'))) name,TRIM(CONCAT(COALESCE(parent.first_name,\'\'),\' \',COALESCE(parent.last_name,\'\'))) parent_name,t.is_partner,t.referred_by_user_id,t.depth FROM team t JOIN users u ON u.id=t.user_id LEFT JOIN users parent ON parent.id=t.referred_by_user_id';
                 $params = [$user];
             } elseif ($kind === 'users') {
                 $sql = 'SELECT u.id,CONCAT(u.first_name, \' \', u.last_name) name,p.is_partner,p.referred_by_user_id,CONCAT(parent.first_name, \' \', parent.last_name) parent_name FROM users u JOIN user_profiles p ON p.user_id=u.id LEFT JOIN users parent ON parent.id=p.referred_by_user_id';
@@ -514,7 +523,7 @@ final class ProgramService
                     $params = [$user];
                 }
             }
-            $rows = $this->db->fetchAllAssociative($sql . ' ORDER BY 1 DESC LIMIT ' . $limit . ' OFFSET ' . $offset, $params);
+            $rows = $this->db->fetchAllAssociative($sql . ' ORDER BY ' . $orderBy . ' LIMIT ' . $limit . ' OFFSET ' . $offset, $params);
             foreach ($rows as &$row) {
                 if ($kind === 'sales') {
                     $snapshot = $this->decode($row['snapshot']);

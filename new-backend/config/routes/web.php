@@ -21,6 +21,7 @@ use App\Http\Web\Loyalty\LoyaltyPageController;
 use App\Http\Web\Page\CmsPageController;
 use App\Http\Web\Product\ProductPageController;
 use App\Http\Web\Profile\ProfilePageController;
+use App\Http\Web\Profile\PartnerPageController;
 use App\Http\Web\Seo\RobotsController;
 use App\Http\Web\Seo\SitemapController;
 use App\Http\Web\System\HealthController;
@@ -56,6 +57,7 @@ return static function (App $app): void {
         $group->get('/order-success', OrderSuccessPageController::class);
         $group->get('/login', LoginPageController::class);
         $group->get('/profile', ProfilePageController::class);
+        $group->get('/partner', PartnerPageController::class);
         $group->get('/privacy', PrivacyPolicyPageController::class);
         $group->get('/oferta', PublicOfferPageController::class);
 

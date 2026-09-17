@@ -27,7 +27,6 @@ import { OrdersPanel } from './components/OrdersPanel';
 import { ProfileDetailsCard } from './components/ProfileDetailsCard';
 import { ProfileStats } from './components/ProfileStats';
 import { TabButton, TabList, TabPanel } from './components/ProfileTabs';
-import { ReferralPanel } from './components/ReferralPanel';
 import type { ProfileTab } from './types';
 
 function messageFromError(error: unknown, fallback: string): string {
@@ -179,36 +178,38 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, withdrawa
         <ProfileStats orders={orders} referralInfo={null} user={user} />
 
         <div className="grid items-start gap-6 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-10">
-          <TabList>
-            <TabButton active={tab === 'profile'} controls="profile-tabpanel" id="profile-tab" onClick={() => setTab('profile')}>
-              <User className="h-4 w-4" />
-              <span>Профиль</span>
-            </TabButton>
-            {cartEnabled && (
-              <TabButton active={tab === 'orders'} controls="orders-tabpanel" id="orders-tab" onClick={() => setTab('orders')}>
-                <Package className="h-4 w-4" />
-                <span>Заказы</span>
+          <div className="min-w-0 space-y-3 lg:sticky lg:top-28">
+            <TabList>
+              <TabButton active={tab === 'profile'} controls="profile-tabpanel" id="profile-tab" onClick={() => setTab('profile')}>
+                <User className="h-4 w-4" />
+                <span>Профиль</span>
               </TabButton>
-            )}
-            {cartEnabled && (
-              <TabButton active={tab === 'addresses'} controls="addresses-tabpanel" id="addresses-tab" onClick={() => setTab('addresses')}>
-                <MapPin className="h-4 w-4" />
-                <span>Адреса</span>
-              </TabButton>
-            )}
+              {cartEnabled && (
+                <TabButton active={tab === 'orders'} controls="orders-tabpanel" id="orders-tab" onClick={() => setTab('orders')}>
+                  <Package className="h-4 w-4" />
+                  <span>Заказы</span>
+                </TabButton>
+              )}
+              {cartEnabled && (
+                <TabButton active={tab === 'addresses'} controls="addresses-tabpanel" id="addresses-tab" onClick={() => setTab('addresses')}>
+                  <MapPin className="h-4 w-4" />
+                  <span>Адреса</span>
+                </TabButton>
+              )}
+              {favoritesEnabled && (
+                <TabButton active={tab === 'favorites'} controls="favorites-tabpanel" id="favorites-tab" onClick={() => setTab('favorites')}>
+                  <Heart className="h-4 w-4" />
+                  <span>Избранное</span>
+                </TabButton>
+              )}
+            </TabList>
             {referralEnabled && (
-              <TabButton active={tab === 'referral'} controls="referral-tabpanel" id="referral-tab" onClick={() => setTab('referral')}>
-                <Gift className="h-4 w-4" />
-                <span>{user.isPartner ? 'Партнёрская программа' : 'Реферальная программа'}</span>
-              </TabButton>
+              <a href="/partner" className="flex items-center gap-3 rounded-2xl border border-border bg-white px-5 py-4 text-sm font-medium text-primary hover:bg-secondary focus-visible:outline-primary">
+                <Gift className="h-4 w-4 shrink-0" />
+                <span>{user.isPartner ? 'Кабинет партнёра' : 'Реферальная программа'} →</span>
+              </a>
             )}
-            {favoritesEnabled && (
-              <TabButton active={tab === 'favorites'} controls="favorites-tabpanel" id="favorites-tab" onClick={() => setTab('favorites')}>
-                <Heart className="h-4 w-4" />
-                <span>Избранное</span>
-              </TabButton>
-            )}
-          </TabList>
+          </div>
 
           <div className="min-w-0">
             <TabPanel active={tab === 'profile'} id="profile-tabpanel" labelledBy="profile-tab">
@@ -246,12 +247,6 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, withdrawa
             {favoritesEnabled && (
               <TabPanel active={tab === 'favorites'} id="favorites-tabpanel" labelledBy="favorites-tab">
                 <FavoritesPanel favorites={favorites} onRemove={(product) => void handleRemoveFavorite(product)} />
-              </TabPanel>
-            )}
-
-            {referralEnabled && (
-              <TabPanel active={tab === 'referral'} id="referral-tabpanel" labelledBy="referral-tab">
-                <ReferralPanel withdrawalsEnabled={withdrawalsEnabled} />
               </TabPanel>
             )}
           </div>
