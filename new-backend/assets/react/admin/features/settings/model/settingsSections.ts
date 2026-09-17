@@ -19,7 +19,7 @@ export const settingsSections = [
   {
     id: 'integrations',
     label: 'Интеграции',
-    subtitle: 'Bitrix24 и внешние сценарии',
+    subtitle: 'Подключения внешних сервисов и журнал ошибок интеграций',
   },
   {
     id: 'orders',

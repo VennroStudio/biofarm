@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { integrationErrorsApi } from '../api/resources';
 import { useLoadOnMount } from '../hooks/useLoadOnMount';
 import { messageFromError } from '../shared/lib';
-import { Badge, Button, Card, ErrorAlert, PageHeader } from '../shared/ui';
+import { Badge, Button, Card, ErrorAlert } from '../shared/ui';
 import type { IntegrationErrorLog } from '../types';
 
 const scenarioLabels: Record<string, string> = {
@@ -62,21 +62,21 @@ export function AdminIntegrationErrors() {
   }
 
   return (
-    <>
-      <PageHeader
-        title="Ошибки интеграций"
-        subtitle="Сбои сценариев почты, Bitrix24, форм и заказов"
-        actions={
-          <Button disabled={saving || unreadCount === 0} onClick={() => void markAllRead()}>
-            <CheckCheck className="h-4 w-4" />
-            Прочитать все
-          </Button>
-        }
-      />
-
-      <ErrorAlert className="mb-5">{error}</ErrorAlert>
-
+    <section id="integration-errors" aria-labelledby="integration-errors-heading" className="scroll-mt-6">
       <Card className="p-6">
+        <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h2 id="integration-errors-heading" className="flex items-center gap-2 text-2xl font-bold">
+              <CircleAlert className="h-5 w-5" aria-hidden="true" />Ошибки интеграций
+            </h2>
+            <p className="mt-1 text-sm text-[#5f7580]">Сбои сценариев почты, Bitrix24, форм и заказов</p>
+          </div>
+          <Button disabled={saving || unreadCount === 0} onClick={() => void markAllRead()}>
+            <CheckCheck className="h-4 w-4" />Прочитать все
+          </Button>
+        </div>
+        <ErrorAlert className="mb-5">{error}</ErrorAlert>
+
         <div className="mb-6 flex flex-wrap items-center gap-3">
           <Badge tone={unreadCount > 0 ? 'red' : 'green'}>{unreadCount} новых</Badge>
           <Badge tone="gray">{errors.length} всего</Badge>
@@ -102,7 +102,7 @@ export function AdminIntegrationErrors() {
                       <Badge tone="blue">{scenarioLabels[item.scenario] || item.scenario}</Badge>
                       {item.http_status && <Badge tone="amber">HTTP {item.http_status}</Badge>}
                     </div>
-                    <h2 className="break-words text-base font-bold text-[#294555]">{item.operation}</h2>
+                    <h3 className="break-words text-base font-bold text-[#294555]">{item.operation}</h3>
                     <p className="mt-1 break-words text-sm text-[#526d78]">{item.message}</p>
                   </div>
                   {!item.is_read && (
@@ -127,6 +127,6 @@ export function AdminIntegrationErrors() {
           </div>
         )}
       </Card>
-    </>
+    </section>
   );
 }

@@ -11,7 +11,6 @@ import { AdminCategories } from './pages/AdminCategories';
 import { AdminCertificates } from './pages/AdminCertificates';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { AdminFaq } from './pages/AdminFaq';
-import { AdminIntegrationErrors } from './pages/AdminIntegrationErrors';
 import { AdminLogin } from './pages/AdminLogin';
 import { AdminOrders } from './pages/AdminOrders';
 import { AdminPages } from './pages/AdminPages';
@@ -69,7 +68,7 @@ export function AdminApp() {
           <Route path="program" element={<AdminProgram />} />
           <Route path="users" element={<AdminUsers />} />
           <Route path="withdrawals" element={<AdminWithdrawals />} />
-          <Route path="integration-errors" element={<AdminIntegrationErrors />} />
+          <Route path="integration-errors" element={<Navigate to="/admin/settings/integrations#integration-errors" replace />} />
           <Route path="settings" element={<Navigate to={settingsSectionPath(defaultSettingsSection)} replace />} />
           <Route path="settings/:section" element={<AdminSettings />} />
         </Route>

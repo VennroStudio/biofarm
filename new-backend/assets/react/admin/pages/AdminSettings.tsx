@@ -1,4 +1,5 @@
-import { Save } from 'lucide-react';
+import { Gift, House, PlugZap, Save, Search, ShieldCheck, SlidersHorizontal, Truck } from 'lucide-react';
+import { AdminIntegrationErrors } from './AdminIntegrationErrors';
 import { FormEvent, useState } from 'react';
 import { Navigate, NavLink, useParams } from 'react-router-dom';
 import { settingsApi } from '../api/resources';
@@ -21,6 +22,8 @@ import { useLoadOnMount } from '../hooks/useLoadOnMount';
 import { messageFromError } from '../shared/lib';
 import { Button, ErrorAlert, PageHeader } from '../shared/ui';
 import type { Settings } from '../types';
+
+const sectionIcons = { features: SlidersHorizontal, home: House, seo: Search, integrations: PlugZap, orders: Truck, loyalty: Gift, security: ShieldCheck };
 
 const defaults: Settings = {
   referral_percent: 5,
@@ -237,25 +240,21 @@ export function AdminSettings() {
 
   return (
     <>
-      <PageHeader title="Настройки" subtitle={sectionMeta?.subtitle ?? 'Конфигурация магазина'} />
-
-      <div className="mb-6 flex flex-wrap gap-2">
-        {settingsSections.map((item) => (
-          <NavLink
-            key={item.id}
-            to={settingsSectionPath(item.id)}
-            className={({ isActive }) =>
-              `rounded-md border px-4 py-2 text-sm font-semibold transition ${
-                isActive
-                  ? 'border-[#2e8175] bg-[#2e8175] text-white'
-                  : 'border-[#cfe2de] bg-white text-[#526d78] hover:border-[#2e8175] hover:text-[#2e8175]'
-              }`
-            }
-          >
-            {item.label}
-          </NavLink>
-        ))}
+      <div className="mb-7">
+        <p className="mb-3 text-sm font-semibold text-[#5f7580]">Настройки</p>
+        <nav aria-label="Разделы настроек" className="flex flex-wrap gap-2 rounded-2xl border border-[#dfece9] bg-[#f4faf8] p-2">
+          {settingsSections.map((item) => {
+            const Icon = sectionIcons[item.id];
+            return (
+              <NavLink key={item.id} to={settingsSectionPath(item.id)}
+                className={({ isActive }) => `inline-flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-colors focus-visible:outline-offset-2 focus-visible:outline-[#2e8175] ${isActive ? 'bg-[#2e8175] text-white shadow-sm' : 'text-[#526d78] hover:bg-white hover:text-[#18574f]'}`}>
+                <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />{item.label}
+              </NavLink>
+            );
+          })}
+        </nav>
       </div>
+      <PageHeader title={sectionMeta?.label ?? 'Настройки'} subtitle={sectionMeta?.subtitle ?? 'Конфигурация магазина'} />
 
       {activeSection === 'security' ? (
         <PasswordSettingsCard
@@ -267,7 +266,10 @@ export function AdminSettings() {
           onSubmit={(event) => void submitPassword(event)}
         />
       ) : activeSection === 'integrations' ? (
-        <BitrixSettingsCard settings={settings} onChange={setSettings} />
+        <div className="space-y-8">
+          <BitrixSettingsCard settings={settings} onChange={setSettings} />
+          <AdminIntegrationErrors />
+        </div>
       ) : (
         <form className="space-y-6" onSubmit={(event) => void submit(event, activeSection)}>
           <ErrorAlert>{error}</ErrorAlert>

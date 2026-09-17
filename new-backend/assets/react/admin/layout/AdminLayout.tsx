@@ -1,6 +1,4 @@
 import {
-  ChevronDown,
-  CircleAlert,
   FileText,
   FileCheck2,
   HelpCircle,
@@ -17,9 +15,8 @@ import {
   X,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { getStoredAdmin, getToken, logout, sessionClearedEvent } from '../api/client';
-import { settingsSections, settingsSectionPath } from '../features/settings/model/settingsSections';
 
 const links = [
   { to: '/admin/program', label: 'Партнёрская программа', icon: Users },
@@ -33,20 +30,15 @@ const links = [
   { to: '/admin/reviews', label: 'Отзывы', icon: Star },
   { to: '/admin/users', label: 'Пользователи', icon: Users },
   { to: '/admin/withdrawals', label: 'Заявки на вывод', icon: Wallet },
-  { to: '/admin/integration-errors', label: 'Ошибки', icon: CircleAlert },
   { to: '/admin/settings', label: 'Настройки', icon: Settings },
 ];
 
 export function AdminLayout() {
   const navigate = useNavigate();
-  const location = useLocation();
   const [admin, setAdmin] = useState(() => getStoredAdmin());
   const [open, setOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(() => location.pathname.startsWith('/admin/settings'));
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
-  const settingsActive = location.pathname.startsWith('/admin/settings');
-  const showSettingsSubnav = settingsOpen;
   const adminRoot = document.getElementById('admin-root');
   const brandName = adminRoot?.dataset.brandName || 'БИОФАРМ';
   const brandLogoUrl = adminRoot?.dataset.brandLogoUrl || '/uploads/images/logo.png';
@@ -122,63 +114,6 @@ export function AdminLayout() {
       <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto px-3 py-4" aria-label="Разделы админ-панели">
         {links.map((link) => {
           const Icon = link.icon;
-          if (link.to === '/admin/settings') {
-            return (
-              <div key={link.to}>
-                <div className="flex items-center gap-2">
-                  <NavLink
-                    to={settingsSectionPath('features')}
-                    onClick={() => {
-                      setOpen(false);
-                      setSettingsOpen(true);
-                    }}
-                    className={`flex min-w-0 flex-1 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${
-                      settingsActive
-                        ? 'bg-white text-[#18574f] shadow-sm ring-1 ring-[#dfece9]'
-                        : 'text-[#526d78] hover:bg-white/70 hover:text-[#18574f]'
-                    }`}
-                  >
-                    <Icon className="h-5 w-5 shrink-0" />
-                    {link.label}
-                  </NavLink>
-                  <button
-                    type="button"
-                    className={`grid h-10 w-10 place-items-center rounded-md transition ${
-                      settingsActive
-                        ? 'bg-white text-[#18574f] shadow-sm'
-                        : 'text-[#526d78] hover:bg-white/70 hover:text-[#18574f]'
-                    }`}
-                    aria-expanded={showSettingsSubnav}
-                    aria-label={showSettingsSubnav ? 'Свернуть настройки' : 'Развернуть настройки'}
-                    onClick={() => setSettingsOpen((value) => !value)}
-                  >
-                    <ChevronDown className={`h-4 w-4 transition ${showSettingsSubnav ? 'rotate-180' : ''}`} />
-                  </button>
-                </div>
-
-                {showSettingsSubnav && (
-                  <div className="mt-2 space-y-1 pl-8">
-                    {settingsSections.map((section) => (
-                      <NavLink
-                        key={section.id}
-                        to={settingsSectionPath(section.id)}
-                        onClick={() => setOpen(false)}
-                        className={({ isActive }) =>
-                          `block rounded-md px-3 py-2 text-sm font-semibold transition ${
-                            isActive
-                              ? 'bg-white text-[#18574f] shadow-sm'
-                              : 'text-[#526d78] hover:bg-white/70 hover:text-[#18574f]'
-                          }`
-                        }
-                      >
-                        {section.label}
-                      </NavLink>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          }
 
           return (
             <NavLink
