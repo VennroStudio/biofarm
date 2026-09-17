@@ -108,6 +108,11 @@ export function AdminOrders() {
           setSelectedOrder(null);
           setDetailsError(null);
         }}
+        onPaymentRefresh={async () => {
+          try { await load(); } catch (refreshError) {
+            setDetailsError(messageFromError(refreshError, 'Не удалось обновить список заказов'));
+          }
+        }}
         onSave={saveOrder}
       />
     </>

@@ -49,6 +49,8 @@ new SchemaTool($em)->createSchema($em->getMetadataFactory()->getAllMetadata());
 $db->executeStatement('CREATE TABLE promo_code_redemptions (order_id TEXT,promo_code_id INTEGER)');
 $db->executeStatement('CREATE TABLE promo_codes (id INTEGER,used_count INTEGER)');
 $db->executeStatement('CREATE TABLE site_settings (`key` TEXT,value TEXT)');
+$db->executeStatement('CREATE TABLE users (id INTEGER PRIMARY KEY,status INTEGER,deleted_at TEXT)');
+$db->insert('users', ['id' => 1, 'status' => 1, 'deleted_at' => null]);
 $db->insert('site_settings', ['key' => 'cart_enabled', 'value' => 'true']);
 $db->insert('site_settings', ['key' => 'referral_enabled', 'value' => 'true']);
 $program = new ProgramService($db);

@@ -1,12 +1,11 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
-import { BookOpen, CreditCard, History, SlidersHorizontal, Wallet } from "lucide-react";
+import { useEffect, useState, type FormEvent } from "react";
+import { BookOpen, History, SlidersHorizontal, Wallet } from "lucide-react";
 import { request } from "../api/client";
 import {
     Section,
     Field,
     Rows,
     Pager,
-    money,
     inputClass,
     buttonClass,
     type Rates,
@@ -22,7 +21,6 @@ const sections = [
     { key: "ledger", title: "Журнал", icon: BookOpen },
     { key: "audit", title: "Аудит", icon: History },
     { key: "withdrawals", title: "Выплаты", icon: Wallet },
-    { key: "payments", title: "Оплата и возвраты", icon: CreditCard },
     { key: "settings", title: "Настройки", icon: SlidersHorizontal },
 ];
 export function AdminProgram() {
@@ -38,20 +36,13 @@ export function AdminProgram() {
     const [revision, setRevision] = useState(0);
     const [busy, setBusy] = useState(false);
     const [selected, setSelected] = useState<Row | null>(null);
-    const [config, setConfig] = useState<{ configured: boolean; receiptsEnabled: boolean } | null>(null);
-    const [orderId, setOrderId] = useState("");
-    const [order, setOrder] = useState<{ payment: Row; items: Row[]; operations: Row[] } | null>(null);
-    const refund = useRef<{ id: string; body: Record<string, unknown> } | null>(null);
     useEffect(() => {
         void request<Rates>(`${base}/settings`)
             .then(setRates)
             .catch((e) => setError(String(e)));
-        void request<{ configured: boolean; receiptsEnabled: boolean }>("/admin/api/payments/config")
-            .then(setConfig)
-            .catch((e) => setError(String(e)));
     }, [revision]);
     useEffect(() => {
-        if (["settings", "payments"].includes(tab)) return;
+        if (tab === "settings") return;
         let live = true;
         const query = new URLSearchParams({ page: String(page) });
         if (tab === "ledger") {
@@ -162,7 +153,7 @@ export function AdminProgram() {
                 </p>
             )}
             {notice && <p role="status">{notice}</p>}
-            {!["settings", "payments"].includes(tab) && (
+            {tab !== "settings" && (
                 <Section title={tab === "ledger" ? "Журнал комиссий" : "Записи"}>
                     {tab === "ledger" && (
                         <ol className="list-decimal space-y-2 rounded-xl border border-border bg-secondary/40 py-4 pl-10 pr-5 text-sm leading-relaxed">
@@ -293,171 +284,7 @@ export function AdminProgram() {
                     </form>
                 </Section>
             )}
-            {tab === "payments" && (
-                <>
-                    <Section title="Подключение оплаты">
-                        <p>
-                            {config?.configured ? "ЮKassa подключена" : "ЮKassa не настроена"}. Чеки:{" "}
-                            {config?.receiptsEnabled ? "включены" : "выключены"}.
-                        </p>
-                        <button
-                            className={buttonClass}
-                            disabled={busy}
-                            onClick={() => void mutate("/admin/api/payments/reconcile", {}).catch(() => {})}
-                        >
-                            Сверить зависшие платежи
-                        </button>
-                    </Section>
-                    <Section title="Заказ: оплата, доставка и возврат">
-                        <form
-                            className="flex gap-3"
-                            onSubmit={(e) => {
-                                e.preventDefault();
-                                setError("");
-                                void request<typeof order>(`/admin/api/payments/orders/${encodeURIComponent(orderId)}`)
-                                    .then((d) => {
-                                        setOrder(d);
-                                        const saved = sessionStorage.getItem(`biofarm_refund_${orderId}`);
-                                        refund.current = saved ? JSON.parse(saved) : null;
-                                    })
-                                    .catch((e) => setError(String(e)));
-                            }}
-                        >
-                            <Field name="Номер заказа">
-                                <input
-                                    className={inputClass}
-                                    value={orderId}
-                                    onChange={(e) => {
-                                        setOrderId(e.target.value);
-                                        setOrder(null);
-                                        refund.current = null;
-                                    }}
-                                    required
-                                />
-                            </Field>
-                            <button className={buttonClass}>Открыть</button>
-                        </form>
-                        {order && (
-                            <>
-                                <p>
-                                    Оплата: {String(order.payment?.status || "—")} ·{" "}
-                                    {money(order.payment?.amountMinor)}
-                                </p>
-                                <button
-                                    className={buttonClass}
-                                    disabled={busy}
-                                    onClick={() =>
-                                        void mutate(
-                                            `${base}/orders/${encodeURIComponent(orderId)}/delivered`,
-                                            {},
-                                        ).catch(() => {})
-                                    }
-                                >
-                                    Подтвердить доставку и начать удержание
-                                </button>
-                                <button type="button" className="rounded-lg border border-slate-300 px-4 py-2 text-sm" disabled={busy}
-                                    onClick={() => void mutate(`/admin/api/payments/orders/${encodeURIComponent(orderId)}/receipt`, {}).then(() => request<typeof order>(`/admin/api/payments/orders/${encodeURIComponent(orderId)}`)).then(setOrder).catch(() => {})}>
-                                    Отправить / проверить чек зачёта предоплаты
-                                </button>
-                                <p className="text-sm text-slate-500">Операция receipt — чек после доставки. queued: ожидает отправки; waiting_refund: ожидает возврата; retry_required: нужна повторная проверка; review_required или canceled: нужна сверка в ЮKassa. Ошибка чека не отменяет доставку.</p>
-                                <form className="space-y-2 rounded-xl border border-slate-200 p-3" onSubmit={(event) => {
-                                    event.preventDefault();
-                                    const data = new FormData(event.currentTarget);
-                                    void mutate(`/admin/api/payments/orders/${encodeURIComponent(orderId)}/receipt`, { providerReceiptId: String(data.get("providerReceiptId") || ""), reason: String(data.get("receiptReason") || "") })
-                                        .then(() => request<typeof order>(`/admin/api/payments/orders/${encodeURIComponent(orderId)}`)).then(setOrder).catch(() => {});
-                                }}>
-                                    <p className="text-sm">Если чек уже зарегистрирован в ЮKassa, укажите его ID. Сервер проверит чек у провайдера; новый чек создан не будет.</p>
-                                    <input name="providerReceiptId" required maxLength={64} placeholder="ID существующего чека ЮKassa" className={inputClass} />
-                                    <input name="receiptReason" required maxLength={2000} placeholder="Причина ручной сверки" className={inputClass} />
-                                    <button className={buttonClass} disabled={busy}>Проверить и привязать существующий чек</button>
-                                </form>
-                                <Rows
-                                    rows={order.operations}
-                                    columns={[
-                                        ["created_at", "Дата"],
-                                        ["kind", "Операция"],
-                                        ["status", "Состояние"],
-                                        ["amount_minor", "Сумма"],
-                                    ]}
-                                />
-                                <form
-                                    className="space-y-3"
-                                    onSubmit={(e) => {
-                                        e.preventDefault();
-                                        const f = new FormData(e.currentTarget);
-                                        const body = {
-                                            items: order.items
-                                                .map((i) => ({ itemId: Number(i.id), quantity: num(f, `item${i.id}`) }))
-                                                .filter((i) => i.quantity > 0),
-                                            refundDelivery: f.get("delivery") === "on",
-                                        };
-                                        if (!refund.current) {
-                                            refund.current = { id: crypto.randomUUID(), body };
-                                            sessionStorage.setItem(
-                                                `biofarm_refund_${orderId}`,
-                                                JSON.stringify(refund.current),
-                                            );
-                                        } else if (JSON.stringify(refund.current.body) !== JSON.stringify(body)) {
-                                            setError(
-                                                "Есть незавершённая попытка. Повторите тот же состав или начните новую операцию после проверки журнала.",
-                                            );
-                                            return;
-                                        }
-                                        void mutate(
-                                            `/admin/api/payments/orders/${encodeURIComponent(orderId)}/refund`,
-                                            { ...refund.current.body, requestId: refund.current.id },
-                                        )
-                                            .then(() => {
-                                                setNotice(
-                                                    "Запрос возврата принят. Проверьте состояние в журнале операций.",
-                                                );
-                                            })
-                                            .catch(() => {});
-                                    }}
-                                >
-                                    <h3 className="font-medium">Возврат товаров</h3>
-                                    {order.items.map((i) => (
-                                        <Field key={String(i.id)} name={`${i.product_name} (в заказе ${i.quantity})`}>
-                                            <input
-                                                className={inputClass}
-                                                name={`item${i.id}`}
-                                                type="number"
-                                                min="0"
-                                                max={Number(i.quantity)}
-                                                defaultValue="0"
-                                            />
-                                        </Field>
-                                    ))}
-                                    <label>
-                                        <input name="delivery" type="checkbox" /> Вернуть доставку
-                                    </label>
-                                    <div className="flex flex-wrap gap-3">
-                                        <button className={buttonClass} disabled={busy}>
-                                            Отправить / повторить тот же возврат
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                if (
-                                                    window.confirm(
-                                                        "Проверили, что предыдущая операция завершена? Создать отдельный новый возврат?",
-                                                    )
-                                                ) {
-                                                    refund.current = null;
-                                                    sessionStorage.removeItem(`biofarm_refund_${orderId}`);
-                                                    setNotice("Новая операция возврата");
-                                                }
-                                            }}
-                                        >
-                                            Начать отдельный возврат
-                                        </button>
-                                    </div>
-                                </form>
-                            </>
-                        )}
-                    </Section>
-                </>
-            )}
+
         </div>
     );
 }

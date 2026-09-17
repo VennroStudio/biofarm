@@ -58,6 +58,11 @@ export function AdminDashboard() {
           setSelectedOrder(null);
           setOrderError(null);
         }}
+        onPaymentRefresh={async () => {
+          try { await load(); } catch (refreshError) {
+            setOrderError(messageFromError(refreshError, 'Не удалось обновить заказы'));
+          }
+        }}
         onSave={saveOrder}
       />
     </>

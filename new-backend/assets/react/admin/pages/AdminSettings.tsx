@@ -1,4 +1,5 @@
 import { Gift, House, PlugZap, Save, Search, ShieldCheck, SlidersHorizontal, Truck } from 'lucide-react';
+import { PaymentIntegrationCard } from '../features/settings/ui/PaymentIntegrationCard';
 import { AdminIntegrationErrors } from './AdminIntegrationErrors';
 import { FormEvent, useState } from 'react';
 import { Navigate, NavLink, useParams } from 'react-router-dom';
@@ -267,6 +268,7 @@ export function AdminSettings() {
         />
       ) : activeSection === 'integrations' ? (
         <div className="space-y-8">
+          <PaymentIntegrationCard />
           <BitrixSettingsCard settings={settings} onChange={setSettings} />
           <AdminIntegrationErrors />
         </div>

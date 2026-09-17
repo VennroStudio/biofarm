@@ -1,3 +1,5 @@
+import { CreditCard, FileText } from 'lucide-react';
+import { OrderPaymentsPanel } from './OrderPaymentsPanel';
 import { useState } from 'react';
 import { formatMoney } from '../../../shared/lib';
 import { Button, ErrorAlert, Field, inputClass, Modal } from '../../../shared/ui';
@@ -9,6 +11,7 @@ type Props = {
   error?: string | null;
   saving: boolean;
   onClose: () => void;
+  onPaymentRefresh: () => Promise<void>;
   onSave: (order: Order, payload: Record<string, unknown>) => Promise<void>;
 };
 
@@ -80,7 +83,8 @@ function orderSubtotal(order: Order | null): number {
   return order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 }
 
-export function OrderDetailsModal({ order, error, saving, onClose, onSave }: Props) {
+export function OrderDetailsModal({ order, error, saving, onClose, onSave, onPaymentRefresh }: Props) {
+  const [tab, setTab] = useState<'details' | 'payment'>('details');
   const [form, setForm] = useState<OrderForm>(() => toForm(order));
   const subtotal = orderSubtotal(order);
   const total = Math.max(0, subtotal + intValue(form.deliveryCost) - intValue(form.discountAmount) - intValue(form.bonusUsed));
@@ -116,21 +120,31 @@ export function OrderDetailsModal({ order, error, saving, onClose, onSave }: Pro
     <Modal
       open={!!order}
       title={`Заказ ${order?.id ?? ''}`}
-      description="Доставка, промокод, бонусы и трек-номер"
+      description="Данные заказа, оплата, возвраты и чеки"
       maxWidth="max-w-5xl"
       onClose={onClose}
       footer={(
         <>
-          <Button type="button" variant="outline" onClick={onClose}>Отмена</Button>
-          <Button type="button" disabled={saving || !order} onClick={() => void submit()}>
+          <Button type="button" variant="outline" onClick={onClose}>Закрыть</Button>
+          {tab === 'details' && <Button type="button" disabled={saving || !order} onClick={() => void submit()}>
             {saving ? 'Сохранение...' : 'Сохранить'}
-          </Button>
+          </Button>}
         </>
       )}
     >
       {order && (
         <div className="space-y-6">
+          <nav aria-label="Разделы заказа" className="flex flex-wrap gap-2 rounded-2xl border border-[#dfece9] bg-[#f4faf8] p-2">
+            {([{ key: 'details', label: 'Данные заказа', icon: FileText }, { key: 'payment', label: 'Оплата и возвраты', icon: CreditCard }] as const).map(({ key, label, icon: Icon }) => (
+              <Button key={key} variant={tab === key ? 'primary' : 'ghost'} aria-pressed={tab === key} onClick={() => setTab(key)}><Icon className="h-4 w-4" />{label}</Button>
+            ))}
+          </nav>
           <ErrorAlert>{error}</ErrorAlert>
+          {tab === 'payment' && <OrderPaymentsPanel orderId={order.id} onPaymentChange={(paymentStatus) => {
+            setForm((current) => ({ ...current, paymentStatus: normalizePaymentStatus(paymentStatus) }));
+            void onPaymentRefresh();
+          }} />}
+          <div hidden={tab !== 'details'} className="space-y-6">
           <section className="grid gap-4 md:grid-cols-3">
             <Field label="Статус">
               <select className={inputClass} value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value })}>
@@ -229,6 +243,7 @@ export function OrderDetailsModal({ order, error, saving, onClose, onSave }: Pro
               <p className="text-sm text-[#5f7580]">Итого</p>
               <p className="text-xl font-bold">{formatMoney(total)}</p>
             </div>
+          </div>
           </div>
         </div>
       )}
