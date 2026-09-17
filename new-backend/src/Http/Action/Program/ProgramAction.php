@@ -41,7 +41,6 @@ final readonly class ProgramAction implements RequestHandlerInterface
                 $method === 'POST' && $part === 'simulate' && $admin                                                      => $this->simulate($body),
                 $method === 'POST' && str_starts_with($part, 'orders/') && $admin                                         => $this->deliver(Route::getArgument($request, 'id')),
                 $method === 'POST' && $part === 'adjustments' && $admin                                                   => $this->adjust($body, $actor),
-                $method === 'PATCH' && str_starts_with($part, 'users/') && $admin                                         => $this->tree((int)Route::getArgument($request, 'id'), $body, $actor),
                 default                                                                                                   => throw new DomainException('Unsupported program operation'),
             };
             return new JsonDataResponse($result);
@@ -63,12 +62,6 @@ final readonly class ProgramAction implements RequestHandlerInterface
             $this->payments->queueSettlementReceipt($id);
         });
         return ['delivered' => true];
-    }
-
-    private function tree(int $id, array $body, int $actor): array
-    {
-        $this->program->changeTree($id, isset($body['parentId']) ? (int)$body['parentId'] : null, (bool)($body['isPartner'] ?? false), $actor, (string)($body['reason'] ?? ''));
-        return ['updated' => true];
     }
 
     private function simulate(array $body): array

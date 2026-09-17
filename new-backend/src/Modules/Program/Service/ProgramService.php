@@ -561,33 +561,23 @@ final class ProgramService
         });
     }
 
-    public function changeTree(int $user, ?int $parent, bool $partner, int $actor, string $reason): void
+    public function setPartnerStatus(int $user, bool $partner, int $actor, string $reason): void
     {
         if (trim($reason) === '') {
             throw new DomainException('Reason required');
         }
-        $this->atomic(function () use ($user, $parent, $partner, $actor, $reason): void {
+        $this->atomic(function () use ($user, $partner, $actor, $reason): void {
             $old = $this->db->fetchAssociative('SELECT is_partner,referred_by_user_id FROM user_profiles WHERE user_id=?', [$user]);
             if (!$old) {
                 throw new DomainException('User not found');
-            }if ($partner) {
-                $parent = null;
             }
-            $seen = [$user => true];
-            $cursor = $parent;
-            while ($cursor !== null) {
-                if (isset($seen[$cursor])) {
-                    throw new DomainException('Referral cycle');
-                }
-                $seen[$cursor] = true;
-                $p = $this->db->fetchAssociative('SELECT referred_by_user_id FROM user_profiles WHERE user_id=?', [$cursor]);
-                if (!$p) {
-                    throw new DomainException('Parent not found');
-                }
-                $cursor = $p['referred_by_user_id'] === null ? null : (int)$p['referred_by_user_id'];
+            if ((bool)$old['is_partner'] === $partner) {
+                return;
             }
+            // Promotion detaches only this root. Descendants and historical orders stay intact.
+            $parent = $partner ? null : $old['referred_by_user_id'];
             $this->db->update('user_profiles', ['is_partner' => (int)$partner, 'referred_by_user_id' => $parent], ['user_id' => $user]);
-            $this->audit($actor, 'tree', ['userId' => $user, 'before' => $old, 'parentId' => $parent, 'isPartner' => $partner, 'reason' => $reason]);
+            $this->audit($actor, 'partner_status', ['userId' => $user, 'before' => $old, 'isPartner' => $partner, 'reason' => $reason]);
         });
     }
 

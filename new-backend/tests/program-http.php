@@ -70,6 +70,9 @@ try {
         } catch (\Slim\Exception\HttpNotFoundException $e) {
             ok($expected === 404, $method . ' ' . $url . ' unexpectedly missing');
             return null;
+        } catch (\Slim\Exception\HttpMethodNotAllowedException $e) {
+            ok($expected === 405, $method . ' ' . $url . ' unexpectedly disallowed');
+            return null;
         }
         $raw = (string)$response->getBody();
         $json = json_decode($raw, true);
@@ -177,7 +180,14 @@ try {
     $earn = $call('GET', '/v1/program', [], $tokens[1]);
     ok($earn['balances']['commission']['availableMinor'] > 0, 'deep partner rewarded');
     $snapshot = $db->fetchOne('SELECT snapshot FROM program_orders WHERE id=?', [$orderId]);
-    $call('PATCH', '/admin/api/program/users/' . $ids[3], ['isPartner' => true, 'parentId' => $ids[2], 'reason' => 'Проверка повышения'], $admin);
+    $call('PATCH', '/admin/api/program/users/' . $ids[3], ['parentId' => $ids[1]], $admin, 405);
+    foreach (['parentId', 'referredByUserId', 'referred_by_user_id'] as $key) {
+        $call('PATCH', '/admin/api/users/' . $ids[3], [$key => $ids[1]], $admin, 422);
+    }
+    ok((int)$db->fetchOne('SELECT referred_by_user_id FROM user_profiles WHERE user_id=?', [$ids[3]]) === $ids[2], 'manual transfer is rejected');
+    $call('PATCH', '/admin/api/users/' . $ids[3], ['isPartner' => true], $tokens[1], 403);
+    $call('PATCH', '/admin/api/users/' . $ids[3], ['isPartner' => 'false'], $admin, 422);
+    $call('PATCH', '/admin/api/users/' . $ids[3], ['isPartner' => true], $admin);
     ok($db->fetchOne('SELECT referred_by_user_id FROM user_profiles WHERE user_id=?', [$ids[3]]) === null, 'promoted partner detached');
     ok((int)$db->fetchOne('SELECT referred_by_user_id FROM user_profiles WHERE user_id=?', [$ids[4]]) === $ids[3], 'descendants retained');
     ok($snapshot === $db->fetchOne('SELECT snapshot FROM program_orders WHERE id=?', [$orderId]), 'historical rewards immutable');

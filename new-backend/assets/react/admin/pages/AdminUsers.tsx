@@ -15,6 +15,7 @@ export function AdminUsers() {
   const [error, setError] = useState<string | null>(null);
   const [detailsError, setDetailsError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [changingPartner, setChangingPartner] = useState(false);
 
   async function load() {
     const result = await usersApi.list();
@@ -32,13 +33,20 @@ export function AdminUsers() {
     ));
   }, [users, search]);
 
-  async function togglePartner() {
+  async function togglePartner(user: AdminCustomer) {
+    const message = user.is_partner
+      ? `Снять статус партнёра у «${user.name}»? Его рефералы сохранятся; прежний пригласивший не восстанавливается.`
+      : `Сделать «${user.name}» партнёром? Пользователь выйдет из прежней команды вместе со своими рефералами. Прошлые начисления сохранятся.`;
+    if (!window.confirm(message)) return;
     setError(null);
+    setChangingPartner(true);
     try {
-      window.location.href = '/admin/program';
+      await usersApi.update(user.id, { isPartner: !user.is_partner });
       await load();
     } catch (toggleError) {
       setError(messageFromError(toggleError, 'Не удалось изменить статус пользователя'));
+    } finally {
+      setChangingPartner(false);
     }
   }
 
@@ -78,7 +86,8 @@ export function AdminUsers() {
         <UsersTable
           users={filteredUsers}
           onEdit={openUser}
-          onTogglePartner={() => void togglePartner()}
+          onTogglePartner={(user) => void togglePartner(user)}
+          changingPartner={changingPartner}
         />
       </Card>
 

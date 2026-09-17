@@ -10,10 +10,6 @@ type UserForm = {
   phone: string;
   cardNumber: string;
   referralCode: string;
-  referredByUserId: string;
-  isPartner: boolean;
-  bonusAdjustment: string;
-  bonusComment: string;
 };
 
 type Props = {
@@ -31,10 +27,6 @@ function toForm(user: AdminCustomer | null): UserForm {
     phone: user?.phone ?? '',
     cardNumber: user?.card_number ?? '',
     referralCode: user?.referral_code ?? '',
-    referredByUserId: user?.referred_by_user_id ? String(user.referred_by_user_id) : '',
-    isPartner: user?.is_partner ?? false,
-    bonusAdjustment: '',
-    bonusComment: '',
   };
 }
 
@@ -98,7 +90,10 @@ export function UserDetailsModal({ user, error, saving, onClose, onSave }: Props
           <Field label="Реферальный код">
             <input className={inputClass} value={form.referralCode} onChange={(event) => setForm({ ...form, referralCode: event.target.value })} />
           </Field>
-          <a href="/admin/program" className="underline">Управлять командой и статусом партнёра</a>
+          <div className="text-sm text-[#5f7580]">
+            <p>Статус: <b className="text-[#294555]">{user.is_partner ? 'Партнёр' : 'Пользователь'}</b></p>
+            <p>Пригласивший: {user.parent_name || user.referred_by_user_id || '—'}</p>
+          </div>
           <div className="text-sm text-[#5f7580]">
             <p>Приглашено: <b className="text-[#294555]">{user.referrals_count}</b></p>
             <p>Оборот рефералов: <b className="text-[#294555]">{formatMoney(user.referral_orders_total)}</b></p>

@@ -15,7 +15,6 @@ use App\Modules\User\Entity\User\UserRepository;
 use App\Modules\User\Entity\UserProfile\UserProfile;
 use App\Modules\User\Entity\UserProfile\UserProfileRepository;
 use DateMalformedStringException;
-use DomainException;
 use Override;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -39,6 +38,16 @@ final readonly class UpdateUserProfileAction implements RequestHandlerInterface
     {
         $userId = Route::getArgumentToInt($request, 'id');
         $payload = (array)$request->getParsedBody();
+        foreach (['referredByUserId', 'referred_by_user_id', 'parentId'] as $key) {
+            if (\array_key_exists($key, $payload)) {
+                throw new DomainExceptionModule('program', 'Ручная смена пригласившего недоступна', 1, status: 422);
+            }
+        }
+        foreach (['isPartner', 'is_partner'] as $key) {
+            if (\array_key_exists($key, $payload) && !\is_bool($payload[$key])) {
+                throw new DomainExceptionModule('user', 'Статус партнёра должен быть логическим значением', 1, status: 422);
+            }
+        }
         $user = $this->userRepository->getById($userId);
 
         if (isset($payload['firstName']) || isset($payload['first_name']) || isset($payload['lastName']) || isset($payload['last_name'])) {
@@ -62,18 +71,8 @@ final readonly class UpdateUserProfileAction implements RequestHandlerInterface
             }
         }
 
-        $referredByUserId = $this->nullableInt($this->payloadValue($payload, 'referredByUserId', 'referred_by_user_id', $profile->referredByUserId));
-        if ($referredByUserId !== null) {
-            if ($referredByUserId === $userId || $this->userRepository->findById($referredByUserId) === null) {
-                throw new DomainExceptionModule('user', 'error.invalid_referrer', 39, status: 422);
-            }
-        }
-
         $partner = (bool)$this->payloadValue($payload, 'isPartner', 'is_partner', $profile->isPartner);
-        $treeChanged = $partner !== $profile->isPartner || $referredByUserId !== $profile->referredByUserId;
-        if ($treeChanged && trim((string)($payload['reason'] ?? '')) === '') {
-            throw new DomainException('Reason required for tree changes');
-        }
+        $partnerChanged = $partner !== $profile->isPartner;
         $profile->edit(
             phone: $this->nullableString($this->payloadValue($payload, 'phone', 'phone', $profile->phone)),
             cardNumber: $this->nullableString($this->payloadValue($payload, 'cardNumber', 'card_number', $profile->cardNumber)),
@@ -86,10 +85,10 @@ final readonly class UpdateUserProfileAction implements RequestHandlerInterface
             throw new DomainExceptionModule('program', 'Use audited program adjustments', 1, status: 409);
         }
 
-        $this->program->atomic(function () use ($treeChanged, $userId, $referredByUserId, $partner, $request, $payload): void {
+        $this->program->atomic(function () use ($partnerChanged, $userId, $partner, $request): void {
             $this->flusher->flush();
-            if ($treeChanged) {
-                $this->program->changeTree($userId, $referredByUserId, $partner, RequestIdentity::get($request)->id, (string)$payload['reason']);
+            if ($partnerChanged) {
+                $this->program->setPartnerStatus($userId, $partner, RequestIdentity::get($request)->id, $partner ? 'Назначение партнёром в разделе пользователей' : 'Снятие статуса партнёра в разделе пользователей');
             }
         });
 
@@ -124,12 +123,4 @@ final readonly class UpdateUserProfileAction implements RequestHandlerInterface
         return $value !== '' ? $value : null;
     }
 
-    private function nullableInt(bool|float|int|string|null $value): ?int
-    {
-        if ($value === null || $value === '') {
-            return null;
-        }
-
-        return (int)$value;
-    }
 }

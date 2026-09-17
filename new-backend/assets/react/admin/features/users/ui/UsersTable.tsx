@@ -14,11 +14,12 @@ import type { AdminCustomer } from '../../../types';
 
 type Props = {
   users: AdminCustomer[];
+  changingPartner: boolean;
   onTogglePartner: (user: AdminCustomer) => void;
   onEdit: (user: AdminCustomer) => void;
 };
 
-export function UsersTable({ users, onTogglePartner, onEdit }: Props) {
+export function UsersTable({ users, onTogglePartner, onEdit, changingPartner }: Props) {
   if (users.length === 0) {
     return <EmptyState>Пользователи не найдены</EmptyState>;
   }
@@ -70,7 +71,7 @@ export function UsersTable({ users, onTogglePartner, onEdit }: Props) {
                     <Edit className="h-4 w-4" />
                     Изменить
                   </Button>
-                  <Button variant={user.is_partner ? 'outline' : 'primary'} size="sm" onClick={() => onTogglePartner(user)}>
+                  <Button variant={user.is_partner ? 'outline' : 'primary'} size="sm" disabled={changingPartner} onClick={() => onTogglePartner(user)}>
                     <UserCheck className="h-4 w-4" />
                     {user.is_partner ? 'Снять партнёра' : 'Сделать партнёром'}
                   </Button>

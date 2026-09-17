@@ -76,14 +76,20 @@ $snapshot = json_decode($db->fetchOne("SELECT snapshot FROM program_orders WHERE
 check($snapshot['items'][0]['paidMinor'] === 870000, 'basis excludes discounts spent delivery');
 check(array_column($snapshot['recipients'], 'userId') === [6, 5, 4, 3, 1, 7], 'four levels and partner beyond depth 4');
 check($p->dashboard(1)['balances']['commission']['pendingMinor'] === 8700, 'partner pending');
-$p->changeTree(4, 3, true, 1, 'Fixture promotion');
+$p->setPartnerStatus(4, true, 1, 'Fixture promotion');
 order($db, $p, 'B');
 $next = json_decode($db->fetchOne("SELECT snapshot FROM program_orders WHERE id='B'"), true);
 check(array_column($next['recipients'], 'userId') === [6, 5, 4, 4, 7], 'detachment and dual partner reward');
 check($db->fetchOne('SELECT referred_by_user_id FROM user_profiles WHERE user_id=5') === 4, 'children retained');
 check(array_column($snapshot['recipients'], 'userId') === [6, 5, 4, 3, 1, 7], 'old snapshot stable');
-fails(static fn () => $p->changeTree(5, 7, false, 1, 'cycle'), 'cycle rejected');
-fails(static fn () => $p->changeTree(5, 99, false, 1, 'missing'), 'missing parent');
+check(!method_exists($p, 'changeTree'), 'manual referral transfer is removed');
+$p->setPartnerStatus(5, false, 1, 'Same status');
+check((int)$db->fetchOne('SELECT referred_by_user_id FROM user_profiles WHERE user_id=5') === 4, 'unchanged status keeps inviter');
+$p->setPartnerStatus(4, false, 1, 'Fixture demotion');
+check($db->fetchOne('SELECT referred_by_user_id FROM user_profiles WHERE user_id=4') === null, 'demotion does not reattach branch');
+check((int)$db->fetchOne('SELECT referred_by_user_id FROM user_profiles WHERE user_id=5') === 4, 'demotion keeps children');
+$p->setPartnerStatus(4, true, 1, 'Fixture restore');
+fails(static fn () => $p->setPartnerStatus(99, true, 1, 'Missing user'), 'missing user rejected');
 $p->cancelOrder('B');
 $p->cancelOrder('B');
 $p->deliverOrder('A');
@@ -195,7 +201,7 @@ foreach (['bf-9', 'bf-10'] as $code) {
     check((int)$db->fetchOne("SELECT COUNT(*) FROM program_ledger WHERE order_id=? AND wallet='commission'", [$id]) === 0, 'no commission for cyclic invitation');
 }
 order($db, $p, 'BECAME-PARTNER', 9);
-$p->changeTree(9, null, true, 1, 'Promotion while order pending');
+$p->setPartnerStatus(9, true, 1, 'Promotion while order pending');
 paid($db, $p, 'BECAME-PARTNER');
 check($db->fetchOne('SELECT referred_by_user_id FROM user_profiles WHERE user_id=9') === null, 'payment must not reattach promoted partner');
 check((int)$db->fetchOne("SELECT COUNT(*) FROM program_ledger WHERE order_id='BECAME-PARTNER' AND wallet='commission'") === 0, 'no former team reward for provisional promoted buyer');

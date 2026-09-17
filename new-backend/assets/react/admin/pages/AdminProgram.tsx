@@ -154,7 +154,7 @@ export function AdminProgram() {
                         rows={list.items}
                         columns={columns[tab]}
                         actions={
-                            ["users", "withdrawals"].includes(tab)
+                            tab === "withdrawals"
                                 ? (row) => (
                                       <button className={buttonClass} onClick={() => setSelected(row)}>
                                           Управление
@@ -166,59 +166,11 @@ export function AdminProgram() {
                     <Pager page={page} setPage={setPage} hasMore={list.items.length === list.limit} />
                 </Section>
             )}
-            {selected && (
+            {selected && tab === "withdrawals" && (
                 <Section title={`Управление: ${selected.name || selected.id}`}>
                     <button className="underline" onClick={() => setSelected(null)}>
                         Закрыть
                     </button>
-                    {tab === "users" && (
-                        <form
-                            className="grid gap-3"
-                            onSubmit={(e) =>
-                                void form(
-                                    e,
-                                    `${base}/users/${selected.id}`,
-                                    (f) => ({
-                                        parentId: value(f, "parentId") ? num(f, "parentId") : null,
-                                        isPartner: f.get("isPartner") === "on",
-                                        reason: value(f, "reason"),
-                                    }),
-                                    "PATCH",
-                                )
-                            }
-                        >
-                            <p>
-                                Назначение партнёром отделит пользователя и всех потомков от прежней команды. Прошлые
-                                заказы сохраняют старые снимки.
-                            </p>
-                            <Field name="ID пригласившего (пусто — нет)">
-                                <input
-                                    className={inputClass}
-                                    type="number"
-                                    min="1"
-                                    name="parentId"
-                                    defaultValue={String(selected.referred_by_user_id || "")}
-                                />
-                            </Field>
-                            <Field name="Партнёр">
-                                <input
-                                    name="isPartner"
-                                    type="checkbox"
-                                    defaultChecked={Boolean(Number(selected.is_partner))}
-                                />
-                            </Field>
-                            <Field name="Причина изменения">
-                                <textarea className={inputClass} name="reason" required />
-                            </Field>
-                            <label>
-                                <input type="checkbox" required /> Подтверждаю изменение дерева и отделение ветки при
-                                назначении партнёром
-                            </label>
-                            <button className={buttonClass} disabled={busy}>
-                                Сохранить
-                            </button>
-                        </form>
-                    )}
                     {tab === "withdrawals" && (
                         <form
                             className="grid gap-3"
