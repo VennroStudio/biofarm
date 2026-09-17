@@ -105,7 +105,7 @@ final readonly class ProductDetails implements ProductModelInterface
             'attribute_value_ids'    => '(SELECT JSON_ARRAYAGG(pav.attribute_value_id) FROM product_attribute_values pav WHERE pav.product_id = p.id)',
             'product_group_id'       => '(SELECT pgi.group_id FROM product_group_items pgi INNER JOIN product_groups pg ON pg.id = pgi.group_id AND pg.deleted_at IS NULL WHERE pgi.product_id = p.id LIMIT 1)',
             'related_blog_post_ids'  => '(SELECT JSON_ARRAYAGG(pbp.blog_post_id) FROM product_blog_posts pbp INNER JOIN blog_posts bp ON bp.id = pbp.blog_post_id AND bp.deleted_at IS NULL WHERE pbp.product_id = p.id)',
-            'certificate_ids'        => '(SELECT JSON_ARRAYAGG(c.id) FROM certificates c WHERE c.product_id = p.id)',
+            'certificate_ids'        => '(SELECT JSON_ARRAYAGG(mp.material_id ORDER BY mp.sort_order, mp.material_id) FROM material_placements mp WHERE mp.kind = \'certificate\' AND mp.target_type = \'product\' AND mp.target_id = CAST(p.id AS CHAR))',
             'features'               => 'features',
             'wb_link'                => 'wb_link',
             'ozon_link'              => 'ozon_link',

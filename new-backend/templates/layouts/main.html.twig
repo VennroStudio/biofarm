@@ -6,6 +6,7 @@
     {% set metaTitle = pageMeta ? pageMeta.title : site.meta.title|default('БИОФАРМ') %}
     {% set metaDescription = pageMeta ? pageMeta.description : site.meta.description|default('Натуральные продукты БИОФАРМ.') %}
     {% set canonicalUrl = pageMeta and pageMeta.canonicalUrl ? pageMeta.canonicalUrl : null %}
+    {% set materialSections = page_material_sections(canonicalUrl, page.certificates is not defined, page.faqItems is not defined and page.items is not defined) %}
     {% set robots = pageMeta ? pageMeta.robots : 'index, follow' %}
     {% set ogTitle = pageMeta and pageMeta.ogTitle ? pageMeta.ogTitle : metaTitle %}
     {% set ogDescription = pageMeta and pageMeta.ogDescription ? pageMeta.ogDescription : metaDescription %}
@@ -43,6 +44,9 @@
             <script type="application/ld+json">{{ schema|json_encode|raw }}</script>
         {% endfor %}
     {% endif %}
+    {% if materialSections.jsonLd %}
+        <script type="application/ld+json">{{ materialSections.jsonLd|json_encode|raw }}</script>
+    {% endif %}
     {% include 'components/seo/yandex-metrika-head.html.twig' only %}
     {% block stylesheets %}
         <link rel="stylesheet" href="{{ vite_asset('assets/styles/app.css') }}">
@@ -54,6 +58,15 @@
 
     <main class="min-h-screen">
         {% block content %}{% endblock %}
+        {% if materialSections.certificates is not empty %}
+            <section class="py-10" aria-label="Сертификаты и документы">
+                <div class="container mx-auto px-5 md:px-8 lg:px-12">
+                    <h2 class="mb-7 text-3xl font-normal text-primary">Сертификаты и документы</h2>
+                    {% include 'sections/certificates/list.html.twig' with { certificates: materialSections.certificates } only %}
+                </div>
+            </section>
+        {% endif %}
+        {% include 'sections/faq/list.html.twig' with { items: materialSections.faq } only %}
     </main>
 
     {% include 'components/layout/footer.html.twig' only %}

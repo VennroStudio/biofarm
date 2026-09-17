@@ -60,6 +60,8 @@ final readonly class UpdateProductCommand
         public ?array $relatedBlogPostIds = null,
         /** @var list<int>|null */
         public ?array $certificateIds = null,
+        /** @var list<int>|null */
+        public ?array $faqIds = null,
         /** @var list<string>|null */
         public ?array $features = null,
         public ?string $wbLink = null,

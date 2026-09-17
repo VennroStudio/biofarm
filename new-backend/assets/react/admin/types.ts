@@ -43,6 +43,7 @@ export type Product = {
   product_group_id: number | null;
   related_blog_post_ids: number[] | null;
   certificate_ids: number[] | null;
+  faq_ids?: number[] | null;
   features: string[] | null;
   wb_link: string | null;
   ozon_link: string | null;

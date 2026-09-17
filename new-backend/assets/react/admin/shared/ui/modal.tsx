@@ -1,7 +1,20 @@
 import { X } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import type { PropsWithChildren, ReactNode } from 'react';
 import { useEffect, useRef } from 'react';
 import { Button } from './button';
+
+const modalStack: HTMLElement[] = [];
+let bodyOverflow = '';
+function updateModalStack() {
+  modalStack.forEach((dialog, index) => {
+    const container = dialog.parentElement;
+    if (container) {
+      container.inert = index !== modalStack.length - 1;
+      container.style.zIndex = String(50 + index);
+    }
+  });
+}
 
 type ModalProps = PropsWithChildren<{
   description?: ReactNode;
@@ -28,21 +41,29 @@ export function Modal({ children, description, footer, headerContent, maxWidth =
     }
 
     previouslyFocusedRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const previousOverflow = document.body.style.overflow;
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (modalStack.length === 0) bodyOverflow = document.body.style.overflow;
+    modalStack.push(dialog);
+    updateModalStack();
     document.body.style.overflow = 'hidden';
 
     const focusableSelector = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
-    const focusFirst = () => dialogRef.current?.querySelector<HTMLElement>(focusableSelector)?.focus();
+    const focusFirst = () => {
+      if (modalStack.at(-1) === dialog) (dialog.querySelector<HTMLElement>(focusableSelector) ?? dialog).focus();
+    };
     const animationFrame = window.requestAnimationFrame(focusFirst);
 
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (modalStack.at(-1) !== dialog || event.defaultPrevented) return;
       if (event.key === 'Escape') {
+        event.preventDefault();
         onCloseRef.current();
         return;
       }
 
       if (event.key === 'Tab' && dialogRef.current) {
-        const focusable = Array.from(dialogRef.current.querySelectorAll<HTMLElement>(focusableSelector));
+        const focusable = Array.from(dialogRef.current.querySelectorAll<HTMLElement>(focusableSelector)).filter(element => element.getClientRects().length > 0 && !element.matches(':disabled'));
         if (focusable.length === 0) {
           event.preventDefault();
           dialogRef.current.focus();
@@ -50,7 +71,10 @@ export function Modal({ children, description, footer, headerContent, maxWidth =
         }
         const first = focusable[0];
         const last = focusable[focusable.length - 1];
-        if (event.shiftKey && document.activeElement === first) {
+        if (!dialog.contains(document.activeElement)) {
+          event.preventDefault();
+          first.focus();
+        } else if (event.shiftKey && document.activeElement === first) {
           event.preventDefault();
           last.focus();
         } else if (!event.shiftKey && document.activeElement === last) {
@@ -65,8 +89,12 @@ export function Modal({ children, description, footer, headerContent, maxWidth =
     return () => {
       window.cancelAnimationFrame(animationFrame);
       document.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = previousOverflow;
-      previouslyFocusedRef.current?.focus();
+      const wasTop = modalStack.at(-1) === dialog;
+      const index = modalStack.indexOf(dialog);
+      if (index >= 0) modalStack.splice(index, 1);
+      updateModalStack();
+      if (modalStack.length === 0) document.body.style.overflow = bodyOverflow;
+      if (wasTop && previouslyFocusedRef.current?.isConnected) previouslyFocusedRef.current.focus();
     };
   }, [open]);
 
@@ -74,7 +102,7 @@ export function Modal({ children, description, footer, headerContent, maxWidth =
     return null;
   }
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 grid place-items-center px-4 py-8">
       <button type="button" aria-label="Закрыть" className="absolute inset-0 bg-[#101812]/55" onClick={onClose} />
       <section
@@ -98,6 +126,7 @@ export function Modal({ children, description, footer, headerContent, maxWidth =
         <div className="overscroll-contain overflow-y-auto px-4 py-4 sm:px-6">{children}</div>
         {footer && <div className="flex flex-wrap justify-end gap-2 border-t border-[#dfece9] px-4 py-3 sm:px-6">{footer}</div>}
       </section>
-    </div>
+    </div>,
+    document.body,
   );
 }

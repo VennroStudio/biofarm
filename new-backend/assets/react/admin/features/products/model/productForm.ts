@@ -37,6 +37,7 @@ export type ProductForm = {
   product_group_id: string;
   related_blog_post_ids: number[];
   certificate_ids: number[];
+  faq_ids: number[];
   image: string;
   image_alt: string;
   image_items: ProductImageForm[];
@@ -74,6 +75,7 @@ export const emptyProductForm: ProductForm = {
   product_group_id: '',
   related_blog_post_ids: [],
   certificate_ids: [],
+  faq_ids: [],
   image: '',
   image_alt: '',
   image_items: [],
@@ -116,6 +118,7 @@ export function productFormFromProduct(product: Product): ProductForm {
     product_group_id: product.product_group_id ? String(product.product_group_id) : '',
     related_blog_post_ids: product.related_blog_post_ids ?? [],
     certificate_ids: product.certificate_ids ?? [],
+    faq_ids: product.faq_ids ?? [],
     image: mainImage?.path ?? product.image,
     image_alt: mainImage?.alt ?? product.image_alt ?? '',
     image_items: imageItems,
@@ -170,6 +173,7 @@ export function productPayloadFromForm(form: ProductForm) {
     productGroupId: form.product_group_id ? Number(form.product_group_id) : null,
     relatedBlogPostIds: form.related_blog_post_ids,
     certificateIds: form.certificate_ids,
+    faqIds: form.faq_ids,
     features: listFromLines(form.features),
     wbLink: form.wb_link || null,
     ozonLink: form.ozon_link || null,
@@ -178,7 +182,11 @@ export function productPayloadFromForm(form: ProductForm) {
 }
 
 export function productPayloadFromProduct(product: Product, overrides: Partial<ProductForm> = {}) {
-  return productPayloadFromForm({ ...productFormFromProduct(product), ...overrides });
+  return {
+    ...productPayloadFromForm({ ...productFormFromProduct(product), ...overrides }),
+    certificateIds: overrides.certificate_ids,
+    faqIds: overrides.faq_ids,
+  };
 }
 
 export function imageItem(path: string, index: number, isMain = false): ProductImageForm {

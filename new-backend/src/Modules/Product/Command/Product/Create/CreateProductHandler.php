@@ -114,6 +114,7 @@ final readonly class CreateProductHandler
                 productId: $product->id,
                 relatedBlogPostIds: $command->relatedBlogPostIds,
                 certificateIds: $command->certificateIds,
+                faqIds: $command->faqIds,
             );
             $this->deleteCache();
             $this->connection->commit();

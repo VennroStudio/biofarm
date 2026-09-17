@@ -7,6 +7,7 @@ namespace App\Http\Unifier\Home;
 use App\Components\Seo\JsonLdFactory;
 use App\Components\Seo\SeoUrlGenerator;
 use App\Http\Unifier\Product\ProductCatalogDataProvider;
+use App\Http\Unifier\Certificate\CertificateDataProvider;
 use App\Http\View\Blog\BlogPostView;
 use App\Http\View\Certificate\CertificateView;
 use App\Http\View\Home\HomeHeroProductView;
@@ -37,6 +38,7 @@ final readonly class HomePageUnifier
 
     public function __construct(
         private ProductCatalogDataProvider $catalogData,
+        private CertificateDataProvider $certificateData,
         private Connection $connection,
         private SeoUrlGenerator $urls,
         private JsonLdFactory $jsonLd,
@@ -119,43 +121,7 @@ final readonly class HomePageUnifier
      */
     private function certificates(): array
     {
-        if (!$this->hasTable('certificates')) {
-            return [];
-        }
-
-        $rows = $this->connection->createQueryBuilder()
-            ->select(
-                'c.id',
-                'c.title',
-                'c.file_path',
-                'c.document_type',
-                'c.product_id',
-                'c.description',
-                'p.name AS product_name',
-                'p.slug AS product_slug',
-            )
-            ->from('certificates', 'c')
-            ->leftJoin('c', 'products', 'p', 'p.id = c.product_id AND p.deleted_at IS NULL')
-            ->where('c.is_active = 1')
-            ->orderBy('c.sort_order', 'ASC')
-            ->addOrderBy('c.id', 'DESC')
-            ->setMaxResults(3)
-            ->executeQuery()
-            ->fetchAllAssociative();
-
-        return array_map(
-            static fn (array $row): CertificateView => new CertificateView(
-                id: (int)$row['id'],
-                title: (string)$row['title'],
-                filePath: (string)$row['file_path'],
-                documentType: (string)$row['document_type'],
-                productId: $row['product_id'] !== null ? (int)$row['product_id'] : null,
-                productName: $row['product_name'] !== null && trim((string)$row['product_name']) !== '' ? (string)$row['product_name'] : null,
-                productSlug: $row['product_slug'] !== null && trim((string)$row['product_slug']) !== '' ? (string)$row['product_slug'] : null,
-                description: $row['description'] !== null && trim((string)$row['description']) !== '' ? (string)$row['description'] : null,
-            ),
-            $rows,
-        );
+        return $this->certificateData->forPage('home');
     }
 
     /**

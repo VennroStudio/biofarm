@@ -111,6 +111,7 @@ final readonly class UpdateProductHandler
                 productId: $command->productId,
                 relatedBlogPostIds: $command->relatedBlogPostIds,
                 certificateIds: $command->certificateIds,
+                faqIds: $command->faqIds,
             );
             $this->deleteCache();
             $this->flusher->flush();

@@ -6,6 +6,8 @@ import { AdminShopLayout } from './layout/AdminShopLayout';
 import { AdminProductGroups } from './pages/AdminProductGroups';
 import { AdminLayout } from './layout/AdminLayout';
 import { AdminAttributes } from './pages/AdminAttributes';
+import { AdminMaterialsLayout } from './layout/AdminMaterialsLayout';
+import { MaterialCategoriesPage } from './features/materials/MaterialCategoriesPage';
 import { AdminBlogLayout } from './layout/AdminBlogLayout';
 import { AdminBlogCategories } from './pages/AdminBlogCategories';
 import { AdminBlog } from './pages/AdminBlog';
@@ -62,8 +64,16 @@ export function AdminApp() {
           <Route path="purposes" element={<Navigate to="/admin/shop/attributes" replace />} />
           <Route path="orders" element={<AdminOrders />} />
           <Route path="promo-codes" element={<Navigate to="/admin/shop/promo-codes" replace />} />
-          <Route path="certificates" element={<AdminCertificates />} />
-          <Route path="faq" element={<AdminFaq />} />
+          <Route path="certificates" element={<AdminMaterialsLayout kind="certificate" />} >
+            <Route index element={<Navigate to="list" replace />} />
+            <Route path="list" element={<AdminCertificates />} />
+            <Route path="categories" element={<MaterialCategoriesPage kind="certificate" />} />
+          </Route>
+          <Route path="faq" element={<AdminMaterialsLayout kind="faq" />} >
+            <Route index element={<Navigate to="list" replace />} />
+            <Route path="list" element={<AdminFaq />} />
+            <Route path="categories" element={<Navigate to="/admin/faq/list" replace />} />
+          </Route>
           <Route path="blog" element={<AdminBlogLayout />}>
             <Route index element={<Navigate to="articles" replace />} />
             <Route path="articles" element={<AdminBlog />} />

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Product\Service;
 
+use App\Modules\Content\Service\MaterialLibrary;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 
@@ -11,6 +12,7 @@ final readonly class ProductContentSyncer
 {
     public function __construct(
         private Connection $connection,
+        private MaterialLibrary $materials,
     ) {}
 
     /**
@@ -21,13 +23,17 @@ final readonly class ProductContentSyncer
         int $productId,
         ?array $relatedBlogPostIds = null,
         ?array $certificateIds = null,
+        ?array $faqIds = null,
     ): void {
-        if ($this->hasTable('product_blog_posts')) {
+        if ($relatedBlogPostIds !== null && $this->hasTable('product_blog_posts')) {
             $this->syncRelatedBlogPosts($productId, $this->existingBlogPostIds($relatedBlogPostIds));
         }
 
-        if ($this->hasTable('certificates')) {
-            $this->syncCertificates($productId, $this->existingCertificateIds($certificateIds));
+        if ($certificateIds !== null) {
+            $this->materials->syncTarget('product', (string)$productId, 'certificate', $certificateIds);
+        }
+        if ($faqIds !== null) {
+            $this->materials->syncTarget('product', (string)$productId, 'faq', $faqIds);
         }
     }
 
@@ -48,35 +54,6 @@ final readonly class ProductContentSyncer
     }
 
     /**
-     * @param list<int> $certificateIds
-     */
-    private function syncCertificates(int $productId, array $certificateIds): void
-    {
-        $this->connection->update(
-            'certificates',
-            [
-                'product_id' => null,
-                'updated_at' => gmdate('Y-m-d H:i:s'),
-            ],
-            ['product_id' => $productId],
-        );
-
-        if ($certificateIds === []) {
-            return;
-        }
-
-        $this->connection->executeStatement(
-            'UPDATE certificates SET product_id = :productId, updated_at = :updatedAt WHERE id IN (:ids)',
-            [
-                'productId' => $productId,
-                'updatedAt' => gmdate('Y-m-d H:i:s'),
-                'ids'       => $certificateIds,
-            ],
-            ['ids' => ArrayParameterType::INTEGER],
-        );
-    }
-
-    /**
      * @param list<int>|null $ids
      * @return list<int>
      */
@@ -92,28 +69,6 @@ final readonly class ProductContentSyncer
             ->from('blog_posts')
             ->where('id IN (:ids)')
             ->andWhere('deleted_at IS NULL')
-            ->setParameter('ids', $ids, ArrayParameterType::INTEGER)
-            ->executeQuery()
-            ->fetchFirstColumn());
-
-        return $this->orderedExistingIds($ids, $existing);
-    }
-
-    /**
-     * @param list<int>|null $ids
-     * @return list<int>
-     */
-    private function existingCertificateIds(?array $ids): array
-    {
-        $ids = $this->ids($ids);
-        if ($ids === []) {
-            return [];
-        }
-
-        $existing = array_map(static fn (mixed $id): int => (int)$id, $this->connection->createQueryBuilder()
-            ->select('id')
-            ->from('certificates')
-            ->where('id IN (:ids)')
             ->setParameter('ids', $ids, ArrayParameterType::INTEGER)
             ->executeQuery()
             ->fetchFirstColumn());

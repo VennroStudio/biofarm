@@ -1,8 +1,9 @@
+import { MaterialSelector } from '../../material-selection/MaterialSelector';
 import { lazy, Suspense, useEffect, useRef, useState, type Dispatch, type FormEvent, type KeyboardEvent, type ReactNode, type SetStateAction } from 'react';
 import { ArrowDown, ArrowUp, FileText, Images, Info, Link2, Search, Settings2, ShoppingBag, X } from 'lucide-react';
 import { ImageUploader } from '../../media/ui/ImageUploader';
 import { Button, ErrorAlert, Field, inputClass, Modal, textareaClass } from '../../../shared/ui';
-import type { BlogPost, Category, Certificate, ProductAttribute, ProductGroup } from '../../../types';
+import type { BlogPost, Category, ProductAttribute, ProductGroup } from '../../../types';
 import { productFormIssue, setMainImage, type ProductForm, type ProductFormIssue, type ProductImageForm } from '../model/productForm';
 
 const RichTextEditor = lazy(() => import('../../../shared/ui/RichTextEditor'));
@@ -11,7 +12,7 @@ const tabs = [
   { id: 'photos', title: 'Фотографии', icon: Images },
   { id: 'about', title: 'О товаре', icon: FileText },
   { id: 'attributes', title: 'Атрибуты', icon: Settings2 },
-  { id: 'related', title: 'Статьи и сертификаты', icon: Link2 },
+  { id: 'related', title: 'Связанные данные', icon: Link2 },
   { id: 'marketplaces', title: 'Маркетплейсы', icon: ShoppingBag },
   { id: 'seo', title: 'SEO', icon: Search },
 ] as const;
@@ -28,7 +29,6 @@ type Props = {
   attributes: ProductAttribute[];
   productGroups: ProductGroup[];
   blogPosts: BlogPost[];
-  certificates: Certificate[];
   form: ProductForm;
   open: boolean;
   error?: string | null;
@@ -40,13 +40,12 @@ type Props = {
 };
 
 
-export function ProductFormModal({ categories, attributes, productGroups, blogPosts, certificates, form, open, error, saving, setForm, onAddImage, onClose, onSubmit }: Props) {
+export function ProductFormModal({ categories, attributes, productGroups, blogPosts, form, open, error, saving, setForm, onAddImage, onClose, onSubmit }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>('main');
   const [issue, setIssue] = useState<ProductFormIssue | null>(null);
   const [confirmClose, setConfirmClose] = useState(false);
   const [attributeSearch, setAttributeSearch] = useState('');
   const [articleSearch, setArticleSearch] = useState('');
-  const [certificateSearch, setCertificateSearch] = useState('');
   const [initialForm] = useState(() => JSON.stringify(form));
   const bodyRef = useRef<HTMLFormElement>(null);
   const dirty = initialForm !== JSON.stringify(form);
@@ -95,7 +94,6 @@ export function ProductFormModal({ categories, attributes, productGroups, blogPo
   const area = (field: TextKey, label: string, placeholder = '') => <Field label={label}><textarea className={textareaClass} value={form[field]} placeholder={placeholder} onChange={event => update(field, event.target.value)} /></Field>;
   const matches = (value: string, search: string) => value.toLocaleLowerCase('ru').includes(search.trim().toLocaleLowerCase('ru'));
   const selectedArticles = blogPosts.filter(post => form.related_blog_post_ids.includes(post.id));
-  const selectedCertificates = certificates.filter(item => form.certificate_ids.includes(item.id));
   const visibleAttributes = attributes.filter(attribute => attribute.values.length > 0 && (matches(attribute.name, attributeSearch) || attribute.values.some(value => matches(value.name, attributeSearch))));
   const updateImage = (index: number, updates: Partial<ProductImageForm>) => {
     setForm((current) => {
@@ -272,12 +270,8 @@ export function ProductFormModal({ categories, attributes, productGroups, blogPo
               <div className="max-h-60 space-y-2 overflow-y-auto">{blogPosts.filter(post => matches(post.title, articleSearch)).map(post => <label key={post.id} className="flex items-start gap-3 rounded-xl border border-[#dfece9] p-3 text-sm text-[#294555]"><input className="mt-1 accent-[#2e8175]" type="checkbox" checked={form.related_blog_post_ids.includes(post.id)} onChange={() => setForm(current => ({ ...current, related_blog_post_ids: toggleId(current.related_blog_post_ids, post.id) }))} /><span>{post.title}<span className="block text-xs text-[#5f7580]">{post.is_published ? 'Опубликована' : 'Черновик'}</span></span></label>)}</div>
               {!blogPosts.some(post => matches(post.title, articleSearch)) && <p className="text-sm text-[#5f7580]">{blogPosts.length ? 'Статьи не найдены.' : 'Статей пока нет.'}</p>}
             </Group>
-            <Group title="Сертификаты">
-              <Field label="Поиск сертификатов"><input className={inputClass} type="search" value={certificateSearch} onChange={event => setCertificateSearch(event.target.value)} placeholder="Название сертификата" /></Field>
-              <div className="flex flex-wrap gap-2">{selectedCertificates.map(item => selectedChip(item.title, () => setForm(current => ({ ...current, certificate_ids: toggleId(current.certificate_ids, item.id) }))))}</div>
-              <div className="max-h-60 space-y-2 overflow-y-auto">{certificates.filter(item => matches(item.title, certificateSearch)).map(item => <label key={item.id} className="flex items-start gap-3 rounded-xl border border-[#dfece9] p-3 text-sm text-[#294555]"><input className="mt-1 accent-[#2e8175]" type="checkbox" checked={form.certificate_ids.includes(item.id)} onChange={() => setForm(current => ({ ...current, certificate_ids: toggleId(current.certificate_ids, item.id) }))} /><span>{item.title}{item.product_name && !form.certificate_ids.includes(item.id) && <span className="block text-xs text-[#5f7580]">Сейчас привязан: {item.product_name}</span>}</span></label>)}</div>
-              {!certificates.some(item => matches(item.title, certificateSearch)) && <p className="text-sm text-[#5f7580]">{certificates.length ? 'Сертификаты не найдены.' : 'Сертификатов пока нет.'}</p>}
-            </Group>
+            <MaterialSelector kind="certificate" ids={form.certificate_ids} onChange={ids => setForm(current => ({ ...current, certificate_ids: ids }))} />
+            <MaterialSelector kind="faq" ids={form.faq_ids} onChange={ids => setForm(current => ({ ...current, faq_ids: ids }))} />
           </>}
           {activeTab === 'seo' && <Group title="Поисковое оформление">
             {text('slug', 'Адрес страницы (slug)', 'Например, ekstrakt-kory-osiny')}

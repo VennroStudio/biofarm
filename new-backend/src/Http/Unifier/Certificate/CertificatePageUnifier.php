@@ -11,13 +11,12 @@ use App\Http\View\Certificate\CertificatePageView;
 use App\Http\View\Certificate\CertificateView;
 use App\Http\View\PageMetaView;
 use App\Modules\Page\Service\PageSeoProvider;
-use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 
 final readonly class CertificatePageUnifier
 {
     public function __construct(
-        private Connection $connection,
+        private CertificateDataProvider $certificateData,
         private SeoUrlGenerator $urls,
         private JsonLdFactory $jsonLd,
         private PageSeoProvider $pages,
@@ -69,50 +68,6 @@ final readonly class CertificatePageUnifier
      */
     private function certificates(): array
     {
-        if (!$this->hasTable('certificates')) {
-            return [];
-        }
-
-        /** @var list<array{id: int|string, title: string, file_path: string, document_type: string, product_id: int|string|null, product_name: string|null, product_slug: string|null, description: string|null}> $rows */
-        $rows = $this->connection->createQueryBuilder()
-            ->select(
-                'c.id',
-                'c.title',
-                'c.file_path',
-                'c.document_type',
-                'c.product_id',
-                'p.name AS product_name',
-                'p.slug AS product_slug',
-                'c.description',
-            )
-            ->from('certificates', 'c')
-            ->leftJoin('c', 'products', 'p', 'p.id = c.product_id AND p.deleted_at IS NULL')
-            ->where('c.is_active = 1')
-            ->orderBy('c.sort_order', 'ASC')
-            ->addOrderBy('c.id', 'DESC')
-            ->executeQuery()
-            ->fetchAllAssociative();
-
-        return array_map(
-            static fn (array $row): CertificateView => new CertificateView(
-                id: (int)$row['id'],
-                title: (string)$row['title'],
-                filePath: (string)$row['file_path'],
-                documentType: (string)$row['document_type'],
-                productId: $row['product_id'] !== null ? (int)$row['product_id'] : null,
-                productName: $row['product_name'] !== null ? (string)$row['product_name'] : null,
-                productSlug: $row['product_slug'] !== null ? (string)$row['product_slug'] : null,
-                description: $row['description'] !== null && trim((string)$row['description']) !== '' ? (string)$row['description'] : null,
-            ),
-            $rows,
-        );
-    }
-
-    /**
-     * @throws Exception
-     */
-    private function hasTable(string $name): bool
-    {
-        return $this->connection->createSchemaManager()->tablesExist([$name]);
+        return $this->certificateData->forPage('certificates');
     }
 }

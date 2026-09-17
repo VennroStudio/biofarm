@@ -1,6 +1,7 @@
+import { materialsApi } from '../features/materials/api';
 import { Plus } from 'lucide-react';
-import { FormEvent, useMemo, useState } from 'react';
-import { attributesApi, blogApi, categoriesApi, certificatesApi, productGroupsApi, productsApi } from '../api/resources';
+import { FormEvent, useMemo, useRef, useState } from 'react';
+import { attributesApi, blogApi, categoriesApi, productGroupsApi, productsApi } from '../api/resources';
 import {
   emptyProductForm,
   imageItem,
@@ -14,7 +15,7 @@ import { ProductTable } from '../features/products/ui/ProductTable';
 import { useLoadOnMount } from '../hooks/useLoadOnMount';
 import { messageFromError } from '../shared/lib';
 import { Badge, Button, Card, ErrorAlert, PageHeader, SearchField } from '../shared/ui';
-import type { BlogPost, Category, Certificate, Product, ProductAttribute, ProductGroup } from '../types';
+import type { BlogPost, Category, Product, ProductAttribute, ProductGroup } from '../types';
 
 export function AdminProducts() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -22,10 +23,11 @@ export function AdminProducts() {
   const [attributes, setAttributes] = useState<ProductAttribute[]>([]);
   const [productGroups, setProductGroups] = useState<ProductGroup[]>([]);
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
-  const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [search, setSearch] = useState('');
   const [form, setForm] = useState<ProductForm>(emptyProductForm);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [loadingSelection, setLoadingSelection] = useState(false);
+  const editRequest = useRef(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,34 +38,44 @@ export function AdminProducts() {
   );
 
   async function load() {
-    const [productResult, categoryResult, attributeResult, productGroupResult, blogResult, certificateResult] = await Promise.all([
+    const [productResult, categoryResult, attributeResult, productGroupResult, blogResult] = await Promise.all([
       productsApi.list(),
       categoriesApi.list(),
       attributesApi.list(),
       productGroupsApi.list(),
       blogApi.list(),
-      certificatesApi.list(),
     ]);
     setProducts(productResult.items);
     setCategories(categoryResult.items);
     setAttributes(attributeResult.items);
     setProductGroups(productGroupResult.items);
     setBlogPosts(blogResult.items);
-    setCertificates(certificateResult.items);
   }
 
   useLoadOnMount(load);
 
   function openCreate() {
+    editRequest.current += 1;
+    setLoadingSelection(false);
     setError(null);
     setForm({ ...emptyProductForm, category_id: String(categories[0]?.id ?? '') });
     setDialogOpen(true);
   }
 
-  function openEdit(product: Product) {
+  async function openEdit(product: Product) {
+    const requestId = ++editRequest.current;
     setError(null);
-    setForm(productFormFromProduct(product));
-    setDialogOpen(true);
+    setLoadingSelection(true);
+    try {
+      const selections = await materialsApi.selections('product', String(product.id));
+      if (requestId !== editRequest.current) return;
+      setForm({ ...productFormFromProduct(product), ...selections });
+      setDialogOpen(true);
+    } catch (loadError) {
+      if (requestId === editRequest.current) setError(messageFromError(loadError, 'Не удалось загрузить связанные материалы. Повторите открытие.'));
+    } finally {
+      if (requestId === editRequest.current) setLoadingSelection(false);
+    }
   }
 
   function addImage(url: string) {
@@ -127,6 +139,7 @@ export function AdminProducts() {
       />
       <ErrorAlert className="mb-5">{dialogOpen ? null : error}</ErrorAlert>
 
+      {loadingSelection && <p role="status" className="mb-4 text-sm text-[#5f7580]">Загрузка связанных материалов…</p>}
       <Card className="p-6">
         <div className="mb-8 flex flex-wrap items-center gap-4">
           <SearchField
@@ -152,7 +165,6 @@ export function AdminProducts() {
         attributes={attributes}
         productGroups={productGroups}
         blogPosts={blogPosts}
-        certificates={certificates}
         form={form}
         open={dialogOpen}
         error={dialogOpen ? error : null}

@@ -12,20 +12,17 @@ use App\Http\Action\Admin\Auth\RefreshAction as AdminRefreshAction;
 use App\Http\Action\Admin\BlogCategory\DeleteBlogCategoryAction;
 use App\Http\Action\Admin\BlogCategory\GetBlogCategoriesAction;
 use App\Http\Action\Admin\BlogCategory\SaveBlogCategoryAction;
-use App\Http\Action\Admin\Certificate\DeleteCertificateAction;
 use App\Http\Action\Admin\Certificate\GetCertificatesAction;
-use App\Http\Action\Admin\Certificate\SaveCertificateAction;
 use App\Http\Action\Admin\Certificate\UploadCertificateFileAction;
 use App\Http\Action\Admin\Dashboard\GetDashboardAction;
-use App\Http\Action\Admin\Faq\DeleteFaqItemAction;
 use App\Http\Action\Admin\Faq\GetFaqItemsAction;
-use App\Http\Action\Admin\Faq\SaveFaqItemAction;
 use App\Http\Action\Admin\Integration\GetBitrix24SettingsAction;
 use App\Http\Action\Admin\Integration\GetIntegrationErrorsAction;
 use App\Http\Action\Admin\Integration\MarkAllIntegrationErrorsReadAction;
 use App\Http\Action\Admin\Integration\MarkIntegrationErrorReadAction;
 use App\Http\Action\Admin\Integration\TestBitrix24ConnectionAction;
 use App\Http\Action\Admin\Integration\UpdateBitrix24SettingsAction;
+use App\Http\Action\Admin\Material\MaterialAction;
 use App\Http\Action\Admin\Media\DeleteMediaAction;
 use App\Http\Action\Admin\Media\UploadMediaAction;
 use App\Http\Action\Admin\Order\UpdateOrderDetailsAction;
@@ -89,16 +86,26 @@ return static function (App $app): void {
                 $group->patch('/promo-codes/{id}', SavePromoCodeAction::class);
                 $group->delete('/promo-codes/{id}', DeletePromoCodeAction::class);
 
+                $materialAction = MaterialAction::class;
+                $group->get('/material-targets', $materialAction)->setArgument('resource', 'targets');
+                $group->get('/material-targets/{type}/{id}/selections', $materialAction)->setArgument('resource', 'selections');
+                $group->get('/material-categories/{kind:certificate}', $materialAction)->setArgument('resource', 'categories');
+                $group->post('/material-categories/{kind:certificate}', $materialAction)->setArgument('resource', 'categories');
+                $group->map(['PATCH', 'DELETE'], '/material-categories/{kind:certificate}/{id:[0-9]+}', $materialAction)->setArgument('resource', 'categories');
+                $group->post('/materials/{kind}/bulk-attach', $materialAction)->setArgument('resource', 'bulk');
+                $group->map(['GET', 'POST'], '/materials/{kind}', $materialAction);
+                $group->map(['GET', 'PATCH', 'DELETE'], '/materials/{kind}/{id:[0-9]+}', $materialAction);
+
                 $group->get('/certificates', GetCertificatesAction::class);
-                $group->post('/certificates', SaveCertificateAction::class);
-                $group->patch('/certificates/{id}', SaveCertificateAction::class);
-                $group->delete('/certificates/{id}', DeleteCertificateAction::class);
+                $group->post('/certificates', $materialAction)->setArgument('kind', 'certificate');
+                $group->patch('/certificates/{id}', $materialAction)->setArgument('kind', 'certificate');
+                $group->delete('/certificates/{id}', $materialAction)->setArgument('kind', 'certificate');
                 $group->post('/certificates/upload', UploadCertificateFileAction::class);
 
                 $group->get('/faq-items', GetFaqItemsAction::class);
-                $group->post('/faq-items', SaveFaqItemAction::class);
-                $group->patch('/faq-items/{id}', SaveFaqItemAction::class);
-                $group->delete('/faq-items/{id}', DeleteFaqItemAction::class);
+                $group->post('/faq-items', $materialAction)->setArgument('kind', 'faq');
+                $group->patch('/faq-items/{id}', $materialAction)->setArgument('kind', 'faq');
+                $group->delete('/faq-items/{id}', $materialAction)->setArgument('kind', 'faq');
 
                 $group->post('/media', UploadMediaAction::class);
                 $group->delete('/media/{id}', DeleteMediaAction::class);

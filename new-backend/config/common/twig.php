@@ -10,6 +10,7 @@ use App\Components\Setting\SiteSettingsTwigExtension;
 use App\Components\Translator\TranslatorTwigExtension;
 use App\Components\Twig\FormattingExtension;
 use App\Modules\Page\Service\PageNavigationTwigExtension;
+use App\Http\Unifier\Page\PageMaterialsTwigExtension;
 use Psr\Container\ContainerInterface;
 use Twig\Environment;
 use Twig\Extension\DebugExtension;
@@ -83,6 +84,7 @@ return [
                 TranslatorTwigExtension::class,
                 FormattingExtension::class,
                 PageNavigationTwigExtension::class,
+                PageMaterialsTwigExtension::class,
             ],
         ],
     ],

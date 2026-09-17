@@ -12,6 +12,7 @@ use App\Http\View\Product\ProductCertificateView;
 use App\Http\View\Product\ProductImageView;
 use App\Http\View\Product\ProductPageProductView;
 use App\Http\View\Product\ProductVariantView;
+use App\Modules\Content\Service\MaterialLibrary;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
@@ -40,6 +41,7 @@ final readonly class ProductCatalogDataProvider
 
     public function __construct(
         private Connection $connection,
+        private MaterialLibrary $materials,
     ) {}
 
     /**
@@ -277,21 +279,7 @@ final readonly class ProductCatalogDataProvider
      */
     public function certificatesForProduct(int $productId): array
     {
-        if (!$this->hasTable('certificates')) {
-            return [];
-        }
-
-        /** @var list<array{id: int|string, title: string, file_path: string, document_type: string, description: string|null}> $rows */
-        $rows = $this->connection->createQueryBuilder()
-            ->select('c.id', 'c.title', 'c.file_path', 'c.document_type', 'c.description')
-            ->from('certificates', 'c')
-            ->where('c.product_id = :productId')
-            ->andWhere('c.is_active = 1')
-            ->setParameter('productId', $productId)
-            ->orderBy('c.sort_order', 'ASC')
-            ->addOrderBy('c.id', 'DESC')
-            ->executeQuery()
-            ->fetchAllAssociative();
+        $rows = $this->materials->publicItems('certificate', 'product', (string)$productId);
 
         return array_map(
             fn (array $row): ProductCertificateView => new ProductCertificateView(
