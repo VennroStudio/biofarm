@@ -2,6 +2,8 @@ import { AdminProgram } from './pages/AdminProgram';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { getToken } from './api/client';
+import { AdminShopLayout } from './layout/AdminShopLayout';
+import { AdminProductGroups } from './pages/AdminProductGroups';
 import { AdminLayout } from './layout/AdminLayout';
 import { AdminAttributes } from './pages/AdminAttributes';
 import { AdminBlog } from './pages/AdminBlog';
@@ -43,13 +45,20 @@ export function AdminApp() {
           }
         >
           <Route index element={<AdminDashboard />} />
-          <Route path="products" element={<AdminProducts />} />
-          <Route path="categories" element={<AdminCategories />} />
-          <Route path="attributes" element={<AdminAttributes />} />
+          <Route path="shop" element={<AdminShopLayout />}>
+            <Route index element={<Navigate to="categories" replace />} />
+            <Route path="categories" element={<AdminCategories />} />
+            <Route path="products" element={<AdminProducts />} />
+            <Route path="attributes" element={<AdminAttributes />} />
+            <Route path="product-groups" element={<AdminProductGroups />} />
+          </Route>
+          <Route path="products" element={<Navigate to="/admin/shop/products" replace />} />
+          <Route path="categories" element={<Navigate to="/admin/shop/categories" replace />} />
+          <Route path="attributes" element={<Navigate to="/admin/shop/attributes" replace />} />
           <Route path="pages" element={<AdminPages />} />
-          <Route path="product-groups" element={<Navigate to="/admin/products" replace />} />
-          <Route path="components" element={<Navigate to="/admin/attributes" replace />} />
-          <Route path="purposes" element={<Navigate to="/admin/attributes" replace />} />
+          <Route path="product-groups" element={<Navigate to="/admin/shop/product-groups" replace />} />
+          <Route path="components" element={<Navigate to="/admin/shop/attributes" replace />} />
+          <Route path="purposes" element={<Navigate to="/admin/shop/attributes" replace />} />
           <Route path="orders" element={<AdminOrders />} />
           <Route path="promo-codes" element={<AdminPromoCodes />} />
           <Route path="certificates" element={<AdminCertificates />} />

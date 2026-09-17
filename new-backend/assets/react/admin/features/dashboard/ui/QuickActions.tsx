@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Card } from '../../../shared/ui';
 
 const quickLinks = [
-  { href: '/admin/products', label: 'Добавить товар', icon: Package },
+  { href: '/admin/shop/products', label: 'Добавить товар', icon: Package },
   { href: '/admin/orders', label: 'Просмотреть заказы', icon: ShoppingCart },
   { href: '/admin/blog', label: 'Написать статью', icon: FileText },
   { href: '/admin/withdrawals', label: 'Заявки на вывод', icon: Wallet },

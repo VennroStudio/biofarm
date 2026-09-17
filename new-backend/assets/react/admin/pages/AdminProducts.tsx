@@ -9,22 +9,12 @@ import {
   productPayloadFromProduct,
   type ProductForm,
 } from '../features/products/model/productForm';
-import {
-  emptyProductGroupForm,
-  productGroupFormFromGroup,
-  productGroupPayloadFromForm,
-  type ProductGroupForm,
-} from '../features/product-groups/model/productGroupForm';
-import { ProductGroupFormModal } from '../features/product-groups/ui/ProductGroupFormModal';
-import { ProductGroupsTable } from '../features/product-groups/ui/ProductGroupsTable';
 import { ProductFormModal } from '../features/products/ui/ProductFormModal';
 import { ProductTable } from '../features/products/ui/ProductTable';
 import { useLoadOnMount } from '../hooks/useLoadOnMount';
 import { messageFromError } from '../shared/lib';
 import { Badge, Button, Card, ErrorAlert, PageHeader, SearchField } from '../shared/ui';
 import type { BlogPost, Category, Certificate, Product, ProductAttribute, ProductGroup } from '../types';
-
-type ProductsTab = 'groups' | 'products';
 
 export function AdminProducts() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -33,14 +23,10 @@ export function AdminProducts() {
   const [productGroups, setProductGroups] = useState<ProductGroup[]>([]);
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
   const [certificates, setCertificates] = useState<Certificate[]>([]);
-  const [activeTab, setActiveTab] = useState<ProductsTab>('products');
   const [search, setSearch] = useState('');
   const [form, setForm] = useState<ProductForm>(emptyProductForm);
-  const [groupForm, setGroupForm] = useState<ProductGroupForm>(emptyProductGroupForm);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [groupDialogOpen, setGroupDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [groupSaving, setGroupSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const categoryById = useMemo(() => new Map(categories.map((category) => [String(category.id), category.name])), [categories]);
@@ -80,18 +66,6 @@ export function AdminProducts() {
     setDialogOpen(true);
   }
 
-  function openCreateGroup() {
-    setError(null);
-    setGroupForm(emptyProductGroupForm);
-    setGroupDialogOpen(true);
-  }
-
-  function openEditGroup(group: ProductGroup) {
-    setError(null);
-    setGroupForm(productGroupFormFromGroup(group));
-    setGroupDialogOpen(true);
-  }
-
   function addImage(url: string) {
     setForm((current) => ({
       ...current,
@@ -121,25 +95,6 @@ export function AdminProducts() {
     }
   }
 
-  async function submitGroup(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setGroupSaving(true);
-    setError(null);
-    try {
-      if (groupForm.id) {
-        await productGroupsApi.update(groupForm.id, productGroupPayloadFromForm(groupForm));
-      } else {
-        await productGroupsApi.create(productGroupPayloadFromForm(groupForm));
-      }
-      setGroupDialogOpen(false);
-      await load();
-    } catch (submitError) {
-      setError(messageFromError(submitError, 'Не удалось сохранить группу товаров'));
-    } finally {
-      setGroupSaving(false);
-    }
-  }
-
   async function remove(product: Product) {
     if (!confirm(`Удалить товар "${product.name}"?`)) {
       return;
@@ -163,82 +118,34 @@ export function AdminProducts() {
     }
   }
 
-  async function removeGroup(group: ProductGroup) {
-    if (!confirm(`Удалить группу "${group.name}"? Товары останутся, но перестанут показываться вариантами друг друга.`)) {
-      return;
-    }
-    setError(null);
-    try {
-      await productGroupsApi.delete(group.id);
-      await load();
-    } catch (removeError) {
-      setError(messageFromError(removeError, 'Не удалось удалить группу товаров'));
-    }
-  }
-
-  const action = activeTab === 'products'
-    ? <Button onClick={openCreate}><Plus className="h-4 w-4" />Добавить товар</Button>
-    : <Button onClick={openCreateGroup}><Plus className="h-4 w-4" />Добавить группу</Button>;
-
   return (
     <>
       <PageHeader
         title="Товары"
         subtitle="Управление каталогом товаров"
-        actions={action}
+        actions={<Button onClick={openCreate}><Plus className="h-4 w-4" />Добавить товар</Button>}
       />
-      <ErrorAlert className="mb-5">{dialogOpen || groupDialogOpen ? null : error}</ErrorAlert>
+      <ErrorAlert className="mb-5">{dialogOpen ? null : error}</ErrorAlert>
 
-      <div className="mb-5 inline-flex rounded-lg border border-[#dfece9] bg-white p-1 shadow-sm">
-        <button
-          type="button"
-          className={`rounded-md px-4 py-2 text-sm font-semibold transition ${
-            activeTab === 'products' ? 'bg-[#18574f] text-white' : 'text-[#5f7580] hover:bg-[#eaf5f1] hover:text-[#294555]'
-          }`}
-          onClick={() => setActiveTab('products')}
-        >
-          Товары
-        </button>
-        <button
-          type="button"
-          className={`rounded-md px-4 py-2 text-sm font-semibold transition ${
-            activeTab === 'groups' ? 'bg-[#18574f] text-white' : 'text-[#5f7580] hover:bg-[#eaf5f1] hover:text-[#294555]'
-          }`}
-          onClick={() => setActiveTab('groups')}
-        >
-          Группы
-        </button>
-      </div>
-
-      {activeTab === 'products' && (
-        <Card className="p-6">
-          <div className="mb-8 flex flex-wrap items-center gap-4">
-            <SearchField
-              className="w-full max-w-sm"
-              placeholder="Поиск товаров..."
-              value={search}
-              onChange={setSearch}
-            />
-            <Badge tone="gray">{filteredProducts.length} товаров</Badge>
-          </div>
-
-          <ProductTable
-            categoryById={categoryById}
-            products={filteredProducts}
-            onEdit={openEdit}
-            onRemove={(product) => void remove(product)}
-            onToggleActive={(product) => void toggleActive(product)}
+      <Card className="p-6">
+        <div className="mb-8 flex flex-wrap items-center gap-4">
+          <SearchField
+            className="w-full max-w-sm"
+            placeholder="Поиск товаров..."
+            value={search}
+            onChange={setSearch}
           />
-        </Card>
-      )}
+          <Badge tone="gray">{filteredProducts.length} товаров</Badge>
+        </div>
 
-      {activeTab === 'groups' && (
-        <ProductGroupsTable
-          groups={productGroups}
-          onEdit={openEditGroup}
-          onRemove={(group) => void removeGroup(group)}
+        <ProductTable
+          categoryById={categoryById}
+          products={filteredProducts}
+          onEdit={openEdit}
+          onRemove={(product) => void remove(product)}
+          onToggleActive={(product) => void toggleActive(product)}
         />
-      )}
+      </Card>
 
       <ProductFormModal
         categories={categories}
@@ -257,19 +164,6 @@ export function AdminProducts() {
           setError(null);
         }}
         onSubmit={(event) => void submit(event)}
-      />
-
-      <ProductGroupFormModal
-        form={groupForm}
-        open={groupDialogOpen}
-        error={groupDialogOpen ? error : null}
-        saving={groupSaving}
-        setForm={setGroupForm}
-        onClose={() => {
-          setGroupDialogOpen(false);
-          setError(null);
-        }}
-        onSubmit={(event) => void submitGroup(event)}
       />
     </>
   );
