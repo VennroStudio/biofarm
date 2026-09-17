@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-use App\Http\Action\Admin\BlogCategory\GetBlogCategoriesAction;
-use App\Http\Action\Admin\BlogCategory\SaveBlogCategoryAction;
-use App\Http\Action\Admin\BlogCategory\DeleteBlogCategoryAction;
 use App\Components\Http\Middleware\Identity\Authenticate;
 use App\Components\Http\Middleware\Identity\RequireAdmin;
 use App\Components\Router\StaticRouteGroup as Group;
-use App\Http\Action\Admin\Auth\RefreshAction as AdminRefreshAction;
 use App\Http\Action\Admin\Auth\LoginAction as AdminLoginAction;
 use App\Http\Action\Admin\Auth\LogoutAction as AdminLogoutAction;
 use App\Http\Action\Admin\Auth\MeAction as AdminMeAction;
+use App\Http\Action\Admin\Auth\RefreshAction as AdminRefreshAction;
+use App\Http\Action\Admin\BlogCategory\DeleteBlogCategoryAction;
+use App\Http\Action\Admin\BlogCategory\GetBlogCategoriesAction;
+use App\Http\Action\Admin\BlogCategory\SaveBlogCategoryAction;
 use App\Http\Action\Admin\Certificate\DeleteCertificateAction;
 use App\Http\Action\Admin\Certificate\GetCertificatesAction;
 use App\Http\Action\Admin\Certificate\SaveCertificateAction;
@@ -51,6 +51,7 @@ use App\Http\Action\Admin\Review\ApproveReviewAction;
 use App\Http\Action\Admin\Setting\ChangePasswordAction;
 use App\Http\Action\Admin\Setting\GetSettingsAction;
 use App\Http\Action\Admin\Setting\UpdateSettingsAction;
+use App\Http\Action\Admin\User\GetUserDetailsAction;
 use App\Http\Action\Admin\User\GetUsersAction as AdminGetUsersAction;
 use App\Http\Action\Admin\User\UpdateUserProfileAction;
 use App\Http\Action\Admin\Withdrawal\CreateWithdrawalAction;
@@ -127,6 +128,7 @@ return static function (App $app): void {
                 $group->delete('/product-groups/{id}', DeleteProductGroupAction::class);
 
                 $group->get('/users', AdminGetUsersAction::class);
+                $group->get('/users/{id:[0-9]+}/details', GetUserDetailsAction::class);
                 $group->patch('/users/{id}', UpdateUserProfileAction::class);
 
                 $group->get('/withdrawals', GetWithdrawalsAction::class);

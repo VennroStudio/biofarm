@@ -1,5 +1,5 @@
-import { Calendar, Edit, Mail, Phone, UserCheck } from 'lucide-react';
-import { formatDate, formatMoney } from '../../../shared/lib';
+import { Calendar, Edit, Mail, Phone } from 'lucide-react';
+import { formatDate } from '../../../shared/lib';
 import {
   AdminTable,
   Badge,
@@ -14,12 +14,10 @@ import type { AdminCustomer } from '../../../types';
 
 type Props = {
   users: AdminCustomer[];
-  changingPartner: boolean;
-  onTogglePartner: (user: AdminCustomer) => void;
   onEdit: (user: AdminCustomer) => void;
 };
 
-export function UsersTable({ users, onTogglePartner, onEdit, changingPartner }: Props) {
+export function UsersTable({ users, onEdit }: Props) {
   if (users.length === 0) {
     return <EmptyState>Пользователи не найдены</EmptyState>;
   }
@@ -32,7 +30,6 @@ export function UsersTable({ users, onTogglePartner, onEdit, changingPartner }: 
             <TableHeaderCell>Пользователь</TableHeaderCell>
             <TableHeaderCell>Контакты</TableHeaderCell>
             <TableHeaderCell>Статус</TableHeaderCell>
-            <TableHeaderCell>Бонусы</TableHeaderCell>
             <TableHeaderCell>Регистрация</TableHeaderCell>
             <TableHeaderCell>Действия</TableHeaderCell>
           </tr>
@@ -48,7 +45,7 @@ export function UsersTable({ users, onTogglePartner, onEdit, changingPartner }: 
                   <div>
                     <p className="font-semibold">{user.name}</p>
                     {user.is_team_member && <p className="text-xs">Команда: {user.team_partner_name}</p>}
-                    {user.is_referral && <><Badge tone="gray" className="mt-1">Реферал</Badge><p className="text-xs">Пригласивший: {user.parent_name || user.referred_by_user_id}</p></>}
+                    {user.is_referral && <p className="text-xs">Пригласивший: {user.parent_name || user.referred_by_user_id}</p>}
                   </div>
                 </div>
               </TableCell>
@@ -59,7 +56,6 @@ export function UsersTable({ users, onTogglePartner, onEdit, changingPartner }: 
                 </div>
               </TableCell>
               <TableCell><Badge tone={user.is_partner ? 'green' : 'gray'}>{user.is_partner ? 'Партнёр' : user.is_team_member ? 'Участник команды' : user.is_referral ? 'Реферал' : 'Пользователь'}</Badge></TableCell>
-              <TableCell className="font-semibold text-[#2e8175]">{formatMoney(user.bonus_balance)}</TableCell>
               <TableCell>
                 <span className="flex items-center gap-2 text-sm text-[#5f7580]">
                   <Calendar className="h-3 w-3" />
@@ -71,10 +67,6 @@ export function UsersTable({ users, onTogglePartner, onEdit, changingPartner }: 
                   <Button variant="outline" size="sm" onClick={() => onEdit(user)}>
                     <Edit className="h-4 w-4" />
                     Изменить
-                  </Button>
-                  <Button variant={user.is_partner ? 'outline' : 'primary'} size="sm" disabled={changingPartner} onClick={() => onTogglePartner(user)}>
-                    <UserCheck className="h-4 w-4" />
-                    {user.is_partner ? 'Снять партнёра' : 'Сделать партнёром'}
                   </Button>
                 </div>
               </TableCell>
