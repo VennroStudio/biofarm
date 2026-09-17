@@ -148,6 +148,17 @@ check((int)$p->listing('team', 4, 1, 1, 'name', 'desc')['items'][0]['id'] === 7,
 fails(static fn () => $p->listing('team', 4, 1, 25, 'unsafe SQL', 'asc'), 'reject unknown sort column');
 fails(static fn () => $p->listing('team', 4, 1, 25, 'name', 'unsafe SQL'), 'reject unknown sort direction');
 check($p->listing('sales', 4)['items'] !== [], 'sales available');
+$p->adjust(7, 'commission', 123, 'wallet filter fixture', 1);
+foreach (['shopping', 'commission'] as $wallet) {
+    $expected = $db->fetchAllAssociative('SELECT id FROM program_ledger WHERE user_id=? AND wallet=? ORDER BY id DESC LIMIT 2 OFFSET 2', [7, $wallet]);
+    $filtered = $p->listing('ledger', 7, 2, 2, wallet: $wallet)['items'];
+    check(array_column($filtered, 'id') === array_column($expected, 'id'), 'wallet filtering precedes pagination');
+    foreach ($p->listing('ledger', 7, limit: 100, wallet: $wallet)['items'] as $entry) {
+        check($entry['wallet'] === $wallet && $entry['user_id'] === 7, 'wallet filtering keeps account ownership');
+    }
+}
+fails(static fn () => $p->listing('ledger', 7, wallet: 'unknown'), 'invalid wallet rejected');
+
 order($db, $p, 'INFLIGHT');
 $db->insert('payment_operations', ['id' => 'inflight', 'order_id' => 'INFLIGHT', 'kind' => 'payment', 'status' => 'creating']);
 fails(static fn () => $p->cancelOrder('INFLIGHT'), 'inflight payment protects bonus reservation');

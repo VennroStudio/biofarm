@@ -46,7 +46,7 @@ export function ReferralPanel({ withdrawalsEnabled }: { withdrawalsEnabled: bool
     useEffect(() => {
         if (tab === "invite") return;
         let live = true;
-        void request<Listing>(`/v1/program/${tab}?page=${page}&sort=${sort}&direction=${direction}`)
+        void request<Listing>(`/v1/program/${tab}?page=${page}&sort=${sort}&direction=${direction}${tab === "ledger" ? "&wallet=commission" : ""}`)
             .then((d) => {
                 if (live) { setList(d); setError(""); }
             })
@@ -86,7 +86,6 @@ export function ReferralPanel({ withdrawalsEnabled }: { withdrawalsEnabled: bool
         ledger: [
             ["created_at", "Дата"],
             ["kind", "Операция"],
-            ["wallet", "Счёт"],
             ["state", "Состояние"],
             ["order_id", "Заказ"],
             ["amount_minor", "Сумма"],
@@ -151,7 +150,6 @@ export function ReferralPanel({ withdrawalsEnabled }: { withdrawalsEnabled: bool
                                     <div className="mt-3 space-y-2 text-muted-foreground">
                                         <p>Начисления — после подтверждённой оплаты. Доступны после доставки и удержания {data.rates.holdDays} дней.</p>
                                         <p>Четыре уровня: {data.rates.levelsBps.map((n) => `${n / 100}%`).join(" / ")}. Ближайшему партнёру: {data.rates.partnerBps / 100}%.</p>
-                                        <p>Покупательские бонусы: {data.rates.buyerBps / 100}%. Они используются для покупок и не выводятся деньгами.</p>
                                     </div>
                                 </details>
                             </Section>
@@ -260,17 +258,7 @@ export function ReferralPanel({ withdrawalsEnabled }: { withdrawalsEnabled: bool
                             <Section title={tab === "offers" ? "Отправленные корзины" : tab === "withdrawals" ? "История выплат" : title}>
                                 {tab === "team" && <p className="text-sm text-muted-foreground">Уровень 1 — приглашённые вами лично. Нажмите на заголовок столбца для сортировки всей команды. Участник, ставший партнёром, уходит вместе со своей веткой.</p>}
                                 {tab === "sales" && <p className="text-sm text-muted-foreground">Оплаченные заказы, по которым вам начислена комиссия. Сумма комиссии учитывает возвраты.</p>}
-                                {tab === "ledger" && <p className="text-sm text-muted-foreground">История денежных комиссий и покупательских бонусов. Состояние показывает, доступно ли начисление.</p>}
-                                {tab === "ledger" && (
-                                    <details className="rounded-xl bg-secondary/40 p-4 text-sm">
-                                        <summary className="cursor-pointer text-primary">Баланс покупательских бонусов</summary>
-                                        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                                            {([["availableMinor", "Доступно"], ["pendingMinor", "На удержании"], ["reservedMinor", "Зарезервировано"], ["debtMinor", "Долг"]] as const).map(([key, caption]) => (
-                                                <div key={key}>{caption}: <strong>{money(data.balances.shopping[key])}</strong></div>
-                                            ))}
-                                        </div>
-                                    </details>
-                                )}
+                                {tab === "ledger" && <p className="text-sm text-muted-foreground">История денежных комиссий. Состояние показывает, доступно ли начисление.</p>}
                                 <Rows
                                     loading={loadingList}
                                     rows={list.items}

@@ -1,1 +1,1 @@
-export type ProfileTab = 'addresses' | 'favorites' | 'orders' | 'profile';
+export type ProfileTab = 'bonuses' | 'addresses' | 'favorites' | 'orders' | 'profile';

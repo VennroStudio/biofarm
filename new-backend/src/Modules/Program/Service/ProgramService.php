@@ -489,9 +489,9 @@ final class ProgramService
         });
     }
 
-    public function listing(string $kind, ?int $user, int $page = 1, int $limit = 25, string $sort = 'depth', string $direction = 'asc'): array
+    public function listing(string $kind, ?int $user, int $page = 1, int $limit = 25, string $sort = 'depth', string $direction = 'asc', ?string $wallet = null): array
     {
-        return $this->atomic(function () use ($kind, $user, $page, $limit, $sort, $direction) {
+        return $this->atomic(function () use ($kind, $user, $page, $limit, $sort, $direction, $wallet) {
             $limit = max(1, min(100, $limit));
             $offset = (max(1, $page) - 1) * $limit;
             $params = [];
@@ -522,6 +522,13 @@ final class ProgramService
                 if ($user !== null) {
                     $params = [$user];
                 }
+            }
+            if ($wallet !== null) {
+                if ($kind !== 'ledger' || !\in_array($wallet, ['shopping', 'commission'], true)) {
+                    throw new DomainException('Invalid ledger wallet');
+                }
+                $sql .= ($user === null ? ' WHERE' : ' AND') . ' wallet=?';
+                $params[] = $wallet;
             }
             $rows = $this->db->fetchAllAssociative($sql . ' ORDER BY ' . $orderBy . ' LIMIT ' . $limit . ' OFFSET ' . $offset, $params);
             foreach ($rows as &$row) {

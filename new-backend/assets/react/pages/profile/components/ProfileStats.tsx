@@ -19,7 +19,7 @@ export function ProfileStats({ orders, referralInfo, user }: Props) {
           </div>
           <div>
             <p className="text-2xl font-bold">{formatMoney(user.bonusBalance)}</p>
-            <p className="text-sm text-muted-foreground">Бонусный баланс</p>
+            <p className="text-sm text-muted-foreground">Покупательские бонусы</p>
           </div>
         </CardContent>
       </Card>

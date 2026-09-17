@@ -91,6 +91,18 @@ try {
         $tokens[] = $login['access_token'];
     }
     $admin = $tokens[0];
+    $program = $c->get(ProgramService::class);
+    $program->adjust($ids[1], 'shopping', 123, 'bonus separation fixture', $ids[0]);
+    $program->adjust($ids[1], 'commission', 456, 'commission separation fixture', $ids[0]);
+    foreach (['shopping', 'commission'] as $wallet) {
+        $history = $call('GET', '/v1/program/ledger?wallet=' . $wallet . '&limit=1', [], $tokens[1]);
+        ok(count($history['items']) === 1 && $history['items'][0]['wallet'] === $wallet, 'wallet filter through HTTP');
+        ok((int)$history['items'][0]['user_id'] === $ids[1], 'wallet filter preserves owner');
+    }
+    $call('GET', '/v1/program/ledger?wallet=unknown', [], $tokens[1], 422);
+    $program->adjust($ids[1], 'shopping', -123, 'restore fixture balance', $ids[0]);
+    $program->adjust($ids[1], 'commission', -456, 'restore fixture balance', $ids[0]);
+
     $buyer = $tokens[6];
     $team = $call('GET', '/v1/program/team?sort=depth&direction=asc&limit=2&page=2', [], $tokens[1]);
     ok(array_map('intval', array_column($team['items'], 'id')) === [$ids[4], $ids[5]], 'team sorting precedes pagination through HTTP');
@@ -137,7 +149,6 @@ try {
         $receiptTotal += YooKassaGateway::minor($line['amount']['value']) * (int)$line['quantity'];
     }
     ok($receiptTotal === (int)$op['amount_minor'], 'receipt exact sum');
-    $program = $c->get(ProgramService::class);
     try {
         $program->cancelOrder($orderId);
         throw new RuntimeException('active payment cancelled');

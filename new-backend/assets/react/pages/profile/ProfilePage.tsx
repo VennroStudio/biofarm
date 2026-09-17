@@ -20,6 +20,7 @@ import {
 } from '../../site/api';
 import { loadFavoriteIds, toggleFavorite } from '../../site/favorites';
 import { Button } from '../../site/ui';
+import { BonusPanel } from './components/BonusPanel';
 import { AddressesPanel } from './components/AddressesPanel';
 import { FavoritesPanel } from './components/FavoritesPanel';
 import { OrderDetailsDialog } from './components/OrderDetailsDialog';
@@ -196,6 +197,10 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, withdrawa
                   <span>Адреса</span>
                 </TabButton>
               )}
+              <TabButton active={tab === 'bonuses'} controls="bonuses-tabpanel" id="bonuses-tab" onClick={() => setTab('bonuses')}>
+                <Gift className="h-4 w-4" />
+                <span>Мои бонусы</span>
+              </TabButton>
               {favoritesEnabled && (
                 <TabButton active={tab === 'favorites'} controls="favorites-tabpanel" id="favorites-tab" onClick={() => setTab('favorites')}>
                   <Heart className="h-4 w-4" />
@@ -212,6 +217,9 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, withdrawa
           </div>
 
           <div className="min-w-0">
+            <TabPanel active={tab === 'bonuses'} id="bonuses-tabpanel" labelledBy="bonuses-tab">
+              {tab === 'bonuses' && <BonusPanel />}
+            </TabPanel>
             <TabPanel active={tab === 'profile'} id="profile-tabpanel" labelledBy="profile-tab">
                 <ProfileDetailsCard
                   editCardNumber={editCardNumber}
