@@ -97,6 +97,7 @@ try {
     }
     $admin = $tokens[0];
     $program = $c->get(ProgramService::class);
+    $call('PATCH', '/admin/api/program/settings', ['directBps' => 100, 'teamBps' => 50, 'referralBonusBps' => 100, 'buyerBps' => 100, 'capBps' => 400, 'products' => []], $admin);
     $invite = $call('GET', '/v1/program/team-invitation', [], $tokens[1]);
     foreach ([3, 4, 5] as $member) {
         $call('POST', '/v1/program/join', ['code' => $invite['code'], 'consent' => true], $tokens[$member]);
@@ -306,7 +307,7 @@ try {
     $noPromoOffer = $call('POST', '/v1/program/offers', ['title' => 'Без автопромокода', 'promoCode' => $retiredCode, 'items' => [['productId' => $product, 'quantity' => 1]]], $tokens[1]);
     ok(!array_key_exists('promoCode', $call('GET', '/v1/offers/' . $noPromoOffer['id'])), 'QR no longer imports a promo');
     $sim = $call('POST', '/admin/api/program/simulate', ['amount' => '10000', 'discountAmount' => '1000', 'costAmount' => '5000'], $admin);
-    ok($sim['totalIncentivesMinor'] === 127000 && $sim['remainingAfterCostsMinor'] === 373000, 'simulator includes all supplied costs');
+    ok($sim['totalIncentivesMinor'] === 122500 && $sim['remainingAfterCostsMinor'] === 377500, 'simulator includes all supplied costs');
     ok(!array_key_exists('maxPromoPercent', $call('GET', '/admin/api/program/settings', [], $admin)), 'partner promo setting retired');
 
     // Existing unbound account follows the first valid link, even with another partner's QR.

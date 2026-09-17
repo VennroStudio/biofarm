@@ -60,6 +60,7 @@ function paid($db, $p, string $id): void
     $p->settleOrder($id);
 }
 
+$p->updateSettings(['directBps' => 100, 'teamBps' => 50], 1);
 $invite = $p->teamInvite(1);
 fails(static fn () => $p->teamInvite(2), 'ordinary customer cannot invite team members');
 fails(static fn () => $p->joinTeam(2, $invite['code'], false), 'explicit consent required');
@@ -87,7 +88,7 @@ check(rewards($db, 'MEMBER') === [[1, 'commission', 'team', 10000], [2, 'shoppin
 $item = order($db, $p, 'MEMBER-CUSTOMER', 3);
 paid($db, $p, 'MEMBER-CUSTOMER');
 paid($db, $p, 'MEMBER-CUSTOMER');
-check(rewards($db, 'MEMBER-CUSTOMER') === [[1, 'commission', 'team', 10000], [2, 'commission', 'direct', 10000], [3, 'shopping', 'buyer', 10000]], 'member customer pays member and partner once');
+check(rewards($db, 'MEMBER-CUSTOMER') === [[1, 'commission', 'team', 5000], [2, 'commission', 'direct', 10000], [3, 'shopping', 'buyer', 10000]], 'member customer pays member and partner once');
 order($db, $p, 'NO-CASCADE', 4);
 paid($db, $p, 'NO-CASCADE');
 check(rewards($db, 'NO-CASCADE') === [[3, 'shopping', 'referral_bonus', 10000], [4, 'shopping', 'buyer', 10000]], 'ordinary referral pays bonuses only and stops chain');
@@ -99,7 +100,7 @@ paid($db, $p, 'REPEAT');
 check(rewards($db, 'REPEAT') === rewards($db, 'MEMBER-CUSTOMER'), 'registered repeat purchase keeps attribution');
 order($db, $p, 'GUEST-MEMBER', null, ref: 'bf-2');
 paid($db, $p, 'GUEST-MEMBER');
-check(rewards($db, 'GUEST-MEMBER') === [[1, 'commission', 'team', 10000], [2, 'commission', 'direct', 10000]], 'guest gives member and partner cash without buyer cashback');
+check(rewards($db, 'GUEST-MEMBER') === [[1, 'commission', 'team', 5000], [2, 'commission', 'direct', 10000]], 'guest gives member and partner cash without buyer cashback');
 order($db, $p, 'GUEST-ORDINARY', null, ref: 'bf-3');
 paid($db, $p, 'GUEST-ORDINARY');
 check(rewards($db, 'GUEST-ORDINARY') === [[3, 'shopping', 'referral_bonus', 10000]], 'ordinary referrer gets only shopping bonuses for guest');
@@ -119,8 +120,10 @@ check(!$p->identity(2)['isTeamMember'] && $p->identity(2)['isPartner'], 'promoti
 order($db, $p, 'PROMOTED', 3);
 paid($db, $p, 'PROMOTED');
 check(rewards($db, 'PROMOTED') === [[2, 'commission', 'direct', 10000], [3, 'shopping', 'buyer', 10000]], 'promoted partner keeps customers without old partner reward');
-$sim = ProgramMath::simulate(['amount' => '10000', 'scenario' => 'team_customer'], ProgramMath::rules([]));
-check($sim['totalMinor'] === 30000, 'maximum team plus buyer rewards are three percent');
+$sim = ProgramMath::simulate(['amount' => '10000', 'scenario' => 'team_customer'], ProgramMath::rules(['directBps' => 100, 'teamBps' => 50]));
+check($sim['partnerMinor'] === 5000 && $sim['directMinor'] === 10000 && $sim['totalMinor'] === 25000, 'member customer earns one percent and partner half percent');
+$own = ProgramMath::simulate(['amount' => '10000', 'scenario' => 'member_purchase'], ProgramMath::rules(['directBps' => 100, 'teamBps' => 50]));
+check($own['partnerMinor'] === 10000, 'member own purchase keeps one percent in simulator');
 fails(static fn () => ProgramMath::rules(['directBps' => 400]), 'maximum scenario respects cap');
 // Leaving the program stops new cash rewards, never confiscates earned cash.
 $p->adjust(2, 'commission', 50000, 'earned balance fixture', 1);

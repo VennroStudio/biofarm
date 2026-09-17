@@ -70,7 +70,7 @@ final class ProgramMath
         $rates = match ($scenario) {
             'partner_customer'  => [$rules['directBps'], 0, 0],
             'team_customer'     => [$rules['directBps'], $rules['teamBps'], 0],
-            'member_purchase'   => [0, $rules['teamBps'], 0],
+            'member_purchase'   => [0, $rules['directBps'], 0],
             'ordinary_referral' => [0, 0, $rules['referralBonusBps']],
             default             => throw new DomainException('Неизвестный сценарий'),
         };
@@ -88,10 +88,10 @@ final class ProgramMath
     {
         // Convert stored legacy settings only. New API writes use named, independent rates.
         $current['directBps'] ??= $current['levelsBps'][0] ?? 100;
-        $current['teamBps'] ??= $current['partnerBps'] ?? 100;
+        $current['teamBps'] ??= $current['partnerBps'] ?? 50;
         $current['referralBonusBps'] ??= $current['directBps'];
         unset($current['maxPromoPercent'], $current['levelsBps'], $current['partnerBps']);
-        $rules = array_replace(['directBps' => 100, 'teamBps' => 100, 'referralBonusBps' => 100, 'buyerBps' => 100, 'capBps' => 400, 'holdDays' => 14, 'minimumWithdrawalMinor' => 10000, 'products' => []], $current, $input);
+        $rules = array_replace(['directBps' => 100, 'teamBps' => 50, 'referralBonusBps' => 100, 'buyerBps' => 100, 'capBps' => 400, 'holdDays' => 14, 'minimumWithdrawalMinor' => 10000, 'products' => []], $current, $input);
         if (array_diff(array_keys($input), ['directBps', 'teamBps', 'referralBonusBps', 'buyerBps', 'capBps', 'holdDays', 'minimumWithdrawalMinor', 'products']) !== []) {
             throw new DomainException('Unknown program setting');
         }

@@ -289,7 +289,7 @@ export function AdminProgram() {
                         >
                             {[
                                 ["direct", "Комиссия за своего покупателя, %", rates.directBps / 100],
-                                ["team", "Комиссия партнёру за команду, %", rates.teamBps / 100],
+                                ["team", "Партнёру за покупателей участников команды, %", rates.teamBps / 100],
                                 ["referralBonus", "Бонусы обычному покупателю за приглашённого, %", rates.referralBonusBps / 100],
                                 ["buyer", "Покупателю, %", rates.buyerBps / 100],
                                 ["cap", "Лимит вознаграждений, %", rates.capBps / 100],

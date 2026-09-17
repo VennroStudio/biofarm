@@ -664,7 +664,7 @@ final class ProgramService
         if (new SiteSettings($this->db)->bool('referral_enabled')) {
             if ($buyerIdentity && $buyerIdentity['isTeamMember']) {
                 // A member's own purchases belong only to their explicit team partner.
-                $add($buyerIdentity['teamPartnerId'], 'commission', 'team', $rules['teamBps']);
+                $add($buyerIdentity['teamPartnerId'], 'commission', 'team', $rules['directBps']);
             } elseif ($buyerIdentity === null || !$buyerIdentity['isPartner']) {
                 if ($parent !== null && $eligible($parent)) {
                     $owner = $participants->identity($parent);
