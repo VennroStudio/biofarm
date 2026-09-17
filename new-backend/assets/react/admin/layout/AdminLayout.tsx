@@ -25,7 +25,7 @@ const links = [
   { to: '/admin/orders', label: 'Заказы', icon: ShoppingCart },
   { to: '/admin/reviews', label: 'Отзывы', icon: Star },
   { to: '/admin/certificates', label: 'Сертификаты', icon: FileCheck2 },
-  { to: '/admin/faq', label: 'Вопросы', icon: HelpCircle },
+  { to: '/admin/faq', label: 'FAQ', icon: HelpCircle },
   { to: '/admin/users', label: 'Пользователи', icon: Users },
   { to: '/admin/program', label: 'Партнёрская программа', icon: Users },
   { to: '/admin/settings', label: 'Настройки', icon: Settings },
