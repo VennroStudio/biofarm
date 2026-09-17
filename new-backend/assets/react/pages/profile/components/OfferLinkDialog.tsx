@@ -1,9 +1,9 @@
-import { useEffect, useId, useRef } from 'react';
+import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { LinkQR } from '../../../program/shared';
 
-export function OfferLinkDialog({ url, onClose }: { url: string; onClose: () => void }) {
+export function OfferLinkDialog({ url, onClose, title = 'Ссылка на корзину', description = 'Сканируйте QR-код или отправьте ссылку покупателю.', children }: { url: string; onClose: () => void; title?: string; description?: string; children?: ReactNode }) {
     const ref = useRef<HTMLDialogElement>(null);
     const titleId = useId();
     useEffect(() => {
@@ -30,13 +30,14 @@ export function OfferLinkDialog({ url, onClose }: { url: string; onClose: () => 
                 if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) onClose();
             }}>
             <div className="mb-2 flex items-center justify-between gap-4">
-                <h2 id={titleId} className="text-xl text-primary">Ссылка на корзину</h2>
+                <h2 id={titleId} className="text-xl text-primary">{title}</h2>
                 <button type="button" aria-label="Закрыть окно" title="Закрыть"
                     className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full hover:bg-secondary focus-visible:outline-primary"
                     onClick={onClose}><X className="h-5 w-5" aria-hidden="true" /></button>
             </div>
-            <p className="mb-4 text-sm text-muted-foreground">Сканируйте QR-код или отправьте ссылку покупателю.</p>
+            <p className="mb-4 text-sm text-muted-foreground">{description}</p>
             <LinkQR url={url} centered />
+            {children}
         </dialog>, document.body,
     );
 }

@@ -4,7 +4,6 @@ import { readCart } from "../../../site/cart";
 import {
     Section,
     Field,
-    LinkQR,
     Rows,
     Pager,
     money,
@@ -14,7 +13,7 @@ import {
     type Listing,
 } from "../../../program/shared";
 import { TabButton, TabList, TabPanel } from "./ProfileTabs";
-import { Users, ShoppingBasket, Wallet, ReceiptText, Link, ListOrdered, QrCode, Ban } from "lucide-react";
+import { Users, ShoppingBasket, Wallet, ReceiptText, UserPlus, ListOrdered, QrCode, Ban } from "lucide-react";
 
 import { OfferLinkDialog } from "./OfferLinkDialog";
 
@@ -33,6 +32,7 @@ export function ReferralPanel({ withdrawalsEnabled }: { withdrawalsEnabled: bool
     const [busy, setBusy] = useState(false);
     const [revision, setRevision] = useState(0);
     const [offerUrl, setOfferUrl] = useState("");
+    const [inviteOpen, setInviteOpen] = useState(false);
     const listKey = `${tab}:${page}:${sort}:${direction}:${revision}`;
     const loadingList = loadedKey !== listKey;
     const cart = readCart();
@@ -48,7 +48,6 @@ export function ReferralPanel({ withdrawalsEnabled }: { withdrawalsEnabled: bool
         };
     }, [revision]);
     useEffect(() => {
-        if (tab === "invite") return;
         let live = true;
         void request<Listing>(`/v1/program/${tab}?page=${page}&sort=${sort}&direction=${direction}${tab === "ledger" ? "&wallet=commission" : ""}`)
             .then((d) => {
@@ -122,7 +121,6 @@ export function ReferralPanel({ withdrawalsEnabled }: { withdrawalsEnabled: bool
         { key: "team", title: "Моя команда", icon: Users },
         { key: "sales", title: "Продажи", icon: ReceiptText },
         { key: "ledger", title: "Начисления", icon: ListOrdered },
-        { key: "invite", title: "Пригласить", icon: Link },
         ...(data.identity.isPartner ? [{ key: "offers", title: "Корзина", icon: ShoppingBasket }] : []),
         ...(withdrawalsEnabled ? [{ key: "withdrawals", title: "Выплаты", icon: Wallet }] : []),
     ];
@@ -130,6 +128,20 @@ export function ReferralPanel({ withdrawalsEnabled }: { withdrawalsEnabled: bool
     return (
         <div className="grid items-start gap-6 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-8">
             {offerUrl && <OfferLinkDialog key={offerUrl} url={offerUrl} onClose={() => setOfferUrl("")} />}
+            {inviteOpen && (
+                <OfferLinkDialog url={`${window.location.origin}/?ref=${encodeURIComponent(data.identity.referralCode)}`}
+                    title="Пригласить в команду"
+                    description="После регистрации приглашённый появится в вашей команде. Покупки без регистрации учитываются в продажах."
+                    onClose={() => setInviteOpen(false)}>
+                    <details className="border-t border-border pt-4 text-sm">
+                        <summary className="cursor-pointer text-primary">Условия начислений</summary>
+                        <div className="mt-3 space-y-2 text-muted-foreground">
+                            <p>Начисления — после подтверждённой оплаты. Доступны после доставки и удержания {data.rates.holdDays} дней.</p>
+                            <p>Четыре уровня: {data.rates.levelsBps.map((n) => `${n / 100}%`).join(" / ")}. Ближайшему партнёру: {data.rates.partnerBps / 100}%.</p>
+                        </div>
+                    </details>
+                </OfferLinkDialog>
+            )}
             <TabList label="Разделы программы">
                 {tabs.map(({ key, title: tabTitle, icon: Icon }) => (
                     <TabButton key={key} id={`program-tab-${key}`} controls={`program-panel-${key}`}
@@ -146,19 +158,6 @@ export function ReferralPanel({ withdrawalsEnabled }: { withdrawalsEnabled: bool
                     <div className="space-y-6">
                         {error && <p role="alert" className="rounded-xl bg-red-50 p-4 text-red-700">{error}</p>}
                         {notice && <p role="status" className="rounded-xl bg-secondary p-4 text-primary">{notice}</p>}
-                        {tab === "invite" && (
-                            <Section title="Пригласить в команду">
-                                <p className="text-sm text-muted-foreground">Отправьте свою ссылку. После регистрации приглашённый появится в команде. Покупки без регистрации учитываются в продажах.</p>
-                                <LinkQR url={`${window.location.origin}/?ref=${encodeURIComponent(data.identity.referralCode)}`} />
-                                <details className="border-t border-border pt-4 text-sm">
-                                    <summary className="cursor-pointer text-primary">Условия начислений</summary>
-                                    <div className="mt-3 space-y-2 text-muted-foreground">
-                                        <p>Начисления — после подтверждённой оплаты. Доступны после доставки и удержания {data.rates.holdDays} дней.</p>
-                                        <p>Четыре уровня: {data.rates.levelsBps.map((n) => `${n / 100}%`).join(" / ")}. Ближайшему партнёру: {data.rates.partnerBps / 100}%.</p>
-                                    </div>
-                                </details>
-                            </Section>
-                        )}
                         {(tab === "withdrawals" || (tab === "ledger" && !withdrawalsEnabled)) && (
                             <Section title="Деньги на выплату">
                                 <div className="grid grid-cols-2 gap-5 xl:grid-cols-4">
@@ -258,8 +257,15 @@ export function ReferralPanel({ withdrawalsEnabled }: { withdrawalsEnabled: bool
                             </>
                         )}
 
-                        {tab !== "invite" && (
                             <Section title={tab === "offers" ? "Отправленные корзины" : tab === "withdrawals" ? "История выплат" : title}>
+                                {tab === "team" && (
+                                    <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
+                                        <p className="text-sm text-muted-foreground">Приглашайте людей по своей ссылке и следите за составом команды.</p>
+                                        <button type="button" className={`${buttonClass} inline-flex shrink-0 items-center gap-2`} onClick={() => setInviteOpen(true)}>
+                                            <UserPlus className="h-4 w-4" aria-hidden="true" />Пригласить в команду
+                                        </button>
+                                    </div>
+                                )}
                                 {tab === "team" && <p className="text-sm text-muted-foreground">Уровень 1 — приглашённые вами лично. Нажмите на заголовок столбца для сортировки всей команды. Участник, ставший партнёром, уходит вместе со своей веткой.</p>}
                                 {tab === "sales" && <p className="text-sm text-muted-foreground">Оплаченные заказы, по которым вам начислена комиссия. Сумма комиссии учитывает возвраты.</p>}
                                 {tab === "ledger" && <p className="text-sm text-muted-foreground">История денежных комиссий. Состояние показывает, доступно ли начисление.</p>}
@@ -309,7 +315,6 @@ export function ReferralPanel({ withdrawalsEnabled }: { withdrawalsEnabled: bool
                                 {!loadingList && <Pager page={page} setPage={setPage} hasMore={list.items.length === list.limit} />}
 
                             </Section>
-                        )}
                     </div>
                 </TabPanel>
             </div>
