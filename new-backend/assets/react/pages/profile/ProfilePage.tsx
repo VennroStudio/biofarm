@@ -26,7 +26,6 @@ import { FavoritesPanel } from './components/FavoritesPanel';
 import { OrderDetailsDialog } from './components/OrderDetailsDialog';
 import { OrdersPanel } from './components/OrdersPanel';
 import { ProfileDetailsCard } from './components/ProfileDetailsCard';
-import { ProfileStats } from './components/ProfileStats';
 import { TabButton, TabList, TabPanel } from './components/ProfileTabs';
 import type { ProfileTab } from './types';
 
@@ -175,8 +174,6 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, withdrawa
         </div>
 
         {notice && <p className="mb-4 rounded bg-green-50 p-3 text-sm text-green-700">{notice}</p>}
-
-        <ProfileStats orders={orders} referralInfo={null} user={user} />
 
         <div className="grid items-start gap-6 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-10">
           <div className="min-w-0 space-y-3 lg:sticky lg:top-28">
