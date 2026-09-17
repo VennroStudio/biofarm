@@ -70,6 +70,49 @@ final readonly class OfferService
         $this->db->update('partner_offers', ['is_active' => 0], ['id' => $id, 'user_id' => $user]);
     }
 
+    /** Owner-only history remains available after a basket expires or is disabled. */
+    public function details(int $user, string $id, int $page = 1): array
+    {
+        $this->assertPartner($user);
+        $offer = $this->db->fetchAssociative('SELECT id,title,items,is_active,expires_at,created_at FROM partner_offers WHERE id=? AND user_id=?', [$id, $user]);
+        if (!$offer) {
+            throw new DomainExceptionModule('program', 'Корзина не найдена.', 11, status: 404);
+        }
+        $items = [];
+        $total = 0;
+        $completeTotal = true;
+        foreach (json_decode($offer['items'], true, 512, JSON_THROW_ON_ERROR) as $item) {
+            $product = $this->db->fetchAssociative('SELECT name,price,image,is_active,availability,deleted_at FROM products WHERE id=?', [$item['productId']]);
+            $quantity = (int)$item['quantity'];
+            $price = $product ? (int)$product['price'] : null;
+            $lineTotal = $price !== null ? $price * $quantity : null;
+            $total += $lineTotal ?? 0;
+            $completeTotal = $completeTotal && $price !== null;
+            $items[] = [
+                'productId' => (int)$item['productId'], 'name' => $product['name'] ?? 'Удалённый товар #' . $item['productId'],
+                'image' => $product['image'] ?? null, 'quantity' => $quantity, 'price' => $price, 'total' => $lineTotal,
+                'available' => $product && (bool)$product['is_active'] && $product['deleted_at'] === null && $product['availability'] !== 'out_of_stock',
+            ];
+        }
+        $count = (int)$this->db->fetchOne('SELECT COUNT(*) FROM partner_offer_orders po JOIN orders o ON BINARY o.id=BINARY po.order_id WHERE po.offer_id=?', [$id]);
+        $pages = max(1, (int)ceil($count / 25));
+        $page = max(1, min($page, $pages));
+        // Select only the fields needed by the partner; never expose payment tokens or delivery contacts.
+        $orders = $this->db->fetchAllAssociative('SELECT o.id,o.status,o.payment_status,o.total,o.created_at,JSON_UNQUOTE(JSON_EXTRACT(o.shipping_address, "$.name")) AS customer_name FROM partner_offer_orders po JOIN orders o ON BINARY o.id=BINARY po.order_id WHERE po.offer_id=? ORDER BY o.created_at DESC,o.id DESC LIMIT 25 OFFSET ' . (($page - 1) * 25), [$id]);
+        foreach ($orders as &$order) {
+            $order['total'] = (int)$order['total'];
+            $order['offerId'] = $id;
+        }
+        unset($order);
+        return [
+            'id' => $offer['id'], 'title' => $offer['title'], 'isActive' => (bool)$offer['is_active'],
+            'isExpired' => $offer['expires_at'] !== null && strtotime($offer['expires_at'] . ' UTC') <= time(),
+            'expiresAt' => $offer['expires_at'], 'createdAt' => $offer['created_at'],
+            'items' => $items, 'total' => $completeTotal ? $total : null,
+            'orders' => ['items' => $orders, 'total' => $count, 'page' => $page, 'pages' => $pages],
+        ];
+    }
+
     public function read(string $id, bool $visit = true): array
     {
         if (!$this->settings->bool('cart_enabled') || !preg_match('/^[a-f0-9]{48}$/D', $id)) {

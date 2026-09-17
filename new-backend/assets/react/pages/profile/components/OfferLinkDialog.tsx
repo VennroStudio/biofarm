@@ -1,43 +1,11 @@
-import { useEffect, useId, useRef, type ReactNode } from 'react';
-import { createPortal } from 'react-dom';
-import { X } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { LinkQR } from '../../../program/shared';
+import { PartnerDialog } from './PartnerDialog';
 
 export function OfferLinkDialog({ url, onClose, title = 'Ссылка на корзину', description = 'Сканируйте QR-код или отправьте ссылку покупателю.', children }: { url: string; onClose: () => void; title?: string; description?: string; children?: ReactNode }) {
-    const ref = useRef<HTMLDialogElement>(null);
-    const titleId = useId();
-    useEffect(() => {
-        const dialog = ref.current;
-        if (!dialog) return;
-        const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-        const previousOverflow = document.body.style.overflow;
-        document.body.style.overflow = 'hidden';
-        dialog.showModal();
-        return () => {
-            dialog.close();
-            document.body.style.overflow = previousOverflow;
-            previouslyFocused?.focus();
-        };
-    }, []);
-
-    return createPortal(
-        <dialog ref={ref} aria-labelledby={titleId}
-            className="fixed inset-0 m-auto max-h-[90dvh] w-[calc(100%_-_2rem)] max-w-md overflow-y-auto rounded-2xl border border-border bg-white p-5 text-foreground shadow-xl backdrop:bg-foreground/45 sm:p-6"
-            onCancel={(event) => { event.preventDefault(); onClose(); }}
-            onClick={(event) => {
-                if (event.target !== event.currentTarget) return;
-                const rect = event.currentTarget.getBoundingClientRect();
-                if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) onClose();
-            }}>
-            <div className="mb-2 flex items-center justify-between gap-4">
-                <h2 id={titleId} className="text-xl text-primary">{title}</h2>
-                <button type="button" aria-label="Закрыть окно" title="Закрыть"
-                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full hover:bg-secondary focus-visible:outline-primary"
-                    onClick={onClose}><X className="h-5 w-5" aria-hidden="true" /></button>
-            </div>
-            <p className="mb-4 text-sm text-muted-foreground">{description}</p>
-            <LinkQR url={url} centered />
-            {children}
-        </dialog>, document.body,
-    );
+    return <PartnerDialog title={title} onClose={onClose}>
+        <p className="mb-4 text-sm text-muted-foreground">{description}</p>
+        <LinkQR url={url} centered />
+        {children}
+    </PartnerDialog>;
 }

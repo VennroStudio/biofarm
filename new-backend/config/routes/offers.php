@@ -15,6 +15,7 @@ return static function (App $app): void {
     $app->get('/v1/offers/{id}', OfferAction::class);
     $group = $app->group('/v1/program', new Group(static function (RouteCollectorProxy $group): void {
         $group->get('/offers', OfferAction::class);
+        $group->get('/offers/{id}', OfferAction::class);
         $group->post('/offers', OfferAction::class);
         $group->patch('/offers/{id}', OfferAction::class);
     }));

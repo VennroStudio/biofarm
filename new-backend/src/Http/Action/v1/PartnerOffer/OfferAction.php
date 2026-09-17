@@ -25,6 +25,9 @@ final readonly class OfferAction implements RequestHandlerInterface
             return new JsonDataResponse($this->offers->read((string)Route::getArgument($request, 'id')));
         }
         $user = RequestIdentity::get($request)->id;
+        if ($request->getMethod() === 'GET' && str_starts_with($path, '/v1/program/offers/')) {
+            return new JsonDataResponse($this->offers->details($user, (string)Route::getArgument($request, 'id'), $page));
+        }
         if ($request->getMethod() === 'PATCH') {
             $this->offers->disable($user, (string)Route::getArgument($request, 'id'));
             $result = ['disabled' => true];

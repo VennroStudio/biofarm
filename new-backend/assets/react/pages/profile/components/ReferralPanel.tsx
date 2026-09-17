@@ -13,8 +13,9 @@ import {
     type Listing,
 } from "../../../program/shared";
 import { TabButton, TabList, TabPanel } from "./ProfileTabs";
-import { Users, ShoppingBasket, Wallet, ReceiptText, UserPlus, ListOrdered, QrCode, Ban } from "lucide-react";
+import { Users, ShoppingBasket, Wallet, ReceiptText, UserPlus, ListOrdered, QrCode, Ban, Info } from "lucide-react";
 
+import { OfferDetailsDialog } from "./OfferDetailsDialog";
 import { OfferLinkDialog } from "./OfferLinkDialog";
 
 const offerActionClass = "inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border text-primary transition-colors hover:bg-secondary focus-visible:outline-primary focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-35";
@@ -31,6 +32,7 @@ export function ReferralPanel({ withdrawalsEnabled }: { withdrawalsEnabled: bool
     const [error, setError] = useState("");
     const [busy, setBusy] = useState(false);
     const [revision, setRevision] = useState(0);
+    const [offerId, setOfferId] = useState("");
     const [offerUrl, setOfferUrl] = useState("");
     const [inviteOpen, setInviteOpen] = useState(false);
     const listKey = `${tab}:${page}:${sort}:${direction}:${revision}`;
@@ -127,6 +129,7 @@ export function ReferralPanel({ withdrawalsEnabled }: { withdrawalsEnabled: bool
     const title = tabs.find((item) => item.key === tab)?.title || "Моя команда";
     return (
         <div className="grid items-start gap-6 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-8">
+            {offerId && <OfferDetailsDialog key={offerId} offerId={offerId} onClose={() => setOfferId("")} />}
             {offerUrl && <OfferLinkDialog key={offerUrl} url={offerUrl} onClose={() => setOfferUrl("")} />}
             {inviteOpen && (
                 <OfferLinkDialog url={`${window.location.origin}/?ref=${encodeURIComponent(data.identity.referralCode)}`}
@@ -285,6 +288,11 @@ export function ReferralPanel({ withdrawalsEnabled }: { withdrawalsEnabled: bool
                                         tab === "offers"
                                             ? (row) => (
                                                   <div className="flex flex-nowrap items-center gap-2">
+                                                      <button type="button" className={offerActionClass}
+                                                          aria-label={`Информация о корзине: ${row.title}`} title="Информация о корзине"
+                                                          onClick={() => setOfferId(String(row.id))}>
+                                                          <Info className="h-5 w-5" aria-hidden="true" />
+                                                      </button>
                                                       <button type="button" className={offerActionClass}
                                                           aria-label={`Ссылка и QR-код: ${row.title}`} title="Ссылка и QR-код"
                                                           disabled={!Number(row.is_active)} onClick={() => setOfferUrl(String(row.url))}>
