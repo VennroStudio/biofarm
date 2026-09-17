@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import QRCode from "qrcode";
+import { copyText } from "../shared/copyText";
 import { Check, Copy } from "lucide-react";
 export type Row = Record<string, unknown>;
 export type Listing = { items: Row[]; page: number; limit: number };
@@ -105,9 +106,9 @@ export function LinkQR({ url: rawUrl, centered = false }: { url: string; centere
             .then(setQr)
             .catch(() => setNotice("Не удалось создать QR"));
     }, [url, centered]);
-    async function copyLink() {
+    async function copyLink(container: HTMLElement) {
         try {
-            await navigator.clipboard.writeText(url);
+            await copyText(url, container);
             setNotice("Ссылка скопирована");
         } catch {
             setNotice("Не удалось скопировать. Выделите ссылку и скопируйте её вручную.");
@@ -121,7 +122,7 @@ export function LinkQR({ url: rawUrl, centered = false }: { url: string; centere
                     <a className="min-w-0 flex-1 break-all text-sm text-primary underline" href={url}>{url}</a>
                     <button type="button" aria-label="Скопировать ссылку" title="Скопировать ссылку"
                         className={centered ? "inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary text-white hover:bg-primary/90 focus-visible:outline-primary focus-visible:outline-offset-2" : buttonClass}
-                        onClick={() => void copyLink()}>
+                        onClick={(event) => void copyLink(event.currentTarget.parentElement!)}>
                         {centered ? (notice === "Ссылка скопирована" ? <Check className="h-5 w-5" aria-hidden="true" /> : <Copy className="h-5 w-5" aria-hidden="true" />) : "Скопировать ссылку"}
                     </button>
                 </div>
@@ -129,6 +130,21 @@ export function LinkQR({ url: rawUrl, centered = false }: { url: string; centere
             </div>
         </div>
     );
+}
+
+function CopyDetails({ text }: { text: string }) {
+    const [notice, setNotice] = useState("");
+    return <div>
+        <button type="button" onClick={async (event) => {
+            try {
+                await copyText(text, event.currentTarget.parentElement!);
+                setNotice("Скопировано");
+            } catch {
+                setNotice("Не удалось скопировать. Выделите текст и скопируйте вручную.");
+            }
+        }}>Копировать</button>
+        <p role="status" className="text-xs text-muted-foreground">{notice}</p>
+    </div>;
 }
 
 export function Rows({
@@ -177,15 +193,7 @@ export function Rows({
                                             <pre className="max-w-xs whitespace-pre-wrap break-all text-xs">
                                                 {JSON.stringify(row[key], null, 2)}
                                             </pre>
-                                            <button
-                                                onClick={() =>
-                                                    void navigator.clipboard.writeText(
-                                                        JSON.stringify(row[key], null, 2),
-                                                    )
-                                                }
-                                            >
-                                                Копировать
-                                            </button>
+                                            <CopyDetails text={JSON.stringify(row[key], null, 2)} />
                                         </details>
                                     ) : ["is_partner","is_referral","isReferral"].includes(key) ? (Number(row[key]) ? "Да" : "Нет") : typeof row[key] === "boolean" ? (
                                         row[key] ? (
