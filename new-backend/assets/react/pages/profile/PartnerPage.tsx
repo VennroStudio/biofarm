@@ -16,6 +16,7 @@ function PartnerPage({ referralEnabled, withdrawalsEnabled }: { referralEnabled:
     void refreshUser().then((freshUser) => {
       if (!live) return;
       if (!freshUser) window.location.replace('/login?redirect=/partner');
+      else if (!freshUser.isPartner && !freshUser.isTeamMember && !freshUser.hasCommissionHistory) window.location.replace('/profile');
       else setUser(freshUser);
     }).catch(() => {
       if (!live) return;
@@ -29,7 +30,7 @@ function PartnerPage({ referralEnabled, withdrawalsEnabled }: { referralEnabled:
       <div className="container mx-auto px-4 sm:px-6">
         <a href="/profile" className="mb-5 inline-flex items-center gap-2 text-sm text-primary hover:underline"><ArrowLeft className="h-4 w-4" />Личный кабинет</a>
         <header className="mb-8">
-          <h1 className="text-3xl font-normal tracking-tight text-primary md:text-4xl">{user?.isPartner ? 'Кабинет партнёра' : 'Реферальная программа'}</h1>
+          <h1 className="text-3xl font-normal tracking-tight text-primary md:text-4xl">{user?.isPartner ? 'Кабинет партнёра' : user?.isTeamMember ? 'Кабинет участника команды' : 'История начислений и выплаты'}</h1>
           {user && <p className="mt-2 text-muted-foreground">{user.name}</p>}
         </header>
         {!referralEnabled ? <p>Программа сейчас недоступна.</p> : !user ? <p role={error ? 'alert' : 'status'}>{error || 'Загрузка кабинета…'}</p> : <ReferralPanel withdrawalsEnabled={withdrawalsEnabled} />}

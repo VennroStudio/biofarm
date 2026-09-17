@@ -8,6 +8,7 @@ use App\Components\Clock\UtcClock;
 use App\Components\Setting\SiteSettings;
 use Closure;
 use DateTimeImmutable;
+use DateTimeZone;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Platforms\SQLitePlatform;
 use DomainException;
@@ -32,6 +33,29 @@ final class ProgramService
             }
             return $callback();
         });
+    }
+
+    public function identity(int $user): array
+    {
+        return new ProgramParticipants($this->db)->identity($user);
+    }
+
+    public function teamInvite(int $user): array
+    {
+        return $this->atomic(fn () => new ProgramParticipants($this->db)->invite($user));
+    }
+
+    public function teamInvitation(string $code): array
+    {
+        return new ProgramParticipants($this->db)->invitation($code);
+    }
+
+    public function joinTeam(int $user, string $code, bool $consent): array
+    {
+        if (!new SiteSettings($this->db)->bool('referral_enabled')) {
+            throw new DomainException('Программа отключена');
+        }
+        return $this->atomic(fn () => new ProgramParticipants($this->db)->join($user, $code, $consent));
     }
 
     public function settings(): array
@@ -79,7 +103,7 @@ final class ProgramService
             if ($flags->bool('referral_enabled') && empty($profile['is_partner'])) {
                 $parent = $profile['referred_by_user_id'] ?? null;
                 if ($parent === null && !empty($o['referred_by'])) {
-                    $parent = $this->referrer((string)$o['referred_by']);
+                    $parent = $this->referralOwner((string)$o['referred_by']);
                     $parent = $this->safeParent($buyer, $parent);
                     $provisional = $buyer !== null && $parent !== null;
                 }
@@ -127,67 +151,15 @@ final class ProgramService
                 $this->entry('spend:' . $orderId, $buyer, 'shopping', -$spent, 'order_spending', $orderId, 'reserved');
                 $this->syncProfile($buyer);
             }
-            $snapshot = ['provisionalReferral' => $provisional, 'referralParentId' => $parent, 'items' => $items, 'rules' => $rules, 'totalMinor' => (int)$o['total'] * 100, 'deliveryMinor' => (int)$o['delivery_cost'] * 100, 'deliveryRefunded' => false, 'bonusMinor' => $spent, 'recipients' => $recipients];
+            $snapshot = ['modelVersion' => 2, 'provisionalReferral' => $provisional, 'referralParentId' => $parent, 'items' => $items, 'rules' => $rules, 'totalMinor' => (int)$o['total'] * 100, 'deliveryMinor' => (int)$o['delivery_cost'] * 100, 'deliveryRefunded' => false, 'bonusMinor' => $spent, 'recipients' => $recipients];
             $this->db->insert('program_orders', ['id' => $orderId, 'buyer_id' => $buyer, 'status' => 'pending', 'snapshot' => $this->json($snapshot), 'delivered_at' => null]);
         });
     }
 
-    private function referrer(string $code): ?int
+    public function referralOwner(string $code): ?int
     {
         $id = $this->db->fetchOne('SELECT p.user_id FROM user_profiles p JOIN users u ON u.id=p.user_id WHERE (p.referral_code=? OR p.user_id=?) AND u.deleted_at IS NULL AND u.status=1 LIMIT 1', [$code, ctype_digit($code) ? (int)$code : 0]);
         return $id === false ? null : (int)$id;
-    }
-
-    private function safeParent(?int $buyer, ?int $parent): ?int
-    {
-        $seen = $buyer === null ? [] : [$buyer => true];
-        $cursor = $parent;
-        while ($cursor !== null) {
-            if (isset($seen[$cursor])) {
-                return null;
-            }
-            $seen[$cursor] = true;
-            $row = $this->db->fetchAssociative('SELECT referred_by_user_id FROM user_profiles WHERE user_id=?', [$cursor]);
-            if (!$row) {
-                return null;
-            }
-            $cursor = $row['referred_by_user_id'] === null ? null : (int)$row['referred_by_user_id'];
-        }
-        return $parent;
-    }
-
-    private function recipients(?int $buyer, ?int $parent, array $rules, bool $buyerBonus, string $guestEmail = ''): array
-    {
-        $result = [];
-        $seen = $buyer === null ? [] : [$buyer => true];
-        $depth = 0;
-        while ($parent !== null) {
-            $id = (int)$parent;
-            if (isset($seen[$id])) {
-                throw new DomainException('Referral cycle');
-            }
-            $seen[$id] = true;
-            $p = $this->db->fetchAssociative('SELECT user_id,is_partner,referred_by_user_id FROM user_profiles WHERE user_id=?', [$id]);
-            if (!$p) {
-                throw new DomainException('Referrer not found');
-            }
-            $ownPurchase = $guestEmail !== '' && $guestEmail === mb_strtolower(trim((string)$this->db->fetchOne('SELECT email FROM users WHERE id=?', [$id])));
-            if ($depth < \count($rules['levelsBps']) && !$ownPurchase) {
-                $result[] = ['userId' => $id, 'wallet' => 'commission', 'kind' => 'level_' . ($depth + 1), 'bps' => $rules['levelsBps'][$depth]];
-            }
-            if ($p['is_partner']) {
-                if (!$ownPurchase) {
-                    $result[] = ['userId' => $id, 'wallet' => 'commission', 'kind' => 'partner', 'bps' => $rules['partnerBps']];
-                }
-                break;
-            }
-            ++$depth;
-            $parent = $p['referred_by_user_id'] === null ? null : (int)$p['referred_by_user_id'];
-        }
-        if ($buyer !== null && $buyerBonus) {
-            $result[] = ['userId' => $buyer, 'wallet' => 'shopping', 'kind' => 'buyer', 'bps' => $rules['buyerBps']];
-        }
-        return $result;
     }
 
     public function settleOrder(string $orderId): void
@@ -205,12 +177,13 @@ final class ProgramService
             $s = $this->decode($o['snapshot']);
             // Only a previously unbound buyer may be attached by checkout. The first
             // confirmed payment wins; pending orders never replace an existing team.
-            if (($s['provisionalReferral'] ?? false) && $o['buyer_id'] !== null) {
+            if (($s['modelVersion'] ?? 1) >= 2 && ($s['provisionalReferral'] ?? false) && $o['buyer_id'] !== null) {
                 $buyer = (int)$o['buyer_id'];
                 $profile = $this->db->fetchAssociative('SELECT * FROM user_profiles WHERE user_id=?', [$buyer]);
-                $parent = empty($profile['is_partner']) ? ($profile['referred_by_user_id'] ?? null) : null;
-                if (empty($profile['is_partner']) && $parent === null) {
-                    $candidate = $this->referrer((string)$s['referralParentId']);
+                $canBind = !$this->identity($buyer)['canEarnCommission'];
+                $parent = $canBind ? ($profile['referred_by_user_id'] ?? null) : null;
+                if ($canBind && $parent === null) {
+                    $candidate = $this->referralOwner((string)$s['referralParentId']);
                     $parent = $this->safeParent($buyer, $candidate);
                     if ($parent !== null) {
                         $this->db->update('user_profiles', ['referred_by_user_id' => $parent], ['user_id' => $buyer]);
@@ -220,7 +193,7 @@ final class ProgramService
                 // Two pending baskets can name different partners. Once a payment
                 // establishes the team, later payments use that team at captured rates.
                 if ($parent !== $s['referralParentId']) {
-                    $buyerBonus = in_array('buyer', array_column($s['recipients'], 'kind'), true);
+                    $buyerBonus = \in_array('buyer', array_column($s['recipients'], 'kind'), true);
                     $s['recipients'] = $this->recipients($buyer, $parent === null ? null : (int)$parent, $s['rules'], $buyerBonus);
                     foreach ($s['items'] as &$item) {
                         $factor = $s['rules']['products'][(string)$item['productId']] ?? 10000;
@@ -422,11 +395,13 @@ final class ProgramService
 
     public function requestWithdrawal(int $user, mixed $amount, array $details): array
     {
+        new ProgramParticipants($this->db)->requireCommissionAccess($user);
         if (!new SiteSettings($this->db)->bool('withdrawals_enabled')) {
             throw new DomainException('Заявки на выплаты временно отключены.');
         }
         $minor = ProgramMath::minor($amount);
         return $this->atomic(function () use ($user, $minor, $details) {
+            new ProgramParticipants($this->db)->requireCommissionAccess($user);
             $this->opening($user);
             if ($minor < $this->settings()['minimumWithdrawalMinor'] || $minor > $this->balance($user, 'commission')['availableMinor']) {
                 throw new DomainException('Withdrawal amount outside available limits');
@@ -484,8 +459,7 @@ final class ProgramService
         return $this->atomic(function () use ($user) {
             $this->opening($user);
             $this->syncProfile($user);
-            $p = $this->db->fetchAssociative('SELECT user_id,is_partner,referral_code,referred_by_user_id FROM user_profiles WHERE user_id=?', [$user]);
-            return ['identity' => ['userId' => $user, 'isPartner' => (bool)$p['is_partner'], 'isReferral' => $p['referred_by_user_id'] !== null, 'parentId' => $p['referred_by_user_id'], 'referralCode' => $p['referral_code']], 'balances' => ['shopping' => $this->balance($user, 'shopping'), 'commission' => $this->balance($user, 'commission')], 'rates' => $this->settings(), 'rateUnit' => 'basis_points', 'currency' => 'RUB', 'moneyUnit' => 'minor'];
+            return ['identity' => $this->identity($user), 'balances' => ['shopping' => $this->balance($user, 'shopping'), 'commission' => $this->balance($user, 'commission')], 'rates' => $this->settings(), 'rateUnit' => 'basis_points', 'currency' => 'RUB', 'moneyUnit' => 'minor'];
         });
     }
 
@@ -496,16 +470,30 @@ final class ProgramService
             $offset = (max(1, $page) - 1) * $limit;
             $params = [];
             $orderBy = '1 DESC';
-            if ($kind === 'team') {
+            if ($user !== null && ($kind !== 'ledger' || $wallet !== 'shopping')) {
+                if (\in_array($kind, ['ledger', 'withdrawals'], true)) {
+                    new ProgramParticipants($this->db)->requireCommissionAccess($user);
+                } else {
+                    new ProgramParticipants($this->db)->requireParticipant($user, $kind === 'team');
+                }
+            }
+            if ($kind === 'team' || $kind === 'referrals') {
+                if ($user === null) {
+                    throw new DomainException('Укажите владельца списка');
+                }
                 $sortColumn = match ($sort) {
-                    'name' => 'name', 'parent_name' => 'parent_name', 'depth' => 't.depth',
+                    'name'  => 'name', 'created_at' => 'u.created_at', 'depth' => 'u.id',
                     default => throw new DomainException('Unknown team sort column'),
                 };
                 if (!\in_array($direction, ['asc', 'desc'], true)) {
                     throw new DomainException('Unknown team sort direction');
                 }
                 $orderBy = $sortColumn . ' ' . strtoupper($direction) . ', u.id ASC';
-                $sql = 'WITH RECURSIVE team AS (SELECT user_id,referred_by_user_id,is_partner,1 depth FROM user_profiles WHERE referred_by_user_id=? UNION ALL SELECT p.user_id,p.referred_by_user_id,p.is_partner,t.depth+1 FROM user_profiles p JOIN team t ON p.referred_by_user_id=t.user_id WHERE t.depth<100) SELECT u.id,u.first_name,u.last_name,TRIM(CONCAT(COALESCE(u.first_name,\'\'),\' \',COALESCE(u.last_name,\'\'))) name,TRIM(CONCAT(COALESCE(parent.first_name,\'\'),\' \',COALESCE(parent.last_name,\'\'))) parent_name,t.is_partner,t.referred_by_user_id,t.depth FROM team t JOIN users u ON u.id=t.user_id LEFT JOIN users parent ON parent.id=t.referred_by_user_id';
+                $sql = "SELECT u.id,u.first_name,u.last_name,u.created_at,TRIM(CONCAT(COALESCE(u.first_name,''),' ',COALESCE(u.last_name,''))) name FROM users u JOIN user_profiles p ON p.user_id=u.id ";
+                $sql .= $kind === 'team'
+                    ? 'JOIN program_members m ON m.user_id=u.id WHERE m.partner_id=? AND p.is_partner=0'
+                    : 'WHERE p.referred_by_user_id=? AND p.is_partner=0 AND NOT EXISTS (SELECT 1 FROM program_members m WHERE m.user_id=u.id)';
+                $sql .= ' AND u.deleted_at IS NULL';
                 $params = [$user];
             } elseif ($kind === 'ledger') {
                 $sortColumn = match ($sort) {
@@ -516,14 +504,16 @@ final class ProgramService
                     throw new DomainException('Неизвестное направление сортировки');
                 }
                 $orderBy = $sort === 'depth' ? 'l.id DESC' : $sortColumn . ' ' . strtoupper($direction) . ', l.created_at DESC, l.id DESC';
-                $sql = "SELECT l.*, COALESCE(NULLIF(TRIM(CONCAT(COALESCE(u.first_name,''),' ',COALESCE(u.last_name,''))),''),'Имя не указано') user_name, CASE WHEN p.is_partner=1 THEN 'Партнёр' WHEN p.referred_by_user_id IS NOT NULL THEN 'Реферал' ELSE 'Пользователь' END participant_type FROM program_ledger l LEFT JOIN users u ON u.id=l.user_id LEFT JOIN user_profiles p ON p.user_id=l.user_id WHERE 1=1";
+                $sql = "SELECT l.*, COALESCE(NULLIF(TRIM(CONCAT(COALESCE(u.first_name,''),' ',COALESCE(u.last_name,''))),''),'Имя не указано') user_name, CASE WHEN p.is_partner=1 THEN 'Партнёр' WHEN EXISTS (SELECT 1 FROM program_members m WHERE m.user_id=p.user_id) THEN 'Участник команды' WHEN p.referred_by_user_id IS NOT NULL THEN 'Реферал' ELSE 'Пользователь' END participant_type FROM program_ledger l LEFT JOIN users u ON u.id=l.user_id LEFT JOIN user_profiles p ON p.user_id=l.user_id WHERE 1=1";
                 if ($user !== null) {
                     $sql .= ' AND l.user_id=?';
                     $params[] = $user;
                 }
                 foreach ([$dateFrom, $dateTo] as $date) {
-                    if ($date === null) continue;
-                    $parsed = DateTimeImmutable::createFromFormat('!Y-m-d', $date, new \DateTimeZone('UTC'));
+                    if ($date === null) {
+                        continue;
+                    }
+                    $parsed = DateTimeImmutable::createFromFormat('!Y-m-d', $date, new DateTimeZone('UTC'));
                     if (!$parsed || $parsed->format('Y-m-d') !== $date) {
                         throw new DomainException('Укажите корректную дату в формате ГГГГ-ММ-ДД');
                     }
@@ -537,7 +527,7 @@ final class ProgramService
                 }
                 if ($dateTo !== null) {
                     $sql .= ' AND l.created_at<?';
-                    $params[] = new DateTimeImmutable($dateTo, new \DateTimeZone('UTC'))->modify('+1 day')->format('Y-m-d H:i:s');
+                    $params[] = new DateTimeImmutable($dateTo, new DateTimeZone('UTC'))->modify('+1 day')->format('Y-m-d H:i:s');
                 }
             } elseif ($kind === 'sales') {
                 $sql = "SELECT o.id,o.status,o.delivered_at,o.snapshot,SUM(CASE WHEN l.state<>'void' THEN l.amount_minor ELSE 0 END) earned_minor FROM program_orders o JOIN program_ledger l ON l.order_id=o.id WHERE l.wallet='commission'" . ($user === null ? '' : ' AND l.user_id=?') . ' GROUP BY o.id,o.status,o.delivered_at,o.snapshot';
@@ -604,7 +594,13 @@ final class ProgramService
             if ((bool)$old['is_partner'] === $partner) {
                 return;
             }
-            // Promotion detaches only this root. Descendants and historical orders stay intact.
+            // Promotion removes membership; purchase customers and historical orders stay intact.
+            if ($partner) {
+                $this->db->delete('program_members', ['user_id' => $user]);
+            } else {
+                $this->db->delete('program_members', ['partner_id' => $user]);
+                $this->db->delete('program_invitations', ['partner_id' => $user]);
+            }
             $parent = $partner ? null : $old['referred_by_user_id'];
             $this->db->update('user_profiles', ['is_partner' => (int)$partner, 'referred_by_user_id' => $parent], ['user_id' => $user]);
             $this->audit($actor, 'partner_status', ['userId' => $user, 'before' => $old, 'isPartner' => $partner, 'reason' => $reason]);
@@ -630,6 +626,63 @@ final class ProgramService
         if ($this->db->fetchOne('SELECT id FROM program_orders WHERE id=?', [$order]) !== false) {
             throw new DomainException('Financial terms of snapshotted order are immutable; cancel and create a new order');
         }
+    }
+
+    private function safeParent(?int $buyer, ?int $parent): ?int
+    {
+        $seen = $buyer === null ? [] : [$buyer => true];
+        $cursor = $parent;
+        while ($cursor !== null) {
+            if (isset($seen[$cursor])) {
+                return null;
+            }
+            $seen[$cursor] = true;
+            $row = $this->db->fetchAssociative('SELECT referred_by_user_id FROM user_profiles WHERE user_id=?', [$cursor]);
+            if (!$row) {
+                return null;
+            }
+            $cursor = $row['referred_by_user_id'] === null ? null : (int)$row['referred_by_user_id'];
+        }
+        return $parent;
+    }
+
+    private function recipients(?int $buyer, ?int $parent, array $rules, bool $buyerBonus, string $guestEmail = ''): array
+    {
+        $result = [];
+        $participants = new ProgramParticipants($this->db);
+        $buyerIdentity = $buyer === null ? null : $participants->identity($buyer);
+        $eligible = function (int $id) use ($buyer, $guestEmail): bool {
+            $u = $this->db->fetchAssociative('SELECT email,status,deleted_at FROM users WHERE id=?', [$id]);
+            return $id !== $buyer && $u && $u['deleted_at'] === null && (int)$u['status'] === 1
+                && ($guestEmail === '' || $guestEmail !== mb_strtolower(trim((string)$u['email'])));
+        };
+        $add = static function (int $id, string $wallet, string $kind, int $bps) use (&$result, $eligible): void {
+            if ($eligible($id) && $bps > 0) {
+                $result[] = ['userId' => $id, 'wallet' => $wallet, 'kind' => $kind, 'bps' => $bps];
+            }
+        };
+        if (new SiteSettings($this->db)->bool('referral_enabled')) {
+            if ($buyerIdentity && $buyerIdentity['isTeamMember']) {
+                // A member's own purchases belong only to their explicit team partner.
+                $add($buyerIdentity['teamPartnerId'], 'commission', 'team', $rules['teamBps']);
+            } elseif ($buyerIdentity === null || !$buyerIdentity['isPartner']) {
+                if ($parent !== null && $eligible($parent)) {
+                    $owner = $participants->identity($parent);
+                    if ($owner['canEarnCommission']) {
+                        $add($parent, 'commission', 'direct', $rules['directBps']);
+                        if ($owner['isTeamMember']) {
+                            $add($owner['teamPartnerId'], 'commission', 'team', $rules['teamBps']);
+                        }
+                    } else {
+                        $add($parent, 'shopping', 'referral_bonus', $rules['referralBonusBps']);
+                    }
+                }
+            }
+        }
+        if ($buyer !== null && $buyerBonus) {
+            $result[] = ['userId' => $buyer, 'wallet' => 'shopping', 'kind' => 'buyer', 'bps' => $rules['buyerBps']];
+        }
+        return $result;
     }
 
     private function now(): string

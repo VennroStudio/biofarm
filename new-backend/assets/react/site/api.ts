@@ -38,6 +38,8 @@ export type SiteUser = {
   referredBy?: string;
   bonusBalance: number;
   isPartner: boolean;
+  isTeamMember: boolean;
+  hasCommissionHistory: boolean;
   cardNumber?: string;
   referralCode?: string;
 };
@@ -293,6 +295,8 @@ function mapUser(value: unknown): SiteUser | null {
       : undefined,
     bonusBalance: numberValue(value.bonus_balance ?? value.bonusBalance),
     isPartner: boolValue(value.is_partner ?? value.isPartner),
+    hasCommissionHistory: boolValue(value.has_commission_history ?? value.hasCommissionHistory),
+    isTeamMember: boolValue(value.is_team_member ?? value.isTeamMember),
     cardNumber: stringValue(value.card_number ?? value.cardNumber) || undefined,
     referralCode: stringValue(value.referral_code ?? value.referralCode) || undefined,
   };
@@ -439,7 +443,7 @@ export async function login(email: string, password: string) {
   return refreshUser();
 }
 
-export async function register(email: string, password: string, name: string, referredBy?: string) {
+export async function register(email: string, password: string, name: string, referredBy?: string, teamInvitation?: string, teamConsent = false) {
   const { firstName, lastName } = splitName(name);
   await request('/v1/users/create', {
     method: 'POST',
@@ -449,6 +453,8 @@ export async function register(email: string, password: string, name: string, re
       lastName,
       password,
       referredBy,
+      teamInvitation,
+      teamConsent,
     },
   });
 }

@@ -4,8 +4,9 @@ import { Check, Copy } from "lucide-react";
 export type Row = Record<string, unknown>;
 export type Listing = { items: Row[]; page: number; limit: number };
 export type Rates = {
-    levelsBps: number[];
-    partnerBps: number;
+    directBps: number;
+    teamBps: number;
+    referralBonusBps: number;
     buyerBps: number;
     capBps: number;
     holdDays: number;
@@ -16,6 +17,10 @@ export type Dashboard = {
     identity: {
         userId: number;
         isPartner: boolean;
+        isTeamMember: boolean;
+        teamPartnerId: number | null;
+        canEarnCommission: boolean;
+        hasCommissionHistory: boolean;
         isReferral: boolean;
         parentId: number | null;
         referralCode: string;
@@ -50,6 +55,9 @@ export const label = (value: unknown) =>
         shopping: "Бонусы",
         buyer: "Покупательские бонусы",
         referral: "Реферальное начисление",
+        direct: "Комиссия за своего покупателя",
+        team: "Комиссия партнёру за команду",
+        referral_bonus: "Бонусы за приглашённого покупателя",
         level_1: "Реферальное начисление: 1-й уровень",
         level_2: "Реферальное начисление: 2-й уровень",
         level_3: "Реферальное начисление: 3-й уровень",

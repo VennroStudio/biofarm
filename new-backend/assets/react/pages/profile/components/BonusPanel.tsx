@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react';
 import { request } from '../../../site/api';
-import { Section, Rows, Pager, money, type Dashboard, type Listing } from '../../../program/shared';
+import { Section, Rows, Pager, money, buttonClass, type Dashboard, type Listing } from '../../../program/shared';
 
-export function BonusPanel() {
+import { OfferLinkDialog } from './OfferLinkDialog';
+
+export function BonusPanel({ referralEnabled }: { referralEnabled: boolean }) {
+  const [inviteOpen, setInviteOpen] = useState(false);
   const [data, setData] = useState<Dashboard | null>(null);
   const [page, setPage] = useState(1);
   const [loadedPage, setLoadedPage] = useState(0);
@@ -31,7 +34,7 @@ export function BonusPanel() {
     <div className="space-y-6">
       {error && <p role="alert" className="rounded-xl bg-red-50 p-4 text-red-700">{error}</p>}
       <Section title="Покупательские бонусы">
-        <p className="text-sm text-muted-foreground">Бонусы за ваши собственные покупки. Их можно использовать для следующих заказов в магазине, вывести деньгами нельзя.</p>
+        <p className="text-sm text-muted-foreground">Бонусы за ваши покупки и приглашения друзей. Их можно использовать для следующих заказов в магазине, вывести деньгами нельзя.</p>
         {data ? <>
           <div className="grid grid-cols-2 gap-5 xl:grid-cols-4">
             {([
@@ -49,6 +52,11 @@ export function BonusPanel() {
           <p className="text-sm text-muted-foreground">Базовая ставка — {data.rates.buyerBps / 100}%. Начисление после подтверждённой оплаты; доступность — после доставки и удержания {data.rates.holdDays} дней. Размер начисления зависит от условий товара и учитывает возвраты.</p>
         </> : !error && <p role="status">Загрузка бонусов…</p>}
       </Section>
+      {referralEnabled && data && !data.identity.canEarnCommission && <Section title="Приглашайте друзей">
+        <p className="text-sm text-muted-foreground">За покупки по вашей ссылке вы получаете {data.rates.referralBonusBps / 100}% покупательскими бонусами. Вывод деньгами недоступен.</p>
+        <button type="button" className={buttonClass} onClick={() => setInviteOpen(true)}>Моя ссылка и QR-код</button>
+        {inviteOpen && <OfferLinkDialog url={`${window.location.origin}/?ref=${encodeURIComponent(data.identity.referralCode)}`} title="Пригласить покупателя" description="Делитесь ссылкой и получайте покупательские бонусы." onClose={() => setInviteOpen(false)} />}
+      </Section>}
       <Section title="История бонусов">
         <Rows rows={list.items} loading={loadedPage !== page} columns={[
           ['created_at', 'Дата'], ['kind', 'Операция'], ['state', 'Состояние'],

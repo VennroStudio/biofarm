@@ -69,22 +69,25 @@ final readonly class GetMeAction implements RequestHandlerInterface
             return [];
         }
 
+        $programIdentity = $this->program->identity($userId);
         return [
-            'id'                  => (int)$row['id'],
-            'role'                => (int)$row['role'],
-            'status'              => (int)$row['status'],
-            'first_name'          => (string)$row['first_name'],
-            'last_name'           => (string)$row['last_name'],
-            'name'                => trim((string)$row['first_name'] . ' ' . (string)$row['last_name']),
-            'email'               => (string)$row['email'],
-            'avatar'              => $row['avatar'],
-            'phone'               => $row['phone'],
-            'card_number'         => $row['card_number'],
-            'bonus_balance'       => (int)$row['bonus_balance'],
-            'is_partner'          => (bool)(int)$row['is_partner'],
-            'referral_code'       => $row['referral_code'],
-            'referred_by_user_id' => $row['referred_by_user_id'] !== null ? (int)$row['referred_by_user_id'] : null,
-            'created_at'          => (string)$row['created_at'],
+            'id'                     => (int)$row['id'],
+            'role'                   => (int)$row['role'],
+            'status'                 => (int)$row['status'],
+            'first_name'             => (string)$row['first_name'],
+            'last_name'              => (string)$row['last_name'],
+            'name'                   => trim((string)$row['first_name'] . ' ' . (string)$row['last_name']),
+            'email'                  => (string)$row['email'],
+            'avatar'                 => $row['avatar'],
+            'phone'                  => $row['phone'],
+            'card_number'            => $row['card_number'],
+            'bonus_balance'          => (int)$row['bonus_balance'],
+            'is_partner'             => (bool)(int)$row['is_partner'],
+            'has_commission_history' => $programIdentity['hasCommissionHistory'],
+            'is_team_member'         => $programIdentity['isTeamMember'],
+            'referral_code'          => $row['referral_code'],
+            'referred_by_user_id'    => $row['referred_by_user_id'] !== null ? (int)$row['referred_by_user_id'] : null,
+            'created_at'             => (string)$row['created_at'],
         ];
     }
 }

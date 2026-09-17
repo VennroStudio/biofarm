@@ -91,8 +91,8 @@ export function UserDetailsModal({ user, error, saving, onClose, onSave }: Props
             <input className={inputClass} value={form.referralCode} onChange={(event) => setForm({ ...form, referralCode: event.target.value })} />
           </Field>
           <div className="text-sm text-[#5f7580]">
-            <p>Статус: <b className="text-[#294555]">{user.is_partner ? 'Партнёр' : 'Пользователь'}</b></p>
-            <p>Пригласивший: {user.parent_name || user.referred_by_user_id || '—'}</p>
+            <p>Статус: <b className="text-[#294555]">{user.is_partner ? 'Партнёр' : user.is_team_member ? 'Участник команды' : user.is_referral ? 'Реферал' : 'Пользователь'}</b></p>
+            <p>Пригласивший: {user.is_team_member ? user.team_partner_name : user.parent_name || user.referred_by_user_id || '—'}</p>
           </div>
           <div className="text-sm text-[#5f7580]">
             <p>Приглашено: <b className="text-[#294555]">{user.referrals_count}</b></p>

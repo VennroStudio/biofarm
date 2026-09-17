@@ -22,7 +22,7 @@ const offerActionClass = "inline-flex h-10 w-10 shrink-0 items-center justify-ce
 
 export function ReferralPanel({ withdrawalsEnabled }: { withdrawalsEnabled: boolean }) {
     const [data, setData] = useState<Dashboard | null>(null);
-    const [tab, setTab] = useState("team");
+    const [tab, setTab] = useState("");
     const [sort, setSort] = useState("depth");
     const [direction, setDirection] = useState<"asc" | "desc">("asc");
     const [loadedKey, setLoadedKey] = useState("");
@@ -34,7 +34,8 @@ export function ReferralPanel({ withdrawalsEnabled }: { withdrawalsEnabled: bool
     const [revision, setRevision] = useState(0);
     const [offerId, setOfferId] = useState("");
     const [offerUrl, setOfferUrl] = useState("");
-    const [inviteOpen, setInviteOpen] = useState(false);
+    const [inviteOpen, setInviteOpen] = useState<"team" | "referrals" | null>(null);
+    const [teamInviteCode, setTeamInviteCode] = useState("");
     const listKey = `${tab}:${page}:${sort}:${direction}:${revision}`;
     const loadingList = loadedKey !== listKey;
     const cart = readCart();
@@ -42,7 +43,7 @@ export function ReferralPanel({ withdrawalsEnabled }: { withdrawalsEnabled: bool
         let live = true;
         void request<Dashboard>("/v1/program")
             .then((d) => {
-                if (live) setData(d);
+                if (live) { setData(d); setTab((current) => current || (d.identity.isPartner ? "team" : d.identity.isTeamMember ? "referrals" : "ledger")); }
             })
             .catch((e) => { if (live) setError(String(e)); });
         return () => {
@@ -51,6 +52,7 @@ export function ReferralPanel({ withdrawalsEnabled }: { withdrawalsEnabled: bool
     }, [revision]);
     useEffect(() => {
         let live = true;
+        if (!tab || !data) return;
         void request<Listing>(`/v1/program/${tab}?page=${page}&sort=${sort}&direction=${direction}${tab === "ledger" ? "&wallet=commission" : ""}`)
             .then((d) => {
                 if (live) { setList(d); setError(""); }
@@ -60,7 +62,7 @@ export function ReferralPanel({ withdrawalsEnabled }: { withdrawalsEnabled: bool
         return () => {
             live = false;
         };
-    }, [tab, page, revision, sort, direction, listKey]);
+    }, [tab, page, revision, sort, direction, listKey, data]);
     async function submit(
         event: FormEvent<HTMLFormElement>,
         path: string,
@@ -87,7 +89,8 @@ export function ReferralPanel({ withdrawalsEnabled }: { withdrawalsEnabled: bool
     }
     if (!data) return <p role="status">{error || "Загрузка программы…"}</p>;
     const columns: Record<string, [string, string][]> = {
-        team: [["name", "Участник"], ["depth", "Уровень"], ["parent_name", "Кто пригласил"]],
+        team: [["name", "Участник"], ["created_at", "Регистрация"]],
+        referrals: [["name", "Покупатель"], ["created_at", "Регистрация"]],
         ledger: [
             ["created_at", "Дата"],
             ["kind", "Операция"],
@@ -120,8 +123,9 @@ export function ReferralPanel({ withdrawalsEnabled }: { withdrawalsEnabled: bool
         ],
     };
     const tabs = [
-        { key: "team", title: "Моя команда", icon: Users },
-        { key: "sales", title: "Продажи", icon: ReceiptText },
+        ...(data.identity.isPartner ? [{ key: "team", title: "Моя команда", icon: Users }] : []),
+        ...(data.identity.canEarnCommission ? [{ key: "referrals", title: "Мои рефералы", icon: Users }] : []),
+        ...(data.identity.isPartner ? [{ key: "sales", title: "Продажи", icon: ReceiptText }] : []),
         { key: "ledger", title: "Начисления", icon: ListOrdered },
         ...(data.identity.isPartner ? [{ key: "offers", title: "Корзина", icon: ShoppingBasket }] : []),
         ...(withdrawalsEnabled ? [{ key: "withdrawals", title: "Выплаты", icon: Wallet }] : []),
@@ -132,15 +136,15 @@ export function ReferralPanel({ withdrawalsEnabled }: { withdrawalsEnabled: bool
             {offerId && <OfferDetailsDialog key={offerId} offerId={offerId} onClose={() => setOfferId("")} />}
             {offerUrl && <OfferLinkDialog key={offerUrl} url={offerUrl} onClose={() => setOfferUrl("")} />}
             {inviteOpen && (
-                <OfferLinkDialog url={`${window.location.origin}/?ref=${encodeURIComponent(data.identity.referralCode)}`}
-                    title="Пригласить в команду"
-                    description="После регистрации приглашённый появится в вашей команде. Покупки без регистрации учитываются в продажах."
-                    onClose={() => setInviteOpen(false)}>
+                <OfferLinkDialog url={inviteOpen === "team" ? `${window.location.origin}/login?team=${encodeURIComponent(teamInviteCode)}` : `${window.location.origin}/?ref=${encodeURIComponent(data.identity.referralCode)}`}
+                    title={inviteOpen === "team" ? "Пригласить в команду" : "Ссылка для покупателей"}
+                    description={inviteOpen === "team" ? "Приглашённый войдёт или зарегистрируется и подтвердит вступление в вашу команду." : "Покупки по этой ссылке дают вам комиссию. Регистрация покупателя не делает его участником команды."}
+                    onClose={() => setInviteOpen(null)}>
                     <details className="border-t border-border pt-4 text-sm">
                         <summary className="cursor-pointer text-primary">Условия начислений</summary>
                         <div className="mt-3 space-y-2 text-muted-foreground">
                             <p>Начисления — после подтверждённой оплаты. Доступны после доставки и удержания {data.rates.holdDays} дней.</p>
-                            <p>Два уровня: {data.rates.levelsBps.map((n) => `${n / 100}%`).join(" / ")}. Ближайшему партнёру: {data.rates.partnerBps / 100}%.</p>
+                            <p>Ваша комиссия за покупателя — {data.rates.directBps / 100}%. {data.identity.isPartner ? `С покупок участников команды и их покупателей — ${data.rates.teamBps / 100}%.` : `Партнёру вашей команды отдельно начисляется ${data.rates.teamBps / 100}%.`}</p>
                         </div>
                     </details>
                 </OfferLinkDialog>
@@ -148,7 +152,7 @@ export function ReferralPanel({ withdrawalsEnabled }: { withdrawalsEnabled: bool
             <TabList label="Разделы программы">
                 {tabs.map(({ key, title: tabTitle, icon: Icon }) => (
                     <TabButton key={key} id={`program-tab-${key}`} controls={`program-panel-${key}`}
-                        active={tab === key} onClick={() => { setTab(key); setPage(1); setError(""); setNotice(""); }}>
+                        active={tab === key} onClick={() => { setTab(key); setSort("depth"); setDirection("asc"); setPage(1); setError(""); setNotice(""); }}>
                         <Icon className="h-4 w-4 shrink-0" /><span>{tabTitle}</span>
                     </TabButton>
                 ))}
@@ -261,22 +265,28 @@ export function ReferralPanel({ withdrawalsEnabled }: { withdrawalsEnabled: bool
                         )}
 
                             <Section title={tab === "offers" ? "Отправленные корзины" : tab === "withdrawals" ? "История выплат" : title}>
-                                {tab === "team" && (
+                                {(tab === "team" || tab === "referrals") && (
                                     <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
-                                        <p className="text-sm text-muted-foreground">Приглашайте людей по своей ссылке и следите за составом команды.</p>
-                                        <button type="button" className={`${buttonClass} inline-flex shrink-0 items-center gap-2`} onClick={() => setInviteOpen(true)}>
-                                            <UserPlus className="h-4 w-4" aria-hidden="true" />Пригласить в команду
+                                        <p className="text-sm text-muted-foreground">{tab === "team" ? "Только пользователи, вступившие по специальному приглашению." : "Покупатели, зарегистрировавшиеся по вашей ссылке. Гостевые покупки учитываются в начислениях."}</p>
+                                        <button type="button" className={`${buttonClass} inline-flex shrink-0 items-center gap-2`} disabled={busy} onClick={() => {
+                                            if (tab === "referrals") { setInviteOpen("referrals"); return; }
+                                            setBusy(true);
+                                            void request<{ code: string }>("/v1/program/team-invitation")
+                                                .then((r) => { setTeamInviteCode(r.code); setInviteOpen("team"); })
+                                                .catch((e) => setError(String(e))).finally(() => setBusy(false));
+                                        }}>
+                                            <UserPlus className="h-4 w-4" aria-hidden="true" />{tab === "team" ? "Пригласить в команду" : "Моя ссылка и QR-код"}
                                         </button>
                                     </div>
                                 )}
-                                {tab === "team" && <p className="text-sm text-muted-foreground">Уровень 1 — приглашённые вами лично. Нажмите на заголовок столбца для сортировки всей команды. Участник, ставший партнёром, уходит вместе со своей веткой.</p>}
+                                {tab === "team" && <p className="text-sm text-muted-foreground">Участник, ставший партнёром, выходит из команды и сохраняет своих покупателей.</p>}
                                 {tab === "sales" && <p className="text-sm text-muted-foreground">Оплаченные заказы, по которым вам начислена комиссия. Сумма комиссии учитывает возвраты.</p>}
                                 {tab === "ledger" && <p className="text-sm text-muted-foreground">История денежных комиссий. Состояние показывает, доступно ли начисление.</p>}
                                 <Rows
                                     loading={loadingList}
                                     rows={list.items}
                                     columns={columns[tab]}
-                                    sorting={tab === "team" ? {
+                                    sorting={tab === "team" || tab === "referrals" ? {
                                         key: sort, direction,
                                         onChange: (key) => {
                                             setDirection(key === sort && direction === "asc" ? "desc" : "asc");

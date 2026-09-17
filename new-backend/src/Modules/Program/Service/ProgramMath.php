@@ -66,9 +66,17 @@ final class ProgramMath
         if ($basis < 0) {
             throw new DomainException('Скидка и списание бонусов превышают стоимость товаров.');
         }
-        $amounts = array_map(static fn (int $bps): int => intdiv($basis * $bps, 10000), [...$rules['levelsBps'], $rules['partnerBps'], $rules['buyerBps']]);
+        $scenario = $input['scenario'] ?? 'team_customer';
+        $rates = match ($scenario) {
+            'partner_customer'  => [$rules['directBps'], 0, 0],
+            'team_customer'     => [$rules['directBps'], $rules['teamBps'], 0],
+            'member_purchase'   => [0, $rules['teamBps'], 0],
+            'ordinary_referral' => [0, 0, $rules['referralBonusBps']],
+            default             => throw new DomainException('Неизвестный сценарий'),
+        };
+        $amounts = array_map(static fn (int $bps): int => intdiv($basis * $bps, 10000), [...$rates, $rules['buyerBps']]);
         $total = array_sum($amounts);
-        $result = ['grossMinor' => $gross, 'discountMinor' => $discount, 'spentBonusMinor' => $spent, 'basisMinor' => $basis, 'levelsMinor' => \array_slice($amounts, 0, 2), 'partnerMinor' => $amounts[2], 'buyerMinor' => $amounts[3], 'totalMinor' => $total, 'capMinor' => intdiv($basis * $rules['capBps'], 10000), 'totalIncentivesMinor' => $discount + $spent + $total, 'remainingBeforeCostsMinor' => $basis - $total];
+        $result = ['grossMinor' => $gross, 'discountMinor' => $discount, 'spentBonusMinor' => $spent, 'basisMinor' => $basis, 'directMinor' => $amounts[0], 'partnerMinor' => $amounts[1], 'referralBonusMinor' => $amounts[2], 'buyerMinor' => $amounts[3], 'totalMinor' => $total, 'capMinor' => intdiv($basis * $rules['capBps'], 10000), 'totalIncentivesMinor' => $discount + $spent + $total, 'remainingBeforeCostsMinor' => $basis - $total];
         if ($costs !== null) {
             $result['costMinor'] = $costs;
             $result['remainingAfterCostsMinor'] = $basis - $total - $costs;
@@ -78,24 +86,24 @@ final class ProgramMath
 
     public static function rules(array $input, array $current = []): array
     {
-        unset($current['maxPromoPercent']); // Historical settings remain readable.
-        // Upgrade persisted settings; new writes must explicitly supply two rates.
-        if (isset($current['levelsBps']) && \is_array($current['levelsBps']) && array_is_list($current['levelsBps']) && \count($current['levelsBps']) === 4) {
-            $current['levelsBps'] = \array_slice($current['levelsBps'], 0, 2);
-        }
-        $rules = array_replace(['levelsBps' => [100, 50], 'partnerBps' => 100, 'buyerBps' => 100, 'capBps' => 400, 'holdDays' => 14, 'minimumWithdrawalMinor' => 10000, 'products' => []], $current, $input);
-        if (array_diff(array_keys($input), ['levelsBps', 'partnerBps', 'buyerBps', 'capBps', 'holdDays', 'minimumWithdrawalMinor', 'products']) !== []) {
+        // Convert stored legacy settings only. New API writes use named, independent rates.
+        $current['directBps'] ??= $current['levelsBps'][0] ?? 100;
+        $current['teamBps'] ??= $current['partnerBps'] ?? 100;
+        $current['referralBonusBps'] ??= $current['directBps'];
+        unset($current['maxPromoPercent'], $current['levelsBps'], $current['partnerBps']);
+        $rules = array_replace(['directBps' => 100, 'teamBps' => 100, 'referralBonusBps' => 100, 'buyerBps' => 100, 'capBps' => 400, 'holdDays' => 14, 'minimumWithdrawalMinor' => 10000, 'products' => []], $current, $input);
+        if (array_diff(array_keys($input), ['directBps', 'teamBps', 'referralBonusBps', 'buyerBps', 'capBps', 'holdDays', 'minimumWithdrawalMinor', 'products']) !== []) {
             throw new DomainException('Unknown program setting');
         }
-        if (!\is_array($rules['products']) || !\is_array($rules['levelsBps']) || !array_is_list($rules['levelsBps']) || \count($rules['levelsBps']) !== 2) {
-            throw new DomainException('Exactly two level rates required');
+        if (!\is_array($rules['products'])) {
+            throw new DomainException('Invalid product factors');
         }
-        foreach ([...$rules['levelsBps'], $rules['partnerBps'], $rules['buyerBps'], $rules['capBps']] as $rate) {
+        foreach ([$rules['directBps'], $rules['teamBps'], $rules['referralBonusBps'], $rules['buyerBps'], $rules['capBps']] as $rate) {
             if (!\is_int($rate) || $rate < 0 || $rate > 10000) {
                 throw new DomainException('Rates must be integer basis points from 0 to 10000');
             }
         }
-        if (array_sum($rules['levelsBps']) + $rules['partnerBps'] + $rules['buyerBps'] > $rules['capBps']) {
+        if (max($rules['directBps'] + $rules['teamBps'], $rules['referralBonusBps']) + $rules['buyerBps'] > $rules['capBps']) {
             throw new DomainException('Maximum rewards exceed budget cap');
         }
         if (!\is_int($rules['holdDays']) || $rules['holdDays'] < 0 || $rules['holdDays'] > 3650 || !\is_int($rules['minimumWithdrawalMinor']) || $rules['minimumWithdrawalMinor'] < 1) {

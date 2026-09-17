@@ -256,6 +256,9 @@ export type AdminCustomer = {
   card_number: string | null;
   bonus_balance: number;
   is_partner: boolean;
+  is_team_member: boolean;
+  is_referral: boolean;
+  team_partner_name: string | null;
   referral_code: string | null;
   referred_by_user_id: number | null;
   referrals_count: number;

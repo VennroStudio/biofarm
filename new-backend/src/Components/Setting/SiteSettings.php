@@ -182,7 +182,7 @@ final class SiteSettings
         // Public promises and checkout previews use the same rates as financial snapshots.
         $rules = new ProgramService($this->connection)->settings();
         $settings['order_bonus_percent'] = $rules['buyerBps'] / 100;
-        $settings['referral_percent'] = $rules['levelsBps'][0] / 100;
+        $settings['referral_percent'] = $rules['referralBonusBps'] / 100;
         $settings['welcome_bonus_enabled'] = false;
         $settings['welcome_bonus_amount'] = 0;
         $this->settings = $settings;

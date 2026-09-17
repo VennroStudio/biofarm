@@ -205,17 +205,17 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, withdrawa
                 </TabButton>
               )}
             </TabList>
-            {referralEnabled && (
+            {referralEnabled && (user.isPartner || user.isTeamMember || user.hasCommissionHistory) && (
               <a href="/partner" className="flex items-center gap-3 rounded-2xl border border-border bg-white px-5 py-4 text-sm font-medium text-primary hover:bg-secondary focus-visible:outline-primary">
                 <Gift className="h-4 w-4 shrink-0" />
-                <span>{user.isPartner ? 'Кабинет партнёра' : 'Реферальная программа'} →</span>
+                <span>{user.isPartner ? 'Кабинет партнёра' : user.isTeamMember ? 'Кабинет участника команды' : 'Начисления и выплаты'} →</span>
               </a>
             )}
           </div>
 
           <div className="min-w-0">
             <TabPanel active={tab === 'bonuses'} id="bonuses-tabpanel" labelledBy="bonuses-tab">
-              {tab === 'bonuses' && <BonusPanel />}
+              {tab === 'bonuses' && <BonusPanel referralEnabled={referralEnabled} />}
             </TabPanel>
             <TabPanel active={tab === 'profile'} id="profile-tabpanel" labelledBy="profile-tab">
                 <ProfileDetailsCard

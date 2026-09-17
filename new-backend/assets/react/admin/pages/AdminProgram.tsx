@@ -266,8 +266,9 @@ export function AdminProgram() {
                                     e,
                                     `${base}/settings`,
                                     (f) => ({
-                                        levelsBps: [0, 1].map((i) => Math.round(num(f, `level${i}`) * 100)),
-                                        partnerBps: Math.round(num(f, "partner") * 100),
+                                        directBps: Math.round(num(f, "direct") * 100),
+                                        teamBps: Math.round(num(f, "team") * 100),
+                                        referralBonusBps: Math.round(num(f, "referralBonus") * 100),
                                         buyerBps: Math.round(num(f, "buyer") * 100),
                                         capBps: Math.round(num(f, "cap") * 100),
                                         holdDays: num(f, "hold"),
@@ -287,8 +288,9 @@ export function AdminProgram() {
                             }
                         >
                             {[
-                                ...rates.levelsBps.map((n, i) => [`level${i}`, `Уровень ${i + 1}, %`, n / 100]),
-                                ["partner", "Ближайший партнёр, %", rates.partnerBps / 100],
+                                ["direct", "Комиссия за своего покупателя, %", rates.directBps / 100],
+                                ["team", "Комиссия партнёру за команду, %", rates.teamBps / 100],
+                                ["referralBonus", "Бонусы обычному покупателю за приглашённого, %", rates.referralBonusBps / 100],
                                 ["buyer", "Покупателю, %", rates.buyerBps / 100],
                                 ["cap", "Лимит вознаграждений, %", rates.capBps / 100],
                                 ["hold", "Удержание после доставки, дней", rates.holdDays],
@@ -320,18 +322,26 @@ export function AdminProgram() {
                             </button>
                         </form>
                     </Section>
-                    <Section title="Симулятор максимального полного распределения">
-                        <p>Максимальные вознаграждения для двух уровней, партнёра и покупателя. Скидки и списанные бонусы учитываются отдельно. Без введённых расходов прибыль не рассчитывается.</p>
+                    <Section title="Симулятор начислений">
+                        <p>Начисления по выбранному сценарию. Комиссия партнёру за команду включает покупки участников и их покупателей. Скидки и списанные бонусы учитываются отдельно. Без введённых расходов прибыль не рассчитывается.</p>
                         <form
                             className="flex flex-wrap gap-3"
                             onSubmit={(e) => {
                                 e.preventDefault();
                                 const f = new FormData(e.currentTarget);
-                                void mutate(`${base}/simulate`, { amount: value(f, "base"), discountAmount: value(f, "discount") || "0", bonusAmount: value(f, "spent") || "0", costAmount: value(f, "costs") })
+                                void mutate(`${base}/simulate`, { scenario: value(f, "scenario"), amount: value(f, "base"), discountAmount: value(f, "discount") || "0", bonusAmount: value(f, "spent") || "0", costAmount: value(f, "costs") })
                                     .then((r) => setSimulation(r || null))
                                     .catch(() => {});
                             }}
                         >
+                            <Field name="Сценарий">
+                                <select className={inputClass} name="scenario" defaultValue="team_customer">
+                                    <option value="team_customer">Покупатель участника команды</option>
+                                    <option value="partner_customer">Личный покупатель партнёра</option>
+                                    <option value="member_purchase">Личная покупка участника</option>
+                                    <option value="ordinary_referral">Приглашение обычного покупателя</option>
+                                </select>
+                            </Field>
                             <Field name="Стоимость товаров до скидки и бонусов, ₽">
                                 <input className={inputClass} name="base" type="number" min="0" step="0.01" required />
                             </Field>
@@ -358,8 +368,9 @@ export function AdminProgram() {
                                             remainingBeforeCostsMinor: "Остаток до себестоимости и расходов",
                                             costMinor: "Указанные расходы",
                                             remainingAfterCostsMinor: "Остаток после указанных расходов",
-                                            levelsMinor: "Два уровня",
-                                            partnerMinor: "Партнёр",
+                                            directMinor: "Комиссия за своего покупателя",
+                                            referralBonusMinor: "Бонусы за приглашённого покупателя",
+                                            partnerMinor: "Комиссия партнёру за команду",
                                             buyerMinor: "Резерв на новые бонусы покупателя",
                                             totalMinor: "Все вознаграждения",
                                             capMinor: "Лимит вознаграждений",

@@ -8,6 +8,7 @@ use App\Components\Clock\UtcClock;
 use App\Components\Exception\DomainExceptionModule;
 use App\Components\Flusher\FlusherInterface;
 use App\Components\Setting\SiteSettings;
+use App\Modules\Program\Service\ProgramService;
 use App\Modules\User\Command\Mailer\EmailVerification\EmailVerificationCommand;
 use App\Modules\User\Command\Mailer\EmailVerification\EmailVerificationHandler;
 use App\Modules\User\Command\UserToken\Create\CreateUserTokenCommand;
@@ -23,6 +24,7 @@ use App\Modules\User\Service\PasswordHasherService;
 use App\Modules\User\Service\TokenHasherService;
 use DateMalformedStringException;
 use Doctrine\DBAL\Exception;
+use DomainException;
 use Random\RandomException;
 use RuntimeException;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
@@ -42,6 +44,7 @@ final readonly class CreateUserHandler
         private EmailVerificationHandler $emailVerificationHandler,
         private UserProfileRepository $profileRepository,
         private SiteSettings $settings,
+        private ProgramService $program,
     ) {}
 
     /**
@@ -59,8 +62,20 @@ final readonly class CreateUserHandler
 
         $this->assertEmailNotRegistered($email);
 
-        $user = $this->createUser($command, $email);
-        $this->createUserProfile((int)$user->id, $command->referredBy);
+        $user = $this->program->atomic(function () use ($command, $email): User {
+            if ($command->teamInvitation !== null) {
+                $this->program->teamInvitation($command->teamInvitation);
+                if (!$command->teamConsent) {
+                    throw new DomainException('Подтвердите вступление в команду');
+                }
+            }
+            $user = $this->createUser($command, $email);
+            $this->createUserProfile((int)$user->id, $command->teamInvitation === null ? $command->referredBy : null);
+            if ($command->teamInvitation !== null) {
+                $this->program->joinTeam((int)$user->id, $command->teamInvitation, $command->teamConsent);
+            }
+            return $user;
+        });
 
         $plainToken = $this->createEmailVerificationToken((int)$user->id);
         $this->sendVerificationEmail($user, $plainToken, $command->locale);
@@ -128,13 +143,7 @@ final readonly class CreateUserHandler
             return null;
         }
 
-        if (ctype_digit($referredBy)) {
-            $userId = (int)$referredBy;
-
-            return $userId > 0 && $this->profileRepository->findByUserId($userId) !== null ? $userId : null;
-        }
-
-        return $this->profileRepository->findByReferralCode($referredBy)?->userId;
+        return $this->program->referralOwner($referredBy);
     }
 
     /**

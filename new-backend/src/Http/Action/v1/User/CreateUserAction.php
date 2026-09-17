@@ -11,6 +11,7 @@ use App\Components\Setting\SiteSettings;
 use App\Components\Validator\Validator;
 use App\Modules\User\Command\User\Create\CreateUserCommand;
 use App\Modules\User\Command\User\Create\CreateUserHandler;
+use DomainException;
 use OpenApi\Attributes as OA;
 use Override;
 use Psr\Http\Message\ResponseInterface;
@@ -73,7 +74,13 @@ final readonly class CreateUserAction implements RequestHandlerInterface
 
         $this->validator->validate($command);
 
-        $this->handler->handle($command);
+        try {
+            $this->handler->handle($command);
+        } catch (DomainExceptionModule $e) {
+            throw $e;
+        } catch (DomainException $e) {
+            throw new DomainExceptionModule('user', $e->getMessage(), 1, status: 422);
+        }
 
         return new JsonDataSuccessResponse();
     }

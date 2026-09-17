@@ -12,6 +12,8 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Promise\Create;
 use GuzzleHttp\Psr7\Response;
 use Psr\Http\Message\RequestInterface;
+use Slim\Exception\HttpMethodNotAllowedException;
+use Slim\Exception\HttpNotFoundException;
 use Slim\Psr7\Factory\ServerRequestFactory;
 use Symfony\Component\Mailer\Envelope;
 use Symfony\Component\Mailer\MailerInterface;
@@ -67,10 +69,10 @@ try {
         }
         try {
             $response = $app->handle($r);
-        } catch (\Slim\Exception\HttpNotFoundException $e) {
+        } catch (HttpNotFoundException $e) {
             ok($expected === 404, $method . ' ' . $url . ' unexpectedly missing');
             return null;
-        } catch (\Slim\Exception\HttpMethodNotAllowedException $e) {
+        } catch (HttpMethodNotAllowedException $e) {
             ok($expected === 405, $method . ' ' . $url . ' unexpectedly disallowed');
             return null;
         }
@@ -95,6 +97,10 @@ try {
     }
     $admin = $tokens[0];
     $program = $c->get(ProgramService::class);
+    $invite = $call('GET', '/v1/program/team-invitation', [], $tokens[1]);
+    foreach ([3, 4, 5] as $member) {
+        $call('POST', '/v1/program/join', ['code' => $invite['code'], 'consent' => true], $tokens[$member]);
+    }
     $program->adjust($ids[1], 'shopping', 123, 'bonus separation fixture', $ids[0]);
     $program->adjust($ids[1], 'commission', 456, 'commission separation fixture', $ids[0]);
     foreach (['shopping', 'commission'] as $wallet) {
@@ -107,14 +113,18 @@ try {
     $program->adjust($ids[1], 'commission', -456, 'restore fixture balance', $ids[0]);
 
     $buyer = $tokens[6];
-    $team = $call('GET', '/v1/program/team?sort=depth&direction=asc&limit=2&page=2', [], $tokens[1]);
-    ok(array_map('intval', array_column($team['items'], 'id')) === [$ids[4], $ids[5]], 'team sorting precedes pagination through HTTP');
-    ok($team['items'][0]['parent_name'] === 'Участник 3 Проверка', 'team returns human readable inviter');
+    $team = $call('GET', '/v1/program/team?sort=depth&direction=asc&limit=1&page=2', [], $tokens[1]);
+    ok(array_map('intval', array_column($team['items'], 'id')) === [$ids[4]], 'team sorting precedes pagination through HTTP');
+    ok($team['items'][0]['name'] === 'Участник 4 Проверка', 'team returns human readable inviter');
     $teamDesc = $call('GET', '/v1/program/team?sort=name&direction=desc&limit=1', [], $tokens[1]);
-    ok((int)$teamDesc['items'][0]['id'] === $ids[6], 'team name descending through HTTP');
+    ok((int)$teamDesc['items'][0]['id'] === $ids[5], 'team name descending through HTTP');
     $call('GET', '/v1/program/team?sort=unknown', [], $tokens[1], 422);
     $call('GET', '/v1/program/team?direction=unknown', [], $tokens[1], 422);
-    ok($call('GET', '/v1/program/team?userId=' . $ids[1], [], $tokens[6])['items'] === [], 'team query cannot select another account');
+    $call('GET', '/v1/program/team?userId=' . $ids[1], [], $tokens[6], 422);
+    $call('GET', '/v1/program/team', [], $tokens[5], 422);
+    $call('GET', '/v1/program/referrals', [], $tokens[6], 422);
+    $call('GET', '/v1/program/ledger?wallet=commission', [], $tokens[6], 422);
+    $call('GET', '/v1/program/ledger?wallet=shopping', [], $tokens[6]);
 
     ok($call('GET', '/v1/referrals/test-' . $suffix . '-1')['valid'] === true, 'existing referral is public and valid');
     ok($call('GET', '/v1/referrals/missing-' . $suffix)['valid'] === false, 'unknown referral rejected');
@@ -178,7 +188,7 @@ try {
     $again = $call('POST', '/admin/api/payments/orders/' . $orderId . '/receipt', [], $admin);
     ok($again['id'] === $settlement['id'], 'delivery receipt key stable');
     $earn = $call('GET', '/v1/program', [], $tokens[1]);
-    ok($earn['balances']['commission']['availableMinor'] > 0, 'deep partner rewarded');
+    ok($earn['balances']['commission']['availableMinor'] > 0, 'explicit team partner rewarded');
     $snapshot = $db->fetchOne('SELECT snapshot FROM program_orders WHERE id=?', [$orderId]);
     $call('PATCH', '/admin/api/program/users/' . $ids[3], ['parentId' => $ids[1]], $admin, 405);
     foreach (['parentId', 'referredByUserId', 'referred_by_user_id'] as $key) {
@@ -209,7 +219,7 @@ try {
     $call('GET', '/admin/api/program/audit', [], $admin);
     // A new guest follows the partner basket, pays without registering, and rewards its owner.
     $guestRules = $call('GET', '/admin/api/program/settings', [], $admin);
-    $call('PATCH', '/admin/api/program/settings', ['levelsBps' => [300, 100], 'partnerBps' => 100, 'buyerBps' => 100, 'capBps' => 1000, 'holdDays' => 14, 'products' => []], $admin);
+    $call('PATCH', '/admin/api/program/settings', ['directBps' => 300, 'teamBps' => 100, 'referralBonusBps' => 100, 'buyerBps' => 100, 'capBps' => 1000, 'holdDays' => 14, 'products' => []], $admin);
     $originalPrice = $db->fetchOne('SELECT price FROM products WHERE id=?', [$product]);
     $db->update('products', ['price' => 1000], ['id' => $product]);
     $guestBody = $body;
@@ -231,31 +241,44 @@ try {
     $guestWebhook = ['event' => 'payment.succeeded', 'object' => ['id' => $guestProviderId]];
     $call('POST', '/webhooks/yookassa', $guestWebhook);
     $guestRewards = $db->fetchAllAssociative('SELECT user_id,wallet,kind,amount_minor,state FROM program_ledger WHERE order_id=? ORDER BY kind', [$guestId]);
-    ok(count($guestRewards) === 2, 'guest rewards only first level and partner, no shopping bonus');
-    ok(array_unique(array_map('intval', array_column($guestRewards, 'user_id'))) === [$ids[1]], 'both guest commissions belong to basket partner');
-    ok(array_column($guestRewards, 'wallet') === ['commission', 'commission'], 'guest purchase credits partner money wallet');
-    ok(array_column($guestRewards, 'kind') === ['level_1', 'partner'], 'guest direct invitation and partner commissions');
-    ok(array_map('intval', array_column($guestRewards, 'amount_minor')) === [6000, 2000], '2000 RUB goods earn 60 RUB at 3 percent plus 20 RUB at 1 percent, excluding delivery');
-    ok(array_column($guestRewards, 'state') === ['pending', 'pending'], 'guest reward held until delivery and hold period');
+    ok(count($guestRewards) === 1, 'guest rewards partner once, no shopping bonus');
+    ok(array_unique(array_map('intval', array_column($guestRewards, 'user_id'))) === [$ids[1]], 'single guest commission belong to basket partner');
+    ok(array_column($guestRewards, 'wallet') === ['commission'], 'guest purchase credits partner money wallet');
+    ok(array_column($guestRewards, 'kind') === ['direct'], 'guest direct commission');
+    ok(array_map('intval', array_column($guestRewards, 'amount_minor')) === [6000], '2000 RUB goods earn 60 RUB at 3 percent, excluding delivery');
+    ok(array_column($guestRewards, 'state') === ['pending'], 'guest reward held until delivery and hold period');
     $call('POST', '/webhooks/yookassa', $guestWebhook);
-    ok((int)$db->fetchOne('SELECT SUM(amount_minor) FROM program_ledger WHERE order_id=?', [$guestId]) === 8000, 'duplicate guest payment notification never doubles 80 RUB reward');
+    ok((int)$db->fetchOne('SELECT SUM(amount_minor) FROM program_ledger WHERE order_id=?', [$guestId]) === 6000, 'duplicate guest payment notification never doubles 60 RUB reward');
     $balanceAfterGuest = $call('GET', '/v1/program', [], $tokens[1]);
-    ok($balanceAfterGuest['balances']['commission']['pendingMinor'] - $balanceBeforeGuest['balances']['commission']['pendingMinor'] === 8000, 'partner dashboard shows 80 RUB pending from guest');
+    ok($balanceAfterGuest['balances']['commission']['pendingMinor'] - $balanceBeforeGuest['balances']['commission']['pendingMinor'] === 6000, 'partner dashboard shows 60 RUB pending from guest');
     $guestSales = $call('GET', '/v1/program/sales', [], $tokens[1]);
     $guestSale = array_values(array_filter($guestSales['items'], static fn ($row) => $row['id'] === $guestId));
-    ok(count($guestSale) === 1 && (int)$guestSale[0]['earned_minor'] === 8000, 'partner sales show guest order and its 80 RUB commission');
+    ok(count($guestSale) === 1 && (int)$guestSale[0]['earned_minor'] === 6000, 'partner sales show guest order and its 60 RUB commission');
     ok((int)$db->fetchOne('SELECT COUNT(*) FROM users') === $usersBeforeGuest, 'guest checkout and payment do not register a user');
     $call('POST', '/admin/api/program/orders/' . $guestId . '/delivered', [], $admin);
     $afterGuestDelivery = $call('GET', '/v1/program', [], $tokens[1]);
     ok($afterGuestDelivery['balances']['commission']['pendingMinor'] === $balanceAfterGuest['balances']['commission']['pendingMinor'], 'delivery does not skip guest reward hold period');
     $call('PATCH', '/admin/api/program/settings', $guestRules, $admin);
     $db->update('products', ['price' => $originalPrice], ['id' => $product]);
-    echo "PASS guest basket: 2000 RUB goods, 80 RUB partner commission (60 + 20), held for delivery + 14 days; duplicate webhook safe; no user created\n";
+    echo "PASS guest basket: 2000 RUB goods, 60 RUB partner commission (3%), held for delivery + 14 days; duplicate webhook safe; no user created\n";
     $registrationEmail = 'registered-' . $suffix . '@example.test';
     $call('POST', '/v1/users/create', ['firstName' => 'Тестовый', 'lastName' => 'Реферал', 'email' => $registrationEmail, 'password' => $password, 'referredBy' => 'test-' . $suffix . '-5'], null, 201);
+    $call('POST', '/v1/users/create', ['firstName' => 'Тестовый', 'lastName' => 'Реферал', 'email' => $registrationEmail, 'password' => $password], null, 409);
     $registered = (int)$db->fetchOne('SELECT id FROM users WHERE email=?', [$registrationEmail]);
     ok((int)$db->fetchOne('SELECT referred_by_user_id FROM user_profiles WHERE user_id=?', [$registered]) === $ids[5], 'registration attaches referral');
     ok((int)$db->fetchOne('SELECT bonus_balance FROM user_profiles WHERE user_id=?', [$registered]) === 0, 'no welcome balance');
+    ok($db->fetchOne('SELECT partner_id FROM program_members WHERE user_id=?', [$registered]) === false, 'purchase referral registration never joins team');
+    $teamEmail = 'team-registered-' . $suffix . '@example.test';
+    $registration = ['firstName' => 'Новый', 'lastName' => 'Участник', 'email' => $teamEmail, 'password' => $password, 'teamInvitation' => $invite['code']];
+    $call('POST', '/v1/users/create', $registration, null, 422);
+    ok($db->fetchOne('SELECT id FROM users WHERE email=?', [$teamEmail]) === false, 'missing consent creates no account');
+    $call('POST', '/v1/users/create', $registration + ['teamConsent' => true, 'referredBy' => 'test-' . $suffix . '-5'], null, 201);
+    $teamRegistered = (int)$db->fetchOne('SELECT id FROM users WHERE email=?', [$teamEmail]);
+    ok((int)$db->fetchOne('SELECT partner_id FROM program_members WHERE user_id=?', [$teamRegistered]) === $ids[1], 'team signup joins explicit partner');
+    ok($db->fetchOne('SELECT referred_by_user_id FROM user_profiles WHERE user_id=?', [$teamRegistered]) === null, 'team signup does not inherit purchase cookie');
+    $call('GET', '/v1/team-invitations/test-' . $suffix . '-1', [], null, 422);
+    $call('GET', '/v1/program/team-invitation', [], $tokens[5], 422);
+    $call('POST', '/v1/program/join', ['code' => $invite['code'], 'consent' => false], $tokens[2], 422);
     // Removed partner promo endpoints must stay unavailable; ordinary shop codes still work.
     $call('POST', '/v1/program/promo-requests', ['description' => 'Removed', 'percent' => 3], $tokens[1], 410);
     $call('GET', '/admin/api/program/promo-requests', [], $admin, 410);
@@ -283,7 +306,7 @@ try {
     $noPromoOffer = $call('POST', '/v1/program/offers', ['title' => 'Без автопромокода', 'promoCode' => $retiredCode, 'items' => [['productId' => $product, 'quantity' => 1]]], $tokens[1]);
     ok(!array_key_exists('promoCode', $call('GET', '/v1/offers/' . $noPromoOffer['id'])), 'QR no longer imports a promo');
     $sim = $call('POST', '/admin/api/program/simulate', ['amount' => '10000', 'discountAmount' => '1000', 'costAmount' => '5000'], $admin);
-    ok($sim['totalIncentivesMinor'] === 131500 && $sim['remainingAfterCostsMinor'] === 368500, 'simulator includes all supplied costs');
+    ok($sim['totalIncentivesMinor'] === 127000 && $sim['remainingAfterCostsMinor'] === 373000, 'simulator includes all supplied costs');
     ok(!array_key_exists('maxPromoPercent', $call('GET', '/admin/api/program/settings', [], $admin)), 'partner promo setting retired');
 
     // Existing unbound account follows the first valid link, even with another partner's QR.
@@ -315,7 +338,7 @@ try {
     $selfOrder = $call('POST', '/v1/orders/create', $selfBody, null, 201);
     ok(!in_array($ids[1], array_column($getSnapshot($selfOrder['id'])['recipients'], 'userId'), true), 'guest self purchase excludes own commission');
 
-    echo "PASS program HTTP: {$checks} assertions, 8 test users, real routes and database; provider mocked; fixtures rolled back\n";
+    echo "PASS program HTTP: {$checks} assertions, isolated test users, real routes and database; provider mocked; fixtures rolled back\n";
 } finally {
     $db->rollBack();
 }
