@@ -7,11 +7,6 @@ export const settingsSections = [
     subtitle: 'Включение и отключение крупных возможностей сайта',
   },
   {
-    id: 'home',
-    label: 'Главная',
-    subtitle: 'Порядок отображения секций на главной странице',
-  },
-  {
     id: 'seo',
     label: 'SEO и robots',
     subtitle: 'Метаданные, Open Graph, robots.txt и индексация',

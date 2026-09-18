@@ -311,16 +311,6 @@ export type Settings = {
   cdek_delivery_price: number;
   post_delivery_price: number;
   order_emails_enabled: boolean;
-  home_features_enabled: boolean;
-  home_catalog_enabled: boolean;
-  home_video_enabled: boolean;
-  home_blog_enabled: boolean;
-  home_about_enabled: boolean;
-  home_marketplaces_enabled: boolean;
-  home_certificates_enabled: boolean;
-  home_loyalty_enabled: boolean;
-  home_reviews_enabled: boolean;
-  home_contacts_enabled: boolean;
   yandex_metrika_enabled: boolean;
   yandex_metrika_id: string;
   bitrix_widget_enabled: boolean;

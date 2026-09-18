@@ -6,48 +6,30 @@
 
 {% block content %}
     {% include 'sections/home/hero.html.twig' with { products: page.heroProducts } only %}
-    {% if site_feature('home_catalog_enabled') %}
-        {% include 'sections/home/categories.html.twig' with { purposes: page.purposes, purposeUrls: page.purposeUrls } only %}
-        {% include 'sections/home/catalog.html.twig' with {
-            products: page.products,
-            categories: page.categories,
-            categoriesTotal: page.categoriesTotal,
-            selectedCategory: page.selectedCategory,
-            basePath: '/',
-            showAllLink: true,
-        } only %}
-    {% endif %}
-    {% if site_feature('home_video_enabled') %}
-        {% include 'sections/home/video.html.twig' only %}
-    {% endif %}
-    {% if site_feature('home_certificates_enabled') %}
-        {% include 'sections/home/certificates.html.twig' with {
-            certificates: page.certificates,
-        } only %}
-    {% endif %}
-    {% if site_feature('home_blog_enabled') %}
-        {% include 'sections/home/blog.html.twig' with {
-            posts: page.blogPosts,
-        } only %}
-    {% endif %}
-    {% if site_feature('home_reviews_enabled') %}
-        {% include 'sections/home/reviews.html.twig' with {
-            reviews: page.reviews,
-        } only %}
-    {% endif %}
-    {% if site_feature('home_about_enabled') %}
-        {% include 'sections/home/about.html.twig' only %}
-    {% endif %}
-    {% if site_feature('home_marketplaces_enabled') %}
-        {% include 'sections/home/marketplaces.html.twig' only %}
-    {% endif %}
-    {% if site_feature('cart_enabled') and site_feature('home_loyalty_enabled') %}
+    {% include 'sections/home/categories.html.twig' with { purposes: page.purposes, purposeUrls: page.purposeUrls } only %}
+    {% include 'sections/home/catalog.html.twig' with {
+        products: page.products,
+        categories: page.categories,
+        categoriesTotal: page.categoriesTotal,
+        selectedCategory: page.selectedCategory,
+        basePath: '/',
+        showAllLink: true,
+    } only %}
+    {% include 'sections/home/video.html.twig' only %}
+    {% include 'sections/home/certificates.html.twig' with {
+        certificates: page.certificates,
+    } only %}
+    {% include 'sections/home/blog.html.twig' with {
+        posts: page.blogPosts,
+    } only %}
+    {% include 'sections/home/reviews.html.twig' with {
+        reviews: page.reviews,
+    } only %}
+    {% include 'sections/home/about.html.twig' only %}
+    {% include 'sections/home/marketplaces.html.twig' only %}
+    {% if site_feature('cart_enabled') %}
         {% include 'sections/home/loyalty.html.twig' only %}
     {% endif %}
-    {% if site_feature('home_features_enabled') %}
-        {% include 'sections/home/features.html.twig' only %}
-    {% endif %}
-    {% if site_feature('home_contacts_enabled') %}
-        {% include 'sections/home/contacts.html.twig' only %}
-    {% endif %}
+    {% include 'sections/home/features.html.twig' only %}
+    {% include 'sections/home/contacts.html.twig' only %}
 {% endblock %}

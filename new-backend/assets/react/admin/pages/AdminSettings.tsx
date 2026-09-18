@@ -1,4 +1,4 @@
-import { House, PlugZap, Save, Search, ShieldCheck, SlidersHorizontal, Truck } from 'lucide-react';
+import { PlugZap, Save, Search, ShieldCheck, SlidersHorizontal, Truck } from 'lucide-react';
 import { PaymentIntegrationCard } from '../features/settings/ui/PaymentIntegrationCard';
 import { AdminIntegrationErrors } from './AdminIntegrationErrors';
 import { FormEvent, useState } from 'react';
@@ -14,7 +14,6 @@ import {
 import { BitrixSettingsCard } from '../features/settings/ui/BitrixSettingsCard';
 import { DeliverySettingsCard } from '../features/settings/ui/DeliverySettingsCard';
 import { FeatureSettingsCard } from '../features/settings/ui/FeatureSettingsCard';
-import { HomeBlocksSettingsCard } from '../features/settings/ui/HomeBlocksSettingsCard';
 import { PasswordSettingsCard, type PasswordForm } from '../features/settings/ui/PasswordSettingsCard';
 import { SeoSettingsCard } from '../features/settings/ui/SeoSettingsCard';
 import { useLoadOnMount } from '../hooks/useLoadOnMount';
@@ -22,7 +21,7 @@ import { messageFromError } from '../shared/lib';
 import { Button, ErrorAlert, PageHeader } from '../shared/ui';
 import type { Settings } from '../types';
 
-const sectionIcons = { features: SlidersHorizontal, home: House, seo: Search, integrations: PlugZap, orders: Truck, security: ShieldCheck };
+const sectionIcons = { features: SlidersHorizontal, seo: Search, integrations: PlugZap, orders: Truck, security: ShieldCheck };
 
 const defaults: Settings = {
   referral_percent: 5,
@@ -41,16 +40,6 @@ const defaults: Settings = {
   cdek_delivery_price: 350,
   post_delivery_price: 250,
   order_emails_enabled: false,
-  home_features_enabled: true,
-  home_catalog_enabled: true,
-  home_video_enabled: true,
-  home_blog_enabled: true,
-  home_about_enabled: true,
-  home_marketplaces_enabled: true,
-  home_certificates_enabled: true,
-  home_loyalty_enabled: true,
-  home_reviews_enabled: true,
-  home_contacts_enabled: true,
   yandex_metrika_enabled: false,
   yandex_metrika_id: '',
   bitrix_widget_enabled: false,
@@ -93,18 +82,6 @@ const sectionSettingsKeys: Record<SaveableSettingsSectionId, readonly WritableSe
     'withdrawals_enabled',
     'favorites_enabled',
   ],
-  home: [
-    'home_features_enabled',
-    'home_catalog_enabled',
-    'home_video_enabled',
-    'home_blog_enabled',
-    'home_about_enabled',
-    'home_marketplaces_enabled',
-    'home_certificates_enabled',
-    'home_loyalty_enabled',
-    'home_reviews_enabled',
-    'home_contacts_enabled',
-  ],
   seo: [
     'site_name',
     'site_phone',
@@ -146,8 +123,6 @@ function renderSettingsSection(section: SettingsSectionId, settings: Settings, s
   switch (section) {
     case 'features':
       return <FeatureSettingsCard settings={settings} onChange={setSettings} />;
-    case 'home':
-      return <HomeBlocksSettingsCard settings={settings} onChange={setSettings} />;
     case 'seo':
       return <SeoSettingsCard settings={settings} onChange={setSettings} />;
     case 'integrations':

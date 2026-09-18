@@ -26,16 +26,6 @@ final class SiteSettings
         'cdek_delivery_price'                => 350,
         'post_delivery_price'                => 250,
         'order_emails_enabled'               => false,
-        'home_features_enabled'              => true,
-        'home_catalog_enabled'               => true,
-        'home_video_enabled'                 => true,
-        'home_blog_enabled'                  => true,
-        'home_about_enabled'                 => true,
-        'home_marketplaces_enabled'          => true,
-        'home_certificates_enabled'          => true,
-        'home_loyalty_enabled'               => true,
-        'home_reviews_enabled'               => true,
-        'home_contacts_enabled'              => true,
         'yandex_metrika_enabled'             => false,
         'yandex_metrika_id'                  => '',
         'bitrix_widget_enabled'              => false,
@@ -176,6 +166,9 @@ final class SiteSettings
 
         foreach ($rows as $row) {
             $key = (string)$row['key'];
+            if (!\array_key_exists($key, self::DEFAULTS)) {
+                continue;
+            }
             $settings[$key] = self::normalize(json_decode((string)$row['value'], true));
         }
 
