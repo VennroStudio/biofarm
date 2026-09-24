@@ -54,8 +54,7 @@ deploy:
 	ssh $(HOST) -p $(PORT) 'mkdir $(PROJECT_NAME)_$(BUILD_NUMBER)'
 	scp -P $(PORT) docker-compose-production.yml $(HOST):$(PROJECT_NAME)_$(BUILD_NUMBER)/docker-compose-production.yml
 	scp -P $(PORT) .env.prod $(HOST):$(PROJECT_NAME)_$(BUILD_NUMBER)/.env
-	ssh $(HOST) -p $(PORT) 'cd $(PROJECT_NAME)_$(BUILD_NUMBER) && echo "COMPOSE_PROJECT_NAME=$(PROJECT_NAME)" >> .env'
-	ssh $(HOST) -p $(PORT) 'cd $(PROJECT_NAME)_$(BUILD_NUMBER) && echo "REGISTRY=$(REGISTRY)" >> .env'
+	ssh $(HOST) -p $(PORT) 'cd $(PROJECT_NAME)_$(BUILD_NUMBER) && printf "\nREGISTRY=%s\n" "$(REGISTRY)" >> .env'
 	ssh $(HOST) -p $(PORT) 'cd $(PROJECT_NAME)_$(BUILD_NUMBER) && echo "IMAGE_TAG=$(VERSION)" >> .env'
 	ssh $(HOST) -p $(PORT) 'cd $(PROJECT_NAME)_$(BUILD_NUMBER) && docker compose -f docker-compose-production.yml pull'
 	ssh $(HOST) -p $(PORT) 'cd $(PROJECT_NAME)_$(BUILD_NUMBER) && docker compose -f docker-compose-production.yml down'

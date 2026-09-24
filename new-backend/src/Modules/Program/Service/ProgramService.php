@@ -790,14 +790,17 @@ final class ProgramService
 
     private function opening(int $user): void
     {
-        if ($this->db->fetchOne('SELECT id FROM program_ledger WHERE id=?', ['opening:' . $user]) !== false) {
+        // Once the shopping ledger exists, bonus_balance is its projection, not a legacy amount to import.
+        if ($this->db->fetchOne("SELECT id FROM program_ledger WHERE user_id=? AND wallet='shopping' LIMIT 1", [$user]) !== false) {
             return;
         }
         $balance = $this->db->fetchOne($this->lockSql('SELECT bonus_balance FROM user_profiles WHERE user_id=?'), [$user]);
         if ($balance === false) {
             throw new DomainException('User profile not found');
         }
-        $this->entry('opening:' . $user, $user, 'shopping', (int)$balance * 100, 'legacy_opening');
+        if ((int)$balance !== 0) {
+            $this->entry('opening:' . $user, $user, 'shopping', (int)$balance * 100, 'legacy_opening');
+        }
     }
 
     private function balance(int $user, string $wallet): array

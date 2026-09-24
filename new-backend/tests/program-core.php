@@ -46,6 +46,17 @@ for ($i = 1; $i <= 7; ++$i) {
     $db->insert('users', ['id' => $i, 'first_name' => 'Fixture', 'last_name' => (string)$i]);
     $db->insert('user_profiles', ['user_id' => $i, 'bonus_balance' => $i === 7 ? 1000 : 0, 'is_partner' => $i === 1 ? 1 : 0, 'referred_by_user_id' => $i === 1 ? null : $i - 1, 'referral_code' => 'bf-' . $i]);
 }
+$db->insert('users', ['id' => 101, 'first_name' => 'Clean', 'last_name' => 'Account']);
+$db->insert('user_profiles', ['user_id' => 101, 'bonus_balance' => 0, 'is_partner' => 0, 'referral_code' => 'bf-101']);
+$p->dashboard(101);
+$p->dashboard(101);
+check((int)$db->fetchOne('SELECT COUNT(*) FROM program_ledger WHERE user_id=101') === 0, 'opening a clean account keeps history empty');
+$p->adjust(101, 'shopping', 10000, 'First real bonus', 1);
+check($p->dashboard(101)['balances']['shopping']['availableMinor'] === 10000, 'first bonus is not imported again as a legacy balance');
+$p->adjust(101, 'shopping', -10000, 'Restore fixture balance', 1);
+check($p->dashboard(7)['balances']['shopping']['availableMinor'] === 100000, 'existing nonzero legacy balance is preserved');
+check($p->dashboard(7)['balances']['shopping']['availableMinor'] === 100000, 'legacy balance imports only once');
+
 function order($db, $p, string $id, int $buyer = 7, int $bonus = 0, int $price = 10000, int $quantity = 1, int $discount = 0): int
 {
     $db->insert('orders', ['id' => $id, 'user_id' => $buyer, 'total' => $price * $quantity - $discount - $bonus + 350, 'discount_amount' => $discount, 'bonus_used' => $bonus, 'delivery_cost' => 350, 'payment_status' => 'pending', 'referred_by' => 'bf-1']);
