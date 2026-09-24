@@ -1,4 +1,4 @@
-import { Heart, ShoppingCart, UserPlus, Users, Wallet } from 'lucide-react';
+import { FlaskConical, Heart, ShoppingCart, UserPlus, Users, Wallet } from 'lucide-react';
 import type { ComponentType } from 'react';
 import { Card } from '../../../shared/ui';
 import type { Settings } from '../../../types';
@@ -18,7 +18,7 @@ type ToggleProps = {
 
 function FeatureToggle({ checked, label, description, icon: Icon, onToggle }: ToggleProps) {
   return (
-    <div className="flex items-center justify-between rounded-lg border border-[#dfece9] px-4 py-4">
+    <div className="flex items-center justify-between gap-4 rounded-lg border border-[#dfece9] px-4 py-4">
       <div>
         <p className="flex items-center gap-2 font-semibold">
           <Icon className="h-4 w-4" />
@@ -28,7 +28,7 @@ function FeatureToggle({ checked, label, description, icon: Icon, onToggle }: To
       </div>
       <button
         type="button"
-        className={`relative h-7 w-12 rounded-full transition ${checked ? 'bg-[#2e8175]' : 'bg-[#cfe2de]'}`}
+        className={`relative h-7 w-12 shrink-0 rounded-full transition ${checked ? 'bg-[#2e8175]' : 'bg-[#cfe2de]'}`}
         onClick={onToggle}
         aria-pressed={checked}
         aria-label={label}
@@ -81,18 +81,13 @@ export function FeatureSettingsCard({ settings, onChange }: Props) {
           icon={Heart}
           onToggle={() => onChange({ ...settings, favorites_enabled: !settings.favorites_enabled })}
         />
-        <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-[#dfece9] px-4 py-4">
-          <input
-            type="checkbox"
-            checked={settings.testing_enabled}
-            onChange={(event) => onChange({ ...settings, testing_enabled: event.target.checked })}
-            className="mt-1 h-5 w-5 shrink-0 accent-[#2e8175]"
-          />
-          <span>
-            <span className="block font-semibold">Тестирование</span>
-            <span className="block text-sm text-[#5f7580]">Новые заказы сразу получают статус «Оплачен» и открывают страницу успешной оплаты без перехода в ЮKassa. Начисления работают по обычным правилам. Деньги не списываются, чеки не отправляются.</span>
-          </span>
-        </label>
+        <FeatureToggle
+          checked={settings.testing_enabled}
+          label="Тестирование"
+          description="Не включать. Только для тестирования процессов."
+          icon={FlaskConical}
+          onToggle={() => onChange({ ...settings, testing_enabled: !settings.testing_enabled })}
+        />
       </div>
     </Card>
   );
