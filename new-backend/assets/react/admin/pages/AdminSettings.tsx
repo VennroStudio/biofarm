@@ -30,6 +30,7 @@ const defaults: Settings = {
   referral_enabled: false,
   withdrawals_enabled: false,
   favorites_enabled: true,
+  testing_enabled: false,
   order_bonus_enabled: true,
   order_bonus_percent: 5,
   order_bonus_spend_limit_percent: 30,
@@ -81,6 +82,7 @@ const sectionSettingsKeys: Record<SaveableSettingsSectionId, readonly WritableSe
     'referral_enabled',
     'withdrawals_enabled',
     'favorites_enabled',
+    'testing_enabled',
   ],
   seo: [
     'site_name',

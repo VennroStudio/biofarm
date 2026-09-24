@@ -34,11 +34,13 @@ function ok(bool $value, string $why): void
     } ++$checks;
 }
 try {
-    foreach (['cart_enabled' => true, 'registration_enabled' => true, 'referral_enabled' => true, 'withdrawals_enabled' => true, 'promo_codes_enabled' => true, 'order_bonus_enabled' => true, 'order_emails_enabled' => false, 'bitrix_crm_enabled' => false] as $k => $v) {
+    foreach (['testing_enabled' => false, 'cart_enabled' => true, 'registration_enabled' => true, 'referral_enabled' => true, 'withdrawals_enabled' => true, 'promo_codes_enabled' => true, 'order_bonus_enabled' => true, 'order_emails_enabled' => false, 'bitrix_crm_enabled' => false] as $k => $v) {
         $db->executeStatement('INSERT INTO site_settings (`key`,value) VALUES (?,?) ON DUPLICATE KEY UPDATE value=VALUES(value)', [$k, json_encode($v)]);
     }
     $provider = [];
-    $handler = static function (RequestInterface $req) use (&$provider) {
+    $providerRequests = 0;
+    $handler = static function (RequestInterface $req) use (&$provider, &$providerRequests) {
+        ++$providerRequests;
         $path = $req->getUri()->getPath();
         if ($req->getMethod() === 'POST') {
             $body = json_decode((string)$req->getBody(), true);
@@ -355,6 +357,35 @@ try {
     $selfBody['shippingAddress']['email'] = 'program-' . $suffix . '-1@example.test';
     $selfOrder = $call('POST', '/v1/orders/create', $selfBody, null, 201);
     ok(!in_array($ids[1], array_column($getSnapshot($selfOrder['id'])['recipients'], 'userId'), true), 'guest self purchase excludes own commission');
+
+    // Testing is controlled only by the admin setting, never by the checkout payload.
+    $call('PATCH', '/admin/api/settings', ['testing_enabled' => true], null, 401);
+    $call('PATCH', '/admin/api/settings', ['testing_enabled' => true], $buyer, 403);
+    $enabled = $call('PATCH', '/admin/api/settings', ['testing_enabled' => true], $admin);
+    ok($enabled['testing_enabled'] === true, 'testing checkbox saves through admin API');
+    $testingBody = $body;
+    unset($testingBody['offerId']);
+    $testingBody['referredBy'] = 'test-' . $suffix . '-1';
+    $testingHeaders = ['Idempotency-Key' => bin2hex(random_bytes(24))];
+    $requestsBeforeTesting = $providerRequests;
+    $testingOrder = $call('POST', '/v1/orders/create', $testingBody, null, 201, $testingHeaders);
+    ok($testingOrder['payment_status'] === 'completed', 'guest checkout immediately returns paid status');
+    ok($db->fetchOne('SELECT payment_status FROM orders WHERE id=?', [$testingOrder['id']]) === 'completed', 'paid status persisted');
+    $ledgerCount = (int)$db->fetchOne('SELECT COUNT(*) FROM program_ledger WHERE order_id=? AND amount_minor>0', [$testingOrder['id']]);
+    ok($ledgerCount > 0, 'simulated payment creates normal rewards');
+    $testingRetry = $call('POST', '/v1/orders/create', $testingBody, null, 201, $testingHeaders);
+    ok($testingRetry['id'] === $testingOrder['id'] && $testingRetry['payment_status'] === 'completed', 'checkout retry returns same paid order');
+    ok((int)$db->fetchOne('SELECT COUNT(*) FROM program_ledger WHERE order_id=? AND amount_minor>0', [$testingOrder['id']]) === $ledgerCount, 'checkout retry does not duplicate rewards');
+    $access = ['X-Order-Token' => $testingOrder['paymentAccessToken']];
+    $state = $call('GET', '/v1/payments/' . $testingOrder['id'], [], null, 200, $access);
+    ok($state['orderPaymentStatus'] === 'completed' && $state['confirmationUrl'] === null, 'success page receives ordinary paid state without provider redirect');
+    ok(!array_key_exists('testing', $state), 'no test label exposed to success page');
+    $call('POST', '/v1/payments/' . $testingOrder['id'], [], null, 200, $access);
+    ok($providerRequests === $requestsBeforeTesting, 'testing checkout and payment retries make no provider requests');
+    $call('PATCH', '/admin/api/settings', ['testing_enabled' => false], $admin);
+    $testingBody['testing_enabled'] = true;
+    $ordinaryOrder = $call('POST', '/v1/orders/create', $testingBody, null, 201);
+    ok($db->fetchOne('SELECT payment_status FROM orders WHERE id=?', [$ordinaryOrder['id']]) === 'pending', 'disabled testing restores normal checkout and ignores client override');
 
     echo "PASS program HTTP: {$checks} assertions, isolated test users, real routes and database; provider mocked; fixtures rolled back\n";
 } finally {

@@ -81,6 +81,18 @@ export function FeatureSettingsCard({ settings, onChange }: Props) {
           icon={Heart}
           onToggle={() => onChange({ ...settings, favorites_enabled: !settings.favorites_enabled })}
         />
+        <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-[#dfece9] px-4 py-4">
+          <input
+            type="checkbox"
+            checked={settings.testing_enabled}
+            onChange={(event) => onChange({ ...settings, testing_enabled: event.target.checked })}
+            className="mt-1 h-5 w-5 shrink-0 accent-[#2e8175]"
+          />
+          <span>
+            <span className="block font-semibold">Тестирование</span>
+            <span className="block text-sm text-[#5f7580]">Новые заказы сразу получают статус «Оплачен» и открывают страницу успешной оплаты без перехода в ЮKassa. Начисления работают по обычным правилам. Деньги не списываются, чеки не отправляются.</span>
+          </span>
+        </label>
       </div>
     </Card>
   );

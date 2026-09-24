@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Payment\Service;
 
 use App\Components\Exception\DomainExceptionModule;
+use App\Components\Setting\SiteSettings;
 use App\Modules\Program\Service\ProgramService;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Platforms\SQLitePlatform;
@@ -37,6 +38,10 @@ final readonly class PaymentService
 
     public function start(string $orderId): array
     {
+        $completed = $this->db->fetchAssociative("SELECT * FROM payment_operations WHERE order_id=? AND kind='payment' AND status='succeeded' LIMIT 1", [$orderId]);
+        if ($completed && $this->isTestingOperation($completed)) {
+            return $this->status($orderId, false);
+        }
         if (!$this->gateway->configured()) {
             throw new DomainExceptionModule('payment', 'Онлайн-оплата не настроена. Заказ сохранён, свяжитесь с магазином.', 12, status: 503);
         }
@@ -72,6 +77,43 @@ final readonly class PaymentService
         return $this->status($orderId, false);
     }
 
+    /** Called only while creating a checkout; the client cannot enable this mode. */
+    public function completeCheckoutForTesting(string $orderId): bool
+    {
+        if (!new SiteSettings($this->db)->bool('testing_enabled')) {
+            return false;
+        }
+        return $this->program->atomic(function () use ($orderId): bool {
+            $order = $this->db->fetchAssociative($this->lockSql('SELECT * FROM orders WHERE id=?'), [$orderId]);
+            if (!$order || \in_array($order['status'], ['cancelled', 'canceled'], true) || $order['payment_status'] === 'refunded') {
+                throw new DomainExceptionModule('payment', 'Заказ уже оплачен или отменён.', 13, status: 409);
+            }
+            $current = $this->db->fetchAssociative("SELECT * FROM payment_operations WHERE order_id=? AND kind='payment' AND status<>'canceled' LIMIT 1", [$orderId]);
+            if ($current && $this->isTestingOperation($current) && $current['status'] === 'succeeded' && $order['payment_status'] === 'completed') {
+                return true;
+            }
+            if ($current || $order['payment_status'] === 'completed') {
+                throw new DomainExceptionModule('payment', 'По заказу уже начата оплата.', 37, status: 409);
+            }
+            $now = gmdate('Y-m-d H:i:s');
+            $this->db->insert('payment_operations', [
+                'id' => bin2hex(random_bytes(16)), 'order_id' => $orderId, 'kind' => 'payment',
+                'provider_id' => null, 'amount_minor' => (int)$order['total'] * 100, 'status' => 'succeeded',
+                // Internal routing only: never send this operation to the real provider, even after disabling testing.
+                'request_payload' => json_encode(['testing' => true], JSON_THROW_ON_ERROR),
+                'confirmation_url' => null, 'created_at' => $now, 'updated_at' => $now,
+            ]);
+            $this->db->update('orders', ['payment_status' => 'completed', 'paid_at' => $now, 'updated_at' => $now], ['id' => $orderId]);
+            $this->program->settleOrder($orderId);
+            return true;
+        });
+    }
+
+    private function isTestingOperation(array $operation): bool
+    {
+        return (json_decode($operation['request_payload'], true, 512, JSON_THROW_ON_ERROR)['testing'] ?? false) === true;
+    }
+
     public function status(string $orderId, bool $refresh = true): array
     {
         $operation = $this->db->fetchAssociative("SELECT * FROM payment_operations WHERE order_id=? AND kind='payment' ORDER BY CASE WHEN status='canceled' THEN 1 ELSE 0 END,created_at DESC,id DESC LIMIT 1", [$orderId]);
@@ -79,7 +121,7 @@ final readonly class PaymentService
             return $this->refresh($operation);
         }
         $order = $this->db->fetchAssociative('SELECT payment_status,total FROM orders WHERE id=?', [$orderId]);
-        return ['orderId' => $orderId, 'configured' => $this->gateway->configured(), 'status' => $operation['status'] ?? 'not_started', 'orderPaymentStatus' => $order['payment_status'] ?? 'pending', 'amountMinor' => (int)($order['total'] ?? 0) * 100, 'confirmationUrl' => $operation['confirmation_url'] ?? null];
+        return ['orderId' => $orderId, 'configured' => ($operation && $this->isTestingOperation($operation)) || $this->gateway->configured(), 'status' => $operation['status'] ?? 'not_started', 'orderPaymentStatus' => $order['payment_status'] ?? 'pending', 'amountMinor' => (int)($order['total'] ?? 0) * 100, 'confirmationUrl' => $operation['confirmation_url'] ?? null];
     }
 
     public function webhook(array $notification): void
@@ -145,14 +187,18 @@ final readonly class PaymentService
                 throw new DomainExceptionModule('payment', 'Некорректная сумма возврата.', 22, status: 422);
             }
             $payload = ['payment_id' => $payment['provider_id'], 'amount' => ['value' => YooKassaGateway::money($amount), 'currency' => 'RUB'], 'description' => 'Возврат по заказу ' . $orderId];
+            $testing = $this->isTestingOperation($payment);
+            if ($testing) {
+                $payload['testing'] = true;
+            }
             $order = $this->db->fetchAssociative('SELECT * FROM orders WHERE id=?', [$orderId]);
-            $receipt = $amount > 0 ? $this->gateway->receipt($order, $this->refundReceiptItems($refund['items']), $this->isDelivered($orderId) ? 'full_payment' : 'full_prepayment') : null;
+            $receipt = $amount > 0 && !$testing ? $this->gateway->receipt($order, $this->refundReceiptItems($refund['items']), $this->isDelivered($orderId) ? 'full_payment' : 'full_prepayment') : null;
             if ($receipt !== null) {
                 $payload['receipt'] = $receipt;
             }
             $row = ['id' => $id, 'order_id' => $orderId, 'kind' => 'refund', 'provider_id' => null, 'amount_minor' => $amount, 'status' => 'creating', 'request_payload' => json_encode($payload, JSON_THROW_ON_ERROR), 'confirmation_url' => null, 'created_at' => gmdate('Y-m-d H:i:s'), 'updated_at' => gmdate('Y-m-d H:i:s')];
             $this->db->insert('payment_operations', $row);
-            if ($amount === 0) {
+            if ($amount === 0 || $testing) {
                 $this->program->completeRefund($id);
                 $row['status'] = 'succeeded';
                 $this->db->update('payment_operations', ['status' => 'succeeded'], ['id' => $id]);

@@ -584,7 +584,7 @@ export async function createOrder(
       quantity: item.quantity,
     })),
     status: 'pending',
-    payment_status: 'pending',
+    payment_status: isRecord(data) ? stringValue(data.payment_status, 'pending') : 'pending',
     shipping_address: shippingAddress,
     payment_method: paymentMethod,
     delivery_method: deliveryMethod,

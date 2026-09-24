@@ -167,7 +167,9 @@ function CheckoutPage({
       if (!order) throw new Error('Не удалось получить номер заказа');
       sessionStorage.setItem('biofarm_checkout_order', order.id);
       sessionStorage.setItem(`biofarm_order_cart_${order.id}`, JSON.stringify(cart));
-      try { const state = await startPayment(order.id); if (state.confirmationUrl) return; } catch { /* Saved order can retry payment on its own page. */ }
+      if (order.paymentStatus !== 'completed') {
+        try { const state = await startPayment(order.id); if (state.confirmationUrl) return; } catch { /* Saved order can retry payment on its own page. */ }
+      }
       window.location.href = `/order-success?order=${encodeURIComponent(order?.id || '')}`;
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : 'Попробуйте еще раз');

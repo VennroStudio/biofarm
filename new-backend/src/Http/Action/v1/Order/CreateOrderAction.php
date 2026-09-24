@@ -129,6 +129,9 @@ final readonly class CreateOrderAction implements RequestHandlerInterface
             if ($offerId !== '') {
                 $this->offers->recordOrder($offerId, $result['id']);
             }
+            if ($this->payments->completeCheckoutForTesting($result['id'])) {
+                $result['payment_status'] = 'completed';
+            }
             if ($requestKey !== '') {
                 $savedResult = $result;
                 unset($savedResult['paymentAccessToken']);

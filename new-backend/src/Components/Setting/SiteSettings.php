@@ -16,6 +16,7 @@ final class SiteSettings
         'referral_enabled'                   => false,
         'withdrawals_enabled'                => false,
         'favorites_enabled'                  => true,
+        'testing_enabled'                    => false,
         'order_bonus_enabled'                => true,
         'order_bonus_percent'                => 1,
         'order_bonus_spend_limit_percent'    => 30,
