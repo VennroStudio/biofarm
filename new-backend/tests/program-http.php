@@ -162,10 +162,18 @@ try {
     ok($offers['items'][0]['url'] === '/checkout?offer=' . $offer['id'], 'saved partner basket links open checkout directly');
     $public = $call('GET', '/v1/offers/' . $offer['id']);
     ok(count($public['items']) === 1, 'public shared basket');
-    $body = ['items' => [['productId' => $product, 'quantity' => 2]], 'paymentMethod' => 'card', 'deliveryMethod' => 'post', 'shippingAddress' => ['name' => 'Тестовый покупатель', 'email' => 'buyer@example.test', 'phone' => '+79990000000', 'city' => 'Томск', 'address' => 'Тестовая 1', 'postalCode' => '634000'], 'offerId' => $offer['id']];
+    $privacy = ['personalDataConsent' => true, 'consentVersion' => '2026-10-04', 'marketingEmailConsent' => false];
+    $body = $privacy + ['offerAccepted' => true, 'items' => [['productId' => $product, 'quantity' => 2]], 'paymentMethod' => 'card', 'deliveryMethod' => 'post', 'shippingAddress' => ['name' => 'Тестовый покупатель', 'email' => 'buyer@example.test', 'phone' => '+79990000000', 'city' => 'Томск', 'address' => 'Тестовая 1', 'postalCode' => '634000'], 'offerId' => $offer['id']];
     $requestHeaders = ['Idempotency-Key' => bin2hex(random_bytes(24))];
+    $ordersBefore = (int)$db->fetchOne('SELECT COUNT(*) FROM orders');
+    foreach (['personalDataConsent' => false, 'consentVersion' => 'old', 'offerAccepted' => false] as $field => $invalid) {
+        $call('POST', '/v1/orders/create', array_replace($body, [$field => $invalid]), $buyer, 422);
+    }
+    ok((int)$db->fetchOne('SELECT COUNT(*) FROM orders') === $ordersBefore, 'invalid consent creates no order');
     $order = $call('POST', '/v1/orders/create', $body, $buyer, 201, $requestHeaders);
     $orderId = $order['id'];
+    ok((int)$db->fetchOne("SELECT COUNT(*) FROM privacy_consents WHERE subject_type='order' AND subject_id=?", [$orderId]) === 3, 'order records privacy, optional marketing and offer separately');
+    ok((int)$db->fetchOne("SELECT accepted FROM privacy_consents WHERE subject_id=? AND kind='marketing_email'", [$orderId]) === 0, 'declining marketing does not prevent checkout');
     $sameOrder = $call('POST', '/v1/orders/create', $body, $buyer, 201, $requestHeaders);
     ok($sameOrder['id'] === $orderId && $sameOrder['paymentAccessToken'] === $order['paymentAccessToken'], 'lost create response reuses exact order and capability');
     $changed = $body;
@@ -282,14 +290,16 @@ try {
     $db->update('products', ['price' => $originalPrice], ['id' => $product]);
     echo "PASS guest basket: 2000 RUB goods, 60 RUB partner commission (3%), held for delivery + 14 days; duplicate webhook safe; no user created\n";
     $registrationEmail = 'registered-' . $suffix . '@example.test';
-    $call('POST', '/v1/users/create', ['firstName' => 'Тестовый', 'lastName' => 'Реферал', 'email' => $registrationEmail, 'password' => $password, 'referredBy' => 'test-' . $suffix . '-5'], null, 201);
-    $call('POST', '/v1/users/create', ['firstName' => 'Тестовый', 'lastName' => 'Реферал', 'email' => $registrationEmail, 'password' => $password], null, 409);
+    $call('POST', '/v1/users/create', ['firstName' => 'Тестовый', 'lastName' => 'Реферал', 'email' => $registrationEmail, 'password' => $password], null, 422);
+    ok($db->fetchOne('SELECT id FROM users WHERE email=?', [$registrationEmail]) === false, 'registration requires explicit privacy consent');
+    $call('POST', '/v1/users/create', $privacy + ['firstName' => 'Тестовый', 'lastName' => 'Реферал', 'email' => $registrationEmail, 'password' => $password, 'referredBy' => 'test-' . $suffix . '-5'], null, 201);
+    $call('POST', '/v1/users/create', $privacy + ['firstName' => 'Тестовый', 'lastName' => 'Реферал', 'email' => $registrationEmail, 'password' => $password], null, 409);
     $registered = (int)$db->fetchOne('SELECT id FROM users WHERE email=?', [$registrationEmail]);
     ok((int)$db->fetchOne('SELECT referred_by_user_id FROM user_profiles WHERE user_id=?', [$registered]) === $ids[5], 'registration attaches referral');
     ok((int)$db->fetchOne('SELECT bonus_balance FROM user_profiles WHERE user_id=?', [$registered]) === 0, 'no welcome balance');
     ok($db->fetchOne('SELECT partner_id FROM program_members WHERE user_id=?', [$registered]) === false, 'purchase referral registration never joins team');
     $teamEmail = 'team-registered-' . $suffix . '@example.test';
-    $registration = ['firstName' => 'Новый', 'lastName' => 'Участник', 'email' => $teamEmail, 'password' => $password, 'teamInvitation' => $invite['code']];
+    $registration = $privacy + ['firstName' => 'Новый', 'lastName' => 'Участник', 'email' => $teamEmail, 'password' => $password, 'teamInvitation' => $invite['code']];
     $call('POST', '/v1/users/create', $registration, null, 422);
     ok($db->fetchOne('SELECT id FROM users WHERE email=?', [$teamEmail]) === false, 'missing consent creates no account');
     $call('POST', '/v1/users/create', $registration + ['teamConsent' => true, 'referredBy' => 'test-' . $suffix . '-5'], null, 201);

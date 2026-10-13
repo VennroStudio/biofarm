@@ -32,6 +32,9 @@ export type ProductForm = {
   shelf_life: string;
   storage_conditions: string;
   bad_disclaimer: string;
+  legal_status: string;
+  official_purpose: string;
+  regulatory_evidence: string;
   active_components_text: string;
   attribute_value_ids: number[];
   product_group_id: string;
@@ -70,6 +73,9 @@ export const emptyProductForm: ProductForm = {
   shelf_life: '',
   storage_conditions: '',
   bad_disclaimer: '',
+  legal_status: 'unknown',
+  official_purpose: '',
+  regulatory_evidence: '',
   active_components_text: '',
   attribute_value_ids: [],
   product_group_id: '',
@@ -113,6 +119,9 @@ export function productFormFromProduct(product: Product): ProductForm {
     shelf_life: product.shelf_life ?? '',
     storage_conditions: product.storage_conditions ?? '',
     bad_disclaimer: product.bad_disclaimer ?? '',
+    legal_status: product.legal_status ?? 'unknown',
+    official_purpose: product.official_purpose ?? '',
+    regulatory_evidence: product.regulatory_evidence ?? '',
     active_components_text: product.active_components_text ?? '',
     attribute_value_ids: product.attribute_value_ids ?? [],
     product_group_id: product.product_group_id ? String(product.product_group_id) : '',
@@ -168,6 +177,9 @@ export function productPayloadFromForm(form: ProductForm) {
     shelfLife: form.shelf_life || null,
     storageConditions: form.storage_conditions || null,
     badDisclaimer: form.bad_disclaimer || null,
+    legalStatus: form.legal_status,
+    officialPurpose: form.official_purpose || null,
+    regulatoryEvidence: form.regulatory_evidence || null,
     activeComponentsText: form.active_components_text || null,
     attributeValueIds: form.attribute_value_ids,
     productGroupId: form.product_group_id ? Number(form.product_group_id) : null,

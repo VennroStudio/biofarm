@@ -61,6 +61,7 @@ COPY ./bin ./bin
 COPY ./config ./config
 COPY ./public ./public
 COPY ./src ./src
+COPY ./resources ./resources
 COPY ./templates ./templates
 COPY --from=assets /app/public/build ./public/build
 

@@ -23,7 +23,8 @@ final class YooKassaGateway
         $this->config = $config ?? [
             'shopId'     => env('YOOKASSA_SHOP_ID', ''),
             'secret'     => env('YOOKASSA_SECRET_KEY', ''),
-            'returnBase' => rtrim(env('YOOKASSA_RETURN_BASE_URL', ''), '/'),
+            'returnBase' => rtrim(env('FRONTEND_URL', '') ?: env('APP_URL', ''), '/'),
+            'returnPath' => trim(env('YOOKASSA_RETURN_BASE_URL', '')) ?: '/order-success',
             'receipts'   => env('YOOKASSA_RECEIPTS_ENABLED', '0') === '1',
             'vatCode'    => (int)env('YOOKASSA_VAT_CODE', '1'),
             'taxSystem'  => (int)env('YOOKASSA_TAX_SYSTEM_CODE', '0'),
@@ -32,8 +33,14 @@ final class YooKassaGateway
 
     public function configured(): bool
     {
+        $base = $this->config['returnBase'] ?? '';
+        $url = parse_url($base);
         return ($this->config['shopId'] ?? '') !== '' && ($this->config['secret'] ?? '') !== ''
-            && preg_match('~^https?://[^/]+~', $this->config['returnBase'] ?? '') === 1;
+            && filter_var($base, FILTER_VALIDATE_URL) !== false && $url !== false
+            && \in_array($url['scheme'] ?? '', ['http', 'https'], true)
+            && !isset($url['user']) && !isset($url['pass']) && !isset($url['query']) && !isset($url['fragment'])
+            && \in_array($url['path'] ?? '', ['', '/'], true)
+            && preg_match('~^/?[a-zA-Z0-9][a-zA-Z0-9/_.-]*$~D', $this->config['returnPath'] ?? '/order-success') === 1;
     }
 
     public function publicConfig(): array
@@ -43,7 +50,9 @@ final class YooKassaGateway
 
     public function returnUrl(string $orderId): string
     {
-        return ($this->config['returnBase'] ?? '') . '/order-success?order=' . rawurlencode($orderId);
+        return rtrim($this->config['returnBase'] ?? '', '/') . '/'
+            . ltrim($this->config['returnPath'] ?? '/order-success', '/')
+            . '?order=' . rawurlencode($orderId);
     }
 
     public function createPayment(array $payload, string $key): array

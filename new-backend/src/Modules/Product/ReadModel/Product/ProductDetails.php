@@ -60,6 +60,9 @@ final readonly class ProductDetails implements ProductModelInterface
         public string $createdAt,
         public ?string $publishedAt,
         public ?string $updatedAt,
+        public string $legalStatus = 'unknown',
+        public ?string $officialPurpose = null,
+        public ?string $regulatoryEvidence = null,
     ) {}
 
     public static function fields(): array
@@ -101,6 +104,9 @@ final readonly class ProductDetails implements ProductModelInterface
             'shelf_life'             => 'shelf_life',
             'storage_conditions'     => 'storage_conditions',
             'bad_disclaimer'         => 'bad_disclaimer',
+            'legal_status' => 'legal_status',
+            'official_purpose' => 'official_purpose',
+            'regulatory_evidence' => 'regulatory_evidence',
             'active_components_text' => 'active_components_text',
             'attribute_value_ids'    => '(SELECT JSON_ARRAYAGG(pav.attribute_value_id) FROM product_attribute_values pav WHERE pav.product_id = p.id)',
             'product_group_id'       => '(SELECT pgi.group_id FROM product_group_items pgi INNER JOIN product_groups pg ON pg.id = pgi.group_id AND pg.deleted_at IS NULL WHERE pgi.product_id = p.id LIMIT 1)',
@@ -201,6 +207,9 @@ final readonly class ProductDetails implements ProductModelInterface
             createdAt: $row['created_at'],
             publishedAt: $row['published_at'],
             updatedAt: $row['updated_at'],
+            legalStatus: $row['legal_status'] ?? 'unknown',
+            officialPurpose: $row['official_purpose'] ?? null,
+            regulatoryEvidence: $row['regulatory_evidence'] ?? null,
         );
     }
 
@@ -241,6 +250,9 @@ final readonly class ProductDetails implements ProductModelInterface
             'shelf_life'             => $this->shelfLife,
             'storage_conditions'     => $this->storageConditions,
             'bad_disclaimer'         => $this->badDisclaimer,
+            'legal_status' => $this->legalStatus,
+            'official_purpose' => $this->officialPurpose,
+            'regulatory_evidence' => $this->regulatoryEvidence,
             'active_components_text' => $this->activeComponentsText,
             'attribute_value_ids'    => $this->attributeValueIds,
             'product_group_id'       => $this->productGroupId,

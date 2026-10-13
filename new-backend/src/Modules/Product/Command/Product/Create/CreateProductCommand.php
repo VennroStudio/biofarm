@@ -63,6 +63,10 @@ final readonly class CreateProductCommand
         public ?array $features = null,
         public ?string $wbLink = null,
         public ?string $ozonLink = null,
+        #[Assert\Choice(choices: ['unknown', 'bad', 'food', 'other'])]
+        public ?string $legalStatus = null,
+        public ?string $officialPurpose = null,
+        public ?string $regulatoryEvidence = null,
         public bool $isActive = true,
     ) {}
 }

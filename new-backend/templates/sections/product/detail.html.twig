@@ -1,4 +1,4 @@
-{% set hasProductDetails = product.ingredients or product.activeComponentsText or product.usageText or product.contraindications or product.country or product.shelfLife or product.storageConditions or product.badDisclaimer %}
+{% set hasProductDetails = product.officialPurpose or product.ingredients or product.activeComponentsText or product.usageText or product.contraindications or product.country or product.shelfLife or product.storageConditions or product.badDisclaimer %}
 <div class="pt-24 md:pt-28">
     <div class="container mx-auto px-5 md:px-8 lg:px-12">
         <nav class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground md:text-sm" aria-label="Хлебные крошки">
@@ -145,6 +145,7 @@
                             {% if product.ingredients %}
                                 <div class="border-t border-border pt-5"><dt class="mb-2 text-sm font-semibold text-foreground">Состав</dt><dd class="text-sm leading-relaxed text-muted-foreground">{{ product.ingredients|e|nl2br }}</dd></div>
                             {% endif %}
+                            {% if product.officialPurpose %}<div class="border-t border-border pt-5"><dt class="mb-2 text-sm font-semibold text-foreground">Область применения</dt><dd class="text-sm leading-relaxed text-muted-foreground">{{ product.officialPurpose|e|nl2br }}</dd></div>{% endif %}
                             {% if product.activeComponentsText %}
                                 <div class="border-t border-border pt-5"><dt class="mb-2 text-sm font-semibold text-foreground">Активные компоненты</dt><dd class="text-sm leading-relaxed text-muted-foreground">{{ product.activeComponentsText|e|nl2br }}</dd></div>
                             {% endif %}
@@ -162,6 +163,7 @@
                                 </div>
                             {% endif %}
                         </dl>
+                        {% if product.legalStatus == 'bad' %}<p class="mt-5 rounded-xl border border-primary/20 p-4 font-semibold">БАД. Не является лекарственным средством.</p>{% endif %}
                         {% if product.badDisclaimer %}<div class="mt-7 rounded-xl border border-primary/15 bg-background px-4 py-4 text-xs leading-relaxed text-muted-foreground">{{ product.badDisclaimer|e|nl2br }}</div>{% endif %}
                     </section>
                 {% endif %}

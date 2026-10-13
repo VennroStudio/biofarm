@@ -40,4 +40,26 @@ try {
 } catch (DomainExceptionModule $e) {
     $assert($e->getStatus() === 503, 'Missing configuration visible');
 }
+// Site domain and the YooKassa return path are configured separately.
+$_ENV['YOOKASSA_SHOP_ID'] = 'fixture-shop';
+$_ENV['YOOKASSA_SECRET_KEY'] = 'fixture-secret';
+$_ENV['FRONTEND_URL'] = 'https://shop.example.test/';
+$_ENV['YOOKASSA_RETURN_BASE_URL'] = '/payment-result';
+$siteGateway = new YooKassaGateway();
+$assert($siteGateway->configured(), 'Site URL completes gateway configuration');
+$assert($siteGateway->returnUrl('order /?') === 'https://shop.example.test/payment-result?order=order%20%2F%3F', 'Return stays on configured site, order ID is encoded');
+$_ENV['YOOKASSA_RETURN_BASE_URL'] = 'order-success';
+$assert(new YooKassaGateway()->returnUrl('1') === 'https://shop.example.test/order-success?order=1', 'Path without leading slash is joined once');
+$_ENV['YOOKASSA_RETURN_BASE_URL'] = '';
+$assert(new YooKassaGateway()->returnUrl('1') === 'https://shop.example.test/order-success?order=1', 'Empty return path defaults to the existing page');
+foreach (['https://other.example.test', '//other.example.test', '/order-success?order=other', '/order-success#fragment'] as $invalidPath) {
+    $_ENV['YOOKASSA_RETURN_BASE_URL'] = $invalidPath;
+    $assert(!new YooKassaGateway()->configured(), 'Return path must not override the site domain or order query');
+}
+$_ENV['YOOKASSA_RETURN_BASE_URL'] = '/order-success';
+$_ENV['FRONTEND_URL'] = '';
+$_ENV['APP_URL'] = 'https://fallback.example.test';
+$assert(new YooKassaGateway()->returnUrl('1') === 'https://fallback.example.test/order-success?order=1', 'App URL fallback when frontend URL is empty');
+$_ENV['FRONTEND_URL'] = 'javascript:alert(1)';
+$assert(!new YooKassaGateway()->configured(), 'Invalid site URL cannot configure payment redirect');
 echo "PASS payment gateway: request keys, verification, refund, minor amounts, configuration\n";

@@ -21,6 +21,7 @@
                 <h3 class="break-words font-medium leading-snug text-foreground transition-colors group-hover:text-primary {{ isList ? 'text-base sm:text-xl' : 'text-sm sm:text-lg' }}">{{ product.title }}</h3>
             </a>
             {% if product.shortDescription %}<p class="mt-2 line-clamp-2 text-xs leading-relaxed text-muted-foreground sm:text-sm">{{ product.shortDescription }}</p>{% endif %}
+            {% if product.legalStatus == 'bad' %}<p class="mt-3 text-xs leading-relaxed text-muted-foreground">БАД. Не является лекарственным средством.</p>{% endif %}
             {% if product.ratingCount > 0 %}<p class="mt-3 text-xs text-foreground"><span class="text-amber-500" aria-hidden="true">★</span> {{ product.ratingRate|rating }} <span class="text-muted-foreground">· {{ product.ratingCount }}</span></p>{% endif %}
         </div>
         <div class="{{ isList ? 'lg:border-l lg:border-border lg:pl-6' : 'mt-auto pt-4' }}">

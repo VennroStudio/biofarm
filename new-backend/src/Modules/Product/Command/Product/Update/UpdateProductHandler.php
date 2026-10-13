@@ -114,6 +114,10 @@ final readonly class UpdateProductHandler
                 faqIds: $command->faqIds,
             );
             $this->deleteCache();
+            if ($command->legalStatus !== null) {
+                $product->setRegulatoryInformation($command->legalStatus, $command->officialPurpose, $command->regulatoryEvidence);
+            }
+
             $this->flusher->flush();
             $this->connection->commit();
         } catch (Throwable $e) {

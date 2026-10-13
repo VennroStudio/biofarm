@@ -56,13 +56,13 @@ final readonly class CreateUserHandler
      * @throws SyntaxError
      * @throws Exception
      */
-    public function handle(CreateUserCommand $command): void
+    public function handle(CreateUserCommand $command, ?\Closure $onCreated = null): void
     {
         $email = mb_strtolower($command->email);
 
         $this->assertEmailNotRegistered($email);
 
-        $user = $this->program->atomic(function () use ($command, $email): User {
+        $user = $this->program->atomic(function () use ($command, $email, $onCreated): User {
             if ($command->teamInvitation !== null) {
                 $this->program->teamInvitation($command->teamInvitation);
                 if (!$command->teamConsent) {
@@ -74,6 +74,7 @@ final readonly class CreateUserHandler
             if ($command->teamInvitation !== null) {
                 $this->program->joinTeam((int)$user->id, $command->teamInvitation, $command->teamConsent);
             }
+            if ($onCreated !== null) $onCreated((int)$user->id);
             return $user;
         });
 

@@ -1,3 +1,4 @@
+import { ConsentFields, formConsents, type FormConsents } from '../../../shared/ConsentFields';
 import { Edit, MapPin, Plus, Save, Trash2, X } from 'lucide-react';
 import { type FormEvent, useMemo, useState } from 'react';
 import type { ShippingAddress, SiteUser, UserAddress } from '../../../site/api';
@@ -11,7 +12,7 @@ type AddressForm = ShippingAddress & {
 type Props = {
   addresses: UserAddress[];
   onDelete: (id: number) => Promise<void>;
-  onSave: (address: AddressForm, id?: number) => Promise<void>;
+  onSave: (address: AddressForm & FormConsents, id?: number) => Promise<void>;
   user: SiteUser;
 };
 
@@ -58,7 +59,7 @@ export function AddressesPanel({ addresses, onDelete, onSave, user }: Props) {
     event.preventDefault();
     setSaving(true);
     try {
-      await onSave(form, editingId ?? undefined);
+      await onSave({ ...form, ...formConsents(event.currentTarget) }, editingId ?? undefined);
       resetForm();
     } finally {
       setSaving(false);
@@ -169,6 +170,7 @@ export function AddressesPanel({ addresses, onDelete, onSave, user }: Props) {
               />
               Адрес по умолчанию
             </label>
+            <ConsentFields key={editingId ?? 'new-address'} />
             <div className="flex gap-2">
               <Button className="flex-1" disabled={saving} type="submit">
                 {editingId ? <Save className="h-4 w-4" /> : <Plus className="h-4 w-4" />}

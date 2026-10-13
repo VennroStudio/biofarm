@@ -1,3 +1,4 @@
+import { ConsentFields, formConsents } from '../../shared/ConsentFields';
 import { OfferImport } from '../cart/OfferImport';
 import type { Dashboard } from '../../program/shared';
 import { startPayment } from '../../site/payment';
@@ -163,6 +164,7 @@ function CheckoutPage({
         deliveryMethod,
         useBonuses,
         promoCodesEnabled ? promoCode : undefined,
+        formConsents(event.currentTarget),
       );
       if (!order) throw new Error('Не удалось получить номер заказа');
       sessionStorage.setItem('biofarm_checkout_order', order.id);
@@ -372,7 +374,9 @@ function CheckoutPage({
               )}
             </div>
 
-            <div>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground"><a className="underline" href="/dostavka">Доставка и оплата</a> · <a className="underline" href="/vozvrat">Возврат и обмен</a></p>
+              <ConsentFields offer />
               <CheckoutSummary
                 bonusDiscount={bonusDiscount}
                 cart={cart}
@@ -407,8 +411,8 @@ export function mountCheckoutPage() {
           cdekDeliveryPrice={numberDataset(root.dataset.cdekDeliveryPrice, 350)}
           freeDeliveryThreshold={numberDataset(root.dataset.freeDeliveryThreshold, 3000)}
           orderBonusEnabled={root.dataset.orderBonusEnabled === 'true'}
-          orderBonusPercent={numberDataset(root.dataset.orderBonusPercent, 5)}
-          orderBonusSpendLimitPercent={numberDataset(root.dataset.orderBonusSpendLimitPercent, 30)}
+          orderBonusPercent={numberDataset(root.dataset.orderBonusPercent, 3)}
+          orderBonusSpendLimitPercent={numberDataset(root.dataset.orderBonusSpendLimitPercent, 100)}
           postDeliveryPrice={numberDataset(root.dataset.postDeliveryPrice, 250)}
           promoCodesEnabled={root.dataset.promoCodesEnabled === 'true'}
         />

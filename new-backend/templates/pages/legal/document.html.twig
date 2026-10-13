@@ -1,0 +1,9 @@
+{% extends 'layouts/main.html.twig' %}
+{% block content %}
+<section class="container mx-auto px-5 pb-12 pt-32 md:px-8 lg:px-12">
+    <h1 class="mb-8 text-3xl text-primary md:text-4xl">{{ documentTitle }}</h1>
+    <article class="mx-auto max-w-5xl space-y-5 leading-relaxed [&_h2]:pt-5 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:text-primary">
+        {% include 'pages/legal/documents/' ~ documentSlug ~ '.html.twig' %}
+    </article>
+</section>
+{% endblock %}

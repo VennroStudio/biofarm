@@ -26,7 +26,7 @@ final readonly class ProductGetByIdFetcher
      */
     public function fetch(ProductGetByIdQuery $query): ProductDetails
     {
-        $key = 'product_by_id_' . $query->id;
+        $key = 'product_regulatory_v2_by_id_' . $query->id;
 
         /** @var ProductDetails|null $cached */
         $cached = $this->cacher->get($key);

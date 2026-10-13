@@ -95,7 +95,7 @@ final class ProgramMath
         $current['partnerTeamBps'] ??= $current['teamBps'] ?? $current['partnerBps'] ?? 50;
         $current['referralBonusBps'] ??= $legacyDirect;
         unset($current['maxPromoPercent'], $current['levelsBps'], $current['partnerBps'], $current['products'], $current['directBps'], $current['teamBps'], $current['capBps']);
-        $defaults = ['partnerDirectBps' => 100, 'partnerMemberBps' => 100, 'partnerTeamBps' => 50, 'memberDirectBps' => 100, 'referralBonusBps' => 100, 'buyerBps' => 100, 'holdDays' => 14, 'minimumWithdrawalMinor' => 10000];
+        $defaults = ['partnerDirectBps' => 100, 'partnerMemberBps' => 100, 'partnerTeamBps' => 50, 'memberDirectBps' => 100, 'referralBonusBps' => 100, 'buyerBps' => 300, 'bonusLifetimeMonths' => 12, 'holdDays' => 14, 'minimumWithdrawalMinor' => 10000];
         if (array_diff(array_keys($input), array_keys($defaults)) !== []) {
             throw new DomainException('Unknown program setting');
         }
@@ -104,6 +104,9 @@ final class ProgramMath
             if (!\is_int($rules[$key]) || $rules[$key] < 0 || $rules[$key] > 10000) {
                 throw new DomainException('Rates must be integer basis points from 0 to 10000');
             }
+        }
+        if (!\is_int($rules['bonusLifetimeMonths']) || $rules['bonusLifetimeMonths'] < 1 || $rules['bonusLifetimeMonths'] > 120) {
+            throw new DomainException('Bonus lifetime must be from 1 to 120 months');
         }
         if (!\is_int($rules['holdDays']) || $rules['holdDays'] < 0 || $rules['holdDays'] > 3650 || !\is_int($rules['minimumWithdrawalMinor']) || $rules['minimumWithdrawalMinor'] < 1) {
             throw new DomainException('Invalid hold or withdrawal minimum');

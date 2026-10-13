@@ -1,8 +1,1 @@
-{% set metrikaId = site_setting('yandex_metrika_id', '')|trim %}
-{% if site_feature('yandex_metrika_enabled') and metrikaId matches '/^\\d+$/' %}
-    <noscript>
-        <div>
-            <img src="https://mc.yandex.ru/watch/{{ metrikaId }}" style="position:absolute; left:-9999px;" alt="">
-        </div>
-    </noscript>
-{% endif %}
+{# Analytics requests require an explicit cookie choice; no unconditional noscript beacon. #}

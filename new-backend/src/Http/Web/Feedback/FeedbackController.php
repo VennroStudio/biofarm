@@ -33,6 +33,9 @@ final readonly class FeedbackController implements RequestHandlerInterface
             return $this->redirect();
         }
 
+        $consents = new \App\Components\Privacy\ConsentRecorder($this->connection);
+        $consents->assertForm($payload);
+
         $feedback = [
             'name'        => mb_substr(trim((string)($payload['name'] ?? '')), 0, 255),
             'phone'       => $this->nullableString($payload['phone'] ?? null, 50),
@@ -46,6 +49,7 @@ final readonly class FeedbackController implements RequestHandlerInterface
         }
 
         try {
+            $feedbackId = $this->connection->transactional(function () use ($feedback, $consents, $request, $payload): int {
             $this->connection->insert('feedback_requests', [
                 'name'        => $feedback['name'],
                 'phone'       => $feedback['phone'],
@@ -57,7 +61,10 @@ final readonly class FeedbackController implements RequestHandlerInterface
                 'created_at'  => gmdate('Y-m-d H:i:s'),
             ]);
 
-            $feedbackId = (int)$this->connection->lastInsertId();
+            $id = (int)$this->connection->lastInsertId();
+            $consents->recordForm($request, $payload, 'feedback', (string)$id);
+            return $id;
+            });
             if ($this->emailNotifier->submitted($feedbackId, $feedback)) {
                 $this->connection->update('feedback_requests', ['email_sent_at' => gmdate('Y-m-d H:i:s')], ['id' => $feedbackId]);
             }

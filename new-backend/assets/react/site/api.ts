@@ -1,3 +1,4 @@
+import type { FormConsents } from '../shared/ConsentFields';
 import type { CartItem } from './cart';
 
 export function getReferralCode(): string | undefined {
@@ -443,7 +444,7 @@ export async function login(email: string, password: string) {
   return refreshUser();
 }
 
-export async function register(email: string, password: string, name: string, referredBy?: string, teamInvitation?: string, teamConsent = false) {
+export async function register(email: string, password: string, name: string, referredBy?: string, teamInvitation?: string, teamConsent = false, consents?: FormConsents) {
   const { firstName, lastName } = splitName(name);
   await request('/v1/users/create', {
     method: 'POST',
@@ -455,6 +456,7 @@ export async function register(email: string, password: string, name: string, re
       referredBy,
       teamInvitation,
       teamConsent,
+      ...consents,
     },
   });
 }
@@ -468,11 +470,13 @@ export async function refreshUser() {
   return user;
 }
 
-export async function updateProfile(payload: { cardNumber?: string; name?: string; phone?: string }) {
+export async function updateProfile(payload: { cardNumber?: string; name?: string; phone?: string } & FormConsents) {
   const user = mapUser(await request('/v1/users/me', {
     method: 'PATCH',
     body: {
-      cardNumber: payload.cardNumber,
+      personalDataConsent: payload.personalDataConsent,
+      marketingEmailConsent: payload.marketingEmailConsent,
+      consentVersion: payload.consentVersion,
       name: payload.name,
       phone: payload.phone,
     },
@@ -491,10 +495,13 @@ export async function getUserAddresses() {
   return mapItemsResponse(data, mapUserAddress);
 }
 
-export async function saveUserAddress(payload: Partial<UserAddress> & ShippingAddress, id?: number) {
+export async function saveUserAddress(payload: Partial<UserAddress> & ShippingAddress & FormConsents, id?: number) {
   const data = await request(id ? `/v1/users/me/addresses/${id}` : '/v1/users/me/addresses', {
     method: id ? 'PATCH' : 'POST',
     body: {
+      personalDataConsent: payload.personalDataConsent,
+      marketingEmailConsent: payload.marketingEmailConsent,
+      consentVersion: payload.consentVersion,
       label: payload.label,
       name: payload.name,
       phone: payload.phone,
@@ -548,10 +555,12 @@ export async function createOrder(
   deliveryMethod: string,
   useBonuses: boolean,
   promoCode?: string,
+  consents?: FormConsents,
 ) {
   const referralCode = getReferralCode();
   const storedUser = getStoredUser();
   const body = {
+      ...consents,
       userId: storedUser?.id ? Number(storedUser.id) : null,
       items: cart.map((item) => ({
         productId: item.product.id,

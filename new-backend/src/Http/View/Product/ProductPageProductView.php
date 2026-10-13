@@ -50,5 +50,7 @@ final readonly class ProductPageProductView
         public array $variants = [],
         public float $ratingRate = 0.0,
         public int $ratingCount = 0,
+        public string $legalStatus = 'unknown',
+        public ?string $officialPurpose = null,
     ) {}
 }

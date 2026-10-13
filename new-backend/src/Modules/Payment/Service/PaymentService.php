@@ -39,7 +39,10 @@ final readonly class PaymentService
     public function start(string $orderId): array
     {
         $completed = $this->db->fetchAssociative("SELECT * FROM payment_operations WHERE order_id=? AND kind='payment' AND status='succeeded' LIMIT 1", [$orderId]);
-        if ($completed && $this->isTestingOperation($completed)) {
+        if ($completed && $this->isInternalPayment($completed)) {
+            return $this->status($orderId, false);
+        }
+        if ($this->completeCheckoutWithoutCash($orderId)) {
             return $this->status($orderId, false);
         }
         if (!$this->gateway->configured()) {
@@ -83,13 +86,28 @@ final readonly class PaymentService
         if (!new SiteSettings($this->db)->bool('testing_enabled')) {
             return false;
         }
+        return $this->completeInternalCheckout($orderId, ['testing' => true]);
+    }
+
+    /** A zero monetary total is settled internally; it is not a simulated provider payment. */
+    public function completeCheckoutWithoutCash(string $orderId): bool
+    {
         return $this->program->atomic(function () use ($orderId): bool {
+            $total = $this->db->fetchOne($this->lockSql('SELECT total FROM orders WHERE id=?'), [$orderId]);
+            if ($total === false || (int)$total !== 0) return false;
+            return $this->completeInternalCheckout($orderId, ['noCashPayment' => true]);
+        });
+    }
+
+    private function completeInternalCheckout(string $orderId, array $reason): bool
+    {
+        return $this->program->atomic(function () use ($orderId, $reason): bool {
             $order = $this->db->fetchAssociative($this->lockSql('SELECT * FROM orders WHERE id=?'), [$orderId]);
             if (!$order || \in_array($order['status'], ['cancelled', 'canceled'], true) || $order['payment_status'] === 'refunded') {
                 throw new DomainExceptionModule('payment', 'Заказ уже оплачен или отменён.', 13, status: 409);
             }
             $current = $this->db->fetchAssociative("SELECT * FROM payment_operations WHERE order_id=? AND kind='payment' AND status<>'canceled' LIMIT 1", [$orderId]);
-            if ($current && $this->isTestingOperation($current) && $current['status'] === 'succeeded' && $order['payment_status'] === 'completed') {
+            if ($current && $this->isInternalPayment($current) && $current['status'] === 'succeeded' && $order['payment_status'] === 'completed') {
                 return true;
             }
             if ($current || $order['payment_status'] === 'completed') {
@@ -100,7 +118,7 @@ final readonly class PaymentService
                 'id' => bin2hex(random_bytes(16)), 'order_id' => $orderId, 'kind' => 'payment',
                 'provider_id' => null, 'amount_minor' => (int)$order['total'] * 100, 'status' => 'succeeded',
                 // Internal routing only: never send this operation to the real provider, even after disabling testing.
-                'request_payload' => json_encode(['testing' => true], JSON_THROW_ON_ERROR),
+                'request_payload' => json_encode($reason, JSON_THROW_ON_ERROR),
                 'confirmation_url' => null, 'created_at' => $now, 'updated_at' => $now,
             ]);
             $this->db->update('orders', ['payment_status' => 'completed', 'paid_at' => $now, 'updated_at' => $now], ['id' => $orderId]);
@@ -109,9 +127,10 @@ final readonly class PaymentService
         });
     }
 
-    private function isTestingOperation(array $operation): bool
+    private function isInternalPayment(array $operation): bool
     {
-        return (json_decode($operation['request_payload'], true, 512, JSON_THROW_ON_ERROR)['testing'] ?? false) === true;
+        $payload = json_decode($operation['request_payload'], true, 512, JSON_THROW_ON_ERROR);
+        return ($payload['testing'] ?? false) === true || ($payload['noCashPayment'] ?? false) === true;
     }
 
     public function status(string $orderId, bool $refresh = true): array
@@ -120,8 +139,8 @@ final readonly class PaymentService
         if ($refresh && $operation && $operation['provider_id'] && !\in_array($operation['status'], ['succeeded', 'canceled'], true)) {
             return $this->refresh($operation);
         }
-        $order = $this->db->fetchAssociative('SELECT payment_status,total FROM orders WHERE id=?', [$orderId]);
-        return ['orderId' => $orderId, 'configured' => ($operation && $this->isTestingOperation($operation)) || $this->gateway->configured(), 'status' => $operation['status'] ?? 'not_started', 'orderPaymentStatus' => $order['payment_status'] ?? 'pending', 'amountMinor' => (int)($order['total'] ?? 0) * 100, 'confirmationUrl' => $operation['confirmation_url'] ?? null];
+        $order = $this->db->fetchAssociative('SELECT payment_status,status,total FROM orders WHERE id=?', [$orderId]);
+        return ['orderId' => $orderId, 'orderStatus' => $order['status'] ?? 'pending', 'configured' => ($operation && $this->isInternalPayment($operation)) || $this->gateway->configured(), 'status' => $operation['status'] ?? 'not_started', 'orderPaymentStatus' => $order['payment_status'] ?? 'pending', 'amountMinor' => (int)($order['total'] ?? 0) * 100, 'confirmationUrl' => $operation['confirmation_url'] ?? null];
     }
 
     public function webhook(array $notification): void
@@ -187,7 +206,7 @@ final readonly class PaymentService
                 throw new DomainExceptionModule('payment', 'Некорректная сумма возврата.', 22, status: 422);
             }
             $payload = ['payment_id' => $payment['provider_id'], 'amount' => ['value' => YooKassaGateway::money($amount), 'currency' => 'RUB'], 'description' => 'Возврат по заказу ' . $orderId];
-            $testing = $this->isTestingOperation($payment);
+            $testing = $this->isInternalPayment($payment);
             if ($testing) {
                 $payload['testing'] = true;
             }

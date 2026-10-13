@@ -36,8 +36,8 @@ final readonly class OrderSuccessPageController implements RequestHandlerInterfa
             'page' => new StaticPageView($this->seo->systemMeta(
                 'order_success',
                 '/order-success',
-                'Заказ оформлен — БИОФАРМ',
-                'Подтверждение оформления заказа БИОФАРМ.',
+                'Статус оплаты заказа — БИОФАРМ',
+                'Проверка статуса оплаты заказа БИОФАРМ.',
                 robots: 'noindex, follow',
             )),
         ]);

@@ -23,6 +23,8 @@ final readonly class CatalogPageController implements RequestHandlerInterface
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
         $query = $request->getQueryParams();
+        $redirect = ThematicRedirect::target($request->getUri()->getPath(), $query);
+        if ($redirect !== null) return new \Slim\Psr7\Response(301)->withHeader('Location', $redirect);
         $categorySlug = $this->routeArgument($request, 'categorySlug');
         $subcategorySlug = $this->routeArgument($request, 'subcategorySlug');
         $routeComponentSlug = $this->routeArgument($request, 'componentSlug');

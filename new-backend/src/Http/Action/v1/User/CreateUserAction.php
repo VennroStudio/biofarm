@@ -52,6 +52,7 @@ final readonly class CreateUserAction implements RequestHandlerInterface
         private CreateUserHandler $handler,
         private Translator $translator,
         private SiteSettings $settings,
+        private \App\Components\Privacy\ConsentRecorder $consents,
     ) {}
 
     /**
@@ -64,6 +65,9 @@ final readonly class CreateUserAction implements RequestHandlerInterface
             throw new DomainExceptionModule('user', 'error.registration_disabled', 36, status: 403);
         }
 
+        $payload = (array)$request->getParsedBody();
+        $this->consents->assertForm($payload);
+
         $command = $this->denormalizer->denormalize(
             array_merge(
                 (array)$request->getParsedBody(),
@@ -75,7 +79,7 @@ final readonly class CreateUserAction implements RequestHandlerInterface
         $this->validator->validate($command);
 
         try {
-            $this->handler->handle($command);
+            $this->handler->handle($command, fn (int $userId) => $this->consents->recordForm($request, $payload, 'user', (string)$userId));
         } catch (DomainExceptionModule $e) {
             throw $e;
         } catch (DomainException $e) {

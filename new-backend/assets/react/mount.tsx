@@ -1,3 +1,4 @@
+import { mountCookieConsent } from './site/cookieConsent';
 import { mountSiteHeader } from './components/layout/header';
 import { mountProductCart } from './components/product/cart';
 import { mountProductCounter } from './components/product/counter-island';
@@ -33,3 +34,5 @@ mountOrderSuccessPage();
 mountLoginPage();
 mountProfilePage();
 mountPartnerPage();
+
+mountCookieConsent();

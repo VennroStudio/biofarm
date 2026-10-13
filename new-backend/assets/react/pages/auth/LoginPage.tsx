@@ -1,3 +1,4 @@
+import { ConsentFields, formConsents } from '../../shared/ConsentFields';
 import { getReferralCode } from '../../site/referral';
 import { ArrowRight, Eye, EyeOff, Lock, Mail, User } from 'lucide-react';
 import { createRoot } from 'react-dom/client';
@@ -88,7 +89,7 @@ function LoginPage({ registrationEnabled }: { registrationEnabled: boolean }) {
     try {
       const referralCode = getReferralCode();
       if (teamCode && (!teamName || !teamConsent)) throw new Error('Подтвердите вступление в команду');
-      await register(registerEmail, registerPassword, registerName, teamCode ? undefined : referralCode, teamCode || undefined, teamConsent);
+      await register(registerEmail, registerPassword, registerName, teamCode ? undefined : referralCode, teamCode || undefined, teamConsent, formConsents(event.currentTarget));
       if (referralCode) {
         window.localStorage.removeItem('referralCode');
       }
@@ -270,6 +271,8 @@ function LoginPage({ registrationEnabled }: { registrationEnabled: boolean }) {
 
                 {error && <p className="rounded bg-destructive/10 p-2 text-sm text-destructive">{error}</p>}
 
+                <ConsentFields />
+
                 <Button className="w-full" disabled={isLoading} type="submit">
                   {isLoading ? 'Регистрация...' : 'Зарегистрироваться'}
                   <ArrowRight className="h-4 w-4" />
@@ -277,15 +280,6 @@ function LoginPage({ registrationEnabled }: { registrationEnabled: boolean }) {
               </form>
             )}
 
-            <div className="mt-6 text-center text-sm text-muted-foreground">
-              <p>
-                Продолжая, вы соглашаетесь с{' '}
-                <a className="text-primary hover:underline" href="/privacy">политикой конфиденциальности</a>, даете{' '}
-                <a className="text-primary hover:underline" href="/personal-data-consent">согласие на обработку персональных данных</a>{' '}
-                и принимаете условия{' '}
-                <a className="text-primary hover:underline" href="/oferta">публичной оферты</a>.
-              </p>
-            </div>
           </CardContent>
         </Card>
       </div>

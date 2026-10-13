@@ -60,7 +60,7 @@ function paid($db, $p, string $id): void
     $p->settleOrder($id);
 }
 
-$p->updateSettings(['partnerDirectBps' => 100, 'partnerMemberBps' => 100, 'memberDirectBps' => 100, 'partnerTeamBps' => 50], 1);
+$p->updateSettings(['buyerBps' => 100, 'partnerDirectBps' => 100, 'partnerMemberBps' => 100, 'memberDirectBps' => 100, 'partnerTeamBps' => 50], 1);
 $invite = $p->teamInvite(1);
 fails(static fn () => $p->teamInvite(2), 'ordinary customer cannot invite team members');
 fails(static fn () => $p->joinTeam(2, $invite['code'], false), 'explicit consent required');
@@ -140,9 +140,9 @@ check(!$p->identity(2)['isTeamMember'] && $p->identity(2)['isPartner'], 'promoti
 order($db, $p, 'PROMOTED', 3);
 paid($db, $p, 'PROMOTED');
 check(rewards($db, 'PROMOTED') === [[2, 'commission', 'direct', 10000], [3, 'shopping', 'buyer', 10000]], 'promoted partner keeps customers without old partner reward');
-$sim = ProgramMath::simulate(['amount' => '10000', 'scenario' => 'team_customer'], ProgramMath::rules(['partnerDirectBps' => 100, 'partnerMemberBps' => 100, 'memberDirectBps' => 100, 'partnerTeamBps' => 50]));
+$sim = ProgramMath::simulate(['amount' => '10000', 'scenario' => 'team_customer'], ProgramMath::rules(['buyerBps' => 100, 'partnerDirectBps' => 100, 'partnerMemberBps' => 100, 'memberDirectBps' => 100, 'partnerTeamBps' => 50]));
 check($sim['partnerMinor'] === 5000 && $sim['directMinor'] === 10000 && $sim['totalMinor'] === 25000, 'member customer earns one percent and partner half percent');
-$own = ProgramMath::simulate(['amount' => '10000', 'scenario' => 'member_purchase'], ProgramMath::rules(['partnerDirectBps' => 100, 'partnerMemberBps' => 100, 'memberDirectBps' => 100, 'partnerTeamBps' => 50]));
+$own = ProgramMath::simulate(['amount' => '10000', 'scenario' => 'member_purchase'], ProgramMath::rules(['buyerBps' => 100, 'partnerDirectBps' => 100, 'partnerMemberBps' => 100, 'memberDirectBps' => 100, 'partnerTeamBps' => 50]));
 check($own['partnerMinor'] === 10000, 'member own purchase keeps one percent in simulator');
 check(ProgramMath::rules(['memberDirectBps' => 600])['memberDirectBps'] === 600, 'no aggregate reward cap');
 // Leaving the program stops new cash rewards, never confiscates earned cash.

@@ -45,7 +45,9 @@ final readonly class GetProductsAction implements RequestHandlerInterface
 
         return new JsonDataItemsResponse(
             count: $result->count,
-            items: $this->unifier->unify(null, $result->items),
+            items: \Slim\Routing\RouteContext::fromRequest($request)->getRoute()?->getArgument('adminProducts') === '1'
+                ? array_map(static fn ($item) => $item->toArray(), $result->items)
+                : $this->unifier->unify(null, $result->items),
         );
     }
 }

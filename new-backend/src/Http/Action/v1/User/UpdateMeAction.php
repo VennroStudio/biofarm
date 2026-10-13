@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Action\v1\User;
 
+use App\Components\Privacy\ConsentRecorder;
+
 use App\Components\Cacher\Cacher;
 use App\Components\Flusher\FlusherInterface;
 use App\Components\Http\Middleware\Identity\RequestIdentity;
@@ -24,6 +26,7 @@ final readonly class UpdateMeAction implements RequestHandlerInterface
         private FlusherInterface $flusher,
         private Cacher $cacher,
         private GetMeAction $getMeAction,
+        private \Doctrine\DBAL\Connection $connection,
     ) {}
 
     /**
@@ -34,6 +37,9 @@ final readonly class UpdateMeAction implements RequestHandlerInterface
     {
         $identity = RequestIdentity::get($request);
         $payload = (array)$request->getParsedBody();
+        $consents = new ConsentRecorder($this->connection);
+        $consents->assertForm($payload);
+        return $this->connection->transactional(function () use ($request, $payload, $identity, $consents): ResponseInterface {
         $user = $this->userRepository->getById($identity->id);
 
         $name = $this->stringValue($payload, 'name');
@@ -59,10 +65,12 @@ final readonly class UpdateMeAction implements RequestHandlerInterface
             referredByUserId: $profile->referredByUserId,
         );
 
+        $consents->recordForm($request, $payload, 'user', (string)$identity->id);
         $this->flusher->flush();
         $this->cacher->delete('user_identity_' . $identity->id);
 
         return $this->getMeAction->handle($request);
+        });
     }
 
     /**

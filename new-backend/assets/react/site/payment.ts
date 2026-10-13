@@ -3,6 +3,7 @@ export type PaymentState = {
     configured: boolean;
     status: string;
     orderPaymentStatus: string;
+    orderStatus?: string;
     amountMinor: number;
     confirmationUrl?: string;
 };

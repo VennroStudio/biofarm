@@ -23,6 +23,14 @@ services:
     networks:
       - proxy
 
+  bonus-expiry:
+    image: ${REGISTRY}/biofarm-php-cli:${IMAGE_TAG}
+    restart: unless-stopped
+    env_file: .env
+    entrypoint: ["php", "bin/expire-bonuses.php", "--watch"]
+    networks:
+      - proxy
+
   php-cli:
     image: ${REGISTRY}/biofarm-php-cli:${IMAGE_TAG}
     container_name: biofarm-php-cli

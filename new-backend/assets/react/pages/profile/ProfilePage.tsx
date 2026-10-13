@@ -1,3 +1,4 @@
+import type { FormConsents } from '../../shared/ConsentFields';
 import { Gift, Heart, LogOut, MapPin, Package, User } from 'lucide-react';
 import { createRoot } from 'react-dom/client';
 import { useCallback, useEffect, useState } from 'react';
@@ -103,9 +104,9 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, withdrawa
     window.location.href = '/';
   }
 
-  async function handleSaveProfile() {
+  async function handleSaveProfile(consents: FormConsents) {
     try {
-      const updated = await updateProfile({ cardNumber: editCardNumber, name: editName, phone: editPhone });
+      const updated = await updateProfile({ name: editName, phone: editPhone, ...consents });
       if (updated) {
         setUser(updated);
         setIsEditing(false);
@@ -126,7 +127,7 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, withdrawa
     }
   }
 
-  async function handleSaveAddress(address: ShippingAddress & { isDefault: boolean; label: string }, id?: number) {
+  async function handleSaveAddress(address: ShippingAddress & FormConsents & { isDefault: boolean; label: string }, id?: number) {
     try {
       await saveUserAddress(address, id);
       setAddresses(await getUserAddresses());
@@ -227,7 +228,7 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, withdrawa
                   setEditName={setEditName}
                   setEditPhone={setEditPhone}
                   user={user}
-                  onSave={() => void handleSaveProfile()}
+                  onSave={(consents) => void handleSaveProfile(consents)}
                   onStartEdit={() => setIsEditing(true)}
                 />
             </TabPanel>

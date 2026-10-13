@@ -81,7 +81,7 @@ check(ProgramMath::rules([], ['levelsBps' => [120, 60, 10, 10]])['partnerDirectB
 fails(static fn () => ProgramMath::rules(['levelsBps' => [100, 50, 25, 25]]), 'new settings cannot re-enable four levels');
 fails(static fn () => ProgramMath::rules(['levelsBps' => [100]]), 'both level rates required');
 $p->updateSettings(['partnerTeamBps' => 100], 1);
-$simulation = ProgramMath::simulate(['amount' => '10000', 'discountAmount' => '1000', 'costAmount' => '5000'], ProgramMath::rules(['partnerTeamBps' => 100]));
+$simulation = ProgramMath::simulate(['amount' => '10000', 'discountAmount' => '1000', 'costAmount' => '5000'], ProgramMath::rules(['buyerBps' => 100, 'partnerTeamBps' => 100]));
 check($simulation['basisMinor'] === 900000 && $simulation['totalMinor'] === 27000, 'simulation net reward base');
 check($simulation['directMinor'] === 9000 && $simulation['referralBonusMinor'] === 0 && $simulation['partnerMinor'] === 9000 && $simulation['buyerMinor'] === 9000, 'simulator separates direct, team and buyer rewards');
 check($simulation['totalIncentivesMinor'] === 127000, 'simulation includes shop discount and rewards');
@@ -157,7 +157,7 @@ $r1 = order($db, $p, 'RESERVE', 7, 500, 1000);
 fails(static fn () => order($db, $p, 'OVER', 7, 1000, 1000), 'concurrent spend excludes reserves');
 $p->cancelOrder('RESERVE');
 check((int)$db->fetchOne("SELECT COUNT(*) FROM program_ledger WHERE kind='legacy_opening' AND wallet='commission'") === 0, 'old bonuses never commission');
-check($p->adminSettings()['bonusSpendLimitPercent'] === 30, 'spend limit defaults to existing checkout default');
+check($p->adminSettings()['bonusSpendLimitPercent'] === 100, 'spend limit defaults to full goods cost');
 $p->updateSettings(['bonusSpendLimitPercent' => 45], 1);
 check($p->adminSettings()['bonusSpendLimitPercent'] === 45, 'admin settings read saved spend limit');
 check(new App\Components\Setting\SiteSettings($db)->int('order_bonus_spend_limit_percent') === 45, 'checkout reads same saved spend limit');

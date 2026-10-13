@@ -58,8 +58,9 @@ return static function (App $app): void {
         $group->get('/login', LoginPageController::class);
         $group->get('/profile', ProfilePageController::class);
         $group->get('/partner', PartnerPageController::class);
-        $group->get('/privacy', PrivacyPolicyPageController::class);
-        $group->get('/oferta', PublicOfferPageController::class);
+        foreach (array_keys(\App\Http\Web\Legal\LegalPageController::PAGES) as $legalSlug) {
+            $group->get('/' . $legalSlug, \App\Http\Web\Legal\LegalPageController::class);
+        }
 
         $group->post('/feedback', FeedbackController::class);
         $group->get('/healthz', HealthController::class);

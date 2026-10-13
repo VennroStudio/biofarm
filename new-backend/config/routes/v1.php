@@ -66,6 +66,7 @@ use Slim\Routing\RouteCollectorProxy;
 return static function (App $app): void {
     $app->group('/v1', new Group(static function (RouteCollectorProxy $group): void {
         $group->get('', OpenApiAction::class);
+        $group->post('/privacy/cookies', \App\Http\Action\v1\Privacy\CookieChoiceAction::class);
 
         $group->group('/users', new Group(static function (RouteCollectorProxy $group): void {
             $group->get('', GetUsersAction::class)->add(Authenticate::class);

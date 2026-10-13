@@ -196,6 +196,12 @@ export function ProductFormModal({ categories, attributes, productGroups, blogPo
             <Group title="Состав и активные компоненты"><div className="grid gap-4 sm:grid-cols-2">{area('ingredients', 'Состав')}{area('active_components_text', 'Активные компоненты')}</div></Group>
             <Group title="Применение и противопоказания"><div className="grid gap-4 sm:grid-cols-2">{area('usage_text', 'Способ применения')}{area('contraindications', 'Противопоказания')}</div></Group>
             <Group title="Производство и хранение"><div className="grid gap-4 sm:grid-cols-2">{text('country', 'Страна производства')}{text('shelf_life', 'Срок годности')}</div>{area('storage_conditions', 'Условия хранения')}</Group>
+            <Group title="Официальная информация">
+              <Field label="Правовой статус"><select className={inputClass} value={form.legal_status} onChange={event => update('legal_status', event.target.value)}><option value="unknown">Не подтверждён</option><option value="bad">БАД</option><option value="food">Пищевая продукция</option><option value="other">Иной статус</option></select></Field>
+              {area('official_purpose', 'Официальное назначение', 'Область применения из документа на этот товар')}
+              {area('regulatory_evidence', 'Основание и результат проверки (только для администратора)', 'Номер СГР, маркировка, источник и дата сверки; нерешённые расхождения')}
+              <p className="text-xs text-[#5f7580]">Статус и назначение подтверждайте документом на конкретный товар. Тематический раздел не заменяет область применения.</p>
+            </Group>
             <Group title="Предупреждение о БАД">{area('bad_disclaimer', 'Текст предупреждения')}</Group>
           </>}
           {activeTab === 'photos' && <div data-field="images" className="space-y-4">

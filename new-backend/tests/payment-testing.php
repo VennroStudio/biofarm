@@ -62,8 +62,9 @@ foreach ([null,2] as $buyer) {
     check((int)$db->fetchOne('SELECT COUNT(*) FROM program_ledger WHERE order_id=?',[$id])===$count, 'Retries do not duplicate rewards');
     check((int)$db->fetchOne('SELECT COUNT(*) FROM payment_operations WHERE order_id=?',[$id])===1, 'Only one payment');
 }
-check((int)$db->fetchOne("SELECT SUM(amount_minor) FROM program_ledger WHERE order_id='member' AND wallet='shopping'")===10000, 'Registered buyer receives normal shopping bonus');
+check((int)$db->fetchOne("SELECT SUM(amount_minor) FROM program_ledger WHERE order_id='member' AND wallet='shopping'")===30000, 'Registered buyer receives normal shopping bonus');
 $fixture('cancelled');$db->update('orders',['status'=>'cancelled'],['id'=>'cancelled']);
+check(($payments->status('cancelled')['orderStatus'] ?? null) === 'cancelled', 'Return page receives authoritative order cancellation');
 try {$payments->completeCheckoutForTesting('cancelled');throw new RuntimeException('Cancelled order must reject');} catch (DomainExceptionModule) {}
 $fixture('in-flight');
 $db->insert('payment_operations',['id'=>'live-op','order_id'=>'in-flight','kind'=>'payment','status'=>'pending','amount_minor'=>1035000,'provider_id'=>'live-provider','request_payload'=>'{}','created_at'=>gmdate('Y-m-d H:i:s'),'updated_at'=>gmdate('Y-m-d H:i:s')]);
@@ -81,5 +82,17 @@ check($refund['status']==='succeeded','Refund does not contact provider for simu
 check($db->fetchOne("SELECT payment_status FROM orders WHERE id='guest'")==='refunded','Normal refund status is used');
 $payments->requestRefund('guest','refund-fixture-0001',[['itemId'=>$item,'quantity'=>1]],true);
 $payments->reconcile();
+// A fully bonus-funded order must complete with testing disabled and no gateway.
+$program->adjust(2, 'shopping', 1000000, 'zero cash fixture', 1);
+$db->insert('orders',['id'=>'bonus-only','user_id'=>2,'status'=>'pending','payment_status'=>'pending','total'=>0,'discount_amount'=>0,'bonus_used'=>10000,'delivery_cost'=>0,'referred_by'=>'partner','shipping_address'=>'{}']);
+$db->insert('order_items',['order_id'=>'bonus-only','product_id'=>1,'product_name'=>'Fixture','quantity'=>1,'price'=>10000]);
+$program->captureOrder('bonus-only');
+check($payments->completeCheckoutWithoutCash('bonus-only'), 'Fully bonus-funded checkout completes without a gateway');
+check($payments->start('bonus-only')['orderPaymentStatus']==='completed', 'Retry preserves bonus-funded success');
+check($payments->completeCheckoutWithoutCash('bonus-only'), 'Zero-cash completion is idempotent');
+check((int)$db->fetchOne("SELECT COUNT(*) FROM payment_operations WHERE order_id='bonus-only'")===1, 'One internal zero-cash operation');
+check($db->fetchOne("SELECT state FROM program_ledger WHERE id='spend:bonus-only'")==='available', 'Bonus reservation becomes final spending');
+check((int)$db->fetchOne("SELECT SUM(amount_minor) FROM program_ledger WHERE order_id='bonus-only' AND amount_minor>0")===0, 'No rewards on bonus-paid goods');
+check(!$payments->completeCheckoutWithoutCash('normal-again'), 'Positive cash amount still requires payment');
 check($networkCalls===0,'No provider calls in the simulated lifecycle');
 echo "Payment testing: disabled/enabled, guest/buyer rewards, retries, cancellation, real-payment isolation, delivery and refund passed.\n";

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Action\v1\User;
 
+use App\Components\Privacy\ConsentRecorder;
+
 use App\Components\Exception\DomainExceptionModule;
 use App\Components\Http\Middleware\Identity\RequestIdentity;
 use App\Components\Http\Response\JsonDataResponse;
@@ -30,6 +32,9 @@ final readonly class SaveUserAddressAction implements RequestHandlerInterface
     {
         $identity = RequestIdentity::get($request);
         $payload = (array)$request->getParsedBody();
+        $consents = new ConsentRecorder($this->connection);
+        $consents->assertForm($payload);
+        return $this->connection->transactional(function () use ($request, $payload, $identity, $consents): ResponseInterface {
         $addressId = $this->routeId($request);
         $data = $this->payload($payload);
 
@@ -77,7 +82,9 @@ final readonly class SaveUserAddressAction implements RequestHandlerInterface
             $status = 200;
         }
 
+        $consents->recordForm($request, $payload, 'user', (string)$identity->id);
         return new JsonDataResponse($this->address($identity->id, $addressId), $status);
+        });
     }
 
     private function routeId(ServerRequestInterface $request): ?int

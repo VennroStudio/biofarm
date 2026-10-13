@@ -74,6 +74,7 @@ final readonly class ProductCatalogDataProvider
                 'p.weight',
                 'p.description',
                 'p.short_description',
+                $this->optionalProductColumn('legal_status'),
                 'c.name AS category_name',
                 'c.slug AS category_slug',
             )
@@ -149,6 +150,7 @@ final readonly class ProductCatalogDataProvider
                 'p.weight',
                 'p.description',
                 'p.short_description',
+                $this->optionalProductColumn('legal_status'),
                 'c.name AS category_name',
                 'c.slug AS category_slug',
             )
@@ -199,6 +201,8 @@ final readonly class ProductCatalogDataProvider
             'p.short_description',
             'p.ingredients',
             ...$this->optionalProductColumns([
+                'legal_status',
+                'official_purpose',
                 'usage_text',
                 'contraindications',
                 'country',
@@ -252,6 +256,7 @@ final readonly class ProductCatalogDataProvider
                 'p.weight',
                 'p.description',
                 'p.short_description',
+                $this->optionalProductColumn('legal_status'),
                 'c.name AS category_name',
                 'c.slug AS category_slug',
             )
@@ -610,6 +615,7 @@ final readonly class ProductCatalogDataProvider
             weight: (string)$row['weight'],
             imageAlt: $row['image_alt'] !== null && trim((string)$row['image_alt']) !== '' ? (string)$row['image_alt'] : (string)$row['name'],
             categorySlug: $row['category_slug'] !== null && trim((string)$row['category_slug']) !== '' ? (string)$row['category_slug'] : null,
+            legalStatus: (string)($row['legal_status'] ?? 'unknown'),
         );
     }
 
@@ -659,6 +665,8 @@ final readonly class ProductCatalogDataProvider
             gtin: $row['gtin'] !== null && trim((string)$row['gtin']) !== '' ? (string)$row['gtin'] : null,
             availability: $row['availability'] !== null && trim((string)$row['availability']) !== '' ? (string)$row['availability'] : 'in_stock',
             ingredients: $row['ingredients'] !== null && trim((string)$row['ingredients']) !== '' ? (string)$row['ingredients'] : null,
+            legalStatus: $row['legal_status'] ?? 'unknown',
+            officialPurpose: $row['official_purpose'] ?? null,
             usageText: $row['usage_text'] !== null && trim((string)$row['usage_text']) !== '' ? (string)$row['usage_text'] : null,
             contraindications: $row['contraindications'] !== null && trim((string)$row['contraindications']) !== '' ? (string)$row['contraindications'] : null,
             country: $row['country'] !== null && trim((string)$row['country']) !== '' ? (string)$row['country'] : null,
@@ -1269,6 +1277,11 @@ final readonly class ProductCatalogDataProvider
      * @return list<string>
      * @throws Exception
      */
+    private function optionalProductColumn(string $column): string
+    {
+        return $this->optionalProductColumns([$column])[0];
+    }
+
     private function optionalProductColumns(array $columns): array
     {
         $availableColumns = array_keys($this->connection->createSchemaManager()->listTableColumns('products'));

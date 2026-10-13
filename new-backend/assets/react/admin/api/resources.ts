@@ -81,7 +81,7 @@ export const integrationErrorsApi = {
 };
 
 export const productsApi = {
-  list: (search = '') => requestItems<Product>(`/v1/products?includeInactive=true&perPage=100${search ? `&search=${encodeURIComponent(search)}` : ''}`),
+  list: (search = '') => requestItems<Product>(`/admin/api/products?includeInactive=true&perPage=100${search ? `&search=${encodeURIComponent(search)}` : ''}`),
   create: (payload: Record<string, unknown>) => request('/v1/products/create', { method: 'POST', body: payload }),
   update: (id: number, payload: Record<string, unknown>) => request(`/v1/products/update/${id}`, { method: 'PATCH', body: payload }),
   delete: (id: number) => request(`/v1/products/delete/${id}`, { method: 'DELETE' }),

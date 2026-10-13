@@ -66,7 +66,7 @@ final class ProgramService
 
     public function adminSettings(): array
     {
-        return $this->settings() + ['bonusSpendLimitPercent' => new SiteSettings($this->db)->int('order_bonus_spend_limit_percent', 30)];
+        return $this->settings() + ['bonusSpendLimitPercent' => new SiteSettings($this->db)->int('order_bonus_spend_limit_percent', 100)];
     }
 
     public function updateSettings(array $input, int $actor): array
@@ -91,10 +91,21 @@ final class ProgramService
         });
     }
 
+    /** CLI maintenance uses the same mutex and profile sync as checkout. */
+    public function expireShoppingBonuses(int $afterUser = 0, int $limit = 100): array
+    {
+        return $this->atomic(function () use ($afterUser, $limit): array {
+            $ids = $this->db->fetchFirstColumn("SELECT DISTINCT user_id FROM program_ledger WHERE wallet='shopping' AND amount_minor>0 AND state<>'void' AND user_id>? ORDER BY user_id LIMIT " . max(1, min(1000, $limit)), [$afterUser]);
+            foreach ($ids as $id) $this->syncProfile((int)$id);
+            return ['processed' => count($ids), 'lastUser' => $ids === [] ? null : (int)end($ids)];
+        });
+    }
+
     public function shoppingAvailable(int $user): int
     {
         return $this->atomic(function () use ($user) {
             $this->opening($user);
+            $this->syncProfile($user);
             return max(0, $this->balance($user, 'shopping')['availableMinor']);
         });
     }
@@ -227,7 +238,7 @@ final class ProgramService
             foreach ($s['items'] as $item) {
                 foreach ($item['rewards'] as $r) {
                     $this->opening($r['userId']);
-                    $this->entry('reward:' . $item['itemId'] . ':' . $r['kind'], $r['userId'], $r['wallet'], $r['amountMinor'], $r['kind'], $orderId, 'pending', ['itemId' => $item['itemId'], 'productName' => $item['description'], 'basisMinor' => $item['paidMinor'], 'rateBps' => $r['bps']], $at);
+                    $this->entry('reward:' . $item['itemId'] . ':' . $r['kind'], $r['userId'], $r['wallet'], $r['amountMinor'], $r['kind'], $orderId, 'pending', ['itemId' => $item['itemId'], 'productName' => $item['description'], 'basisMinor' => $item['paidMinor'], 'rateBps' => $r['bps'], 'bonusLifetimeMonths' => $s['rules']['bonusLifetimeMonths'] ?? 12], $at);
                 }
             }
             $this->db->update('program_orders', ['status' => 'paid'], ['id' => $orderId]);
@@ -327,7 +338,7 @@ final class ProgramService
                     $original = $this->db->fetchAssociative('SELECT state,available_at FROM program_ledger WHERE id=?', [$rewardId]);
                     $key = 'refund:' . $refundId . ':' . $id . ':' . $r['kind'];
                     $payload['reversals'][] = ['id' => $key, 'rewardId' => $rewardId, 'userId' => $r['userId'], 'wallet' => $r['wallet'], 'amountMinor' => $amount];
-                    $this->entry($key, $r['userId'], $r['wallet'], -$amount, 'refund_reserve', $orderId, $original['state'] === 'pending' ? 'refund_pending' : 'reserved', [], $original['available_at']);
+                    $this->entry($key, $r['userId'], $r['wallet'], -$amount, 'refund_reserve', $orderId, $original['state'] === 'pending' ? 'refund_pending' : 'reserved', ['sourceCreditId' => $rewardId], $original['available_at']);
                 }
             }
             if ($requested !== [] || ($payload['items'] === [] && !$refundDelivery)) {
@@ -472,13 +483,14 @@ final class ProgramService
         return $this->atomic(function () use ($user) {
             $this->opening($user);
             $this->syncProfile($user);
-            return ['identity' => $this->identity($user), 'balances' => ['shopping' => $this->balance($user, 'shopping'), 'commission' => $this->balance($user, 'commission')], 'rates' => $this->settings(), 'rateUnit' => 'basis_points', 'currency' => 'RUB', 'moneyUnit' => 'minor'];
+            return ['identity' => $this->identity($user), 'bonusExpiry' => new ShoppingBonusExpiry($this->db)->refresh($user, $this->now()), 'balances' => ['shopping' => $this->balance($user, 'shopping'), 'commission' => $this->balance($user, 'commission')], 'rates' => $this->settings(), 'rateUnit' => 'basis_points', 'currency' => 'RUB', 'moneyUnit' => 'minor'];
         });
     }
 
     public function listing(string $kind, ?int $user, int $page = 1, int $limit = 25, string $sort = 'depth', string $direction = 'asc', ?string $wallet = null, ?string $dateFrom = null, ?string $dateTo = null): array
     {
         return $this->atomic(function () use ($kind, $user, $page, $limit, $sort, $direction, $wallet, $dateFrom, $dateTo) {
+            if ($kind === 'ledger' && $user !== null && $wallet === 'shopping') $this->syncProfile($user);
             $limit = max(1, min(100, $limit));
             $offset = (max(1, $page) - 1) * $limit;
             $params = [];
@@ -586,7 +598,9 @@ final class ProgramService
                     if (isset($row[$key])) {
                         $row[$key] = $this->decode($row[$key]);
                     }
-                }if ($kind === 'withdrawals') {
+                }
+                if ($kind === 'ledger') $row['expires_at'] = $row['details']['expiresAt'] ?? null;
+                if ($kind === 'withdrawals') {
                     $row['reason'] = $row['details']['decisionReason'] ?? null;
                 }
                 if (\array_key_exists('referred_by_user_id', $row)) {
@@ -785,6 +799,12 @@ final class ProgramService
 
     private function entry(string $id, int $user, string $wallet, int $amount, string $kind, ?string $order = null, string $state = 'available', array $details = [], ?string $availableAt = null): void
     {
+        if ($wallet === 'shopping') {
+            $details['sequence'] = (int)$this->db->fetchOne('SELECT COUNT(*) FROM program_ledger WHERE user_id=? AND wallet=?', [$user, $wallet]) + 1;
+            if ($amount > 0 && $kind !== 'legacy_opening') {
+                $details['expiresAt'] = ShoppingBonusExpiry::deadline($this->now(), $details['bonusLifetimeMonths'] ?? $this->settings()['bonusLifetimeMonths']);
+            }
+        }
         $this->db->insert('program_ledger', ['id' => $id, 'user_id' => $user, 'wallet' => $wallet, 'amount_minor' => $amount, 'kind' => $kind, 'order_id' => $order, 'state' => $state, 'details' => $this->json($details), 'created_at' => $this->now(), 'available_at' => $availableAt]);
     }
 
@@ -805,6 +825,7 @@ final class ProgramService
 
     private function balance(int $user, string $wallet): array
     {
+        if ($wallet === 'shopping') new ShoppingBonusExpiry($this->db)->refresh($user, $this->now());
         $rows = $this->db->fetchAllAssociative('SELECT state,SUM(amount_minor) amount FROM program_ledger WHERE user_id=? AND wallet=? GROUP BY state', [$user, $wallet]);
         $b = ['available' => 0, 'pending' => 0, 'reserved' => 0];
         foreach ($rows as $r) {
@@ -815,6 +836,7 @@ final class ProgramService
 
     private function syncProfile(int $user): void
     {
+        new ShoppingBonusExpiry($this->db)->refresh($user, $this->now());
         $amount = (int)$this->db->fetchOne("SELECT COALESCE(SUM(amount_minor),0) FROM program_ledger WHERE user_id=? AND wallet='shopping' AND state IN ('available','reserved')", [$user]);
         $this->db->update('user_profiles', ['bonus_balance' => intdiv(max(0, $amount), 100)], ['user_id' => $user]);
     }

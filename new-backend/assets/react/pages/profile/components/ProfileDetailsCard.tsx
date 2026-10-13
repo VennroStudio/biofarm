@@ -1,3 +1,4 @@
+import { ConsentFields, formConsents, type FormConsents } from '../../../shared/ConsentFields';
 import { Check, Edit, Mail, Phone, User } from 'lucide-react';
 import type { SiteUser } from '../../../site/api';
 import { formatDate } from '../../../site/format';
@@ -8,7 +9,7 @@ type Props = {
   editName: string;
   editPhone: string;
   isEditing: boolean;
-  onSave: () => void;
+  onSave: (consents: FormConsents) => void;
   onStartEdit: () => void;
   setEditCardNumber: (value: string) => void;
   setEditName: (value: string) => void;
@@ -17,25 +18,23 @@ type Props = {
 };
 
 export function ProfileDetailsCard({
-  editCardNumber,
   editName,
   editPhone,
   isEditing,
   onSave,
   onStartEdit,
-  setEditCardNumber,
   setEditName,
   setEditPhone,
   user,
 }: Props) {
   return (
-    <Card>
+    <form onSubmit={(event) => { event.preventDefault(); onSave(formConsents(event.currentTarget)); }}><Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
           <CardTitle>Личные данные</CardTitle>
           <CardDescription>Управление профилем</CardDescription>
         </div>
-        <Button size="sm" variant="outline" onClick={() => (isEditing ? onSave() : onStartEdit())}>
+        <Button size="sm" variant="outline" type={isEditing ? 'submit' : 'button'} onClick={isEditing ? undefined : onStartEdit}>
           {isEditing ? <Check className="h-4 w-4" /> : <Edit className="h-4 w-4" />}
           {isEditing ? 'Сохранить' : 'Редактировать'}
         </Button>
@@ -79,18 +78,10 @@ export function ProfileDetailsCard({
             <div className="rounded-md bg-muted/50 p-2">{formatDate(user.createdAt)}</div>
           </div>
 
-          {user.isPartner && (
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor={isEditing ? 'profile-card-number' : undefined}>Карта для выплат</Label>
-              {isEditing ? (
-                <Input id="profile-card-number" value={editCardNumber} onChange={(event) => setEditCardNumber(event.target.value)} />
-              ) : (
-                <div className="rounded-md bg-muted/50 p-2">{user.cardNumber || 'Не указана'}</div>
-              )}
-            </div>
-          )}
+
         </div>
+        {isEditing && <ConsentFields />}
       </CardContent>
-    </Card>
+    </Card></form>
   );
 }

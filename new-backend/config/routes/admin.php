@@ -70,6 +70,7 @@ return static function (App $app): void {
             $protected = $group->group('', new Group(static function (RouteCollectorProxy $group): void {
                 $group->get('/auth/me', AdminMeAction::class);
                 $group->get('/dashboard', GetDashboardAction::class);
+                $group->get('/products', \App\Http\Action\v1\Product\GetProductsAction::class)->setArgument('adminProducts', '1');
 
                 $group->get('/settings', GetSettingsAction::class);
                 $group->patch('/settings', UpdateSettingsAction::class);

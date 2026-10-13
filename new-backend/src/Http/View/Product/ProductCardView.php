@@ -25,5 +25,6 @@ final readonly class ProductCardView
         public int $ratingCount = 0,
         public ?string $imageAlt = null,
         public ?string $categorySlug = null,
+        public string $legalStatus = 'unknown',
     ) {}
 }

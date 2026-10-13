@@ -84,6 +84,10 @@ final readonly class CreateProductHandler
             availability: $command->availability,
         );
 
+        if ($command->legalStatus !== null) {
+            $product->setRegulatoryInformation($command->legalStatus, $command->officialPurpose, $command->regulatoryEvidence);
+        }
+
         $this->connection->beginTransaction();
         try {
             $this->productRepository->add($product);

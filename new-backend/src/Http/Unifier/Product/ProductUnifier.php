@@ -33,6 +33,8 @@ final readonly class ProductUnifier implements UnifierInterface
     public function map(object $item): array
     {
         /** @var ProductModelInterface $item */
-        return $item->toArray();
+        $data = $item->toArray();
+        unset($data['regulatory_evidence']);
+        return $data;
     }
 }

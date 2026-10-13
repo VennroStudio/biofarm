@@ -102,6 +102,15 @@ class Product
     #[ORM\Column(name: 'active_components_text', type: Types::TEXT, nullable: true)]
     private(set) ?string $activeComponentsText;
 
+    #[ORM\Column(name: 'legal_status', type: Types::STRING, length: 20, options: ['default' => 'unknown'])]
+    private(set) string $legalStatus = 'unknown';
+
+    #[ORM\Column(name: 'official_purpose', type: Types::TEXT, nullable: true)]
+    private(set) ?string $officialPurpose = null;
+
+    #[ORM\Column(name: 'regulatory_evidence', type: Types::TEXT, nullable: true)]
+    private(set) ?string $regulatoryEvidence = null;
+
     /** @var list<string>|null */
     #[ORM\Column(type: Types::JSON, nullable: true)]
     private(set) ?array $features;
@@ -277,6 +286,16 @@ class Product
      * @param list<string>|null $features
      * @throws DateMalformedStringException
      */
+    public function setRegulatoryInformation(string $status, ?string $purpose, ?string $evidence): void
+    {
+        if (!\in_array($status, ['unknown', 'bad', 'food', 'other'], true)) {
+            throw new DomainExceptionModule('product', 'Некорректный правовой статус товара.', 42, status: 422);
+        }
+        $this->legalStatus = $status;
+        $this->officialPurpose = $purpose;
+        $this->regulatoryEvidence = $evidence;
+    }
+
     public function edit(
         string $slug,
         string $name,

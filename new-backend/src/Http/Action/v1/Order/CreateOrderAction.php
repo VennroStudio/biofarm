@@ -52,6 +52,8 @@ final readonly class CreateOrderAction implements RequestHandlerInterface
     {
         $identity = RequestIdentity::find($request);
         $payload = (array)$request->getParsedBody();
+        $consents = new \App\Components\Privacy\ConsentRecorder($this->connection);
+        $consents->assertForm($payload, true);
         $requestKey = $request->getHeaderLine('Idempotency-Key');
         if ($requestKey !== '' && !preg_match('/^[a-zA-Z0-9_-]{32,100}$/D', $requestKey)) {
             throw new DomainExceptionModule('order', 'Некорректный ключ оформления заказа.', 40, status: 422);
@@ -111,7 +113,7 @@ final readonly class CreateOrderAction implements RequestHandlerInterface
         $command = $this->denormalizer->denormalize($payload, CreateOrderCommand::class);
         $this->validator->validate($command);
         $created = false;
-        $result = $this->program->atomic(function () use ($command, $offerId, $requestKey, $requestId, $requestHash, &$created): array {
+        $result = $this->program->atomic(function () use ($command, $offerId, $requestKey, $requestId, $requestHash, $consents, $request, $payload, &$created): array {
             if ($requestKey !== '') {
                 $saved = $this->connection->fetchAssociative('SELECT * FROM checkout_requests WHERE id=?', [$requestId]);
                 if ($saved) {
@@ -124,12 +126,13 @@ final readonly class CreateOrderAction implements RequestHandlerInterface
                 }
             }
             $result = $this->handler->handle($command, false);
+            $consents->recordForm($request, $payload, 'order', $result['id']);
             $token = $requestKey !== '' ? hash('sha256', 'payment:' . $result['id'] . ':' . $requestKey) : null;
             $result['paymentAccessToken'] = $this->payments->issueAccess($result['id'], $token);
             if ($offerId !== '') {
                 $this->offers->recordOrder($offerId, $result['id']);
             }
-            if ($this->payments->completeCheckoutForTesting($result['id'])) {
+            if ($this->payments->completeCheckoutWithoutCash($result['id']) || $this->payments->completeCheckoutForTesting($result['id'])) {
                 $result['payment_status'] = 'completed';
             }
             if ($requestKey !== '') {

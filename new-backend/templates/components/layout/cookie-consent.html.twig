@@ -1,0 +1,15 @@
+<dialog data-cookie-dialog aria-labelledby="cookie-title" class="m-auto w-[calc(100%-2rem)] max-w-xl rounded-2xl border border-border bg-background p-6 text-foreground shadow-xl backdrop:bg-foreground/40">
+    <h2 id="cookie-title" class="text-2xl text-primary">Настройки cookies</h2>
+    <p class="mt-4 text-sm leading-relaxed">Необходимые cookies обеспечивают работу кабинета и оформления заказа. Аналитика и виджет связи включаются только по вашему выбору. <a class="text-primary underline" href="/cookie-policy" target="_blank" rel="noreferrer">Политика Cookie</a></p>
+    <div class="my-5 space-y-4 text-sm">
+        <p>Необходимые — всегда включены</p>
+        <label class="flex gap-3"><input class="h-4 w-4 accent-primary" name="analytics" type="checkbox">Аналитические — статистика посещений</label>
+        <label class="flex gap-3"><input class="h-4 w-4 accent-primary" name="marketing" type="checkbox">Внешние виджеты — чат и формы Bitrix24</label>
+    </div>
+    <p data-cookie-error role="alert" class="mb-3 text-sm text-destructive"></p>
+    <div class="flex flex-wrap gap-3">
+        <button type="button" data-cookie-choice="necessary" class="rounded-xl border border-border px-4 py-3 text-sm">Только необходимые</button>
+        <button type="button" data-cookie-choice="selected" class="rounded-xl border border-border px-4 py-3 text-sm">Сохранить выбор</button>
+        <button type="button" data-cookie-choice="all" class="rounded-xl bg-primary px-4 py-3 text-sm text-primary-foreground">Разрешить все</button>
+    </div>
+</dialog>

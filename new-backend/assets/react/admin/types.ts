@@ -38,6 +38,9 @@ export type Product = {
   shelf_life: string | null;
   storage_conditions: string | null;
   bad_disclaimer: string | null;
+  legal_status: string;
+  official_purpose: string | null;
+  regulatory_evidence: string | null;
   active_components_text: string | null;
   attribute_value_ids: number[] | null;
   product_group_id: number | null;

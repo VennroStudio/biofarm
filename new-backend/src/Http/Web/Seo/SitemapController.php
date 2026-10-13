@@ -71,6 +71,7 @@ final readonly class SitemapController implements RequestHandlerInterface
     {
         return $this->uniqueItems([
             ...$this->pageItems(),
+            ...array_map(static fn (string $slug): array => ['loc' => '/' . $slug, 'lastmod' => '2026-10-04', 'priority' => '0.3'], array_keys(\App\Http\Web\Legal\LegalPageController::PAGES)),
             ...$this->categoryItems(),
             ...$this->componentItems(),
             ...$this->purposeItems(),

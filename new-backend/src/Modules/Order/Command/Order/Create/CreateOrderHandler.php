@@ -474,7 +474,7 @@ final readonly class CreateOrderHandler
             return 0;
         }
 
-        $limit = (int)floor($baseTotal * max(0, min(100, $this->settings->int('order_bonus_spend_limit_percent', 30))) / 100);
+        $limit = (int)floor($baseTotal * max(0, min(100, $this->settings->int('order_bonus_spend_limit_percent', 100))) / 100);
 
         return min(intdiv($this->program->shoppingAvailable($profile->userId), 100), $baseTotal, $limit);
     }

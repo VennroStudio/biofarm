@@ -11,6 +11,7 @@ export type Rates = {
     memberDirectBps: number;
     referralBonusBps: number;
     buyerBps: number;
+    bonusLifetimeMonths: number;
     holdDays: number;
     minimumWithdrawalMinor: number;
 };
@@ -31,6 +32,7 @@ export type Dashboard = {
         { availableMinor: number; pendingMinor: number; reservedMinor: number; debtMinor: number }
     >;
     rates: Rates;
+    bonusExpiry: { nextExpiryAt: string | null; nextExpiryMinor: number };
 };
 export const money = (value: unknown) =>
     new Intl.NumberFormat("ru-RU", { style: "currency", currency: "RUB", minimumFractionDigits: 2 }).format(
@@ -47,6 +49,7 @@ export const label = (value: unknown) =>
         refund_pending: "Возврат ожидается",
         completed: "Оплачено",
         refunded: "Возвращено",
+        expiration: "Срок действия истёк",
         order_spending: "Оплата бонусами",
         refund_restore: "Возврат бонусов",
         payout: "Выплата",
