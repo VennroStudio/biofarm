@@ -29,6 +29,20 @@ make frontend-dev
 make frontend-build
 ```
 
+## Application Data Cache
+
+Set `REDIS=false` in the backend `.env` to disable application data caching. Reads
+go directly to MySQL; Redis connection settings and the PHP Redis extension are
+not required. This is suitable for hosting without Redis.
+
+Set `REDIS=true` to enable the existing Redis cache. Install the PHP `redis`
+extension and configure `REDIS_HOST`, `REDIS_PORT`, and optional `REDIS_USER` and
+`REDIS_PASSWORD`. Connection failures are reported rather than silently disabling
+caching. If `REDIS` is absent, it defaults to `true` for existing installations.
+
+This switch does not disable PHP OPcache, browser caching, or Doctrine metadata
+caching. Orders, balances and authentication tokens remain stored in MySQL.
+
 ## Frontend Rendering
 
 The public site is rendered by backend web controllers:
@@ -73,4 +87,3 @@ The frontend-only check is:
 ```bash
 make frontend-check
 ```
-
