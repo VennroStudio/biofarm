@@ -1221,6 +1221,9 @@ final readonly class ProductCatalogDataProvider
             return [];
         }
 
+        // All cards in a packaging group share units; use natural quantity order.
+        usort($rows, static fn (array $a, array $b): int => strnatcasecmp(trim($a['weight']), trim($b['weight'])) ?: ((int)$a['id'] <=> (int)$b['id']));
+
         return array_map(function (array $row) use ($productId): ProductVariantView {
             $weight = trim((string)$row['weight']);
 

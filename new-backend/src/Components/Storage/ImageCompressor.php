@@ -17,6 +17,10 @@ final readonly class ImageCompressor
 
     public function compress(string $sourcePath, string $sourceMime): CompressedImage
     {
+        if (!\function_exists('imageavif')) {
+            throw new RuntimeException('AVIF encoding is unavailable in this PHP build.');
+        }
+
         $image = $this->load($sourcePath, $sourceMime);
         $image = $this->resizeIfNeeded($image);
         $tmpPath = tempnam(sys_get_temp_dir(), 'img_') . '.avif';

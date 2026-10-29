@@ -1,0 +1,1869 @@
+{
+  "version": "2026-10-28-packaging-v1",
+  "source": {
+    "file": "ПРАЙС ФИНАЛ.xlsx",
+    "sha256": "330cb7365dc20d91001a4643ef04808721788dce3b498994360685f804b31f86",
+    "sheet": "Лист1",
+    "price_column": "H"
+  },
+  "skip_product_ids": [
+    11,
+    12
+  ],
+  "skip_source_rows": [
+    90,
+    91
+  ],
+  "families": [
+    {
+      "key": "Antiparasitic",
+      "base_id": 17,
+      "expected_name": "Антипаразитарный",
+      "expected_slug": "antiparazitarnyy",
+      "old_quantity": 60,
+      "unit": "капсул",
+      "name": "Антипаразитарный",
+      "variants": [
+        {
+          "quantity": 30,
+          "weight": "30 капсул",
+          "slug": "antiparazitarnyy-30-kapsul",
+          "existing_id": null,
+          "price": 1050,
+          "source_row": 3,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_Antiparasitic_30.jpg",
+            "sha256": "3e581e837ef0017015854c78e929e709e7574ee49a9ae03b240bcdbfbabf36b2",
+            "width": 1200,
+            "height": 2000,
+            "size": 239047
+          },
+          "source_name": "Антипаразитарный 30",
+          "source_volume": 30
+        },
+        {
+          "quantity": 60,
+          "weight": "60 капсул",
+          "slug": "antiparazitarnyy",
+          "existing_id": 17,
+          "price": 1250,
+          "source_row": 4,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_Antiparasitic_60.jpg",
+            "sha256": "36b1cd507f941dfd42535c0d133f570b80c961ff7a183b1e895b05f9f3c1b7cc",
+            "width": 1200,
+            "height": 2320,
+            "size": 254545
+          },
+          "source_name": "Антипаразитарный 60",
+          "source_volume": 60
+        },
+        {
+          "quantity": 90,
+          "weight": "90 капсул",
+          "slug": "antiparazitarnyy-90-kapsul",
+          "existing_id": null,
+          "price": 1450,
+          "source_row": 5,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_Antiparasitic_90.jpg",
+            "sha256": "a68778cd4c2d7080a4e7ad59961d81e1640f16661149e7d426c0a6795f1e062d",
+            "width": 1200,
+            "height": 2320,
+            "size": 260843
+          },
+          "source_name": "Антипаразитарный 90",
+          "source_volume": 90
+        },
+        {
+          "quantity": 120,
+          "weight": "120 капсул",
+          "slug": "antiparazitarnyy-120-kapsul",
+          "existing_id": null,
+          "price": 1650,
+          "source_row": 6,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_Antiparasitic_120.jpg",
+            "sha256": "162864cc60e58f00de6724388c339a544e5535ff70f49c1d2072df2ae3442b3d",
+            "width": 1200,
+            "height": 2400,
+            "size": 268664
+          },
+          "source_name": "Антипаразитарный 120",
+          "source_volume": 120
+        }
+      ]
+    },
+    {
+      "key": "BronchoLight",
+      "base_id": 21,
+      "expected_name": "Бронхолегочные",
+      "expected_slug": "bronholegochnye",
+      "old_quantity": 60,
+      "unit": "капсул",
+      "name": "Бронхолегочные",
+      "variants": [
+        {
+          "quantity": 30,
+          "weight": "30 капсул",
+          "slug": "bronholegochnye-30-kapsul",
+          "existing_id": null,
+          "price": 1050,
+          "source_row": 7,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_BronchoLight_30.jpg",
+            "sha256": "f29d7755678609b9e8e690fd8e289c171532c922e1ac613c3b8abfc3995795f7",
+            "width": 1200,
+            "height": 2000,
+            "size": 221071
+          },
+          "source_name": "Бронхолегочный 30",
+          "source_volume": 30
+        },
+        {
+          "quantity": 60,
+          "weight": "60 капсул",
+          "slug": "bronholegochnye",
+          "existing_id": 21,
+          "price": 1250,
+          "source_row": 8,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_BronchoLight_60.jpg",
+            "sha256": "82c1e7dbff6f1de4bbf47a78ecc74eb3c9385cef01e9a979851a726e328203e8",
+            "width": 1200,
+            "height": 2320,
+            "size": 233501
+          },
+          "source_name": "Бронхолегочный 60",
+          "source_volume": 60
+        },
+        {
+          "quantity": 90,
+          "weight": "90 капсул",
+          "slug": "bronholegochnye-90-kapsul",
+          "existing_id": null,
+          "price": 1450,
+          "source_row": 9,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_BronchoLight_90.jpg",
+            "sha256": "62416106e0085a468c9f944893c4805f33bceb509a9f6027c80cd16a802bdc3c",
+            "width": 1200,
+            "height": 2320,
+            "size": 240125
+          },
+          "source_name": "Бронхолегочный 90",
+          "source_volume": 90
+        },
+        {
+          "quantity": 120,
+          "weight": "120 капсул",
+          "slug": "bronholegochnye-120-kapsul",
+          "existing_id": null,
+          "price": 1650,
+          "source_row": 10,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_BronchoLight_120.jpg",
+            "sha256": "3f192f3b64746533569c5b9a872c68bd2fcb8e86af7b5c506617cbedfaf5cb1c",
+            "width": 1200,
+            "height": 2400,
+            "size": 244643
+          },
+          "source_name": "Бронхолегочный 120",
+          "source_volume": 120
+        }
+      ]
+    },
+    {
+      "key": "Berberin+Chromium",
+      "base_id": 19,
+      "expected_name": "Берберин",
+      "expected_slug": "berberin",
+      "old_quantity": 60,
+      "unit": "капсул",
+      "name": "Берберин",
+      "variants": [
+        {
+          "quantity": 30,
+          "weight": "30 капсул",
+          "slug": "berberin-30-kapsul",
+          "existing_id": null,
+          "price": 1070,
+          "source_row": 11,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_Berberin+Chromium_30.jpg",
+            "sha256": "863801ee35068ddc5b587be0db4a8d0696abb9c4ae64dbf0c6964d4229965cc4",
+            "width": 1200,
+            "height": 2000,
+            "size": 233605
+          },
+          "source_name": "Берберин 30",
+          "source_volume": 30
+        },
+        {
+          "quantity": 60,
+          "weight": "60 капсул",
+          "slug": "berberin",
+          "existing_id": 19,
+          "price": 1370,
+          "source_row": 12,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_Berberin+Chromium_60.jpg",
+            "sha256": "286acb6455e4d3d65abf5400c8270a8c8579392bdd7662fdb6cfc09d36b83314",
+            "width": 1200,
+            "height": 2320,
+            "size": 248069
+          },
+          "source_name": "Берберин 60",
+          "source_volume": 60
+        },
+        {
+          "quantity": 90,
+          "weight": "90 капсул",
+          "slug": "berberin-90-kapsul",
+          "existing_id": null,
+          "price": 1670,
+          "source_row": 13,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_Berberin+Chromium_90.jpg",
+            "sha256": "998ae396d268aae326cf34787d1dbdf6d98b920300422ea59ab087c53a7513b7",
+            "width": 1200,
+            "height": 2320,
+            "size": 255663
+          },
+          "source_name": "Берберин 90",
+          "source_volume": 90
+        },
+        {
+          "quantity": 120,
+          "weight": "120 капсул",
+          "slug": "berberin-120-kapsul",
+          "existing_id": null,
+          "price": 1970,
+          "source_row": 14,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_Berberin+Chromium_120.jpg",
+            "sha256": "54e6672f40a3f161d218faa80ae53b39ae67ca39734d5f43d6f82aff99a60f0e",
+            "width": 1200,
+            "height": 2400,
+            "size": 261710
+          },
+          "source_name": "Берберин 120",
+          "source_volume": 120
+        }
+      ]
+    },
+    {
+      "key": "OrthiliaSecunda",
+      "base_id": 20,
+      "expected_name": "Боровая матка",
+      "expected_slug": "borovaya-matka",
+      "old_quantity": 60,
+      "unit": "капсул",
+      "name": "Боровая матка",
+      "variants": [
+        {
+          "quantity": 30,
+          "weight": "30 капсул",
+          "slug": "borovaya-matka-30-kapsul",
+          "existing_id": null,
+          "price": 1040,
+          "source_row": 15,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_OrthiliaSecunda_30.jpg",
+            "sha256": "6b522ea67b30135a67de05bdd2237aab3ebb854c4c47bb0c383605b4d24dfc94",
+            "width": 1200,
+            "height": 2000,
+            "size": 233666
+          },
+          "source_name": "Боровая матка 30",
+          "source_volume": 30
+        },
+        {
+          "quantity": 60,
+          "weight": "60 капсул",
+          "slug": "borovaya-matka",
+          "existing_id": 20,
+          "price": 1310,
+          "source_row": 16,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_OrthiliaSecunda_60.jpg",
+            "sha256": "8a40e9fb87b6815a11081950783f0313e71c9c43a5755fa328a5fecaaa051a14",
+            "width": 1200,
+            "height": 2320,
+            "size": 250470
+          },
+          "source_name": "Боровая матка 60",
+          "source_volume": 60
+        },
+        {
+          "quantity": 90,
+          "weight": "90 капсул",
+          "slug": "borovaya-matka-90-kapsul",
+          "existing_id": null,
+          "price": 1580,
+          "source_row": 17,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_OrthiliaSecunda_90.jpg",
+            "sha256": "b3ce69789b94cb91a38914aee711f602a881ffd229dde27d3244f7ab7041aec9",
+            "width": 1200,
+            "height": 2320,
+            "size": 254615
+          },
+          "source_name": "Боровая матка 90",
+          "source_volume": 90
+        },
+        {
+          "quantity": 120,
+          "weight": "120 капсул",
+          "slug": "borovaya-matka-120-kapsul",
+          "existing_id": null,
+          "price": 1850,
+          "source_row": 18,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_OrthiliaSecunda_120.jpg",
+            "sha256": "68e3ae796835c229bc22d0b5e9ed63ddd7d7da7a6d0f7d91464074f42cc179e0",
+            "width": 1200,
+            "height": 2400,
+            "size": 264049
+          },
+          "source_name": "Боровая матка 120",
+          "source_volume": 120
+        }
+      ]
+    },
+    {
+      "key": "Resveratrol",
+      "base_id": 28,
+      "expected_name": "Ресвератрол",
+      "expected_slug": "resveratrol",
+      "old_quantity": 60,
+      "unit": "капсул",
+      "name": "Ресвератрол",
+      "variants": [
+        {
+          "quantity": 30,
+          "weight": "30 капсул",
+          "slug": "resveratrol-30-kapsul",
+          "existing_id": null,
+          "price": 1220,
+          "source_row": 19,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_Resveratrol_30.jpg",
+            "sha256": "1c8801e8919dadf754dd5605514720ae808c8f49c773aff01aae672b12f07ac0",
+            "width": 1200,
+            "height": 2000,
+            "size": 232944
+          },
+          "source_name": "Ресвератрол 30",
+          "source_volume": 30
+        },
+        {
+          "quantity": 60,
+          "weight": "60 капсул",
+          "slug": "resveratrol",
+          "existing_id": 28,
+          "price": 1630,
+          "source_row": 20,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_Resveratrol_60.jpg",
+            "sha256": "a906878cfc840f7eb013cf8c2dadae7abacf031a49fa5023d289b3f931f0951a",
+            "width": 1200,
+            "height": 2320,
+            "size": 249223
+          },
+          "source_name": "Ресвератрол 60",
+          "source_volume": 60
+        },
+        {
+          "quantity": 90,
+          "weight": "90 капсул",
+          "slug": "resveratrol-90-kapsul",
+          "existing_id": null,
+          "price": 2020,
+          "source_row": 21,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_Resveratrol_90.jpg",
+            "sha256": "90696bb4c50f593ebb667573eda5b346557877fb279e449ef2d62c7529c87149",
+            "width": 1200,
+            "height": 2320,
+            "size": 251399
+          },
+          "source_name": "Ресвератрол 90",
+          "source_volume": 90
+        },
+        {
+          "quantity": 120,
+          "weight": "120 капсул",
+          "slug": "resveratrol-120-kapsul",
+          "existing_id": null,
+          "price": 2530,
+          "source_row": 22,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_Resveratrol_120.jpg",
+            "sha256": "e95983a3fdcb63931f90aa059d2bb711d6051c4d3254dae1e116683788499c25",
+            "width": 1200,
+            "height": 2400,
+            "size": 261994
+          },
+          "source_name": "Ресвератрол 120",
+          "source_volume": 120
+        }
+      ]
+    },
+    {
+      "key": "Antistress",
+      "base_id": 18,
+      "expected_name": "Антистресс",
+      "expected_slug": "antistress",
+      "old_quantity": 60,
+      "unit": "капсул",
+      "name": "Антистресс",
+      "variants": [
+        {
+          "quantity": 30,
+          "weight": "30 капсул",
+          "slug": "antistress-30-kapsul",
+          "existing_id": null,
+          "price": 1050,
+          "source_row": 23,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_Antistress_30.jpg",
+            "sha256": "2e29d1d0f38e4a995a854e905e8f1ae5d16ad4c003291c25273ba301746c86ab",
+            "width": 1200,
+            "height": 2000,
+            "size": 228487
+          },
+          "source_name": "Антистресс 30",
+          "source_volume": 30
+        },
+        {
+          "quantity": 60,
+          "weight": "60 капсул",
+          "slug": "antistress",
+          "existing_id": 18,
+          "price": 1250,
+          "source_row": 24,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_Antistress_60.jpg",
+            "sha256": "1d00ef9d37f6d6a5b537ce1a5ebddbee1f80435b0de8cc9ff142ecbfdad910e5",
+            "width": 1200,
+            "height": 2320,
+            "size": 244152
+          },
+          "source_name": "Антистресс 60",
+          "source_volume": 60
+        },
+        {
+          "quantity": 90,
+          "weight": "90 капсул",
+          "slug": "antistress-90-kapsul",
+          "existing_id": null,
+          "price": 1450,
+          "source_row": 25,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_Antistress_90.jpg",
+            "sha256": "e10866a7d655be646eba9576ef204254a6d9c274499bcfafc6c7efe43a107843",
+            "width": 1200,
+            "height": 2320,
+            "size": 251019
+          },
+          "source_name": "Антистресс 90",
+          "source_volume": 90
+        },
+        {
+          "quantity": 120,
+          "weight": "120 капсул",
+          "slug": "antistress-120-kapsul",
+          "existing_id": null,
+          "price": 1650,
+          "source_row": 26,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_Antistress_120.jpg",
+            "sha256": "7bb2607c1ffe77e0d85c7b9a349e3273ad55b9739f3a1c80763668a094848471",
+            "width": 1200,
+            "height": 2400,
+            "size": 256951
+          },
+          "source_name": "Антистресс 120",
+          "source_volume": 120
+        }
+      ]
+    },
+    {
+      "key": "WildYam",
+      "base_id": 22,
+      "expected_name": "Дикий ямс",
+      "expected_slug": "dikiy-yams",
+      "old_quantity": 60,
+      "unit": "капсул",
+      "name": "Дикий ямс",
+      "variants": [
+        {
+          "quantity": 30,
+          "weight": "30 капсул",
+          "slug": "dikiy-yams-30-kapsul",
+          "existing_id": null,
+          "price": 1050,
+          "source_row": 27,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_WildYam_30.jpg",
+            "sha256": "8fd730c79a7796ab2bd664625cb1d636d055eb3acb849c800ecd27166f0699c7",
+            "width": 1200,
+            "height": 2000,
+            "size": 226729
+          },
+          "source_name": "Дикий Ямс 30",
+          "source_volume": 30
+        },
+        {
+          "quantity": 60,
+          "weight": "60 капсул",
+          "slug": "dikiy-yams",
+          "existing_id": 22,
+          "price": 1250,
+          "source_row": 28,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_WildYam_60.jpg",
+            "sha256": "8dde00275bec5e86c1f565e2c9c9c6c0c724c1e28da6be5c62fc6d132ac3ada8",
+            "width": 1200,
+            "height": 2320,
+            "size": 247204
+          },
+          "source_name": "Дикий Ямс 60",
+          "source_volume": 60
+        },
+        {
+          "quantity": 90,
+          "weight": "90 капсул",
+          "slug": "dikiy-yams-90-kapsul",
+          "existing_id": null,
+          "price": 1450,
+          "source_row": 29,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_WildYam_90.jpg",
+            "sha256": "7de7a3a216deaa34d07c1ecd27fa3c2f9973205f40c69440397a7934ed33b6ca",
+            "width": 1200,
+            "height": 2320,
+            "size": 249924
+          },
+          "source_name": "Дикий Ямс 90",
+          "source_volume": 90
+        },
+        {
+          "quantity": 120,
+          "weight": "120 капсул",
+          "slug": "dikiy-yams-120-kapsul",
+          "existing_id": null,
+          "price": 1650,
+          "source_row": 30,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_WildYam_120.jpg",
+            "sha256": "ead1448f5236730308124b02f2029280a3714ad3cda10412c1260faf220da165",
+            "width": 1200,
+            "height": 2400,
+            "size": 261780
+          },
+          "source_name": "Дикий Ямс 120",
+          "source_volume": 120
+        }
+      ]
+    },
+    {
+      "key": "ExtractChaga",
+      "base_id": 32,
+      "expected_name": "Чага березовая с клеточным соком сибирской пихты",
+      "expected_slug": "chaga-berezovaya-s-kletochnym-sokom-sibirskoy-pihty",
+      "old_quantity": 60,
+      "unit": "капсул",
+      "name": "Чага березовая с клеточным соком сибирской пихты",
+      "variants": [
+        {
+          "quantity": 30,
+          "weight": "30 капсул",
+          "slug": "chaga-berezovaya-s-kletochnym-sokom-sibirskoy-pihty-30-kapsul",
+          "existing_id": null,
+          "price": 1050,
+          "source_row": 31,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_ExtractChaga_30.jpg",
+            "sha256": "33cae1990b5cc9eabca08c0476f9832c079ba814ce0fddf30e084e85d55e82fa",
+            "width": 1200,
+            "height": 2000,
+            "size": 232549
+          },
+          "source_name": "Чага с клеточным соком пихты 30",
+          "source_volume": 30
+        },
+        {
+          "quantity": 60,
+          "weight": "60 капсул",
+          "slug": "chaga-berezovaya-s-kletochnym-sokom-sibirskoy-pihty",
+          "existing_id": 32,
+          "price": 1250,
+          "source_row": 32,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_ExtractChaga_60.jpg",
+            "sha256": "895a451110407e1f05386b8774f5b41703f7702fdf14dc11a39c8478724876d0",
+            "width": 1200,
+            "height": 2320,
+            "size": 250207
+          },
+          "source_name": "Чага с клеточным соком пихты 60",
+          "source_volume": 60
+        },
+        {
+          "quantity": 90,
+          "weight": "90 капсул",
+          "slug": "chaga-berezovaya-s-kletochnym-sokom-sibirskoy-pihty-90-kapsul",
+          "existing_id": null,
+          "price": 1450,
+          "source_row": 33,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_ExtractChaga_90.jpg",
+            "sha256": "10b0f8490c03b203ace2408880448aa76892737c1c0f70ea65f4c8933ac65d65",
+            "width": 1200,
+            "height": 2320,
+            "size": 254341
+          },
+          "source_name": "Чага 90",
+          "source_volume": 90
+        },
+        {
+          "quantity": 120,
+          "weight": "120 капсул",
+          "slug": "chaga-berezovaya-s-kletochnym-sokom-sibirskoy-pihty-120-kapsul",
+          "existing_id": null,
+          "price": 1650,
+          "source_row": 34,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_ExtractChaga_120.jpg",
+            "sha256": "3857fae203df3cf15532b5a15f39e91ec0b8a8b1a455979a135a04a8c19c7047",
+            "width": 1200,
+            "height": 2400,
+            "size": 262242
+          },
+          "source_name": "Чага 120",
+          "source_volume": 120
+        }
+      ]
+    },
+    {
+      "key": "PowerMan",
+      "base_id": 31,
+      "expected_name": "Сила мужчины",
+      "expected_slug": "sila-muzhchiny",
+      "old_quantity": 60,
+      "unit": "капсул",
+      "name": "Сила мужчины",
+      "variants": [
+        {
+          "quantity": 30,
+          "weight": "30 капсул",
+          "slug": "sila-muzhchiny-30-kapsul",
+          "existing_id": null,
+          "price": 900,
+          "source_row": 35,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_PowerMan_30.jpg",
+            "sha256": "f67b8f35bf88182a443891dedfb08762c381f1171ff5c71d7fd12e5c4c5481b3",
+            "width": 1200,
+            "height": 2000,
+            "size": 237736
+          },
+          "source_name": "Сила мужчины 30",
+          "source_volume": 30
+        },
+        {
+          "quantity": 60,
+          "weight": "60 капсул",
+          "slug": "sila-muzhchiny",
+          "existing_id": 31,
+          "price": 1250,
+          "source_row": 36,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_PowerMan_60.jpg",
+            "sha256": "bb16025550af3b44c69c8f0dbed8f613f28894ad6d289df617864616103b1b09",
+            "width": 1200,
+            "height": 2320,
+            "size": 255162
+          },
+          "source_name": "Сила мужчины 60",
+          "source_volume": 60
+        },
+        {
+          "quantity": 90,
+          "weight": "90 капсул",
+          "slug": "sila-muzhchiny-90-kapsul",
+          "existing_id": null,
+          "price": 1600,
+          "source_row": 37,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_PowerMan_90.jpg",
+            "sha256": "c33d34d91818e9560057cc57f3f929c92c3e076df52bba0d8221660cde56afcd",
+            "width": 1200,
+            "height": 2320,
+            "size": 259785
+          },
+          "source_name": "Сила мужчины 90",
+          "source_volume": 90
+        },
+        {
+          "quantity": 120,
+          "weight": "120 капсул",
+          "slug": "sila-muzhchiny-120-kapsul",
+          "existing_id": null,
+          "price": 1950,
+          "source_row": 38,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_PowerMan_120.jpg",
+            "sha256": "612e98f592a79b77a09173d3454dc176cf405d040a43db3d50f4559c292773d3",
+            "width": 1200,
+            "height": 2400,
+            "size": 267520
+          },
+          "source_name": "Сила мужчины 120",
+          "source_volume": 120
+        }
+      ]
+    },
+    {
+      "key": "CardioBit",
+      "base_id": 30,
+      "expected_name": "Сердце и сосуды",
+      "expected_slug": "serdtse-i-sosudy",
+      "old_quantity": 60,
+      "unit": "капсул",
+      "name": "Сердце и сосуды",
+      "variants": [
+        {
+          "quantity": 30,
+          "weight": "30 капсул",
+          "slug": "serdtse-i-sosudy-30-kapsul",
+          "existing_id": null,
+          "price": 1050,
+          "source_row": 39,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_CardioBit_30.jpg",
+            "sha256": "aaf89fe5edc3faf9b91507adb3cfc3779f85524ec49131f05b3c187f55a183ac",
+            "width": 1200,
+            "height": 2000,
+            "size": 234988
+          },
+          "source_name": "Сердце сосуды 30",
+          "source_volume": 30
+        },
+        {
+          "quantity": 60,
+          "weight": "60 капсул",
+          "slug": "serdtse-i-sosudy",
+          "existing_id": 30,
+          "price": 1250,
+          "source_row": 40,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_CardioBit_60.jpg",
+            "sha256": "09db77d53a188d941fb415642782459f454faf4b2a3040ea8ef24856f0af70f1",
+            "width": 1200,
+            "height": 2320,
+            "size": 248823
+          },
+          "source_name": "Сердце сосуды 60",
+          "source_volume": 60
+        },
+        {
+          "quantity": 90,
+          "weight": "90 капсул",
+          "slug": "serdtse-i-sosudy-90-kapsul",
+          "existing_id": null,
+          "price": 1450,
+          "source_row": 41,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_CardioBit_90.jpg",
+            "sha256": "81440447f91809fa25a7b2dd7b8d4677ab9f084d858b8afd77f436234543d637",
+            "width": 1200,
+            "height": 2320,
+            "size": 255184
+          },
+          "source_name": "Сердце сосуды 90",
+          "source_volume": 90
+        },
+        {
+          "quantity": 120,
+          "weight": "120 капсул",
+          "slug": "serdtse-i-sosudy-120-kapsul",
+          "existing_id": null,
+          "price": 1650,
+          "source_row": 42,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_CardioBit_120.jpg",
+            "sha256": "af43b9350f460e3229c0aae125d3026c856e6a872b2b3b08dceedb2e8b2136e0",
+            "width": 1200,
+            "height": 2400,
+            "size": 261753
+          },
+          "source_name": "Сердце сосуды 120",
+          "source_volume": 120
+        }
+      ]
+    },
+    {
+      "key": "RhodiolaRosea",
+      "base_id": 29,
+      "expected_name": "Родиола розовая",
+      "expected_slug": "rodiola-rozovaya",
+      "old_quantity": 60,
+      "unit": "капсул",
+      "name": "Родиола розовая",
+      "variants": [
+        {
+          "quantity": 30,
+          "weight": "30 капсул",
+          "slug": "rodiola-rozovaya-30-kapsul",
+          "existing_id": null,
+          "price": 1170,
+          "source_row": 43,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_RhodiolaRosea_30.jpg",
+            "sha256": "f82f2f451c039eb5cdb7df9501126f7c02be989e056c8432ee2e79fe2419dd05",
+            "width": 1200,
+            "height": 2000,
+            "size": 234499
+          },
+          "source_name": "Родиола розовая 30",
+          "source_volume": 30
+        },
+        {
+          "quantity": 60,
+          "weight": "60 капсул",
+          "slug": "rodiola-rozovaya",
+          "existing_id": 29,
+          "price": 1480,
+          "source_row": 44,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_RhodiolaRosea_60.jpg",
+            "sha256": "a64f2b0a5d22def9650b02c1a7bfbf973cf4e4cd7e88728ac79822fc4157e110",
+            "width": 1200,
+            "height": 2320,
+            "size": 255278
+          },
+          "source_name": "Родиола розовая 60",
+          "source_volume": 60
+        },
+        {
+          "quantity": 90,
+          "weight": "90 капсул",
+          "slug": "rodiola-rozovaya-90-kapsul",
+          "existing_id": null,
+          "price": 1790,
+          "source_row": 45,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_RhodiolaRosea_90.jpg",
+            "sha256": "91f9c8cf64b595e9d46fb6713a2878f0a60b495364015a74620daaa860d945bf",
+            "width": 1200,
+            "height": 2320,
+            "size": 258078
+          },
+          "source_name": "Родиола розовая 90",
+          "source_volume": 90
+        },
+        {
+          "quantity": 120,
+          "weight": "120 капсул",
+          "slug": "rodiola-rozovaya-120-kapsul",
+          "existing_id": null,
+          "price": 2100,
+          "source_row": 46,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_RhodiolaRosea_120.jpg",
+            "sha256": "e29b22f81fcea5705854dfdd91b5951c5f761d176fb344d5dc59cc933e537d83",
+            "width": 1200,
+            "height": 2400,
+            "size": 268073
+          },
+          "source_name": "Родиола розовая 120",
+          "source_volume": 120
+        }
+      ]
+    },
+    {
+      "key": "Pancreas",
+      "base_id": 27,
+      "expected_name": "Поджелудочные",
+      "expected_slug": "podzheludochnye",
+      "old_quantity": 60,
+      "unit": "капсул",
+      "name": "Поджелудочные",
+      "variants": [
+        {
+          "quantity": 30,
+          "weight": "30 капсул",
+          "slug": "podzheludochnye-30-kapsul",
+          "existing_id": null,
+          "price": 1050,
+          "source_row": 47,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_Pancreas_30.jpg",
+            "sha256": "c205c184ebc189eda72645e2e5d7bbcda569bb75393e223d2f05fb8afedef59a",
+            "width": 1200,
+            "height": 2000,
+            "size": 222026
+          },
+          "source_name": "Поджелудочные 30",
+          "source_volume": 30
+        },
+        {
+          "quantity": 60,
+          "weight": "60 капсул",
+          "slug": "podzheludochnye",
+          "existing_id": 27,
+          "price": 1250,
+          "source_row": 48,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_Pancreas_60.jpg",
+            "sha256": "ec5c1d0d0023c7827bdaac899b822a97a5820920378af15932f0941e60537428",
+            "width": 1200,
+            "height": 2320,
+            "size": 236266
+          },
+          "source_name": "Поджелудочные 60",
+          "source_volume": 60
+        },
+        {
+          "quantity": 90,
+          "weight": "90 капсул",
+          "slug": "podzheludochnye-90-kapsul",
+          "existing_id": null,
+          "price": 1450,
+          "source_row": 49,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_Pancreas_90.jpg",
+            "sha256": "0b42dc645f1b3a4f341ed827095a2abdd9714e964540e0f8593414ff0b270878",
+            "width": 1200,
+            "height": 2320,
+            "size": 240190
+          },
+          "source_name": "Поджелудочные 90",
+          "source_volume": 90
+        },
+        {
+          "quantity": 120,
+          "weight": "120 капсул",
+          "slug": "podzheludochnye-120-kapsul",
+          "existing_id": null,
+          "price": 1650,
+          "source_row": 50,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_Pancreas_120.jpg",
+            "sha256": "250fe15cc7af04e6af9259f294fcaefdbbd382c4a29006acdb3d63a3a624537c",
+            "width": 1200,
+            "height": 2400,
+            "size": 249131
+          },
+          "source_name": "Поджелудочные 120",
+          "source_volume": 120
+        }
+      ]
+    },
+    {
+      "key": "Pantohematogen",
+      "base_id": 26,
+      "expected_name": "Пантогематоген",
+      "expected_slug": "pantogematogen",
+      "old_quantity": 60,
+      "unit": "капсул",
+      "name": "Пантогематоген",
+      "variants": [
+        {
+          "quantity": 30,
+          "weight": "30 капсул",
+          "slug": "pantogematogen-30-kapsul",
+          "existing_id": null,
+          "price": 1040,
+          "source_row": 51,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_Pantohematogen_30.jpg",
+            "sha256": "8d8e370385a3eda7f24f0571fde2ba9fe6ff0f4dde2dee0f6a168f75096561ee",
+            "width": 1200,
+            "height": 2000,
+            "size": 227311
+          },
+          "source_name": "Пантогематоген 30",
+          "source_volume": 30
+        },
+        {
+          "quantity": 60,
+          "weight": "60 капсул",
+          "slug": "pantogematogen",
+          "existing_id": 26,
+          "price": 1350,
+          "source_row": 52,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_Pantohematogen_60.jpg",
+            "sha256": "964283b70539f1b8bcd620ca2d6ff726b5c0c3af5380a023509139fb7764ff15",
+            "width": 1200,
+            "height": 2320,
+            "size": 248241
+          },
+          "source_name": "Пантогематоген 60",
+          "source_volume": 60
+        },
+        {
+          "quantity": 90,
+          "weight": "90 капсул",
+          "slug": "pantogematogen-90-kapsul",
+          "existing_id": null,
+          "price": 1660,
+          "source_row": 53,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_Pantohematogen_90.jpg",
+            "sha256": "173f689f2c05924099bbe63d9a8038ee465105d7711607d0810e7b4a21ddc3b9",
+            "width": 1200,
+            "height": 2320,
+            "size": 252141
+          },
+          "source_name": "Пантогематоген 90",
+          "source_volume": 90
+        },
+        {
+          "quantity": 120,
+          "weight": "120 капсул",
+          "slug": "pantogematogen-120-kapsul",
+          "existing_id": null,
+          "price": 1970,
+          "source_row": 54,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_Pantohematogen_120.jpg",
+            "sha256": "63a6c3d527789d3d1c9a49550d14af9425245e1d353f051953ff6f19c3ef493d",
+            "width": 1200,
+            "height": 2400,
+            "size": 260402
+          },
+          "source_name": "Пантогематоген 120",
+          "source_volume": 120
+        }
+      ]
+    },
+    {
+      "key": "RhodiolaQuadrifida",
+      "base_id": 24,
+      "expected_name": "Красная щетка",
+      "expected_slug": "krasnaya-schetka",
+      "old_quantity": 60,
+      "unit": "капсул",
+      "name": "Красная щетка",
+      "variants": [
+        {
+          "quantity": 30,
+          "weight": "30 капсул",
+          "slug": "krasnaya-schetka-30-kapsul",
+          "existing_id": null,
+          "price": 1120,
+          "source_row": 55,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_RhodiolaQuadrifida_30.jpg",
+            "sha256": "4b02260be075c4c0486c083c088ec141dc5edbaa5277e99b07062c8a9726e062",
+            "width": 1200,
+            "height": 2000,
+            "size": 238444
+          },
+          "source_name": "Красная щетка 30",
+          "source_volume": 30
+        },
+        {
+          "quantity": 60,
+          "weight": "60 капсул",
+          "slug": "krasnaya-schetka",
+          "existing_id": 24,
+          "price": 1550,
+          "source_row": 56,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_RhodiolaQuadrifida_60.jpg",
+            "sha256": "5d4a2471332db8008eceefb28c197bc9e5ee09f9aaa5fea0f5f3f933ea68701a",
+            "width": 1200,
+            "height": 2320,
+            "size": 256005
+          },
+          "source_name": "Красная щетка 60",
+          "source_volume": 60
+        },
+        {
+          "quantity": 90,
+          "weight": "90 капсул",
+          "slug": "krasnaya-schetka-90-kapsul",
+          "existing_id": null,
+          "price": 1980,
+          "source_row": 57,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_RhodiolaQuadrifida_90.jpg",
+            "sha256": "695c8c81b620629bc824164db48043242e107284e6bbd0b178d89da02308e710",
+            "width": 1200,
+            "height": 2320,
+            "size": 259242
+          },
+          "source_name": "Красная щетка 90",
+          "source_volume": 90
+        },
+        {
+          "quantity": 120,
+          "weight": "120 капсул",
+          "slug": "krasnaya-schetka-120-kapsul",
+          "existing_id": null,
+          "price": 2400,
+          "source_row": 58,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_RhodiolaQuadrifida_120.jpg",
+            "sha256": "601cd2f3654a27e2f8ba3958dec3b5a474e06cc946fb878f7f32c2744c9b23ee",
+            "width": 1200,
+            "height": 2400,
+            "size": 269548
+          },
+          "source_name": "Красная щетка 120",
+          "source_volume": 120
+        }
+      ]
+    },
+    {
+      "key": "IslandicMoss",
+      "base_id": 25,
+      "expected_name": "Исландский мох",
+      "expected_slug": "islandskiy-moh",
+      "old_quantity": 60,
+      "unit": "капсул",
+      "name": "Исландский мох",
+      "variants": [
+        {
+          "quantity": 30,
+          "weight": "30 капсул",
+          "slug": "islandskiy-moh-30-kapsul",
+          "existing_id": null,
+          "price": 1000,
+          "source_row": 59,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_IslandicMoss_30.jpg",
+            "sha256": "a20714efea8e21658fb5ba7311e717ee50778a8368eb3e81d4ffc73c69ad0a59",
+            "width": 1200,
+            "height": 2000,
+            "size": 231206
+          },
+          "source_name": "Исланский мох 30",
+          "source_volume": 30
+        },
+        {
+          "quantity": 60,
+          "weight": "60 капсул",
+          "slug": "islandskiy-moh",
+          "existing_id": 25,
+          "price": 1250,
+          "source_row": 60,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_IslandicMoss_60.jpg",
+            "sha256": "377bd984813d191732dbbd66eaa2055d2c61cc9b13d2f3d97ab49c2039fbc717",
+            "width": 1200,
+            "height": 2320,
+            "size": 246679
+          },
+          "source_name": "Исланский мох 60",
+          "source_volume": 60
+        },
+        {
+          "quantity": 90,
+          "weight": "90 капсул",
+          "slug": "islandskiy-moh-90-kapsul",
+          "existing_id": null,
+          "price": 1500,
+          "source_row": 61,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_IslandicMoss_90.jpg",
+            "sha256": "88daed6521ab25e96c569cd3289d08b70e03cb1d100da20e188435aa3060eb07",
+            "width": 1200,
+            "height": 2320,
+            "size": 252417
+          },
+          "source_name": "Исландский мох 90",
+          "source_volume": 90
+        },
+        {
+          "quantity": 120,
+          "weight": "120 капсул",
+          "slug": "islandskiy-moh-120-kapsul",
+          "existing_id": null,
+          "price": 1750,
+          "source_row": 62,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_IslandicMoss_120.jpg",
+            "sha256": "dd1de25d6b6fc1f9e5c7387af0c14931095155f527790ae0221b76ae71235cf2",
+            "width": 1200,
+            "height": 2400,
+            "size": 259530
+          },
+          "source_name": "Исландский мох 120",
+          "source_volume": 120
+        }
+      ]
+    },
+    {
+      "key": "GastroLight",
+      "base_id": 23,
+      "expected_name": "Желудочные",
+      "expected_slug": "zheludochnye",
+      "old_quantity": 120,
+      "unit": "капсул",
+      "name": "Желудочные",
+      "variants": [
+        {
+          "quantity": 30,
+          "weight": "30 капсул",
+          "slug": "zheludochnye-30-kapsul",
+          "existing_id": null,
+          "price": 1050,
+          "source_row": 63,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_GastroLight_30.jpg",
+            "sha256": "ab42cbcdad5adaaca8f5a94bba3c45f0d00a8de294906b58ec37b407ec7b7111",
+            "width": 1200,
+            "height": 2000,
+            "size": 234910
+          },
+          "source_name": "Желудочные 30",
+          "source_volume": 30
+        },
+        {
+          "quantity": 60,
+          "weight": "60 капсул",
+          "slug": "zheludochnye-60-kapsul",
+          "existing_id": null,
+          "price": 1250,
+          "source_row": 64,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_GastroLight_60.jpg",
+            "sha256": "24566da712b8609448863050129be7fbe3382d2d7a85ced35945df4b9230cbc4",
+            "width": 1200,
+            "height": 2320,
+            "size": 250407
+          },
+          "source_name": "Желудочные 60",
+          "source_volume": 60
+        },
+        {
+          "quantity": 90,
+          "weight": "90 капсул",
+          "slug": "zheludochnye-90-kapsul",
+          "existing_id": null,
+          "price": 1450,
+          "source_row": 65,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_GastroLight_90.jpg",
+            "sha256": "ca35d15350c3505db4b3df42a637a31e73aadfcf9aa9e773044b15f12a36a008",
+            "width": 1200,
+            "height": 2320,
+            "size": 254844
+          },
+          "source_name": "Желудочные 90",
+          "source_volume": 90
+        },
+        {
+          "quantity": 120,
+          "weight": "120 капсул",
+          "slug": "zheludochnye",
+          "existing_id": 23,
+          "price": 1650,
+          "source_row": 66,
+          "active": true,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_GastroLight_120.jpg",
+            "sha256": "63a9cf901081d2b103847f71792621c32359d6a657c9d39d995140d79e1e1b6c",
+            "width": 1200,
+            "height": 2400,
+            "size": 264884
+          },
+          "source_name": "Желудочные 120",
+          "source_volume": 120
+        }
+      ]
+    },
+    {
+      "key": "Lopuh",
+      "base_id": 33,
+      "expected_name": "Экстракт корней майского лопуха",
+      "expected_slug": "ekstrakt-korney-mayskogo-lopuha",
+      "old_quantity": 580,
+      "unit": "г",
+      "name": "Экстракт корней майского лопуха",
+      "variants": [
+        {
+          "quantity": 130,
+          "weight": "130 г",
+          "slug": "ekstrakt-korney-mayskogo-lopuha-130-g",
+          "existing_id": null,
+          "price": 2360,
+          "source_row": 68,
+          "active": false,
+          "source_name": "Экстракты корней лопуха 130",
+          "source_volume": 130
+        },
+        {
+          "quantity": 270,
+          "weight": "270 г",
+          "slug": "ekstrakt-korney-mayskogo-lopuha-270-g",
+          "existing_id": null,
+          "price": 4380,
+          "source_row": 69,
+          "active": false,
+          "source_name": "Экстракты корней лопуха 270",
+          "source_volume": 270
+        },
+        {
+          "quantity": 580,
+          "weight": "580 г",
+          "slug": "ekstrakt-korney-mayskogo-lopuha",
+          "existing_id": 33,
+          "price": 9680,
+          "source_row": 70,
+          "active": true,
+          "source_name": "Экстракты корней лопуха 580",
+          "source_volume": 580
+        }
+      ]
+    },
+    {
+      "key": "Osina",
+      "base_id": 34,
+      "expected_name": "Экстракт коры осины",
+      "expected_slug": "ekstrakt-kory-osiny",
+      "old_quantity": 130,
+      "unit": "г",
+      "name": "Экстракт коры осины",
+      "variants": [
+        {
+          "quantity": 130,
+          "weight": "130 г",
+          "slug": "ekstrakt-kory-osiny",
+          "existing_id": 34,
+          "price": 1470,
+          "source_row": 71,
+          "active": true,
+          "source_name": "Экстракт Осины 130",
+          "source_volume": 130
+        },
+        {
+          "quantity": 270,
+          "weight": "270 г",
+          "slug": "ekstrakt-kory-osiny-270-g",
+          "existing_id": null,
+          "price": 2250,
+          "source_row": 72,
+          "active": false,
+          "source_name": "Экстракт Осины 270",
+          "source_volume": 270
+        },
+        {
+          "quantity": 580,
+          "weight": "580 г",
+          "slug": "ekstrakt-kory-osiny-580-g",
+          "existing_id": null,
+          "price": 3480,
+          "source_row": 73,
+          "active": false,
+          "source_name": "Экстракт Осины 580",
+          "source_volume": 580
+        }
+      ]
+    },
+    {
+      "key": "Mix",
+      "base_id": 35,
+      "expected_name": "Микс экстрактов лопуха, осины и зелени сибирской пихты",
+      "expected_slug": "miks-ekstraktov-lopuha-osiny-i-zeleni-sibirskoy-pihty",
+      "old_quantity": 130,
+      "unit": "г",
+      "name": "Микс экстрактов лопуха, осины и зелени сибирской пихты",
+      "variants": [
+        {
+          "quantity": 130,
+          "weight": "130 г",
+          "slug": "miks-ekstraktov-lopuha-osiny-i-zeleni-sibirskoy-pihty",
+          "existing_id": 35,
+          "price": 1450,
+          "source_row": 74,
+          "active": true,
+          "source_name": "Микс (корень лопуха, коры осины, зелень пихты) 130",
+          "source_volume": 130
+        },
+        {
+          "quantity": 270,
+          "weight": "270 г",
+          "slug": "miks-ekstraktov-lopuha-osiny-i-zeleni-sibirskoy-pihty-270-g",
+          "existing_id": null,
+          "price": 2300,
+          "source_row": 75,
+          "active": false,
+          "source_name": "Микс (корень лопуха, коры осины, зелень пихты)  270",
+          "source_volume": 270
+        },
+        {
+          "quantity": 580,
+          "weight": "580 г",
+          "slug": "miks-ekstraktov-lopuha-osiny-i-zeleni-sibirskoy-pihty-580-g",
+          "existing_id": null,
+          "price": 3500,
+          "source_row": 76,
+          "active": false,
+          "source_name": "Микс (корень лопуха, коры осины, зелень пихты)  580",
+          "source_volume": 580
+        }
+      ]
+    },
+    {
+      "key": "CellJuice",
+      "base_id": 10,
+      "expected_name": "КЛЕТОЧНЫЙ СОК ПИХТЫ СИБИРСКОЙ",
+      "expected_slug": "kletochnyy-sok-pihty-sibirskoy",
+      "old_quantity": 100,
+      "unit": "мл",
+      "name": "КЛЕТОЧНЫЙ СОК ПИХТЫ СИБИРСКОЙ",
+      "variants": [
+        {
+          "quantity": 30,
+          "weight": "30 мл",
+          "slug": "kletochnyy-sok-pihty-sibirskoy-30-ml",
+          "existing_id": null,
+          "price": 970,
+          "source_row": 79,
+          "active": false,
+          "source_name": "Клеточный сок 30",
+          "source_volume": "30 мл."
+        },
+        {
+          "quantity": 100,
+          "weight": "100 мл",
+          "slug": "kletochnyy-sok-pihty-sibirskoy",
+          "existing_id": 10,
+          "price": 2150,
+          "source_row": 78,
+          "active": true,
+          "source_name": "Клеточный сок 100",
+          "source_volume": "100 мл."
+        }
+      ]
+    },
+    {
+      "key": "Immunomod",
+      "base_id": 9,
+      "expected_name": "ИММУНОМОДУЛЯТОР (концентрат)",
+      "expected_slug": "immunomodulyator-kontsentrat",
+      "old_quantity": 100,
+      "unit": "мл",
+      "name": "ИММУНОМОДУЛЯТОР (концентрат)",
+      "variants": [
+        {
+          "quantity": 30,
+          "weight": "30 мл",
+          "slug": "immunomodulyator-kontsentrat-30-ml",
+          "existing_id": null,
+          "price": 1200,
+          "source_row": 81,
+          "active": false,
+          "source_name": "Иммуномодулятор 30",
+          "source_volume": "30 мл."
+        },
+        {
+          "quantity": 100,
+          "weight": "100 мл",
+          "slug": "immunomodulyator-kontsentrat",
+          "existing_id": 9,
+          "price": 2550,
+          "source_row": 80,
+          "active": true,
+          "source_name": "Иммуномодулятор 100",
+          "source_volume": "100 мл."
+        }
+      ]
+    },
+    {
+      "key": "Antiox",
+      "base_id": 14,
+      "expected_name": "Комплекс природных АНТИОКСИДАНТОВ с полифенолами",
+      "expected_slug": "kompleks-prirodnyh-antioksidantov-s-polifenolami",
+      "old_quantity": 100,
+      "unit": "мл",
+      "name": "Комплекс природных АНТИОКСИДАНТОВ с полифенолами",
+      "variants": [
+        {
+          "quantity": 30,
+          "weight": "30 мл",
+          "slug": "kompleks-prirodnyh-antioksidantov-s-polifenolami-30-ml",
+          "existing_id": null,
+          "price": 1175,
+          "source_row": 83,
+          "active": false,
+          "source_name": "Антиоксидант 30",
+          "source_volume": "30 мл."
+        },
+        {
+          "quantity": 100,
+          "weight": "100 мл",
+          "slug": "kompleks-prirodnyh-antioksidantov-s-polifenolami",
+          "existing_id": 14,
+          "price": 2470,
+          "source_row": 82,
+          "active": true,
+          "source_name": "Антиоксидант 100",
+          "source_volume": "100 мл."
+        }
+      ]
+    },
+    {
+      "key": "Oil",
+      "base_id": 13,
+      "expected_name": "Эфирно масляный комплекс",
+      "expected_slug": "efirno-maslyanyy-kompleks",
+      "old_quantity": 30,
+      "unit": "мл",
+      "name": "Эфирно масляный комплекс",
+      "variants": [
+        {
+          "quantity": 30,
+          "weight": "30 мл",
+          "slug": "efirno-maslyanyy-kompleks",
+          "existing_id": 13,
+          "price": 890,
+          "source_row": 86,
+          "active": true,
+          "source_name": "Масло Пихты Сибирской 30",
+          "source_volume": "30 мл."
+        },
+        {
+          "quantity": 100,
+          "weight": "100 мл",
+          "slug": "efirno-maslyanyy-kompleks-100-ml",
+          "existing_id": null,
+          "price": 1470,
+          "source_row": 85,
+          "active": false,
+          "source_name": "Масло Пихты Сибирской 100",
+          "source_volume": "100 мл."
+        }
+      ]
+    },
+    {
+      "key": "EnhancedFraction",
+      "base_id": 15,
+      "expected_name": "Фитонцидная фракция экстракт",
+      "expected_slug": "fitontsidnaya-fraktsiya-ekstrakt",
+      "old_quantity": 500,
+      "unit": "мл",
+      "name": "Фитонцидная фракция экстракт",
+      "variants": [
+        {
+          "quantity": 500,
+          "weight": "500 мл",
+          "slug": "fitontsidnaya-fraktsiya-ekstrakt",
+          "existing_id": 15,
+          "price": 970,
+          "source_row": 88,
+          "active": true,
+          "source_name": "Фитонцидная фракция усилен. Клеточным соком сибирской пихты",
+          "source_volume": "0.5 л."
+        },
+        {
+          "quantity": 1000,
+          "weight": "1000 мл",
+          "slug": "fitontsidnaya-fraktsiya-ekstrakt-1000-ml",
+          "existing_id": null,
+          "price": 1500,
+          "source_row": 89,
+          "active": false,
+          "source_name": "Фитонцидная фракция усилен. Клеточным соком сибирской пихты",
+          "source_volume": "1 л."
+        }
+      ]
+    },
+    {
+      "key": "fitontsidnaya-fraktsiya-s-lopuhom",
+      "base_id": null,
+      "expected_name": "Фитонцидная фракция сибирской пихты с экстрактом лопуха",
+      "expected_slug": null,
+      "old_quantity": null,
+      "unit": "мл",
+      "name": "Фитонцидная фракция сибирской пихты с экстрактом лопуха",
+      "variants": [
+        {
+          "quantity": 500,
+          "weight": "500 мл",
+          "slug": "fitontsidnaya-fraktsiya-s-lopuhom-500-ml",
+          "existing_id": null,
+          "price": 950,
+          "source_row": 92,
+          "active": false,
+          "source_name": "Фитонцидная фракция с лопухом ",
+          "source_volume": "0,5 литра"
+        },
+        {
+          "quantity": 1000,
+          "weight": "1000 мл",
+          "slug": "fitontsidnaya-fraktsiya-s-lopuhom-1000-ml",
+          "existing_id": null,
+          "price": 1500,
+          "source_row": 93,
+          "active": false,
+          "source_name": "Фитонцидная фракция с лопухом ",
+          "source_volume": "1 литр"
+        }
+      ]
+    },
+    {
+      "key": "urica",
+      "base_id": null,
+      "expected_name": "Урика",
+      "expected_slug": null,
+      "old_quantity": null,
+      "unit": "капсул",
+      "name": "Урика",
+      "variants": [
+        {
+          "quantity": 30,
+          "weight": "30 капсул",
+          "slug": "urica-30-kapsul",
+          "existing_id": null,
+          "price": 0,
+          "source_row": null,
+          "active": false,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_Urica_30.jpg",
+            "sha256": "3b3ad80ecdfb2447a377c0e973fdc0d789e6a6d4a4c186729108fa04e688905a",
+            "width": 1200,
+            "height": 2000,
+            "size": 225763
+          }
+        },
+        {
+          "quantity": 60,
+          "weight": "60 капсул",
+          "slug": "urica-60-kapsul",
+          "existing_id": null,
+          "price": 0,
+          "source_row": null,
+          "active": false,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_Urica_60.jpg",
+            "sha256": "4d86e728f86fcc20d4ff50d76aff114cd95125a2266296ac0e4cb21bc0d3f964",
+            "width": 1200,
+            "height": 2320,
+            "size": 246033
+          }
+        },
+        {
+          "quantity": 90,
+          "weight": "90 капсул",
+          "slug": "urica-90-kapsul",
+          "existing_id": null,
+          "price": 0,
+          "source_row": null,
+          "active": false,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_Urica_90.jpg",
+            "sha256": "dff5dea840f4e5b7403a64a87ddb4c851248dd384b300bece8d947cb9e515a68",
+            "width": 1200,
+            "height": 2320,
+            "size": 250211
+          }
+        },
+        {
+          "quantity": 120,
+          "weight": "120 капсул",
+          "slug": "urica-120-kapsul",
+          "existing_id": null,
+          "price": 0,
+          "source_row": null,
+          "active": false,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_Urica_120.jpg",
+            "sha256": "4683a4764683d7d7b1d7b83d92a876c544979a39c479d08e5ccd9d3a7fefc6ef",
+            "width": 1200,
+            "height": 2400,
+            "size": 257923
+          }
+        }
+      ]
+    },
+    {
+      "key": "phytolytic",
+      "base_id": null,
+      "expected_name": "Фитолитик",
+      "expected_slug": null,
+      "old_quantity": null,
+      "unit": "капсул",
+      "name": "Фитолитик",
+      "variants": [
+        {
+          "quantity": 30,
+          "weight": "30 капсул",
+          "slug": "phytolytic-30-kapsul",
+          "existing_id": null,
+          "price": 0,
+          "source_row": null,
+          "active": false,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_Phytolytic_30.jpg",
+            "sha256": "2681d0a1e8d6b77368bff8057003ca806bfdb10a127a14045b14a00db222a5ff",
+            "width": 1200,
+            "height": 2000,
+            "size": 231161
+          }
+        },
+        {
+          "quantity": 60,
+          "weight": "60 капсул",
+          "slug": "phytolytic-60-kapsul",
+          "existing_id": null,
+          "price": 0,
+          "source_row": null,
+          "active": false,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_Phytolytic_60.jpg",
+            "sha256": "71f66f8bd54e07001c03ff548bcfe373077baf4444124dc16426de8fb749a203",
+            "width": 1200,
+            "height": 2320,
+            "size": 246997
+          }
+        },
+        {
+          "quantity": 90,
+          "weight": "90 капсул",
+          "slug": "phytolytic-90-kapsul",
+          "existing_id": null,
+          "price": 0,
+          "source_row": null,
+          "active": false,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_Phytolytic_90.jpg",
+            "sha256": "88d7b1c1758528c7e907ab228be93fb08d60216fb28e98f764d3eb60e398ddd5",
+            "width": 1200,
+            "height": 2320,
+            "size": 249011
+          }
+        },
+        {
+          "quantity": 120,
+          "weight": "120 капсул",
+          "slug": "phytolytic-120-kapsul",
+          "existing_id": null,
+          "price": 0,
+          "source_row": null,
+          "active": false,
+          "photo": {
+            "path": "/uploads/products/mockups-20261028/Bottle_Phytolytic_120.jpg",
+            "sha256": "88c6024d03fb16392d681e355430046dcd9d7f63783ed343559af05e61cf0035",
+            "width": 1200,
+            "height": 2400,
+            "size": 258548
+          }
+        }
+      ]
+    }
+  ],
+  "faq_neutral": [
+    {
+      "id": 58,
+      "question": "Сколько капсул в упаковке и на сколько её хватает?",
+      "answer": "Фасовка указана в карточке товара. При рекомендованной схеме по 1 капсуле 2 раза в день расход составляет 2 капсулы в сутки. Продолжительность приёма — 1 месяц; размер упаковки не изменяет рекомендацию."
+    },
+    {
+      "id": 68,
+      "question": "На сколько дней хватает упаковки?",
+      "answer": "Фасовка указана в карточке товара. При рекомендованной схеме взрослым по 1 капсуле 2 раза в день расход составляет 2 капсулы в сутки. Продолжительность приёма — 1 месяц."
+    },
+    {
+      "id": 71,
+      "question": "Какая масса капсулы?",
+      "answer": "Масса одной капсулы — 0,53 г. Количество капсул указано в выбранной карточке товара."
+    },
+    {
+      "id": 75,
+      "question": "Какая фасовка у продукта?",
+      "answer": "Количество капсул указано в выбранной карточке товара. Масса одной капсулы — 0,5 г."
+    },
+    {
+      "id": 80,
+      "question": "На сколько дней хватает упаковки?",
+      "answer": "Количество капсул указано в карточке товара. При рекомендованной схеме по 1 капсуле 2 раза в день расход составляет 2 капсулы в сутки. Продолжительность приёма — 1 месяц."
+    },
+    {
+      "id": 82,
+      "question": "Сколько капсул в упаковке?",
+      "answer": "Количество капсул указано в выбранной карточке товара. Масса одной капсулы — 0,5 г."
+    },
+    {
+      "id": 83,
+      "question": "Определяет ли размер упаковки продолжительность приёма?",
+      "answer": "Количество капсул в банке не определяет продолжительность приёма. Дозировку и длительность применения проверяйте по инструкции конкретной упаковки; при отсутствии инструкции уточните их у производителя до использования."
+    },
+    {
+      "id": 88,
+      "question": "На сколько дней хватает упаковки?",
+      "answer": "Количество капсул указано в выбранной карточке товара. При рекомендованной схеме по 2 капсулы 3 раза в день расход составляет 6 капсул в сутки. Продолжительность приёма — 2–3 недели."
+    }
+  ]
+}

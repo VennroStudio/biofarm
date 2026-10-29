@@ -104,14 +104,14 @@ final readonly class ProductDetails implements ProductModelInterface
             'shelf_life'             => 'shelf_life',
             'storage_conditions'     => 'storage_conditions',
             'bad_disclaimer'         => 'bad_disclaimer',
-            'legal_status' => 'legal_status',
-            'official_purpose' => 'official_purpose',
-            'regulatory_evidence' => 'regulatory_evidence',
+            'legal_status'           => 'legal_status',
+            'official_purpose'       => 'official_purpose',
+            'regulatory_evidence'    => 'regulatory_evidence',
             'active_components_text' => 'active_components_text',
             'attribute_value_ids'    => '(SELECT JSON_ARRAYAGG(pav.attribute_value_id) FROM product_attribute_values pav WHERE pav.product_id = p.id)',
             'product_group_id'       => '(SELECT pgi.group_id FROM product_group_items pgi INNER JOIN product_groups pg ON pg.id = pgi.group_id AND pg.deleted_at IS NULL WHERE pgi.product_id = p.id LIMIT 1)',
             'related_blog_post_ids'  => '(SELECT JSON_ARRAYAGG(pbp.blog_post_id) FROM product_blog_posts pbp INNER JOIN blog_posts bp ON bp.id = pbp.blog_post_id AND bp.deleted_at IS NULL WHERE pbp.product_id = p.id)',
-            'certificate_ids'        => '(SELECT JSON_ARRAYAGG(mp.material_id ORDER BY mp.sort_order, mp.material_id) FROM material_placements mp WHERE mp.kind = \'certificate\' AND mp.target_type = \'product\' AND mp.target_id = CAST(p.id AS CHAR))',
+            'certificate_ids'        => '(SELECT JSON_ARRAYAGG(JSON_OBJECT(\'id\', mp.material_id, \'sort_order\', mp.sort_order)) FROM material_placements mp WHERE mp.kind = \'certificate\' AND mp.target_type = \'product\' AND mp.target_id = CAST(p.id AS CHAR))',
             'features'               => 'features',
             'wb_link'                => 'wb_link',
             'ozon_link'              => 'ozon_link',
@@ -155,7 +155,7 @@ final readonly class ProductDetails implements ProductModelInterface
      *     attribute_value_ids: list<int>|string|null,
      *     product_group_id: int|string|null,
      *     related_blog_post_ids: list<int>|string|null,
-     *     certificate_ids: list<int>|string|null,
+     *     certificate_ids: list<array{id: int|string, sort_order: int|string}|int>|string|null,
      *     features: list<string>|string|null,
      *     wb_link: string|null,
      *     ozon_link: string|null,
@@ -199,7 +199,7 @@ final readonly class ProductDetails implements ProductModelInterface
             attributeValueIds: self::jsonIntList($row['attribute_value_ids']),
             productGroupId: $row['product_group_id'] !== null ? (int)$row['product_group_id'] : null,
             relatedBlogPostIds: self::jsonIntList($row['related_blog_post_ids']),
-            certificateIds: self::jsonIntList($row['certificate_ids']),
+            certificateIds: self::jsonCertificateIds($row['certificate_ids']),
             features: self::jsonList($row['features']),
             wbLink: $row['wb_link'],
             ozonLink: $row['ozon_link'],
@@ -250,9 +250,9 @@ final readonly class ProductDetails implements ProductModelInterface
             'shelf_life'             => $this->shelfLife,
             'storage_conditions'     => $this->storageConditions,
             'bad_disclaimer'         => $this->badDisclaimer,
-            'legal_status' => $this->legalStatus,
-            'official_purpose' => $this->officialPurpose,
-            'regulatory_evidence' => $this->regulatoryEvidence,
+            'legal_status'           => $this->legalStatus,
+            'official_purpose'       => $this->officialPurpose,
+            'regulatory_evidence'    => $this->regulatoryEvidence,
             'active_components_text' => $this->activeComponentsText,
             'attribute_value_ids'    => $this->attributeValueIds,
             'product_group_id'       => $this->productGroupId,
@@ -280,6 +280,34 @@ final readonly class ProductDetails implements ProductModelInterface
         $decoded = json_decode($value, true);
 
         return \is_array($decoded) ? $decoded : null;
+    }
+
+    /** @return list<int>|null */
+    private static function jsonCertificateIds(array|string|null $value): ?array
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $items = \is_array($value) ? $value : json_decode($value, true);
+        if (!\is_array($items)) {
+            return null;
+        }
+
+        // MySQL does not support ORDER BY inside JSON_ARRAYAGG; order placements after decoding.
+        $placements = [];
+        foreach ($items as $index => $item) {
+            $id = \is_array($item) ? (int)($item['id'] ?? 0) : (int)$item;
+            if ($id > 0) {
+                $placements[] = [
+                    'id'         => $id,
+                    'sort_order' => \is_array($item) ? (int)($item['sort_order'] ?? 0) : $index,
+                ];
+            }
+        }
+        usort($placements, static fn (array $left, array $right): int => [$left['sort_order'], $left['id']] <=> [$right['sort_order'], $right['id']]);
+
+        return array_column($placements, 'id');
     }
 
     /**

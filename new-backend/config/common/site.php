@@ -2,11 +2,13 @@
 
 declare(strict_types=1);
 
+use function App\Components\env;
+
 return [
     'config' => [
         'site' => [
             'locale' => 'ru',
-            'url'    => rtrim((string)(getenv('APP_URL') ?: 'http://localhost'), '/'),
+            'url'    => rtrim(env('APP_URL', 'http://localhost'), '/'),
             'meta'   => [
                 'title'       => 'БИОФАРМ',
                 'description' => 'Натуральные продукты БИОФАРМ.',

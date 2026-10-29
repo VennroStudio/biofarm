@@ -34,6 +34,15 @@ final readonly class GetProductByIdAction implements RequestHandlerInterface
             new ProductGetByIdQuery(Route::getArgumentToInt($request, 'id'))
         );
 
+        if (!$product->isActive) {
+            throw new \App\Components\Exception\DomainExceptionModule(
+                module: 'product',
+                message: 'error.product_not_found',
+                code: 11,
+                status: 404,
+            );
+        }
+
         return new JsonDataResponse(
             $this->unifier->unifyOne(null, $product),
         );

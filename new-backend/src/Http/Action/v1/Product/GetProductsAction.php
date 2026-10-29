@@ -40,12 +40,17 @@ final readonly class GetProductsAction implements RequestHandlerInterface
             ProductFindAllQuery::class,
         );
 
+        $isAdmin = \Slim\Routing\RouteContext::fromRequest($request)->getRoute()?->getArgument('adminProducts') === '1';
+        if (!$isAdmin) {
+            $query->includeInactive = false;
+        }
+
         $this->validator->validate($query);
         $result = $this->fetcher->fetch($query);
 
         return new JsonDataItemsResponse(
             count: $result->count,
-            items: \Slim\Routing\RouteContext::fromRequest($request)->getRoute()?->getArgument('adminProducts') === '1'
+            items: $isAdmin
                 ? array_map(static fn ($item) => $item->toArray(), $result->items)
                 : $this->unifier->unify(null, $result->items),
         );
