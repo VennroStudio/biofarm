@@ -1,7 +1,8 @@
         <div class="flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-premium lg:flex-row">
             <a href="/certificates" class="flex shrink-0 items-center gap-4 p-4 text-base lg:w-1/4 lg:p-6 lg:text-lg leading-snug text-secondary-foreground">
                 <svg class="h-9 w-9 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M6 2h9l5 5v15H4V2h2Z"/><path d="M14 2v6h6M8 12h8M8 16h8"/></svg>
-                Сертификаты<br>и документы <span aria-hidden="true">→</span>
+                <span class="min-w-0">Сертификаты и документы</span>
+                <span class="shrink-0" aria-hidden="true">→</span>
             </a>
             <div class="grid min-w-0 flex-1 {{ certificates|length == 1 ? 'grid-cols-1' : (certificates|length == 2 ? 'grid-cols-2' : 'grid-cols-3') }}">
             {% for certificate in certificates %}
