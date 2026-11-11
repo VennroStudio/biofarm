@@ -1,7 +1,6 @@
 <?php
 require dirname(__DIR__).'/vendor/autoload.php';
 use App\Modules\Program\Service\ShoppingBonusExpiry;
-use App\Modules\Program\Service\ProgramMath;
 use Doctrine\DBAL\DriverManager;
 function ok($v,$m) { if (!$v) throw new RuntimeException($m); }
 $db=DriverManager::getConnection(['driver'=>'pdo_sqlite','memory'=>true]);
@@ -19,6 +18,5 @@ $expiry->refresh(1,'2027-01-02 00:00:00');ok((int)$db->fetchOne("SELECT amount_m
 $add('legacy',500,'2025-01-01 00:00:00');
 $expiry->refresh(1,'2028-01-01 00:00:00');ok((int)$db->fetchOne("SELECT SUM(amount_minor) FROM program_ledger WHERE state='available'")===500,'legacy credits are not retroactively expired');
 ok(ShoppingBonusExpiry::deadline('2024-02-29 12:00:00',12)==='2025-02-28 12:00:00','calendar year clamp');
-ok(ProgramMath::rules([])['buyerBps']===300,'3 percent default');
-ok(ProgramMath::rules([])['bonusLifetimeMonths']===12,'12 month default');
+ok(ShoppingBonusExpiry::deadline('2026-01-31 12:00:00',1)==='2026-02-28 12:00:00','one calendar month clamps to the last day');
 echo "bonus-expiry: all assertions passed\n";

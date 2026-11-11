@@ -1,4 +1,5 @@
 import type { Dashboard } from '../../program/shared';
+import { CreateOfferButton } from './CreateOfferButton';
 import { OfferImport } from './OfferImport';
 import { ArrowRight, Minus, Plus, ShoppingBag, ShoppingCart, Trash2 } from 'lucide-react';
 import { createRoot } from 'react-dom/client';
@@ -52,9 +53,10 @@ type CartPageProps = {
   freeDeliveryThreshold: number;
   orderBonusEnabled: boolean;
   orderBonusPercent: number;
+  referralEnabled: boolean;
 };
 
-function CartPage({ cdekDeliveryPrice, freeDeliveryThreshold, orderBonusEnabled }: CartPageProps) {
+function CartPage({ cdekDeliveryPrice, freeDeliveryThreshold, orderBonusEnabled, referralEnabled }: CartPageProps) {
   const [program,setProgram] = useState<Dashboard|null>(null);
   useEffect(() => { if(getToken()) void request<Dashboard>('/v1/program').then(setProgram).catch(()=>undefined); }, []);
   const cart = useCartState();
@@ -195,6 +197,7 @@ function CartPage({ cdekDeliveryPrice, freeDeliveryThreshold, orderBonusEnabled 
                 <LinkButton className="w-full" href="/catalog" variant="outline">
                   Продолжить покупки
                 </LinkButton>
+                {referralEnabled && program?.identity.isPartner && <CreateOfferButton cart={cart} />}
               </CardFooter>
             </Card>
           </div>
@@ -216,6 +219,7 @@ export function mountCartPage() {
         freeDeliveryThreshold={numberDataset(root.dataset.freeDeliveryThreshold, 3000)}
         orderBonusEnabled={root.dataset.orderBonusEnabled === 'true'}
         orderBonusPercent={numberDataset(root.dataset.orderBonusPercent, 5)}
+        referralEnabled={root.dataset.referralEnabled === 'true'}
       />
     ));
   });

@@ -55,7 +55,7 @@ final class ProgramMath
         return intdiv($amount * ($previous + $quantity), $total) - intdiv($amount * $previous, $total);
     }
 
-    /** Conservative full-chain estimate; costs are supplied explicitly, never guessed. */
+    /** Estimate bonuses and the amount remaining after costs supplied by the administrator. */
     public static function simulate(array $input, array $rules): array
     {
         $rules = self::rules([], $rules);
@@ -67,17 +67,20 @@ final class ProgramMath
         if ($basis < 0) {
             throw new DomainException('Скидка и списание бонусов превышают стоимость товаров.');
         }
-        $scenario = $input['scenario'] ?? 'team_customer';
-        $rates = match ($scenario) {
-            'partner_customer'  => [$rules['partnerDirectBps'], 0, 0],
-            'team_customer'     => [$rules['memberDirectBps'], $rules['partnerTeamBps'], 0],
-            'member_purchase'   => [0, $rules['partnerMemberBps'], 0],
-            'ordinary_referral' => [0, 0, $rules['referralBonusBps']],
-            default             => throw new DomainException('Неизвестный сценарий'),
+        $scenario = $input['scenario'] ?? 'referral';
+        [$buyerRate, $referralRate] = match ($scenario) {
+            'purchase' => [$rules['buyerBps'], 0],
+            'referral' => [$rules['buyerBps'], $rules['referralBonusBps']],
+            'guest_referral' => [0, $rules['referralBonusBps']],
+            default => throw new DomainException('Неизвестный сценарий'),
         };
-        $amounts = array_map(static fn (int $bps): int => intdiv($basis * $bps, 10000), [...$rates, $rules['buyerBps']]);
-        $total = array_sum($amounts);
-        $result = ['grossMinor' => $gross, 'discountMinor' => $discount, 'spentBonusMinor' => $spent, 'basisMinor' => $basis, 'directMinor' => $amounts[0], 'partnerMinor' => $amounts[1], 'referralBonusMinor' => $amounts[2], 'buyerMinor' => $amounts[3], 'totalMinor' => $total, 'totalIncentivesMinor' => $discount + $spent + $total, 'remainingBeforeCostsMinor' => $basis - $total];
+        $buyer = intdiv($basis * $buyerRate, 10000);
+        $referral = intdiv($basis * $referralRate, 10000);
+        $total = $buyer + $referral;
+        $result = ['grossMinor' => $gross, 'discountMinor' => $discount, 'spentBonusMinor' => $spent,
+            'basisMinor' => $basis, 'referralBonusMinor' => $referral, 'buyerMinor' => $buyer,
+            'totalMinor' => $total, 'totalIncentivesMinor' => $discount + $spent + $total,
+            'remainingBeforeCostsMinor' => $basis - $total];
         if ($costs !== null) {
             $result['costMinor'] = $costs;
             $result['remainingAfterCostsMinor'] = $basis - $total - $costs;
@@ -87,29 +90,19 @@ final class ProgramMath
 
     public static function rules(array $input, array $current = []): array
     {
-        // Preserve saved rates when splitting the old shared direct commission.
-        $legacyDirect = $current['directBps'] ?? $current['levelsBps'][0] ?? 100;
-        $current['partnerDirectBps'] ??= $legacyDirect;
-        $current['partnerMemberBps'] ??= $legacyDirect;
-        $current['memberDirectBps'] ??= $legacyDirect;
-        $current['partnerTeamBps'] ??= $current['teamBps'] ?? $current['partnerBps'] ?? 50;
-        $current['referralBonusBps'] ??= $legacyDirect;
-        unset($current['maxPromoPercent'], $current['levelsBps'], $current['partnerBps'], $current['products'], $current['directBps'], $current['teamBps'], $current['capBps']);
-        $defaults = ['partnerDirectBps' => 100, 'partnerMemberBps' => 100, 'partnerTeamBps' => 50, 'memberDirectBps' => 100, 'referralBonusBps' => 100, 'buyerBps' => 300, 'bonusLifetimeMonths' => 12, 'holdDays' => 14, 'minimumWithdrawalMinor' => 10000];
-        if (array_diff(array_keys($input), array_keys($defaults)) !== []) {
-            throw new DomainException('Unknown program setting');
+        $defaults = ['referralBonusBps' => 100, 'buyerBps' => 300, 'holdDays' => 14];
+        if (array_diff_key($input, $defaults) !== []) {
+            throw new DomainException('Неизвестная настройка программы бонусов');
         }
-        $rules = array_replace($defaults, $current, $input);
-        foreach (['partnerDirectBps', 'partnerMemberBps', 'partnerTeamBps', 'memberDirectBps', 'referralBonusBps', 'buyerBps'] as $key) {
+        $current['referralBonusBps'] ??= $current['directBps'] ?? $current['levelsBps'][0] ?? $defaults['referralBonusBps'];
+        $rules = array_replace($defaults, array_intersect_key($current, $defaults), $input);
+        foreach (['referralBonusBps', 'buyerBps'] as $key) {
             if (!\is_int($rules[$key]) || $rules[$key] < 0 || $rules[$key] > 10000) {
-                throw new DomainException('Rates must be integer basis points from 0 to 10000');
+                throw new DomainException('Ставка должна быть от 0 до 100%');
             }
         }
-        if (!\is_int($rules['bonusLifetimeMonths']) || $rules['bonusLifetimeMonths'] < 1 || $rules['bonusLifetimeMonths'] > 120) {
-            throw new DomainException('Bonus lifetime must be from 1 to 120 months');
-        }
-        if (!\is_int($rules['holdDays']) || $rules['holdDays'] < 0 || $rules['holdDays'] > 3650 || !\is_int($rules['minimumWithdrawalMinor']) || $rules['minimumWithdrawalMinor'] < 1) {
-            throw new DomainException('Invalid hold or withdrawal minimum');
+        if (!\is_int($rules['holdDays']) || $rules['holdDays'] < 0 || $rules['holdDays'] > 3650) {
+            throw new DomainException('Некорректный срок удержания');
         }
         return $rules;
     }

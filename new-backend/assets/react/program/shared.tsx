@@ -5,30 +5,20 @@ import { Check, Copy } from "lucide-react";
 export type Row = Record<string, unknown>;
 export type Listing = { items: Row[]; page: number; limit: number };
 export type Rates = {
-    partnerDirectBps: number;
-    partnerMemberBps: number;
-    partnerTeamBps: number;
-    memberDirectBps: number;
     referralBonusBps: number;
     buyerBps: number;
-    bonusLifetimeMonths: number;
     holdDays: number;
-    minimumWithdrawalMinor: number;
 };
 export type Dashboard = {
     identity: {
         userId: number;
         isPartner: boolean;
-        isTeamMember: boolean;
-        teamPartnerId: number | null;
-        canEarnCommission: boolean;
-        hasCommissionHistory: boolean;
         isReferral: boolean;
         parentId: number | null;
         referralCode: string;
     };
     balances: Record<
-        "shopping" | "commission",
+        "shopping",
         { availableMinor: number; pendingMinor: number; reservedMinor: number; debtMinor: number }
     >;
     rates: Rates;
@@ -38,16 +28,22 @@ export const money = (value: unknown) =>
     new Intl.NumberFormat("ru-RU", { style: "currency", currency: "RUB", minimumFractionDigits: 2 }).format(
         Number(value || 0) / 100,
     );
+export const bonus = (minor: unknown) =>
+    new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 }).format(Number(minor || 0) / 100) + " бонусов";
 export const label = (value: unknown) =>
     ({
         pending: "Ожидает",
         approved: "Одобрено, перевод не выполнен",
-        paid: "Выплачено",
+        paid: "Оплачено",
         rejected: "Отклонено",
         available: "Доступно",
         reserved: "Зарезервировано",
         refund_pending: "Возврат ожидается",
         completed: "Оплачено",
+        processing: "Обработка",
+        shipped: "Отправлен",
+        delivered: "Доставлен",
+        failed: "Ошибка оплаты",
         refunded: "Возвращено",
         expiration: "Срок действия истёк",
         order_spending: "Оплата бонусами",
@@ -57,11 +53,11 @@ export const label = (value: unknown) =>
         cancelled: "Отменено",
         commission: "Комиссия",
         shopping: "Бонусы",
-        buyer: "Покупательские бонусы",
+        buyer: "Бонусы за свою покупку",
         referral: "Реферальное начисление",
         direct: "Комиссия за своего покупателя",
         team: "Комиссия партнёру за команду",
-        referral_bonus: "Бонусы за приглашённого покупателя",
+        referral_bonus: "Бонусы за покупку приглашённого",
         level_1: "Реферальное начисление: 1-й уровень",
         level_2: "Реферальное начисление: 2-й уровень",
         level_3: "Реферальное начисление: 3-й уровень",

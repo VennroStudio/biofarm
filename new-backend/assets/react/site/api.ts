@@ -39,9 +39,6 @@ export type SiteUser = {
   referredBy?: string;
   bonusBalance: number;
   isPartner: boolean;
-  isTeamMember: boolean;
-  hasCommissionHistory: boolean;
-  cardNumber?: string;
   referralCode?: string;
 };
 
@@ -97,14 +94,6 @@ export type ReferralInfo = {
   pendingEarnings: number;
   referralPercent: number;
   referralCode: string;
-};
-
-export type WithdrawalRequest = {
-  id: string;
-  amount: number;
-  status: 'approved' | 'pending' | 'rejected';
-  createdAt: string;
-  processedAt?: null | string;
 };
 
 export type FavoriteProduct = {
@@ -296,9 +285,6 @@ function mapUser(value: unknown): SiteUser | null {
       : undefined,
     bonusBalance: numberValue(value.bonus_balance ?? value.bonusBalance),
     isPartner: boolValue(value.is_partner ?? value.isPartner),
-    hasCommissionHistory: boolValue(value.has_commission_history ?? value.hasCommissionHistory),
-    isTeamMember: boolValue(value.is_team_member ?? value.isTeamMember),
-    cardNumber: stringValue(value.card_number ?? value.cardNumber) || undefined,
     referralCode: stringValue(value.referral_code ?? value.referralCode) || undefined,
   };
 }
@@ -444,7 +430,7 @@ export async function login(email: string, password: string) {
   return refreshUser();
 }
 
-export async function register(email: string, password: string, name: string, referredBy?: string, teamInvitation?: string, teamConsent = false, consents?: FormConsents) {
+export async function register(email: string, password: string, name: string, referredBy?: string, consents?: FormConsents) {
   const { firstName, lastName } = splitName(name);
   await request('/v1/users/create', {
     method: 'POST',
@@ -454,8 +440,6 @@ export async function register(email: string, password: string, name: string, re
       lastName,
       password,
       referredBy,
-      teamInvitation,
-      teamConsent,
       ...consents,
     },
   });
@@ -470,7 +454,7 @@ export async function refreshUser() {
   return user;
 }
 
-export async function updateProfile(payload: { cardNumber?: string; name?: string; phone?: string } & FormConsents) {
+export async function updateProfile(payload: { name?: string; phone?: string } & FormConsents) {
   const user = mapUser(await request('/v1/users/me', {
     method: 'PATCH',
     body: {
@@ -597,31 +581,6 @@ export async function createOrder(
     shipping_address: shippingAddress,
     payment_method: paymentMethod,
     delivery_method: deliveryMethod,
-  });
-}
-
-export async function getWithdrawals() {
-  const data = await request('/v1/withdrawals');
-
-  return mapItemsResponse(data, (item): WithdrawalRequest | null => {
-    if (!isRecord(item)) {
-      return null;
-    }
-
-    return {
-      id: String(item.id || ''),
-      amount: numberValue(item.amount),
-      status: stringValue(item.status, 'pending') as WithdrawalRequest['status'],
-      createdAt: stringValue(item.created_at ?? item.createdAt),
-      processedAt: stringValue(item.processed_at ?? item.processedAt) || null,
-    };
-  });
-}
-
-export async function createWithdrawal(amount: number) {
-  await request('/v1/withdrawals/create', {
-    method: 'POST',
-    body: { amount },
   });
 }
 

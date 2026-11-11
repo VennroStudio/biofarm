@@ -53,25 +53,11 @@ final readonly class GetUsersAction implements RequestHandlerInterface
                 'u.avatar',
                 'u.created_at',
                 'up.phone',
-                'up.card_number',
                 'COALESCE(up.bonus_balance, 0) AS bonus_balance',
                 'COALESCE(up.is_partner, 0) AS is_partner',
                 'up.referral_code',
-                '(SELECT m.partner_id FROM program_members m JOIN user_profiles owner ON owner.user_id=m.partner_id JOIN users partner ON partner.id=owner.user_id WHERE m.user_id=u.id AND up.is_partner=0 AND owner.is_partner=1 AND partner.status=1 AND partner.deleted_at IS NULL) AS team_partner_id',
-                "(SELECT CONCAT(partner.first_name,' ',partner.last_name) FROM program_members m JOIN user_profiles owner ON owner.user_id=m.partner_id JOIN users partner ON partner.id=owner.user_id WHERE m.user_id=u.id AND up.is_partner=0 AND owner.is_partner=1 AND partner.status=1 AND partner.deleted_at IS NULL) AS team_partner_name",
                 'up.referred_by_user_id',
                 "(SELECT CONCAT(parent.first_name, ' ', parent.last_name) FROM users parent WHERE parent.id=up.referred_by_user_id) AS parent_name",
-                '(SELECT COUNT(rp.user_id) FROM user_profiles rp WHERE rp.referred_by_user_id = u.id) AS referrals_count',
-                '(SELECT COALESCE(SUM(o.total), 0) FROM orders o WHERE o.referred_by = up.referral_code OR o.referred_by = CAST(u.id AS CHAR)) AS referral_orders_total',
-                "(SELECT JSON_ARRAYAGG(JSON_OBJECT(
-                    'id', bt.id,
-                    'amount', bt.amount,
-                    'type', bt.type,
-                    'source_order_id', bt.source_order_id,
-                    'source_withdrawal_id', bt.source_withdrawal_id,
-                    'comment', bt.comment,
-                    'created_at', bt.created_at
-                )) FROM bonus_transactions bt WHERE bt.user_id = u.id) AS bonus_transactions",
             )
             ->orderBy('u.created_at', 'DESC')
             ->setFirstResult(($page - 1) * $perPage)
@@ -89,58 +75,16 @@ final readonly class GetUsersAction implements RequestHandlerInterface
             'email'                 => (string)$row['email'],
             'avatar'                => $row['avatar'],
             'phone'                 => $row['phone'],
-            'card_number'           => $row['card_number'],
             'bonus_balance'         => (int)$row['bonus_balance'],
             'is_partner'            => (bool)(int)$row['is_partner'],
             'referral_code'         => $row['referral_code'],
             'referred_by_user_id'   => $row['referred_by_user_id'] !== null ? (int)$row['referred_by_user_id'] : null,
-            'is_team_member'        => $row['team_partner_id'] !== null,
-            'team_partner_name'     => $row['team_partner_name'],
-            'is_referral'           => !(bool)$row['is_partner'] && $row['team_partner_id'] === null && $row['referred_by_user_id'] !== null,
-            'isReferral'            => !(bool)$row['is_partner'] && $row['team_partner_id'] === null && $row['referred_by_user_id'] !== null,
+            'is_referral'           => $row['referred_by_user_id'] !== null,
+            'isReferral'            => $row['referred_by_user_id'] !== null,
             'parent_name'           => $row['parent_name'],
-            'referrals_count'       => (int)$row['referrals_count'],
-            'referral_orders_total' => (int)$row['referral_orders_total'],
-            'bonus_transactions'    => self::bonusTransactions($row['bonus_transactions']),
             'created_at'            => (string)$row['created_at'],
         ], $rows);
 
         return new JsonDataItemsResponse(count: $count, items: $items);
-    }
-
-    /**
-     * @return list<array{id: int, amount: int, type: string, source_order_id: string|null, source_withdrawal_id: string|null, comment: string|null, created_at: string}>
-     */
-    private static function bonusTransactions(mixed $value): array
-    {
-        if ($value === null || $value === '') {
-            return [];
-        }
-
-        $items = \is_array($value) ? $value : json_decode((string)$value, true);
-        if (!\is_array($items)) {
-            return [];
-        }
-
-        $transactions = [];
-        foreach ($items as $item) {
-            if (!\is_array($item) || !isset($item['id'])) {
-                continue;
-            }
-
-            $transactions[] = [
-                'id'                   => (int)$item['id'],
-                'amount'               => (int)($item['amount'] ?? 0),
-                'type'                 => (string)($item['type'] ?? ''),
-                'source_order_id'      => isset($item['source_order_id']) && $item['source_order_id'] !== '' ? (string)$item['source_order_id'] : null,
-                'source_withdrawal_id' => isset($item['source_withdrawal_id']) && $item['source_withdrawal_id'] !== '' ? (string)$item['source_withdrawal_id'] : null,
-                'comment'              => isset($item['comment']) && $item['comment'] !== '' ? (string)$item['comment'] : null,
-                'created_at'           => (string)($item['created_at'] ?? ''),
-            ];
-        }
-
-        usort($transactions, static fn (array $left, array $right): int => strcmp($right['created_at'], $left['created_at']));
-
-        return $transactions;
     }
 }

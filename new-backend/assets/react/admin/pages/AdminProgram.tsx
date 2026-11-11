@@ -1,8 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { BookOpen, History, SlidersHorizontal, Wallet, Clock3, CheckCircle2, XCircle } from "lucide-react";
+import { BookOpen, History, SlidersHorizontal } from "lucide-react";
 import { Navigate, NavLink, useParams } from "react-router-dom";
-import { Badge } from "../shared/ui";
-import { AdminWithdrawalModal } from "./AdminWithdrawalModal";
 import { request } from "../api/client";
 import {
     Section,
@@ -11,6 +9,7 @@ import {
     Pager,
     inputClass,
     buttonClass,
+    bonus,
     type Listing,
     type Row,
 } from "../../program/shared";
@@ -23,7 +22,6 @@ const defaultLedgerFilters = { sort: "created_at:desc", dateFrom: "", dateTo: ""
 const sections = [
     { key: "ledger", title: "Журнал", icon: BookOpen },
     { key: "audit", title: "История действий", icon: History },
-    { key: "withdrawals", title: "Выплаты", icon: Wallet },
     { key: "settings", title: "Настройки", icon: SlidersHorizontal },
 ];
 export function AdminProgram() {
@@ -42,7 +40,6 @@ function AdminProgramSection({ tab }: { tab: string }) {
     const [notice, setNotice] = useState("");
     const [revision, setRevision] = useState(0);
     const [busy, setBusy] = useState(false);
-    const [selected, setSelected] = useState<Row | null>(null);
     useEffect(() => {
         void request<ProgramAdminSettings>(`${base}/settings`)
             .then(setRates)
@@ -54,7 +51,6 @@ function AdminProgramSection({ tab }: { tab: string }) {
         const query = new URLSearchParams({ page: String(page) });
         if (tab === "ledger") {
             const [sort, direction] = ledgerFilters.sort.split(":");
-            query.set("wallet", "commission");
             query.set("sort", sort);
             query.set("direction", direction);
             if (ledgerFilters.dateFrom) query.set("dateFrom", ledgerFilters.dateFrom);
@@ -100,7 +96,6 @@ function AdminProgramSection({ tab }: { tab: string }) {
         event.preventDefault();
         try {
             await mutate(path, body(new FormData(event.currentTarget)), method);
-            setSelected(null);
         } catch {
             /* Error shown above. */
         }
@@ -113,7 +108,7 @@ function AdminProgramSection({ tab }: { tab: string }) {
             ["kind", "Операция"],
             ["state", "Состояние"],
             ["order_id", "Заказ"],
-            ["amount_minor", "Сумма"],
+            ["amount_minor", "Бонусы"],
         ],
         audit: [
             ["created_at", "Дата"],
@@ -121,18 +116,12 @@ function AdminProgramSection({ tab }: { tab: string }) {
             ["kind", "Действие"],
             ["payload", "Подробности"],
         ],
-        withdrawals: [
-            ["created_at", "Дата"],
-            ["user_name", "Пользователь"],
-            ["amount_minor", "Сумма"],
-            ["status", "Состояние"],
-        ],
     };
     return (
         <div className="space-y-6">
-            <h1 className="text-3xl text-primary">Партнёрская программа</h1>
-            <p>Начисления по подтверждённым оплатам. Переводы выполняются вручную.</p>
-            <nav aria-label="Разделы партнёрской программы" className="flex flex-wrap gap-2 rounded-2xl border border-[#dfece9] bg-[#f4faf8] p-2">
+            <h1 className="text-3xl text-primary">Бонусная программа</h1>
+            <p>Бонусы за свои покупки и покупки прямых рефералов.</p>
+            <nav aria-label="Разделы бонусной программы" className="flex flex-wrap gap-2 rounded-2xl border border-[#dfece9] bg-[#f4faf8] p-2">
                 {sections.map(({ key, title, icon: Icon }) => (
                     <NavLink
                         to={`/admin/program/${key}`}
@@ -151,13 +140,13 @@ function AdminProgramSection({ tab }: { tab: string }) {
             )}
             {notice && <p role="status">{notice}</p>}
             {tab !== "settings" && (
-                <Section title={tab === "ledger" ? "Журнал комиссий" : tab === "withdrawals" ? "Выплаты" : "История действий"}>
-                    {tab === "audit" && <p className="mb-4 text-sm text-muted-foreground">Кто и когда изменил настройки, скорректировал баланс или обработал выплату. Здесь также сохраняется история вступления в команду. Свежие события — сверху.</p>}
+                <Section title={tab === "ledger" ? "Журнал бонусов" : "История действий"}>
+                    {tab === "audit" && <p className="mb-4 text-sm text-muted-foreground">Изменения настроек программы, бонусных балансов и статусов партнёров.</p>}
                     {tab === "ledger" && (
                         <ol className="list-decimal space-y-2 rounded-xl border border-border bg-secondary/40 py-4 pl-10 pr-5 text-sm leading-relaxed">
                             <li><strong>Ожидает</strong> — оплата подтверждена, но начисление ещё удерживается до доставки и окончания установленного срока.</li>
-                            <li><strong>Доступно</strong> — операция учитывается в доступном балансе. <strong>Это не означает, что деньги уже выплачены.</strong></li>
-                            <li><strong>Зарезервировано</strong> — сумма временно заблокирована, например под заявку на выплату.</li>
+                            <li><strong>Доступно</strong> — операция учитывается в доступном балансе.</li>
+                            <li><strong>Зарезервировано</strong> — бонусы временно заблокированы для заказа или возврата.</li>
                             <li><strong>Отменено</strong> — операция не учитывается в балансе.</li>
                         </ol>
                     )}
@@ -201,34 +190,12 @@ function AdminProgramSection({ tab }: { tab: string }) {
                                 if (key === "kind") return auditAction(row);
                                 if (key === "payload") return <AuditDetails row={row} />;
                             }
-                            if (tab !== "withdrawals" || key !== "status") return undefined;
-                            const state = String(row.status);
-                            const Icon = state === "paid" ? CheckCircle2 : state === "rejected" ? XCircle : Clock3;
-                            const title = ({ pending: "Ожидает", approved: "Ожидает перевода", paid: "Переведено", rejected: "Отказ" } as Record<string, string>)[state] ?? state;
-                            return <Badge tone={state === "paid" ? "green" : state === "rejected" ? "red" : "amber"} className="items-center gap-1.5 whitespace-nowrap"><Icon className="h-4 w-4" aria-hidden="true" />{title}</Badge>;
+                            return key === "amount_minor" ? bonus(row[key]) : undefined;
                         }}
-                        actions={
-                            tab === "withdrawals"
-                                ? (row) => (
-                                      <button className={buttonClass} onClick={() => setSelected(row)}>
-                                          Открыть
-                                      </button>
-                                  )
-                                : undefined
-                        }
                     />
                     </div>
                     <Pager page={page} setPage={setPage} hasMore={list.items.length === list.limit} />
                 </Section>
-            )}
-            {selected && tab === "withdrawals" && (
-                <AdminWithdrawalModal key={String(selected.id)} withdrawal={selected} onClose={() => setSelected(null)}
-                    onSave={async (body) => {
-                        await request(`${base}/withdrawals/${selected.id}`, { method: "PATCH", body });
-                        setSelected(null);
-                        setNotice("Состояние выплаты сохранено");
-                        setRevision((current) => current + 1);
-                    }} />
             )}
             {tab === "settings" && rates && (
                 <ProgramSettings key={JSON.stringify(rates)} rates={rates} busy={busy}
@@ -241,7 +208,6 @@ function AdminProgramSection({ tab }: { tab: string }) {
                         onSubmit={(e) =>
                             void form(e, `${base}/adjustments`, (f) => ({
                                 userId: num(f, "userId"),
-                                wallet: "commission",
                                 amountMinor: Math.round(num(f, "amount") * 100),
                                 reason: value(f, "reason"),
                             }))
@@ -250,8 +216,7 @@ function AdminProgramSection({ tab }: { tab: string }) {
                         <Field name="ID пользователя">
                             <input className={inputClass} name="userId" type="number" min="1" required />
                         </Field>
-                        <p className="self-center text-sm">Счёт: денежные комиссии</p>
-                        <Field name="Изменение, ₽ (минус — списание)">
+                        <Field name="Изменение, бонусы (минус — списание)">
                             <input className={inputClass} name="amount" type="number" step="0.01" required />
                         </Field>
                         <Field name="Обязательная причина">

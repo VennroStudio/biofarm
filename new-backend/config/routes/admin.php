@@ -51,9 +51,6 @@ use App\Http\Action\Admin\Setting\UpdateSettingsAction;
 use App\Http\Action\Admin\User\GetUserDetailsAction;
 use App\Http\Action\Admin\User\GetUsersAction as AdminGetUsersAction;
 use App\Http\Action\Admin\User\UpdateUserProfileAction;
-use App\Http\Action\Admin\Withdrawal\CreateWithdrawalAction;
-use App\Http\Action\Admin\Withdrawal\GetWithdrawalsAction;
-use App\Http\Action\Admin\Withdrawal\UpdateWithdrawalStatusAction;
 use App\Http\Web\Admin\AdminPageController;
 use Psr\Container\ContainerInterface;
 use Slim\App;
@@ -139,9 +136,6 @@ return static function (App $app): void {
                 $group->get('/users/{id:[0-9]+}/details', GetUserDetailsAction::class);
                 $group->patch('/users/{id}', UpdateUserProfileAction::class);
 
-                $group->get('/withdrawals', GetWithdrawalsAction::class);
-                $group->post('/withdrawals', CreateWithdrawalAction::class);
-                $group->patch('/withdrawals/{id}/status', UpdateWithdrawalStatusAction::class);
 
                 $group->patch('/reviews/{id}/approve', ApproveReviewAction::class);
                 $group->patch('/orders/{id}', UpdateOrderDetailsAction::class);

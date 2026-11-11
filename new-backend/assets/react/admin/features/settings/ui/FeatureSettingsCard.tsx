@@ -1,4 +1,4 @@
-import { FlaskConical, Heart, ShoppingCart, UserPlus, Users, Wallet } from 'lucide-react';
+import { FlaskConical, Heart, ShoppingCart, UserPlus, Users } from 'lucide-react';
 import type { ComponentType } from 'react';
 import { Card } from '../../../shared/ui';
 import type { Settings } from '../../../types';
@@ -66,13 +66,6 @@ export function FeatureSettingsCard({ settings, onChange }: Props) {
           description="Показывает партнёрский блок в профиле и начисляет реферальные бонусы только при включенных заказах."
           icon={Users}
           onToggle={() => onChange({ ...settings, referral_enabled: !settings.referral_enabled })}
-        />
-        <FeatureToggle
-          checked={settings.withdrawals_enabled}
-          label="Заявки на вывод"
-          description="Показывает вывод средств партнёрам только при включенной реферальной программе."
-          icon={Wallet}
-          onToggle={() => onChange({ ...settings, withdrawals_enabled: !settings.withdrawals_enabled })}
         />
         <FeatureToggle
           checked={settings.favorites_enabled}

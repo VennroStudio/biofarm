@@ -44,7 +44,6 @@ export function UsersTable({ users, onEdit }: Props) {
                   </span>
                   <div>
                     <p className="font-semibold">{user.name}</p>
-                    {user.is_team_member && <p className="text-xs">Команда: {user.team_partner_name}</p>}
                     {user.is_referral && <p className="text-xs">Пригласивший: {user.parent_name || user.referred_by_user_id}</p>}
                   </div>
                 </div>
@@ -55,7 +54,7 @@ export function UsersTable({ users, onEdit }: Props) {
                   {user.phone && <p className="flex items-center gap-2"><Phone className="h-3 w-3 text-[#5f7580]" />{user.phone}</p>}
                 </div>
               </TableCell>
-              <TableCell><Badge tone={user.is_partner ? 'green' : 'gray'}>{user.is_partner ? 'Партнёр' : user.is_team_member ? 'Участник команды' : user.is_referral ? 'Реферал' : 'Пользователь'}</Badge></TableCell>
+              <TableCell><Badge tone={user.is_partner ? 'green' : 'gray'}>{user.is_partner ? 'Партнёр' : user.is_referral ? 'Реферал' : 'Пользователь'}</Badge></TableCell>
               <TableCell>
                 <span className="flex items-center gap-2 text-sm text-[#5f7580]">
                   <Calendar className="h-3 w-3" />

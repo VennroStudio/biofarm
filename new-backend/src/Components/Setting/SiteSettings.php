@@ -14,7 +14,6 @@ final class SiteSettings
         'cart_enabled'                       => false,
         'registration_enabled'               => false,
         'referral_enabled'                   => false,
-        'withdrawals_enabled'                => false,
         'favorites_enabled'                  => true,
         'testing_enabled'                    => false,
         'order_bonus_enabled'                => true,
@@ -98,8 +97,6 @@ final class SiteSettings
         return match ($key) {
             'referral_enabled' => $this->rawBool('referral_enabled', $default)
                 && $this->rawBool('cart_enabled'),
-            'withdrawals_enabled' => $this->rawBool('withdrawals_enabled', $default)
-                && $this->bool('referral_enabled'),
             'order_bonus_enabled',
             'promo_codes_enabled',
             'order_emails_enabled' => $this->rawBool($key, $default)

@@ -1,9 +1,9 @@
 import { ConsentFields, formConsents } from '../../shared/ConsentFields';
-import { getReferralCode } from '../../site/referral';
+import { registrationReferralCode } from '../../site/referral';
 import { ArrowRight, Eye, EyeOff, Lock, Mail, User } from 'lucide-react';
 import { createRoot } from 'react-dom/client';
-import { type FormEvent, useMemo, useState, useEffect } from 'react';
-import { login, register, request, getToken, refreshUser } from '../../site/api';
+import { type FormEvent, useMemo, useState } from 'react';
+import { login, register } from '../../site/api';
 import { Button, Card, CardContent, CardDescription, CardHeader, Input, Label, cn } from '../../site/ui';
 
 function redirectAfterLogin() {
@@ -14,11 +14,9 @@ function redirectAfterLogin() {
 }
 
 function LoginPage({ registrationEnabled }: { registrationEnabled: boolean }) {
-  const [teamCode] = useState(() => new URLSearchParams(window.location.search).get('team') || '');
-  const [teamName, setTeamName] = useState('');
-  const [teamConsent, setTeamConsent] = useState(false);
-  const [authenticated, setAuthenticated] = useState(() => Boolean(getToken()));
-  const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [mode, setMode] = useState<'login' | 'register'>(() =>
+    registrationEnabled && new URLSearchParams(window.location.search).get('tab') === 'register' ? 'register' : 'login',
+  );
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -29,28 +27,6 @@ function LoginPage({ registrationEnabled }: { registrationEnabled: boolean }) {
   const [registerEmail, setRegisterEmail] = useState('');
   const [registerPassword, setRegisterPassword] = useState('');
   const [registerConfirm, setRegisterConfirm] = useState('');
-
-  useEffect(() => {
-    if (!teamCode) return;
-    let live = true;
-    void request<{ partnerName: string }>(`/v1/team-invitations/${encodeURIComponent(teamCode)}`)
-      .then((r) => { if (live) setTeamName(r.partnerName); })
-      .catch(() => { if (live) setError('Приглашение недействительно или партнёр больше не участвует в программе.'); });
-    return () => { live = false; };
-  }, [teamCode]);
-
-  useEffect(() => {
-    if (!teamCode || !getToken()) return;
-    let live = true;
-    void refreshUser().catch(() => { if (live && !getToken()) setAuthenticated(false); });
-    return () => { live = false; };
-  }, [teamCode]);
-
-  async function joinTeam() {
-    if (!teamName || !teamConsent) throw new Error('Подтвердите вступление в команду');
-    await request('/v1/program/join', { method: 'POST', body: { code: teamCode, consent: true } });
-    window.location.href = '/partner';
-  }
 
   const cardDescription = useMemo(
     () => (registrationEnabled ? 'Войдите или создайте аккаунт' : 'Войдите в свой аккаунт'),
@@ -65,9 +41,7 @@ function LoginPage({ registrationEnabled }: { registrationEnabled: boolean }) {
 
     try {
       await login(loginEmail, loginPassword);
-      setAuthenticated(true);
-      if (teamCode) await joinTeam();
-      else redirectAfterLogin();
+      redirectAfterLogin();
     } catch (loginError) {
       setError(loginError instanceof Error ? loginError.message : 'Проверьте email и пароль');
     } finally {
@@ -87,12 +61,9 @@ function LoginPage({ registrationEnabled }: { registrationEnabled: boolean }) {
 
     setIsLoading(true);
     try {
-      const referralCode = getReferralCode();
-      if (teamCode && (!teamName || !teamConsent)) throw new Error('Подтвердите вступление в команду');
-      await register(registerEmail, registerPassword, registerName, teamCode ? undefined : referralCode, teamCode || undefined, teamConsent, formConsents(event.currentTarget));
-      if (referralCode) {
-        window.localStorage.removeItem('referralCode');
-      }
+      const consents = formConsents(event.currentTarget);
+      const referralCode = await registrationReferralCode();
+      await register(registerEmail, registerPassword, registerName, referralCode, consents);
       setMode('login');
       setMessage('Регистрация успешна. Проверьте почту и подтвердите аккаунт перед входом.');
     } catch (registerError) {
@@ -112,18 +83,7 @@ function LoginPage({ registrationEnabled }: { registrationEnabled: boolean }) {
           </CardHeader>
 
           <CardContent className="mx-auto w-full max-w-xl">
-            {teamCode && <div className="mb-6 space-y-3 rounded-2xl border border-primary/20 bg-secondary p-5">
-              <h2 className="text-xl text-primary">Вступить в команду{teamName ? `: ${teamName}` : ''}</h2>
-              <p className="text-sm">Это приглашение стать участником команды и получать денежные комиссии за своих покупателей.</p>
-              {teamName && <label className="flex items-start gap-3 text-sm"><input type="checkbox" checked={teamConsent} onChange={(e) => setTeamConsent(e.target.checked)} />Подтверждаю вступление в команду партнёра {teamName}</label>}
-              {authenticated && <Button disabled={isLoading || !teamName || !teamConsent} onClick={() => {
-                setIsLoading(true); setError('');
-                void joinTeam().catch((e) => { if (!getToken()) setAuthenticated(false); setError(e instanceof Error ? e.message : 'Не удалось вступить'); }).finally(() => setIsLoading(false));
-              }}>Вступить в команду</Button>}
-              {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-            </div>}
-
-            {registrationEnabled && !(teamCode && authenticated) && (
+            {registrationEnabled && (
               <div className="mb-6 grid w-full grid-cols-2 rounded-xl border border-border bg-secondary p-1">
                 <button
                   className={cn('rounded-sm px-3 py-1.5 text-sm font-medium transition-colors', mode === 'login' && 'bg-background shadow-sm')}
@@ -142,7 +102,7 @@ function LoginPage({ registrationEnabled }: { registrationEnabled: boolean }) {
               </div>
             )}
 
-            {mode === 'login' && !(teamCode && authenticated) && (
+            {mode === 'login' && (
               <form className="space-y-4" onSubmit={handleLogin}>
                 <div className="space-y-2">
                   <Label htmlFor="login-email">Email</Label>
@@ -194,7 +154,7 @@ function LoginPage({ registrationEnabled }: { registrationEnabled: boolean }) {
               </form>
             )}
 
-            {registrationEnabled && mode === 'register' && !(teamCode && authenticated) && (
+            {registrationEnabled && mode === 'register' && (
               <form className="space-y-4" onSubmit={handleRegister}>
                 <div className="space-y-2">
                   <Label htmlFor="register-name">Имя</Label>

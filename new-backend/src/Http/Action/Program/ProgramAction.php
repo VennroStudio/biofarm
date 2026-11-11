@@ -32,14 +32,10 @@ final readonly class ProgramAction implements RequestHandlerInterface
         $method = $request->getMethod();
         try {
             $result = match (true) {
-                !$admin && $method === 'GET' && $part === 'team-invitation'                                                   => $this->program->teamInvite($actor),
-                !$admin && $method === 'POST' && $part === 'join'                                                             => $this->program->joinTeam($actor, (string)($body['code'] ?? ''), ($body['consent'] ?? false) === true),
-                $method === 'GET' && $part === ''                                                                             => $admin ? ['rates' => $this->program->settings(), 'withdrawals' => $this->program->listing('withdrawals', null, 1, 25), 'rateUnit' => 'basis_points', 'moneyUnit' => 'minor'] : $this->program->dashboard($actor),
+                $method === 'GET' && $part === ''                                                                             => $admin ? ['rates' => $this->program->settings(), 'rateUnit' => 'basis_points', 'moneyUnit' => 'minor'] : $this->program->dashboard($actor),
                 $method === 'GET' && $part === 'settings' && $admin                                                           => $this->program->adminSettings(),
                 $method === 'PATCH' && $part === 'settings' && $admin                                                         => $this->program->updateSettings($body, $actor),
-                $method === 'GET' && \in_array($part, ['team', 'referrals', 'ledger', 'sales', 'withdrawals', 'audit'], true) => $this->program->listing($part, $admin ? null : $actor, (int)($query['page'] ?? 1), (int)($query['limit'] ?? 25), (string)($query['sort'] ?? 'depth'), (string)($query['direction'] ?? 'asc'), isset($query['wallet']) ? (string)$query['wallet'] : null, isset($query['dateFrom']) ? (string)$query['dateFrom'] : null, isset($query['dateTo']) ? (string)$query['dateTo'] : null),
-                $method === 'POST' && $part === 'withdrawals'                                                                 => $this->program->requestWithdrawal($actor, $body['amount'] ?? '0', (array)($body['details'] ?? [])),
-                $method === 'PATCH' && str_starts_with($part, 'withdrawals/') && $admin                                       => $this->program->updateWithdrawal(Route::getArgument($request, 'id'), (string)($body['status'] ?? ''), isset($body['reference']) ? (string)$body['reference'] : null, isset($body['reason']) ? (string)$body['reason'] : null, $actor),
+                $method === 'GET' && \in_array($part, ['referrals', 'ledger', 'sales', 'audit'], true) => $this->program->listing($part, $admin ? null : $actor, (int)($query['page'] ?? 1), (int)($query['limit'] ?? 25), (string)($query['sort'] ?? 'depth'), (string)($query['direction'] ?? 'asc'), isset($query['wallet']) ? (string)$query['wallet'] : null, isset($query['dateFrom']) ? (string)$query['dateFrom'] : null, isset($query['dateTo']) ? (string)$query['dateTo'] : null),
                 $method === 'POST' && $part === 'simulate' && $admin                                                          => $this->simulate($body),
                 $method === 'POST' && str_starts_with($part, 'orders/') && $admin                                             => $this->deliver(Route::getArgument($request, 'id')),
                 $method === 'POST' && $part === 'adjustments' && $admin                                                       => $this->adjust($body, $actor),
@@ -53,7 +49,7 @@ final readonly class ProgramAction implements RequestHandlerInterface
 
     private function adjust(array $body, int $actor): array
     {
-        $this->program->adjust((int)($body['userId'] ?? 0), (string)($body['wallet'] ?? ''), (int)($body['amountMinor'] ?? 0), (string)($body['reason'] ?? ''), $actor);
+        $this->program->adjust((int)($body['userId'] ?? 0), (string)($body['wallet'] ?? 'shopping'), (int)($body['amountMinor'] ?? 0), (string)($body['reason'] ?? ''), $actor);
         return ['adjusted' => true];
     }
 

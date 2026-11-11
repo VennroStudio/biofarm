@@ -5,13 +5,11 @@ import { formatDate } from '../../../site/format';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label } from '../../../site/ui';
 
 type Props = {
-  editCardNumber: string;
   editName: string;
   editPhone: string;
   isEditing: boolean;
   onSave: (consents: FormConsents) => void;
   onStartEdit: () => void;
-  setEditCardNumber: (value: string) => void;
   setEditName: (value: string) => void;
   setEditPhone: (value: string) => void;
   user: SiteUser;

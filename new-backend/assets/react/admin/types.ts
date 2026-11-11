@@ -257,44 +257,12 @@ export type AdminCustomer = {
   name: string;
   email: string;
   phone: string | null;
-  card_number: string | null;
   bonus_balance: number;
   is_partner: boolean;
-  is_team_member: boolean;
   is_referral: boolean;
-  team_partner_name: string | null;
   referral_code: string | null;
   referred_by_user_id: number | null;
-  referrals_count: number;
-  referral_orders_total: number;
-  bonus_transactions: BonusTransaction[];
   created_at: string;
-};
-
-export type BonusTransaction = {
-  id: number;
-  amount: number;
-  type: string;
-  source_order_id: string | null;
-  source_withdrawal_id: string | null;
-  comment: string | null;
-  created_at: string;
-};
-
-export type Withdrawal = {
-  id: string;
-  user_id: number;
-  amount: number;
-  status: 'pending' | 'approved' | 'rejected';
-  processed_by: string | null;
-  processed_at: string | null;
-  created_at: string;
-  user: {
-    email: string | null;
-    name: string;
-    card_number: string | null;
-    bonus_balance: number;
-  };
 };
 
 export type Settings = {
@@ -302,7 +270,6 @@ export type Settings = {
   registration_enabled: boolean;
   cart_enabled: boolean;
   referral_enabled: boolean;
-  withdrawals_enabled: boolean;
   favorites_enabled: boolean;
   testing_enabled: boolean;
   order_bonus_enabled: boolean;
@@ -365,8 +332,6 @@ export type DashboardStats = {
   total_orders: number;
   total_revenue: number;
   total_users: number;
-  pending_withdrawals: number;
-  total_withdrawal_amount: number;
 };
 
 export type MediaAsset = {

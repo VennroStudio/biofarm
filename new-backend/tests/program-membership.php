@@ -31,14 +31,14 @@ $config->setNamingStrategy(new UnderscoreNamingStrategy());
 $em = new EntityManager($db, $config);
 new SchemaTool($em)->createSchema($em->getMetadataFactory()->getAllMetadata());
 $db->executeStatement('CREATE TABLE site_settings (`key` TEXT PRIMARY KEY, value TEXT)');
-foreach (['cart_enabled', 'referral_enabled', 'order_bonus_enabled', 'withdrawals_enabled'] as $flag) {
+foreach (['cart_enabled', 'referral_enabled', 'order_bonus_enabled'] as $flag) {
     $db->insert('site_settings', ['key' => $flag, 'value' => 'true']);
 }
 $db->executeStatement('CREATE TABLE promo_code_redemptions (order_id TEXT, promo_code_id INTEGER)');
 $db->executeStatement('CREATE TABLE payment_operations (id TEXT PRIMARY KEY, order_id TEXT, kind TEXT, status TEXT)');
 $db->executeStatement('CREATE TABLE users (id INTEGER PRIMARY KEY,first_name TEXT,last_name TEXT,email TEXT,status INTEGER DEFAULT 1,deleted_at TEXT,created_at TEXT)');
 $db->executeStatement('CREATE TABLE user_profiles (user_id INTEGER PRIMARY KEY,bonus_balance INTEGER,is_partner INTEGER,referred_by_user_id INTEGER,referral_code TEXT)');
-$db->executeStatement('CREATE TABLE orders (id TEXT PRIMARY KEY,user_id INTEGER,total INTEGER,discount_amount INTEGER,bonus_used INTEGER,delivery_cost INTEGER,payment_status TEXT,referred_by TEXT,promo_code TEXT,status TEXT,updated_at TEXT,shipping_address TEXT)');
+$db->executeStatement('CREATE TABLE orders (id TEXT PRIMARY KEY,user_id INTEGER,total INTEGER,discount_amount INTEGER,bonus_used INTEGER,delivery_cost INTEGER,payment_status TEXT,referred_by TEXT,promo_code TEXT,status TEXT,updated_at TEXT,created_at TEXT,shipping_address TEXT)');
 $db->executeStatement('CREATE TABLE order_items (id INTEGER PRIMARY KEY AUTOINCREMENT,order_id TEXT,product_id INTEGER,product_name TEXT,price INTEGER,quantity INTEGER)');
 $now = new DateTimeImmutable('2026-09-17 12:00:00', new DateTimeZone('UTC'));
 $p = new ProgramService($db, static function () use (&$now) {return $now; });
@@ -60,102 +60,54 @@ function paid($db, $p, string $id): void
     $p->settleOrder($id);
 }
 
-$p->updateSettings(['buyerBps' => 100, 'partnerDirectBps' => 100, 'partnerMemberBps' => 100, 'memberDirectBps' => 100, 'partnerTeamBps' => 50], 1);
-$invite = $p->teamInvite(1);
-fails(static fn () => $p->teamInvite(2), 'ordinary customer cannot invite team members');
-fails(static fn () => $p->joinTeam(2, $invite['code'], false), 'explicit consent required');
-$p->joinTeam(2, $invite['code'], true);
-$p->joinTeam(2, $invite['code'], true);
-check($p->identity(2)['isTeamMember'] && $p->identity(2)['teamPartnerId'] === 1, 'separate membership');
-check($db->fetchOne('SELECT referred_by_user_id FROM user_profiles WHERE user_id=2') === null, 'membership is not purchase attribution');
-$db->update('user_profiles', ['referred_by_user_id' => 2], ['user_id' => 3]);
-$db->update('user_profiles', ['referred_by_user_id' => 3], ['user_id' => 4]);
-$db->update('user_profiles', ['referred_by_user_id' => 1], ['user_id' => 5]);
-check(!$p->identity(3)['isTeamMember'] && !$p->identity(5)['isTeamMember'], 'registered referrals never become team members automatically');
-check(array_map('intval', array_column($p->listing('team', 1)['items'], 'id')) === [2], 'team contains only explicit member');
-check(array_map('intval', array_column($p->listing('referrals', 2)['items'], 'id')) === [3], 'member sees only own registered referrals');
-check(array_map('intval', array_column($p->listing('referrals', 1)['items'], 'id')) === [5], 'partner referrals exclude members and their buyers');
-fails(static fn () => $p->listing('team', 2), 'member cannot read a team');
-fails(static fn () => $p->listing('referrals', 3), 'ordinary buyer has no program tab');
-fails(static fn () => $p->requestWithdrawal(3, '1', ['bank' => 'test']), 'ordinary buyer cannot withdraw');
 function rewards($db, string $id): array
 {
     return array_map(static fn (array $r): array => [(int)$r['user_id'], $r['wallet'], $r['kind'], (int)$r['amount_minor']], $db->fetchAllAssociative('SELECT user_id,wallet,kind,amount_minor FROM program_ledger WHERE order_id=? ORDER BY user_id,kind', [$id]));
 }
-// Independent rates: each recipient uses its own setting; no total-reward cap.
-$db->beginTransaction();
-$p->updateSettings(['partnerDirectBps' => 200, 'partnerMemberBps' => 300, 'partnerTeamBps' => 50, 'memberDirectBps' => 400], 1);
+$p->updateSettings(['buyerBps' => 300, 'referralBonusBps' => 100, 'holdDays' => 14], 1);
+$db->update('user_profiles', ['referred_by_user_id' => 1], ['user_id' => 2]);
+$db->update('user_profiles', ['referred_by_user_id' => 2], ['user_id' => 3]);
 foreach ([
-    ['RATE-MEMBER', 2, [[1, 'commission', 'team', 30000], [2, 'shopping', 'buyer', 10000]]],
-    ['RATE-MEMBER-CUSTOMER', 3, [[1, 'commission', 'team', 5000], [2, 'commission', 'direct', 40000], [3, 'shopping', 'buyer', 10000]]],
-    ['RATE-PARTNER-CUSTOMER', 5, [[1, 'commission', 'direct', 20000], [5, 'shopping', 'buyer', 10000]]],
+    ['FIRST', 2, [[1, 'shopping', 'referral_bonus', 10000], [2, 'shopping', 'buyer', 30000]]],
+    ['SECOND', 3, [[2, 'shopping', 'referral_bonus', 10000], [3, 'shopping', 'buyer', 30000]]],
+    ['GUEST', null, [[1, 'shopping', 'referral_bonus', 10000]]],
 ] as [$id, $buyer, $expected]) {
     order($db, $p, $id, $buyer);
+    check(rewards($db, $id) === [], 'no rewards until confirmed payment');
     paid($db, $p, $id);
-    check(rewards($db, $id) === $expected, 'independent commission: ' . $id);
+    $p->settleOrder($id);
+    check(rewards($db, $id) === $expected, 'buyer and direct referrer rewarded once: ' . $id);
 }
-foreach ([['partner_customer', 20000, 0], ['member_purchase', 0, 30000], ['team_customer', 40000, 5000]] as [$scenario, $direct, $partner]) {
-    $result = ProgramMath::simulate(['amount' => '10000', 'scenario' => $scenario], $p->settings());
-    check($result['directMinor'] === $direct && $result['partnerMinor'] === $partner, 'simulator uses independent rates: ' . $scenario);
-    check(!array_key_exists('capMinor', $result), 'simulator has no cap');
-}
-check(!array_key_exists('capBps', $p->settings()), 'settings have no cap');
-fails(static fn () => $p->updateSettings(['capBps' => 400], 1), 'removed cap cannot be configured');
-$db->rollBack();
-order($db, $p, 'MEMBER', 2);
-paid($db, $p, 'MEMBER');
-check(rewards($db, 'MEMBER') === [[1, 'commission', 'team', 10000], [2, 'shopping', 'buyer', 10000]], 'member own purchase pays partner once');
-$item = order($db, $p, 'MEMBER-CUSTOMER', 3);
-paid($db, $p, 'MEMBER-CUSTOMER');
-paid($db, $p, 'MEMBER-CUSTOMER');
-check(rewards($db, 'MEMBER-CUSTOMER') === [[1, 'commission', 'team', 5000], [2, 'commission', 'direct', 10000], [3, 'shopping', 'buyer', 10000]], 'member customer pays member and partner once');
-order($db, $p, 'NO-CASCADE', 4);
-paid($db, $p, 'NO-CASCADE');
-check(rewards($db, 'NO-CASCADE') === [[3, 'shopping', 'referral_bonus', 10000], [4, 'shopping', 'buyer', 10000]], 'ordinary referral pays bonuses only and stops chain');
-order($db, $p, 'PARTNER-CUSTOMER', 5);
-paid($db, $p, 'PARTNER-CUSTOMER');
-check(rewards($db, 'PARTNER-CUSTOMER') === [[1, 'commission', 'direct', 10000], [5, 'shopping', 'buyer', 10000]], 'partner direct customer pays single commission');
-order($db, $p, 'REPEAT', 3);
-paid($db, $p, 'REPEAT');
-check(rewards($db, 'REPEAT') === rewards($db, 'MEMBER-CUSTOMER'), 'registered repeat purchase keeps attribution');
-order($db, $p, 'GUEST-MEMBER', null, ref: 'bf-2');
-paid($db, $p, 'GUEST-MEMBER');
-check(rewards($db, 'GUEST-MEMBER') === [[1, 'commission', 'team', 5000], [2, 'commission', 'direct', 10000]], 'guest gives member and partner cash without buyer cashback');
-order($db, $p, 'GUEST-ORDINARY', null, ref: 'bf-3');
-paid($db, $p, 'GUEST-ORDINARY');
-check(rewards($db, 'GUEST-ORDINARY') === [[3, 'shopping', 'referral_bonus', 10000]], 'ordinary referrer gets only shopping bonuses for guest');
-$db->update('site_settings', ['value' => 'false'], ['key' => 'order_bonus_enabled']);
-order($db, $p, 'REFERRAL-NO-CASHBACK', 4);
-paid($db, $p, 'REFERRAL-NO-CASHBACK');
-check(rewards($db, 'REFERRAL-NO-CASHBACK') === [[3, 'shopping', 'referral_bonus', 10000]], 'own cashback flag does not disable referral bonuses');
-$db->update('site_settings', ['value' => 'true'], ['key' => 'order_bonus_enabled']);
-$p->deliverOrder('MEMBER-CUSTOMER');
-$now = $now->modify('+15 days');
-check($p->dashboard(2)['balances']['commission']['availableMinor'] === 10000, 'hold releases member money');
-$p->reserveRefund('MEMBER-CUSTOMER', 'refund-member', [['itemId' => $item, 'quantity' => 1]], true);
-$p->completeRefund('refund-member');
-check((int)$db->fetchOne("SELECT SUM(amount_minor) FROM program_ledger WHERE order_id='MEMBER-CUSTOMER'") === 0, 'refund reverses all recipients');
-$p->setPartnerStatus(2, true, 1, 'promotion');
-check(!$p->identity(2)['isTeamMember'] && $p->identity(2)['isPartner'], 'promotion removes membership');
-order($db, $p, 'PROMOTED', 3);
-paid($db, $p, 'PROMOTED');
-check(rewards($db, 'PROMOTED') === [[2, 'commission', 'direct', 10000], [3, 'shopping', 'buyer', 10000]], 'promoted partner keeps customers without old partner reward');
-$sim = ProgramMath::simulate(['amount' => '10000', 'scenario' => 'team_customer'], ProgramMath::rules(['buyerBps' => 100, 'partnerDirectBps' => 100, 'partnerMemberBps' => 100, 'memberDirectBps' => 100, 'partnerTeamBps' => 50]));
-check($sim['partnerMinor'] === 5000 && $sim['directMinor'] === 10000 && $sim['totalMinor'] === 25000, 'member customer earns one percent and partner half percent');
-$own = ProgramMath::simulate(['amount' => '10000', 'scenario' => 'member_purchase'], ProgramMath::rules(['buyerBps' => 100, 'partnerDirectBps' => 100, 'partnerMemberBps' => 100, 'memberDirectBps' => 100, 'partnerTeamBps' => 50]));
-check($own['partnerMinor'] === 10000, 'member own purchase keeps one percent in simulator');
-check(ProgramMath::rules(['memberDirectBps' => 600])['memberDirectBps'] === 600, 'no aggregate reward cap');
-// Leaving the program stops new cash rewards, never confiscates earned cash.
-$p->adjust(2, 'commission', 50000, 'earned balance fixture', 1);
-$p->setPartnerStatus(2, false, 1, 'demotion');
-check(!$p->identity(2)['canEarnCommission'] && $p->identity(2)['hasCommissionHistory'], 'former participant retains history access');
-check(count($p->listing('ledger', 2, wallet: 'commission')['items']) > 0, 'former participant can read own cash history');
-$p->requestWithdrawal(2, '100', ['recipient' => 'fixture']);
-fails(static fn () => $p->listing('referrals', 2), 'former participant cannot use active program');
-$p->joinTeam(6, $invite['code'], true);
-$p->adjust(6, 'commission', 50000, 'earned member balance', 1);
-$p->setPartnerStatus(1, false, 1, 'partner demotion');
-check(!$p->identity(6)['isTeamMember'], 'demotion ends membership');
-$p->requestWithdrawal(6, '100', ['recipient' => 'fixture']);
-check(ProgramMath::rules([], ['levelsBps' => [0, 0], 'partnerBps' => 0, 'buyerBps' => 0, 'capBps' => 0])['referralBonusBps'] === 0, 'legacy disabled rewards remain valid');
-echo "program-membership: all assertions passed\n";
+check($p->dashboard(2)['balances']['shopping']['pendingMinor'] === 40000, 'own and invited purchases share a wallet');
+check($p->dashboard(2)['bonusExpiry']['nextExpiryAt'] === null, 'undelivered bonuses have no expiry');
+$now = new DateTimeImmutable('2027-01-17 12:00:00', new DateTimeZone('UTC'));
+$p->deliverOrder('FIRST');
+$p->deliverOrder('SECOND');
+check($p->dashboard(2)['balances']['shopping']['availableMinor'] === 0, 'delivery does not skip hold');
+$now = new DateTimeImmutable('2027-01-31 12:00:00', new DateTimeZone('UTC'));
+$balance = $p->dashboard(2);
+check($balance['balances']['shopping']['availableMinor'] === 40000, 'bonuses released after hold');
+check($balance['bonusExpiry']['nextExpiryAt'] === '2027-02-28 12:00:00', 'expires a calendar month after release');
+$now = new DateTimeImmutable('2027-02-28 11:59:59', new DateTimeZone('UTC'));
+check($p->shoppingAvailable(2) === 40000, 'available until expiry');
+$now = $now->modify('+1 second');
+check($p->shoppingAvailable(2) === 0 && $p->shoppingAvailable(2) === 0, 'expiry exact and repeatable');
+
+$p->setPartnerStatus(2, true, 1, 'fixture');
+check($p->identity(2)['isPartner'] && $p->identity(2)['isReferral'], 'promotion preserves the inviter');
+order($db, $p, 'LEGACY', 2);
+$snapshot = json_decode($db->fetchOne("SELECT snapshot FROM program_orders WHERE id='LEGACY'"), true);
+$snapshot['modelVersion'] = 2;
+$snapshot['recipients'][1]['wallet'] = 'commission';
+$snapshot['recipients'][1]['kind'] = 'direct';
+$snapshot['items'][0]['rewards'][1]['wallet'] = 'commission';
+$snapshot['items'][0]['rewards'][1]['kind'] = 'direct';
+$db->update('program_orders', ['snapshot' => json_encode($snapshot)], ['id' => 'LEGACY']);
+$p->updateSettings(['referralBonusBps' => 500], 1);
+paid($db, $p, 'LEGACY');
+check(rewards($db, 'LEGACY') === [[1, 'shopping', 'referral_bonus', 10000], [2, 'shopping', 'buyer', 30000]], 'pending legacy orders use saved rates and issue only bonuses');
+fails(static fn () => $p->adjust(2, 'commission', 500, 'fixture', 1), 'cash adjustments unavailable');
+fails(static fn () => $p->listing('sales', 3), 'partner order history restricted');
+check(array_map('intval', array_column($p->listing('referrals', 1)['items'], 'id')) === [2], 'direct referral stays visible after promotion');
+check(ProgramMath::rules([], ['levelsBps' => [0, 0]])['referralBonusBps'] === 0, 'legacy disabled rewards remain disabled');
+echo "program-referrals: all assertions passed\n";

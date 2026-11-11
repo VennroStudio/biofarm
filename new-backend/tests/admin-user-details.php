@@ -28,35 +28,32 @@ for ($id = 1; $id <= 5; ++$id) {
     $db->insert('user_profiles', ['user_id'=>$id,'is_partner'=> $id === 1 ? 1 : 0,'bonus_balance'=>0,'referral_code'=>'ref-'.$id,'referred_by_user_id'=>$id >= 2 ? 1 : null]);
 }
 $db->executeStatement('CREATE TABLE site_settings (`key` TEXT PRIMARY KEY,value TEXT)');
-foreach (['cart_enabled','referral_enabled','withdrawals_enabled'] as $flag) $db->insert('site_settings',['key'=>$flag,'value'=>'true']);
+foreach (['cart_enabled','referral_enabled'] as $flag) $db->insert('site_settings',['key'=>$flag,'value'=>'true']);
 $program = new ProgramService($db);
 $details = new AdminUserDetails($db, $program);
-$program->joinTeam(2, $program->teamInvite(1)['code'], true);
+$db->update('user_profiles',['referred_by_user_id'=>3],['user_id'=>2]);
 $db->update('user_profiles',['is_partner'=>1],['user_id'=>4]);
 $db->update('users',['deleted_at'=>'2026-09-18'],['id'=>5]);
-check(array_map('intval',array_column($details->get(1,'team')['items'],'id')) === [2], 'Only explicit member in team');
-check(array_map('intval',array_column($details->get(1,'referrals')['items'],'id')) === [3], 'Members, partners and deleted users excluded from referrals');
+$referrals = array_map('intval', array_column($details->get(1,'referrals')['items'],'id'));
+sort($referrals);
+check($referrals === [3, 4], 'Only direct referrals, including partners, are listed');
 for ($i=1; $i<=21; ++$i) $db->insert('orders',['id'=>'mine-'.$i,'user_id'=>3,'total'=>1000,'payment_status'=>$i===1?'completed':'pending','created_at'=>'2026-09-18 10:00:00']);
 $db->insert('orders',['id'=>'other','user_id'=>2,'total'=>9999,'payment_status'=>'completed']);
 $db->insert('orders',['id'=>'guest','user_id'=>null,'total'=>9999,'payment_status'=>'completed']);
 $first=$details->get(3,'orders'); $second=$details->get(3,'orders',2);
 check($first['count']===21 && count($first['items'])===20 && count($second['items'])===1,'Pagination scoped to user');
 check(count(array_intersect(array_column($first['items'],'id'),array_column($second['items'],'id')))===0,'Stable pagination without duplicates');
-$ref=$details->get(1,'referrals')['items'][0];
+$ref = array_values(array_filter($details->get(1,'referrals')['items'], static fn ($row) => (int)$row['id'] === 3))[0];
 check((int)$ref['orders_count']===21 && (int)$ref['paid_total']===1000,'Only paid personal orders included in total');
-$program->adjust(1,'commission',15000,'fixture',1);
 $program->adjust(1,'shopping',700,'fixture',1);
-$program->adjust(2,'commission',99900,'fixture',1);
-$commission=$details->get(1,'commission');
-check($commission['balances']['commission']['availableMinor']===15000 && $commission['balances']['shopping']['availableMinor']===700,'Balances separated, in kopecks');
-check(count($commission['items'])===1 && (int)$commission['items'][0]['amount_minor']===15000,'Commission rows isolated from shopping and other users');
-$program->requestWithdrawal(1,'100',['recipient'=>'User 1','bank'=>'Test','account'=>'fixture']);
-check(count($details->get(1,'withdrawals')['items'])===1 && count($details->get(2,'withdrawals')['items'])===0,'Withdrawals scoped');
-check($details->get(1,'commission')['balances']['commission']['reservedMinor']===10000,'Payout reservation displayed');
+$program->adjust(2,'shopping',99900,'fixture',1);
+$shopping = $details->get(1,'shopping');
+check(array_keys($shopping['balances']) === ['shopping'] && $shopping['balances']['shopping']['availableMinor']===700,'Single shopping balance');
+check(count($shopping['items'])===1 && (int)$shopping['items'][0]['amount_minor']===700,'Bonus rows isolated from other users');
 $db->insert('user_addresses',['id'=>1,'user_id'=>1,'label'=>'Home','is_default'=>1]);
 $db->insert('user_addresses',['id'=>2,'user_id'=>2,'label'=>'Other','is_default'=>1]);
 check(array_column($details->get(1)['items'],'label')===['Home'],'Addresses scoped');
-foreach ([[1,'invalid'],[999,'profile'],[5,'profile']] as [$id,$section]) {
+foreach ([[1,'invalid'],[1,'team'],[1,'commission'],[1,'withdrawals'],[999,'profile'],[5,'profile']] as [$id,$section]) {
     try { $details->get($id,$section); throw new RuntimeException('Expected rejection'); }
     catch (DomainExceptionModule $e) { check(in_array($e->getStatus(),[404,422],true),'Expected 404 or 422'); }
 }

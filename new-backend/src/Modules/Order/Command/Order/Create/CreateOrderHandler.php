@@ -156,9 +156,6 @@ final readonly class CreateOrderHandler
         }
 
         $profile = $command->userId === null ? null : $this->profileRepository->findByUserId($command->userId);
-        if ($profile?->isPartner) {
-            return null;
-        }
         if ($profile?->referredByUserId !== null) {
             $referrerProfile = $this->profileRepository->findByUserId($profile->referredByUserId);
             return $referrerProfile?->referralCode ?: (string)$profile->referredByUserId;

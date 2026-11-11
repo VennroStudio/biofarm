@@ -59,7 +59,7 @@ final readonly class UpdateMeAction implements RequestHandlerInterface
 
         $profile->edit(
             phone: $this->stringValue($payload, 'phone') ?? $profile->phone,
-            cardNumber: $this->stringValue($payload, 'cardNumber', 'card_number') ?? $profile->cardNumber,
+            cardNumber: $profile->cardNumber,
             isPartner: $profile->isPartner,
             referralCode: $profile->referralCode ?? 'bf-' . $identity->id,
             referredByUserId: $profile->referredByUserId,

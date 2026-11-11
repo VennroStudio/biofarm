@@ -24,7 +24,6 @@ use App\Modules\User\Service\PasswordHasherService;
 use App\Modules\User\Service\TokenHasherService;
 use DateMalformedStringException;
 use Doctrine\DBAL\Exception;
-use DomainException;
 use Random\RandomException;
 use RuntimeException;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
@@ -63,17 +62,8 @@ final readonly class CreateUserHandler
         $this->assertEmailNotRegistered($email);
 
         $user = $this->program->atomic(function () use ($command, $email, $onCreated): User {
-            if ($command->teamInvitation !== null) {
-                $this->program->teamInvitation($command->teamInvitation);
-                if (!$command->teamConsent) {
-                    throw new DomainException('Подтвердите вступление в команду');
-                }
-            }
             $user = $this->createUser($command, $email);
-            $this->createUserProfile((int)$user->id, $command->teamInvitation === null ? $command->referredBy : null);
-            if ($command->teamInvitation !== null) {
-                $this->program->joinTeam((int)$user->id, $command->teamInvitation, $command->teamConsent);
-            }
+            $this->createUserProfile((int)$user->id, $command->referredBy);
             if ($onCreated !== null) $onCreated((int)$user->id);
             return $user;
         });

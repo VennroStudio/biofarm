@@ -5,7 +5,7 @@ const settings: Record<string, string> = {
   partnerMemberBps: 'Партнёру с личных покупок участника команды',
   partnerTeamBps: 'Партнёру с покупок реферала участника команды',
   memberDirectBps: 'Участнику команды с покупок своего реферала',
-  referralBonusBps: 'Бонусы за приглашённого покупателя',
+  referralBonusBps: 'Бонусы за покупку приглашённого',
   buyerBps: 'Бонусы за собственную покупку',
   bonusSpendLimitPercent: 'Лимит списания бонусов',
   holdDays: 'Удержание после доставки',
@@ -34,7 +34,7 @@ export function auditAction(row: Row): string {
     case 'adjustment': return `Изменён баланс: ${nameOf(row, p.userId)}`;
     case 'withdrawal': return `${statuses[String(p.status)] ?? 'Изменён статус выплаты'}: ${nameOf(row, row.withdrawal_user_id)}`;
     case 'partner_status': return `${p.isPartner ? 'Назначен партнёром' : 'Снят статус партнёра'}: ${nameOf(row, p.userId)}`;
-    case 'referral_attached': return `Закреплён пригласивший за покупателем: ${nameOf(row, p.userId)}`;
+    case 'referral_attached': return `Указан пригласивший для пользователя ${nameOf(row, p.userId)}`;
     case 'demo_seed': return 'Подготовлены тестовые данные';
     default: return 'Служебное событие';
   }
@@ -66,13 +66,13 @@ export function AuditDetails({ row }: { row: Row }) {
     }
     if (row.kind === 'adjustment') {
       add('Получатель', nameOf(row, p.userId));
-      add('Счёт', p.wallet === 'commission' ? 'Денежные комиссии' : p.wallet === 'shopping' ? 'Покупательские бонусы' : p.wallet);
+      add('Счёт', p.wallet === 'commission' ? 'Денежные комиссии' : p.wallet === 'shopping' ? 'Бонусный баланс' : p.wallet);
       add('Изменение баланса', `${Number(p.amountMinor) > 0 ? '+' : ''}${money(p.amountMinor)}`);
     }
     if (row.kind === 'team_joined') add('Партнёр', nameOf(row, p.partnerId));
     if (row.kind === 'partner_status') add('Пользователь', nameOf(row, p.userId));
     if (row.kind === 'referral_attached') {
-      add('Покупатель', nameOf(row, p.userId)); add('Пригласивший', nameOf(row, p.parentId)); add('Заказ', p.orderId);
+      add('Приглашённый', nameOf(row, p.userId)); add('Пригласивший', nameOf(row, p.parentId)); add('Заказ', p.orderId);
     }
     if (row.kind === 'demo_seed') {
       if (Array.isArray(p.orders)) add('Тестовые заказы', p.orders.join(', '));

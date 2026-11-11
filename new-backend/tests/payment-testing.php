@@ -51,18 +51,18 @@ check(!$payments->completeCheckoutForTesting('disabled'), 'Disabled mode does no
 check($db->fetchOne("SELECT payment_status FROM orders WHERE id='disabled'") === 'pending', 'Normal order stays pending');
 $db->insert('site_settings',['key'=>'testing_enabled','value'=>'{"value":true}']);
 foreach ([null,2] as $buyer) {
-    $id=$buyer===null?'guest':'member';$fixture($id,$buyer);
+    $id=$buyer===null?'guest':'registered';$fixture($id,$buyer);
     check($payments->completeCheckoutForTesting($id), 'Testing completes checkout');
     $state=$payments->status($id);
     check($state['orderPaymentStatus']==='completed' && $state['status']==='succeeded' && $state['confirmationUrl']===null, 'Same success state without redirect');
     check($db->fetchOne('SELECT paid_at FROM orders WHERE id=?',[$id])!==null, 'Payment timestamp recorded');
-    check((int)$db->fetchOne("SELECT SUM(amount_minor) FROM program_ledger WHERE order_id=? AND wallet='commission'",[$id])===10000, 'Partner receives 1% of goods, delivery excluded');
+    check((int)$db->fetchOne("SELECT SUM(amount_minor) FROM program_ledger WHERE order_id=? AND wallet='shopping' AND kind='referral_bonus'",[$id])===10000, 'Partner receives 1% of goods, delivery excluded');
     $count=(int)$db->fetchOne('SELECT COUNT(*) FROM program_ledger WHERE order_id=?',[$id]);
     $payments->completeCheckoutForTesting($id);$payments->start($id);
     check((int)$db->fetchOne('SELECT COUNT(*) FROM program_ledger WHERE order_id=?',[$id])===$count, 'Retries do not duplicate rewards');
     check((int)$db->fetchOne('SELECT COUNT(*) FROM payment_operations WHERE order_id=?',[$id])===1, 'Only one payment');
 }
-check((int)$db->fetchOne("SELECT SUM(amount_minor) FROM program_ledger WHERE order_id='member' AND wallet='shopping'")===30000, 'Registered buyer receives normal shopping bonus');
+check((int)$db->fetchOne("SELECT SUM(amount_minor) FROM program_ledger WHERE order_id='registered' AND wallet='shopping' AND kind='buyer'")===30000, 'Registered buyer receives normal shopping bonus');
 $fixture('cancelled');$db->update('orders',['status'=>'cancelled'],['id'=>'cancelled']);
 check(($payments->status('cancelled')['orderStatus'] ?? null) === 'cancelled', 'Return page receives authoritative order cancellation');
 try {$payments->completeCheckoutForTesting('cancelled');throw new RuntimeException('Cancelled order must reject');} catch (DomainExceptionModule) {}

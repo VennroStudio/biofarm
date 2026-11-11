@@ -3,7 +3,7 @@
 
 declare(strict_types=1);
 
-// Persistent local demonstration. Successful orders and commissions remain visible in the UI.
+// Persistent local demonstration. Successful orders and bonuses remain visible in the UI.
 use App\Components\Integration\Bitrix24\Bitrix24CrmSettings;
 use App\Modules\Payment\Service\YooKassaGateway;
 use App\Modules\Program\Service\ProgramService;
@@ -77,10 +77,10 @@ if (!$orderId) {
         $provider[$providerId]['paid'] = true;
         $notification = ['event' => 'payment.succeeded', 'object' => ['id' => $providerId]];
         $call('POST', '/webhooks/yookassa', $notification);
-        $reward = (int)$db->fetchOne('SELECT SUM(amount_minor) FROM program_ledger WHERE order_id=? AND user_id=? AND wallet="commission"', [$id, $partner]);
-        if ($reward <= 0) throw new RuntimeException('Partner commission is missing');
+        $reward = (int)$db->fetchOne('SELECT SUM(amount_minor) FROM program_ledger WHERE order_id=? AND user_id=? AND wallet="shopping" AND kind="referral_bonus"', [$id, $partner]);
+        if ($reward <= 0) throw new RuntimeException('Partner referral bonus is missing');
         $call('POST', '/webhooks/yookassa', $notification);
-        if ($reward !== (int)$db->fetchOne('SELECT SUM(amount_minor) FROM program_ledger WHERE order_id=? AND user_id=? AND wallet="commission"', [$id, $partner])) throw new RuntimeException('Duplicate commission');
+        if ($reward !== (int)$db->fetchOne('SELECT SUM(amount_minor) FROM program_ledger WHERE order_id=? AND user_id=? AND wallet="shopping" AND kind="referral_bonus"', [$id, $partner])) throw new RuntimeException('Duplicate commission');
         if ($usersBefore !== (int)$db->fetchOne('SELECT COUNT(*) FROM users')) throw new RuntimeException('Guest unexpectedly registered');
         return $id;
     });
@@ -89,7 +89,7 @@ $program = $c->get(ProgramService::class);
 $report = [
     'persisted' => true, 'paymentSimulated' => true, 'partnerEmail' => 'demo-partner@biofarm.example.test',
     'order' => $db->fetchAssociative('SELECT id,user_id,subtotal,delivery_cost,total,payment_status,status FROM orders WHERE id=?', [$orderId]),
-    'commissions' => $db->fetchAllAssociative('SELECT kind,amount_minor,state FROM program_ledger WHERE order_id=? AND user_id=?', [$orderId, $partner]),
-    'balances' => $program->dashboard($partner)['balances']['commission'],
+    'bonuses' => $db->fetchAllAssociative('SELECT kind,amount_minor,state FROM program_ledger WHERE order_id=? AND user_id=?', [$orderId, $partner]),
+    'balances' => $program->dashboard($partner)['balances']['shopping'],
 ];
 echo json_encode($report, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) . "\n";

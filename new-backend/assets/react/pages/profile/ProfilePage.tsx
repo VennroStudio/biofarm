@@ -1,5 +1,5 @@
 import type { FormConsents } from '../../shared/ConsentFields';
-import { Gift, Heart, LogOut, MapPin, Package, User } from 'lucide-react';
+import { Gift, Heart, LogOut, MapPin, Package, ReceiptText, ShoppingBasket, User, UserPlus } from 'lucide-react';
 import { createRoot } from 'react-dom/client';
 import { useCallback, useEffect, useState } from 'react';
 import {
@@ -24,8 +24,10 @@ import { Button } from '../../site/ui';
 import { BonusPanel } from './components/BonusPanel';
 import { AddressesPanel } from './components/AddressesPanel';
 import { FavoritesPanel } from './components/FavoritesPanel';
+import { InvitationsPanel } from './components/InvitationsPanel';
 import { OrderDetailsDialog } from './components/OrderDetailsDialog';
 import { OrdersPanel } from './components/OrdersPanel';
+import { PartnerHistoryPanel } from './components/PartnerHistoryPanel';
 import { ProfileDetailsCard } from './components/ProfileDetailsCard';
 import { TabButton, TabList, TabPanel } from './components/ProfileTabs';
 import type { ProfileTab } from './types';
@@ -34,24 +36,33 @@ function messageFromError(error: unknown, fallback: string): string {
   return error instanceof Error && error.message ? error.message : fallback;
 }
 
+function initialTab(): ProfileTab {
+  const tab = new URLSearchParams(window.location.search).get('tab');
+  return tab === 'invitations' || tab === 'partner-orders' || tab === 'partner-carts' ? tab : 'profile';
+}
+
+function redirectToLogin() {
+  const destination = window.location.pathname + window.location.search;
+  window.location.href = `/login?redirect=${encodeURIComponent(destination)}`;
+}
+
 type ProfilePageProps = {
   cartEnabled: boolean;
   favoritesEnabled: boolean;
   referralEnabled: boolean;
-  withdrawalsEnabled: boolean;
+  referralBonusPercent: number;
 };
 
-function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, withdrawalsEnabled }: ProfilePageProps) {
+function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, referralBonusPercent }: ProfilePageProps) {
   const [user, setUser] = useState<SiteUser | null>(() => getStoredUser());
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<ProfileTab>('profile');
+  const [selectedTab, setTab] = useState<ProfileTab>(initialTab);
   const [orders, setOrders] = useState<SiteOrder[]>([]);
   const [addresses, setAddresses] = useState<UserAddress[]>([]);
   const [favorites, setFavorites] = useState<FavoriteProduct[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(user?.name || '');
   const [editPhone, setEditPhone] = useState(user?.phone || '');
-  const [editCardNumber, setEditCardNumber] = useState(user?.cardNumber || '');
   const [selectedOrder, setSelectedOrder] = useState<SiteOrder | null>(null);
   const [notice, setNotice] = useState('');
 
@@ -59,7 +70,7 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, withdrawa
 
   useEffect(() => {
     if (!getToken()) {
-      window.location.href = '/login?redirect=/profile';
+      redirectToLogin();
       return;
     }
 
@@ -70,14 +81,13 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, withdrawa
     ])
       .then(async ([freshUser, loadedOrders, loadedAddresses]) => {
         if (!freshUser) {
-          window.location.href = '/login?redirect=/profile';
+          redirectToLogin();
           return;
         }
 
         setUser(freshUser);
         setEditName(freshUser.name);
         setEditPhone(freshUser.phone || '');
-        setEditCardNumber(freshUser.cardNumber || '');
         setOrders(loadedOrders);
         setAddresses(loadedAddresses);
 
@@ -85,19 +95,17 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, withdrawa
           await loadFavoriteIds();
           setFavorites(await getFavorites());
         }
-
-
       })
       .catch((error: unknown) => {
         if (!getToken()) {
-          window.location.href = '/login?redirect=/profile';
+          redirectToLogin();
           return;
         }
         console.error('Failed to load profile page', error);
         setNotice(messageFromError(error, 'Не удалось загрузить личный кабинет'));
       })
       .finally(() => setLoading(false));
-  }, [cartEnabled, favoritesEnabled, referralEnabled, withdrawalsEnabled]);
+  }, [cartEnabled, favoritesEnabled]);
 
   function handleLogout() {
     clearAuth();
@@ -160,6 +168,12 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, withdrawa
     return null;
   }
 
+  const partnerTabsEnabled = referralEnabled && user.isPartner;
+  const partnerTabSelected = selectedTab === 'partner-orders' || selectedTab === 'partner-carts';
+  const tab = (partnerTabSelected && !partnerTabsEnabled) || (selectedTab === 'invitations' && !referralEnabled)
+    ? 'profile'
+    : selectedTab;
+
   return (
     <section className="bg-secondary/30 pb-10 pt-[120px] md:pb-12 md:pt-[128px]">
       <div className="container mx-auto px-4 sm:px-6">
@@ -199,32 +213,47 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, withdrawa
                 <Gift className="h-4 w-4" />
                 <span>Мои бонусы</span>
               </TabButton>
+              {referralEnabled && (
+                <TabButton active={tab === 'invitations'} controls="invitations-tabpanel" id="invitations-tab" onClick={() => setTab('invitations')}>
+                  <UserPlus className="h-4 w-4" aria-hidden="true" />
+                  <span>Приглашения</span>
+                </TabButton>
+              )}
               {favoritesEnabled && (
                 <TabButton active={tab === 'favorites'} controls="favorites-tabpanel" id="favorites-tab" onClick={() => setTab('favorites')}>
                   <Heart className="h-4 w-4" />
                   <span>Избранное</span>
                 </TabButton>
               )}
+              {partnerTabsEnabled && (
+                <>
+                  <TabButton active={tab === 'partner-orders'} controls="partner-orders-tabpanel" id="partner-orders-tab" onClick={() => setTab('partner-orders')}>
+                    <ReceiptText className="h-4 w-4" aria-hidden="true" />
+                    <span>Реферальные заказы</span>
+                  </TabButton>
+                  <TabButton active={tab === 'partner-carts'} controls="partner-carts-tabpanel" id="partner-carts-tab" onClick={() => setTab('partner-carts')}>
+                    <ShoppingBasket className="h-4 w-4" aria-hidden="true" />
+                    <span>История корзин</span>
+                  </TabButton>
+                </>
+              )}
             </TabList>
-            {referralEnabled && (user.isPartner || user.isTeamMember || user.hasCommissionHistory) && (
-              <a href="/partner" className="flex items-center gap-3 rounded-2xl border border-border bg-white px-5 py-4 text-sm font-medium text-primary hover:bg-secondary focus-visible:outline-primary">
-                <Gift className="h-4 w-4 shrink-0" />
-                <span>{user.isPartner ? 'Кабинет партнёра' : user.isTeamMember ? 'Кабинет участника команды' : 'Начисления и выплаты'} →</span>
-              </a>
-            )}
           </div>
 
           <div className="min-w-0">
             <TabPanel active={tab === 'bonuses'} id="bonuses-tabpanel" labelledBy="bonuses-tab">
-              {tab === 'bonuses' && <BonusPanel referralEnabled={referralEnabled} />}
+              {tab === 'bonuses' && <BonusPanel />}
             </TabPanel>
+            {referralEnabled && (
+              <TabPanel active={tab === 'invitations'} id="invitations-tabpanel" labelledBy="invitations-tab">
+                {tab === 'invitations' && <InvitationsPanel referralCode={user.referralCode} bonusPercent={referralBonusPercent} />}
+              </TabPanel>
+            )}
             <TabPanel active={tab === 'profile'} id="profile-tabpanel" labelledBy="profile-tab">
                 <ProfileDetailsCard
-                  editCardNumber={editCardNumber}
                   editName={editName}
                   editPhone={editPhone}
                   isEditing={isEditing}
-                  setEditCardNumber={setEditCardNumber}
                   setEditName={setEditName}
                   setEditPhone={setEditPhone}
                   user={user}
@@ -255,6 +284,17 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, withdrawa
                 <FavoritesPanel favorites={favorites} onRemove={(product) => void handleRemoveFavorite(product)} />
               </TabPanel>
             )}
+
+            {partnerTabsEnabled && (
+              <>
+                <TabPanel active={tab === 'partner-orders'} id="partner-orders-tabpanel" labelledBy="partner-orders-tab">
+                  {tab === 'partner-orders' && <PartnerHistoryPanel kind="sales" />}
+                </TabPanel>
+                <TabPanel active={tab === 'partner-carts'} id="partner-carts-tabpanel" labelledBy="partner-carts-tab">
+                  {tab === 'partner-carts' && <PartnerHistoryPanel kind="offers" />}
+                </TabPanel>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -275,7 +315,7 @@ export function mountProfilePage() {
         cartEnabled={root.dataset.cartEnabled !== 'false'}
         favoritesEnabled={root.dataset.favoritesEnabled !== 'false'}
         referralEnabled={root.dataset.referralEnabled !== 'false'}
-        withdrawalsEnabled={root.dataset.withdrawalsEnabled !== 'false'}
+        referralBonusPercent={Number(root.dataset.referralBonusPercent ?? 1)}
       />,
     );
   });

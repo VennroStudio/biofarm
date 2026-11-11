@@ -50,7 +50,6 @@ final readonly class GetMeAction implements RequestHandlerInterface
                 'u.avatar',
                 'u.created_at',
                 'up.phone',
-                'up.card_number',
                 'COALESCE(up.bonus_balance, 0) AS bonus_balance',
                 'COALESCE(up.is_partner, 0) AS is_partner',
                 'up.referral_code',
@@ -69,7 +68,6 @@ final readonly class GetMeAction implements RequestHandlerInterface
             return [];
         }
 
-        $programIdentity = $this->program->identity($userId);
         return [
             'id'                     => (int)$row['id'],
             'role'                   => (int)$row['role'],
@@ -80,11 +78,8 @@ final readonly class GetMeAction implements RequestHandlerInterface
             'email'                  => (string)$row['email'],
             'avatar'                 => $row['avatar'],
             'phone'                  => $row['phone'],
-            'card_number'            => $row['card_number'],
             'bonus_balance'          => (int)$row['bonus_balance'],
             'is_partner'             => (bool)(int)$row['is_partner'],
-            'has_commission_history' => $programIdentity['hasCommissionHistory'],
-            'is_team_member'         => $programIdentity['isTeamMember'],
             'referral_code'          => $row['referral_code'],
             'referred_by_user_id'    => $row['referred_by_user_id'] !== null ? (int)$row['referred_by_user_id'] : null,
             'created_at'             => (string)$row['created_at'],

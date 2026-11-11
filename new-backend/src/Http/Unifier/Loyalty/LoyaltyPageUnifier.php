@@ -33,7 +33,7 @@ final readonly class LoyaltyPageUnifier
             'loyalty',
             '/loyalnost',
             'Бонусная программа — БИОФАРМ',
-            'Бонусы, промокоды и реферальная программа БИОФАРМ для покупателей.',
+            'Бонусы за свои покупки и покупки приглашённых, промокоды и условия программы БИОФАРМ.',
         );
 
         if ($items !== []) {
@@ -52,7 +52,6 @@ final readonly class LoyaltyPageUnifier
             welcomeBonusEnabled: false,
             welcomeBonusAmount: $this->settings->int('welcome_bonus_amount'),
             freeDeliveryThreshold: $this->settings->int('free_delivery_threshold'),
-            withdrawalsEnabled: $this->settings->bool('withdrawals_enabled'),
             faqItems: $items,
             programRules: $this->program->settings(),
         );

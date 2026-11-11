@@ -75,7 +75,7 @@ final readonly class UpdateUserProfileAction implements RequestHandlerInterface
         $partnerChanged = $partner !== $profile->isPartner;
         $profile->edit(
             phone: $this->nullableString($this->payloadValue($payload, 'phone', 'phone', $profile->phone)),
-            cardNumber: $this->nullableString($this->payloadValue($payload, 'cardNumber', 'card_number', $profile->cardNumber)),
+            cardNumber: $profile->cardNumber,
             isPartner: $profile->isPartner,
             referralCode: $referralCode,
             referredByUserId: $profile->referredByUserId,

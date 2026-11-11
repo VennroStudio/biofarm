@@ -28,10 +28,11 @@ final readonly class LegalPageController implements RequestHandlerInterface
     {
         $slug = trim($request->getUri()->getPath(), '/');
         $title = self::PAGES[$slug];
+        $edition = $slug === 'bonus-rules' ? '12.11.2026' : '04.10.2026';
         return $this->html->render('pages/legal/document.html.twig', [
             'documentSlug' => $slug,
             'documentTitle' => $title,
-            'page' => new StaticPageView($this->seo->systemMeta($slug, '/' . $slug, $title . ' — БИОФАРМ', $title . '. Редакция от 04.10.2026.')),
+            'page' => new StaticPageView($this->seo->systemMeta($slug, '/' . $slug, $title . ' — БИОФАРМ', $title . '. Редакция от ' . $edition . '.')),
         ]);
     }
 }

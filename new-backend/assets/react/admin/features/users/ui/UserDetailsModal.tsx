@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
-import { UserRound, ShoppingBag, Users, Network, Gift, Coins, Wallet, UserCheck } from 'lucide-react';
+import { UserRound, ShoppingBag, Users, Gift, UserCheck } from 'lucide-react';
 import { formatDate } from '../../../shared/lib';
 import { Badge, Button, ErrorAlert, Field, inputClass, Modal } from '../../../shared/ui';
 import type { AdminCustomer } from '../../../types';
@@ -9,10 +9,7 @@ const tabs = [
   { id: 'profile', title: 'Профиль', icon: UserRound },
   { id: 'orders', title: 'Заказы', icon: ShoppingBag },
   { id: 'referrals', title: 'Рефералы', icon: Users },
-  { id: 'team', title: 'Команда', icon: Network },
   { id: 'shopping', title: 'Бонусы', icon: Gift },
-  { id: 'commission', title: 'Комиссии', icon: Coins },
-  { id: 'withdrawals', title: 'Выплаты', icon: Wallet },
 ] as const;
 function toForm(user: AdminCustomer) {
   return { firstName: user.first_name, lastName: user.last_name, phone: user.phone ?? '', referralCode: user.referral_code ?? '' };
@@ -34,9 +31,9 @@ export function UserDetailsModal({ user, error, saving, changingPartner, onClose
   const bodyRef = useRef<HTMLFormElement>(null);
   const dirty = JSON.stringify(form) !== initial;
   const busy = saving || changingPartner;
-  const visibleTabs = tabs.filter(tab => tab.id !== 'team' || user.is_partner);
-  const currentTab = activeTab === 'team' && !user.is_partner ? 'profile' : activeTab;
-  const role = user.is_partner ? 'Партнёр' : user.is_team_member ? 'Участник команды' : user.is_referral ? 'Реферал' : 'Пользователь';
+  const visibleTabs = tabs;
+  const currentTab = activeTab;
+  const role = user.is_partner ? 'Партнёр' : user.is_referral ? 'Реферал' : 'Пользователь';
   useEffect(() => {
     if (!dirty) return;
     const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ''; };
@@ -71,8 +68,7 @@ export function UserDetailsModal({ user, error, saving, changingPartner, onClose
           </fieldset>
           <section className="space-y-4 rounded-2xl border border-[#dfece9] p-5">
             <div className="flex flex-wrap items-center justify-between gap-3"><h3 className="font-semibold">Участие в программе</h3><Badge tone={user.is_partner ? 'green' : 'gray'}>{role}</Badge></div>
-            {user.is_team_member && <p className="text-sm">Партнёр команды: <b>{user.team_partner_name || '—'}</b></p>}
-            {!user.is_team_member && user.parent_name && <p className="text-sm">Пригласивший: <b>{user.parent_name}</b></p>}
+            {user.parent_name && <p className="text-sm">Пригласивший: <b>{user.parent_name}</b></p>}
             <Field label="Реферальный код"><input className={inputClass} disabled={busy} value={form.referralCode} onChange={event => setForm({ ...form, referralCode: event.target.value })} /></Field>
             <div className="flex flex-wrap items-start gap-4"><Button type="button" variant={user.is_partner ? 'outline' : 'primary'} disabled={busy || dirty} onClick={() => onTogglePartner(user)}><UserCheck className="h-4 w-4" />{changingPartner ? 'Сохранение…' : user.is_partner ? 'Снять статус партнёра' : 'Сделать партнёром'}</Button><p className="max-w-lg text-xs leading-relaxed text-[#5f7580]">{dirty ? 'Сначала сохраните изменения профиля.' : user.is_partner ? 'Рефералы и история начислений сохранятся. Прежний пригласивший не восстанавливается.' : 'При назначении пользователь выйдет из прежней команды вместе со своими рефералами. История начислений сохранится.'}</p></div>
           </section>

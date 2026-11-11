@@ -1,4 +1,4 @@
-import { DollarSign, ShoppingCart, Users, Wallet } from 'lucide-react';
+import { DollarSign, ShoppingCart, Users } from 'lucide-react';
 import { formatMoney } from '../../../shared/lib';
 import { Card } from '../../../shared/ui';
 import type { DashboardStats } from '../../../types';
@@ -30,17 +30,10 @@ export function DashboardStatsGrid({ stats }: Props) {
       icon: Users,
       color: 'bg-[#f3d9ff] text-[#a855f7]',
     },
-    {
-      title: 'Заявок на вывод',
-      value: stats?.pending_withdrawals ?? 0,
-      caption: stats?.total_withdrawal_amount ? formatMoney(stats.total_withdrawal_amount) : 'Нет заявок',
-      icon: Wallet,
-      color: 'bg-[#fff2bf] text-[#f59e0b]',
-    },
   ];
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
       {cards.map((card) => {
         const Icon = card.icon;
         return (

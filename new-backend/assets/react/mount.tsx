@@ -9,7 +9,6 @@ import { mountLoginPage } from './pages/auth/LoginPage';
 import { mountCartPage } from './pages/cart/CartPage';
 import { mountCheckoutPage } from './pages/checkout/CheckoutPage';
 import { mountOrderSuccessPage } from './pages/order-success/OrderSuccessPage';
-import { mountPartnerPage } from './pages/profile/PartnerPage';
 import { mountProfilePage } from './pages/profile/ProfilePage';
 import { mountHomeHero } from './sections/home/hero';
 import { mountHomeReviews } from './sections/home/reviews';
@@ -35,6 +34,5 @@ mountCheckoutPage();
 mountOrderSuccessPage();
 mountLoginPage();
 mountProfilePage();
-mountPartnerPage();
 
 mountCookieConsent();

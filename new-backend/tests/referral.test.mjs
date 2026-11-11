@@ -22,8 +22,7 @@ async function visit(previous, incoming, validate) {
   const referral = {};
   runInNewContext(referralSource, { exports: referral, window, URLSearchParams, require: () => api });
   referral.mountReferralHandler();
-  await new Promise(resolve => setImmediate(resolve));
-  return api.getReferralCode();
+  return referral.registrationReferralCode();
 }
 
 test('invalid first touch does not prevent a subsequent valid invitation', async () => {

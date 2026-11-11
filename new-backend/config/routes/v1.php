@@ -56,8 +56,6 @@ use App\Http\Action\v1\User\SaveUserAddressAction;
 use App\Http\Action\v1\User\UpdateMeAction;
 use App\Http\Action\v1\User\UploadAvatarAction;
 use App\Http\Action\v1\User\UserUpdateAction;
-use App\Http\Action\v1\Withdrawal\CreateWithdrawalAction;
-use App\Http\Action\v1\Withdrawal\GetWithdrawalsAction;
 use Psr\Container\ContainerInterface;
 use Slim\App;
 use Slim\Routing\RouteCollectorProxy;
@@ -142,9 +140,5 @@ return static function (App $app): void {
             $group->delete('/delete/{id}', DeleteOrderAction::class)->add(Authenticate::class);
         }));
 
-        $group->group('/withdrawals', new Group(static function (RouteCollectorProxy $group): void {
-            $group->get('', GetWithdrawalsAction::class)->add(Authenticate::class);
-            $group->post('/create', CreateWithdrawalAction::class)->add(Authenticate::class);
-        }));
     }));
 };

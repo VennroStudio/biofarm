@@ -31,14 +31,16 @@ $config->setNamingStrategy(new UnderscoreNamingStrategy());
 $em = new EntityManager($db, $config);
 new SchemaTool($em)->createSchema($em->getMetadataFactory()->getAllMetadata());
 $db->executeStatement('CREATE TABLE site_settings (`key` TEXT PRIMARY KEY, value TEXT)');
-foreach (['cart_enabled', 'referral_enabled', 'order_bonus_enabled', 'withdrawals_enabled'] as $flag) {
+foreach (['cart_enabled', 'referral_enabled', 'order_bonus_enabled'] as $flag) {
     $db->insert('site_settings', ['key' => $flag, 'value' => 'true']);
 }
 $db->executeStatement('CREATE TABLE promo_code_redemptions (order_id TEXT, promo_code_id INTEGER)');
 $db->executeStatement('CREATE TABLE payment_operations (id TEXT PRIMARY KEY, order_id TEXT, kind TEXT, status TEXT)');
 $db->executeStatement('CREATE TABLE users (id INTEGER PRIMARY KEY,first_name TEXT,last_name TEXT,email TEXT,status INTEGER DEFAULT 1,deleted_at TEXT,created_at TEXT)');
 $db->executeStatement('CREATE TABLE user_profiles (user_id INTEGER PRIMARY KEY,bonus_balance INTEGER,is_partner INTEGER,referred_by_user_id INTEGER,referral_code TEXT)');
-$db->executeStatement('CREATE TABLE orders (id TEXT PRIMARY KEY,user_id INTEGER,total INTEGER,discount_amount INTEGER,bonus_used INTEGER,delivery_cost INTEGER,payment_status TEXT,referred_by TEXT,promo_code TEXT,status TEXT,updated_at TEXT,shipping_address TEXT)');
+$db->executeStatement('CREATE TABLE orders (id TEXT PRIMARY KEY,user_id INTEGER,total INTEGER,discount_amount INTEGER,bonus_used INTEGER,delivery_cost INTEGER,payment_status TEXT,referred_by TEXT,promo_code TEXT,status TEXT,updated_at TEXT,created_at TEXT,shipping_address TEXT)');
+$db->executeStatement('CREATE TABLE partner_offers (id TEXT PRIMARY KEY,user_id INTEGER)');
+$db->executeStatement('CREATE TABLE partner_offer_orders (order_id TEXT PRIMARY KEY,offer_id TEXT)');
 $db->executeStatement('CREATE TABLE order_items (id INTEGER PRIMARY KEY AUTOINCREMENT,order_id TEXT,product_id INTEGER,product_name TEXT,price INTEGER,quantity INTEGER)');
 $now = new DateTimeImmutable('2026-09-17 12:00:00', new DateTimeZone('UTC'));
 $p = new ProgramService($db, static function () use (&$now) {return $now; });
@@ -70,22 +72,21 @@ function paid($db, $p, string $id): void
     $db->update('orders', ['payment_status' => 'completed'], ['id' => $id]);
     $p->settleOrder($id);
 }
-$p->joinTeam(6, $p->teamInvite(1)['code'], true);
 check(ProgramMath::allocate(5, [1 => 3, 2 => 3, 3 => 3]) === [1 => 2, 2 => 2, 3 => 1], 'allocation');
 check(ProgramMath::rules(['buyerBps' => 500])['buyerBps'] === 500, 'buyer rate is not limited by a total cap');
 $converted = ProgramMath::rules([], ['directBps' => 220, 'teamBps' => 70, 'capBps' => 1]);
-check($converted['partnerDirectBps'] === 220 && $converted['partnerMemberBps'] === 220 && $converted['memberDirectBps'] === 220 && $converted['partnerTeamBps'] === 70, 'legacy shared rates split without changing saved values');
+check($converted['referralBonusBps'] === 220 && !isset($converted['partnerTeamBps']), 'only the direct rate is carried forward');
 check(!array_key_exists('capBps', $converted), 'legacy cap is discarded');
 check(ProgramMath::minor('0.25') === 25, 'decimal');
-check(ProgramMath::rules([], ['levelsBps' => [120, 60, 10, 10]])['partnerDirectBps'] === 120, 'stored legacy direct rate is retained');
+check(ProgramMath::rules([], ['levelsBps' => [120, 60, 10, 10]])['referralBonusBps'] === 120, 'stored legacy direct rate is retained');
 fails(static fn () => ProgramMath::rules(['levelsBps' => [100, 50, 25, 25]]), 'new settings cannot re-enable four levels');
 fails(static fn () => ProgramMath::rules(['levelsBps' => [100]]), 'both level rates required');
-$p->updateSettings(['partnerTeamBps' => 100], 1);
-$simulation = ProgramMath::simulate(['amount' => '10000', 'discountAmount' => '1000', 'costAmount' => '5000'], ProgramMath::rules(['buyerBps' => 100, 'partnerTeamBps' => 100]));
-check($simulation['basisMinor'] === 900000 && $simulation['totalMinor'] === 27000, 'simulation net reward base');
-check($simulation['directMinor'] === 9000 && $simulation['referralBonusMinor'] === 0 && $simulation['partnerMinor'] === 9000 && $simulation['buyerMinor'] === 9000, 'simulator separates direct, team and buyer rewards');
-check($simulation['totalIncentivesMinor'] === 127000, 'simulation includes shop discount and rewards');
-check($simulation['remainingAfterCostsMinor'] === 373000, 'simulation subtracts supplied operating costs');
+$p->updateSettings(['referralBonusBps' => 100], 1);
+$simulation = ProgramMath::simulate(['amount' => '10000', 'discountAmount' => '1000', 'costAmount' => '5000'], ProgramMath::rules(['buyerBps' => 100, 'referralBonusBps' => 100]));
+check($simulation['basisMinor'] === 900000 && $simulation['totalMinor'] === 18000, 'simulation net reward base');
+check($simulation['referralBonusMinor'] === 9000 && $simulation['buyerMinor'] === 9000, 'simulator separates inviter and buyer bonuses');
+check($simulation['totalIncentivesMinor'] === 118000, 'simulation includes shop discount and rewards');
+check($simulation['remainingAfterCostsMinor'] === 382000, 'simulation subtracts supplied operating costs');
 fails(static fn () => ProgramMath::simulate(['amount' => '100', 'discountAmount' => '101'], ProgramMath::rules([])), 'discount cannot exceed goods');
 $item = order($db, $p, 'A', 7, 300, 10000, 1, 1000);
 check($p->shoppingAvailable(7) === 70000, 'spending reserved');
@@ -94,54 +95,40 @@ paid($db, $p, 'A');
 paid($db, $p, 'A');
 $snapshot = json_decode($db->fetchOne("SELECT snapshot FROM program_orders WHERE id='A'"), true);
 check($snapshot['items'][0]['paidMinor'] === 870000, 'basis excludes discounts spent delivery');
-check(array_column($snapshot['recipients'], 'userId') === [6, 1, 7], 'direct member, explicit partner and buyer only');
-check($p->dashboard(1)['balances']['commission']['pendingMinor'] === 8700, 'partner pending');
-check((int)$db->fetchOne("SELECT COUNT(*) FROM program_ledger WHERE order_id='A' AND user_id IN (2,3,4) AND wallet='commission'") === 0, 'no commissions beyond two referral levels');
-check((int)$db->fetchOne("SELECT SUM(amount_minor) FROM program_ledger WHERE order_id='A' AND wallet='commission'") === 17400, '8700 RUB pays 87 plus 87 commissions once');
+check(array_column($snapshot['recipients'], 'userId') === [7, 6], 'buyer and direct inviter only');
+check($p->dashboard(6)['balances']['shopping']['pendingMinor'] === 8700, 'direct inviter gets pending bonuses');
+check((int)$db->fetchOne("SELECT COUNT(*) FROM program_ledger WHERE order_id='A' AND kind='referral_bonus'") === 1, 'one referral reward even after repeated settlement');
+check((int)$db->fetchOne("SELECT COUNT(*) FROM program_ledger WHERE order_id='A' AND wallet='commission'") === 0, 'no cash rewards');
 $p->setPartnerStatus(4, true, 1, 'Fixture promotion');
 order($db, $p, 'B');
 $next = json_decode($db->fetchOne("SELECT snapshot FROM program_orders WHERE id='B'"), true);
-check(array_column($next['recipients'], 'userId') === [6, 1, 7], 'unrelated promotion does not change explicit team');
+check(array_column($next['recipients'], 'userId') === [7, 6], 'unrelated promotion does not change referral attribution');
 check($db->fetchOne('SELECT referred_by_user_id FROM user_profiles WHERE user_id=5') === 4, 'children retained');
-check(array_column($snapshot['recipients'], 'userId') === [6, 1, 7], 'old snapshot stable');
+check(array_column($snapshot['recipients'], 'userId') === [7, 6], 'old snapshot stable');
 check(!method_exists($p, 'changeTree'), 'manual referral transfer is removed');
 $p->setPartnerStatus(5, false, 1, 'Same status');
 check((int)$db->fetchOne('SELECT referred_by_user_id FROM user_profiles WHERE user_id=5') === 4, 'unchanged status keeps inviter');
 $p->setPartnerStatus(4, false, 1, 'Fixture demotion');
-check($db->fetchOne('SELECT referred_by_user_id FROM user_profiles WHERE user_id=4') === null, 'demotion does not reattach branch');
+check((int)$db->fetchOne('SELECT referred_by_user_id FROM user_profiles WHERE user_id=4') === 3, 'partner status does not alter the original referral');
 check((int)$db->fetchOne('SELECT referred_by_user_id FROM user_profiles WHERE user_id=5') === 4, 'demotion keeps children');
 $p->setPartnerStatus(4, true, 1, 'Fixture restore');
 fails(static fn () => $p->setPartnerStatus(99, true, 1, 'Missing user'), 'missing user rejected');
 $p->cancelOrder('B');
 $p->cancelOrder('B');
 $p->deliverOrder('A');
-check($p->dashboard(1)['balances']['commission']['availableMinor'] === 0, 'hold');
+check($p->dashboard(6)['balances']['shopping']['availableMinor'] === 0, 'hold');
 $now = $now->modify('+15 days');
-check($p->dashboard(1)['balances']['commission']['availableMinor'] === 8700, 'hold releases');
-$p->updateSettings(['minimumWithdrawalMinor' => 1], 1);
-$w = $p->requestWithdrawal(1, '80.00', ['recipient' => 'fixture']);
-check($p->dashboard(1)['balances']['commission']['availableMinor'] === 700, 'payout reserve');
-$p->updateWithdrawal($w['id'], 'rejected', null, 'fixture', 1);
-check($p->dashboard(1)['balances']['commission']['availableMinor'] === 8700, 'payout rejection');
-$w = $p->requestWithdrawal(1, '80.00', ['recipient' => 'fixture']);
-fails(static fn () => $p->updateWithdrawal($w['id'], 'approved', null, null, 1), 'approval stage removed');
-fails(static fn () => $p->updateWithdrawal($w['id'], 'rejected', null, null, 1), 'rejection reason required');
-check($p->listing('withdrawals', 1)['items'][0]['user_name'] === 'Fixture 1', 'withdrawal recipient name');
-check($p->listing('withdrawals', 6)['items'] === [], 'withdrawals scoped to owner');
-fails(static fn () => $p->updateWithdrawal($w['id'], 'paid', null, null, 1), 'reference required');
-$p->updateWithdrawal($w['id'], 'paid', 'fixture-transfer-1', null, 1);
-$p->updateWithdrawal($w['id'], 'paid', 'fixture-transfer-1', null, 1);
-check($p->dashboard(1)['balances']['commission']['availableMinor'] === 700, 'direct payment is idempotent');
-fails(static fn () => $p->updateWithdrawal($w['id'], 'rejected', null, 'late rejection', 1), 'paid withdrawal cannot be rejected');
+check($p->dashboard(6)['balances']['shopping']['availableMinor'] === 8700, 'hold releases');
+fails(static fn () => $p->adjust(6, 'commission', 100, 'test', 1), 'cash wallet cannot be credited');
 $refund = $p->reserveRefund('A', 'refund-a', [['itemId' => $item, 'quantity' => 1]], true);
 check($refund['amountMinor'] === 905000, 'refund cash basis');
-check($p->dashboard(1)['balances']['commission']['debtMinor'] === 8000, 'refund reserve debt');
+check($p->shoppingAvailable(6) === 0, 'refunded inviter reward is reserved');
 $p->cancelRefund('refund-a');
-check($p->dashboard(1)['balances']['commission']['debtMinor'] === 0, 'failed refund release');
+check($p->shoppingAvailable(6) === 8700, 'failed refund releases inviter reward');
 $p->reserveRefund('A', 'refund-a2', [['itemId' => $item, 'quantity' => 1]], true);
 $p->completeRefund('refund-a2');
 $p->completeRefund('refund-a2');
-check($p->dashboard(1)['balances']['commission']['debtMinor'] === 8000, 'withdrawn commission debt');
+check($p->shoppingAvailable(6) === 0, 'confirmed refund reverses inviter reward');
 check($p->shoppingAvailable(7) === 100000, 'spent shopping restored');
 $round = order($db, $p, 'ROUND', 7, 0, 1, 3, 1);
 paid($db, $p, 'ROUND');
@@ -181,7 +168,7 @@ $db->update('program_locks', ['payload' => json_encode($before + ['products' => 
 check(!array_key_exists('products', $p->settings()), 'legacy product factors are absent from current settings');
 order($db, $p, 'FULL-BASE', 7, 0, 10000);
 paid($db, $p, 'FULL-BASE');
-check((int)$db->fetchOne("SELECT SUM(amount_minor) FROM program_ledger WHERE order_id='FULL-BASE' AND wallet='commission'") === 20000, 'legacy exclusion cannot reduce new order commissions');
+check((int)$db->fetchOne("SELECT SUM(amount_minor) FROM program_ledger WHERE order_id='FULL-BASE' AND kind='referral_bonus'") === 10000, 'legacy exclusion cannot reduce new order bonuses');
 $p->updateSettings(['holdDays' => 0], 1);
 $held = order($db, $p, 'HELD', 7, 0, 1000);
 paid($db, $p, 'HELD');
@@ -189,26 +176,19 @@ $p->reserveRefund('HELD', 'held-refund', [['itemId' => $held, 'quantity' => 1]])
 $p->deliverOrder('HELD');
 $p->dashboard(4);
 $p->completeRefund('held-refund');
-check((int)$db->fetchOne("SELECT SUM(amount_minor) FROM program_ledger WHERE order_id='HELD' AND wallet='commission' AND state='available'") === 0, 'refund pending spans release');
-$p->joinTeam(5, $p->teamInvite(1)['code'], true);
-check(count($p->listing('team', 1)['items']) === 2, 'team lists explicit members only');
-$sorted = $p->listing('team', 1, 1, 1, 'depth', 'asc')['items'];
-check((int)$sorted[0]['id'] === 5, 'team sort applies before pagination');
-check($sorted[0]['name'] === 'Fixture 5', 'team includes readable names');
-check((int)$p->listing('team', 1, 2, 1, 'depth', 'asc')['items'][0]['id'] === 6, 'team second sorted page');
-check((int)$p->listing('team', 1, 1, 1, 'name', 'desc')['items'][0]['id'] === 6, 'team name descending');
-fails(static fn () => $p->listing('team', 1, 1, 25, 'unsafe SQL', 'asc'), 'reject unknown sort column');
-fails(static fn () => $p->listing('team', 1, 1, 25, 'name', 'unsafe SQL'), 'reject unknown sort direction');
-check($p->listing('sales', 1)['items'] !== [], 'sales available');
-$p->adjust(6, 'commission', 123, 'wallet filter fixture', 1);
-foreach (['shopping', 'commission'] as $wallet) {
-    $expected = $db->fetchAllAssociative('SELECT id FROM program_ledger WHERE user_id=? AND wallet=? ORDER BY id DESC LIMIT 2 OFFSET 2', [6, $wallet]);
-    $filtered = $p->listing('ledger', 6, 2, 2, wallet: $wallet)['items'];
-    check(array_column($filtered, 'id') === array_column($expected, 'id'), 'wallet filtering precedes pagination');
-    foreach ($p->listing('ledger', 6, limit: 100, wallet: $wallet)['items'] as $entry) {
-        check($entry['wallet'] === $wallet && $entry['user_id'] === 6, 'wallet filtering keeps account ownership');
-    }
-}
+check((int)$db->fetchOne("SELECT SUM(amount_minor) FROM program_ledger WHERE order_id='HELD' AND wallet='shopping' AND state='available'") === 0, 'refund pending spans release');
+$sorted = $p->listing('referrals', 1, 1, 1, 'depth', 'asc')['items'];
+check((int)$sorted[0]['id'] === 2 && $sorted[0]['name'] === 'Fixture 2', 'only direct referrals are listed');
+fails(static fn () => $p->listing('referrals', 1, 1, 25, 'unsafe SQL', 'asc'), 'reject unknown sort column');
+fails(static fn () => $p->listing('referrals', 1, 1, 25, 'name', 'unsafe SQL'), 'reject unknown sort direction');
+$db->insert('partner_offers', ['id' => 'offer-1', 'user_id' => 1]);
+$db->insert('partner_offer_orders', ['order_id' => 'FULL-BASE', 'offer_id' => 'offer-1']);
+check(in_array('FULL-BASE', array_column($p->listing('sales', 1)['items'], 'id'), true), 'order history includes QR orders for the basket owner');
+fails(static fn () => $p->listing('sales', 6), 'partner sales require the partner role');
+$expected = $db->fetchFirstColumn("SELECT id FROM program_ledger WHERE user_id=6 AND wallet='shopping' ORDER BY id DESC LIMIT 2 OFFSET 2");
+$filtered = $p->listing('ledger', 6, 2, 2, wallet: 'shopping')['items'];
+check(array_column($filtered, 'id') === $expected, 'wallet filtering precedes pagination');
+fails(static fn () => $p->listing('ledger', 6, wallet: 'commission'), 'legacy cash ledger unavailable');
 fails(static fn () => $p->listing('ledger', 7, wallet: 'unknown'), 'invalid wallet rejected');
 
 order($db, $p, 'INFLIGHT');
@@ -225,11 +205,11 @@ $db->insert('users', ['id' => 8, 'first_name' => 'Unbound', 'email' => 'unbound@
 $db->insert('user_profiles', ['user_id' => 8, 'bonus_balance' => 0, 'is_partner' => 0, 'referral_code' => 'bf-8']);
 order($db, $p, 'UNBOUND', 8);
 $unbound = json_decode($db->fetchOne("SELECT snapshot FROM program_orders WHERE id='UNBOUND'"), true);
-check(array_column($unbound['recipients'], 'userId') === [1, 8], 'unbound QR buyer must reward the partner');
+check(array_column($unbound['recipients'], 'userId') === [8, 1], 'unbound QR buyer must reward the partner');
 check($db->fetchOne('SELECT referred_by_user_id FROM user_profiles WHERE user_id=8') === null, 'unpaid order does not bind customer');
 paid($db, $p, 'UNBOUND');
 check((int)$db->fetchOne('SELECT referred_by_user_id FROM user_profiles WHERE user_id=8') === 1, 'paid QR order binds existing customer');
-check($p->dashboard(1)['balances']['commission']['pendingMinor'] > 0, 'QR partner gets commissions');
+check($p->dashboard(1)['balances']['shopping']['pendingMinor'] > 0, 'QR partner gets bonuses');
 // Self-links and links from descendants must not prevent a normal purchase or create cycles.
 $db->insert('users', ['id' => 9, 'first_name' => 'Cycle', 'email' => 'cycle@example.test']);
 $db->insert('user_profiles', ['user_id' => 9, 'bonus_balance' => 0, 'is_partner' => 0, 'referral_code' => 'bf-9']);
@@ -244,43 +224,44 @@ foreach (['bf-9', 'bf-10'] as $code) {
     $p->captureOrder($id);
     paid($db, $p, $id);
     check($db->fetchOne('SELECT referred_by_user_id FROM user_profiles WHERE user_id=9') === null, 'self or descendant link cannot bind');
-    check((int)$db->fetchOne("SELECT COUNT(*) FROM program_ledger WHERE order_id=? AND wallet='commission'", [$id]) === 0, 'no commission for cyclic invitation');
+    check((int)$db->fetchOne("SELECT COUNT(*) FROM program_ledger WHERE order_id=? AND kind='referral_bonus'", [$id]) === 0, 'no bonus for cyclic invitation');
 }
 order($db, $p, 'BECAME-PARTNER', 9);
 $p->setPartnerStatus(9, true, 1, 'Promotion while order pending');
 paid($db, $p, 'BECAME-PARTNER');
-check($db->fetchOne('SELECT referred_by_user_id FROM user_profiles WHERE user_id=9') === null, 'payment must not reattach promoted partner');
-check((int)$db->fetchOne("SELECT COUNT(*) FROM program_ledger WHERE order_id='BECAME-PARTNER' AND wallet='commission'") === 0, 'no former team reward for provisional promoted buyer');
-// A guest must not receive a cash commission on their own purchase.
+check((int)$db->fetchOne('SELECT referred_by_user_id FROM user_profiles WHERE user_id=9') === 1, 'promotion does not change the direct referral rule');
+check((int)$db->fetchOne("SELECT COUNT(*) FROM program_ledger WHERE order_id='BECAME-PARTNER' AND kind='referral_bonus' AND user_id=1") === 1, 'inviter earns a bonus from a promoted buyer');
+// A guest must not receive an invitation bonus on their own purchase.
 $db->update('users', ['email' => 'partner@example.test'], ['id' => 1]);
 $db->insert('orders', ['id' => 'SELF', 'user_id' => null, 'total' => 1000, 'discount_amount' => 0, 'bonus_used' => 0, 'delivery_cost' => 0, 'payment_status' => 'pending', 'referred_by' => 'bf-1', 'shipping_address' => json_encode(['email' => 'PARTNER@example.test'])]);
 $db->insert('order_items', ['order_id' => 'SELF', 'product_id' => 1, 'product_name' => 'Test', 'price' => 1000, 'quantity' => 1]);
 $p->captureOrder('SELF');
 paid($db, $p, 'SELF');
-check((int)$db->fetchOne("SELECT COUNT(*) FROM program_ledger WHERE order_id='SELF' AND wallet='commission' AND user_id=1") === 0, 'guest self referral must not pay buyer');
+check((int)$db->fetchOne("SELECT COUNT(*) FROM program_ledger WHERE order_id='SELF' AND kind='referral_bonus' AND user_id=1") === 0, 'guest self referral must not pay buyer');
 $db->update('site_settings', ['value' => 'false'], ['key' => 'referral_enabled']);
 order($db, $p, 'NOREF');
 $noRef = json_decode($db->fetchOne("SELECT snapshot FROM program_orders WHERE id='NOREF'"), true);
 check(count($noRef['recipients']) === 1, 'disabled referrals omit upstream rewards');
 // Journal filtering is applied before pagination; the end date includes the whole day.
-foreach ([[1, '2020-01-01 00:00:00', 'commission'], [5, '2020-01-01 23:59:59', 'commission'], [6, '2020-01-02 00:00:00', 'commission'], [7, '2020-01-01 12:00:00', 'shopping']] as [$uid, $at, $wallet]) {
+foreach ([[1, '2020-01-01 00:00:00', 'shopping'], [5, '2020-01-01 23:59:59', 'shopping'], [6, '2020-01-02 00:00:00', 'shopping'], [7, '2020-01-01 12:00:00', 'commission']] as [$uid, $at, $wallet]) {
     $db->insert('program_ledger', ['id' => 'journal-test-' . $uid, 'user_id' => $uid, 'wallet' => $wallet, 'amount_minor' => 100, 'kind' => 'adjustment', 'state' => 'available', 'details' => '{}', 'created_at' => $at]);
 }
-$journal = $p->listing('ledger', null, limit: 100, sort: 'user_name', direction: 'asc', wallet: 'commission', dateFrom: '2020-01-01', dateTo: '2020-01-01')['items'];
-check(array_column($journal, 'user_id') === [1, 5], 'journal inclusive dates, commission filter and user sort');
+$journal = $p->listing('ledger', null, limit: 100, sort: 'user_name', direction: 'asc', wallet: 'shopping', dateFrom: '2020-01-01', dateTo: '2020-01-01')['items'];
+check(array_column($journal, 'user_id') === [1, 5], 'journal inclusive dates, bonus filter and user sort');
 check($journal[0]['user_name'] === 'Fixture 1' && $journal[0]['participant_type'] === 'Партнёр', 'journal shows partner name');
-check($journal[1]['participant_type'] === 'Участник команды', 'journal shows referral type');
-$secondPage = $p->listing('ledger', null, page: 2, limit: 1, sort: 'user_name', direction: 'desc', wallet: 'commission', dateFrom: '2020-01-01', dateTo: '2020-01-01')['items'];
+check($journal[1]['participant_type'] === 'Реферал', 'journal shows referral type');
+$secondPage = $p->listing('ledger', null, page: 2, limit: 1, sort: 'user_name', direction: 'desc', wallet: 'shopping', dateFrom: '2020-01-01', dateTo: '2020-01-01')['items'];
 check(array_column($secondPage, 'user_id') === [1], 'journal sort across pages');
-check($p->listing('ledger', null, sort: 'created_at', direction: 'desc', wallet: 'commission', dateFrom: '2020-01-01', dateTo: '2020-01-02')['items'][0]['user_id'] === 6, 'journal latest first');
-check(count($p->listing('ledger', 5, wallet: 'commission', dateFrom: '2020-01-01', dateTo: '2020-01-02')['items']) === 1, 'date filter preserves account scope');
+check($p->listing('ledger', null, sort: 'created_at', direction: 'desc', wallet: 'shopping', dateFrom: '2020-01-01', dateTo: '2020-01-02')['items'][0]['user_id'] === 6, 'journal latest first');
+check(count($p->listing('ledger', 5, wallet: 'shopping', dateFrom: '2020-01-01', dateTo: '2020-01-02')['items']) === 1, 'date filter preserves account scope');
 fails(static fn () => $p->listing('ledger', null, sort: 'unsafe SQL'), 'journal rejects unknown sort');
 fails(static fn () => $p->listing('ledger', null, direction: 'unsafe SQL'), 'journal rejects unknown direction');
 fails(static fn () => $p->listing('ledger', null, dateFrom: '2020-02-30'), 'journal rejects invalid calendar dates');
 fails(static fn () => $p->listing('ledger', null, dateFrom: '2020-01-02', dateTo: '2020-01-01'), 'journal rejects reversed range');
 // History uses dates rather than random audit IDs and resolves the people involved.
 $db->insert('program_audit', ['id' => 'zz-old', 'actor_id' => 1, 'kind' => 'adjustment', 'payload' => '{"userId":6,"amountMinor":100,"wallet":"commission","reason":"fixture"}', 'created_at' => '2010-01-01 00:00:00']);
-$db->insert('program_audit', ['id' => 'aa-new', 'actor_id' => 1, 'kind' => 'withdrawal', 'payload' => json_encode(['id' => $w['id'], 'status' => 'paid']), 'created_at' => '2090-01-01 00:00:00']);
+$db->insert('program_withdrawals', ['id' => 'legacy-payout', 'user_id' => 1, 'amount_minor' => 8000, 'status' => 'paid', 'details' => '{}', 'created_at' => '2010-01-01 00:00:00']);
+$db->insert('program_audit', ['id' => 'aa-new', 'actor_id' => 1, 'kind' => 'withdrawal', 'payload' => json_encode(['id' => 'legacy-payout', 'status' => 'paid']), 'created_at' => '2090-01-01 00:00:00']);
 $history = $p->listing('audit', null, limit: 100)['items'];
 check($history[0]['id'] === 'aa-new', 'history newest first regardless of ID');
 check($history[0]['actor_name'] === 'Fixture 1', 'history actor name');

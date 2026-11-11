@@ -1,6 +1,13 @@
 import { getReferralCode, request } from "./api";
 export { getReferralCode } from "./api";
 const key = "biofarm_referral";
+let referralValidation: Promise<void> | undefined;
+
+export async function registrationReferralCode() {
+    await referralValidation;
+    return getReferralCode();
+}
+
 export function rememberReferral(code: string) {
     if (!getReferralCode() && /^[a-zA-Z0-9_-]{1,100}$/.test(code))
         window.localStorage.setItem(key, JSON.stringify({ code, expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000 }));
@@ -8,7 +15,7 @@ export function rememberReferral(code: string) {
 export function mountReferralHandler() {
     const params = new URLSearchParams(window.location.search);
     const ref = params.get("ref");
-    void validateAndRemember(ref);
+    referralValidation = validateAndRemember(ref);
     if (!ref) return;
     params.delete("ref");
     const query = params.toString();

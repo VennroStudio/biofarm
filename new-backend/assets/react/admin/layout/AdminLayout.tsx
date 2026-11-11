@@ -27,7 +27,7 @@ const links = [
   { to: '/admin/certificates', label: 'Сертификаты', icon: FileCheck2 },
   { to: '/admin/faq', label: 'FAQ', icon: HelpCircle },
   { to: '/admin/users', label: 'Пользователи', icon: Users },
-  { to: '/admin/program', label: 'Партнёрская программа', icon: Users },
+  { to: '/admin/program', label: 'Бонусная программа', icon: Users },
   { to: '/admin/settings', label: 'Настройки', icon: Settings },
 ];
 

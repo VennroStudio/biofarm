@@ -20,7 +20,6 @@ import type {
   Review,
   Settings,
   Bitrix24IntegrationSettings,
-  Withdrawal,
 } from '../types';
 import { request, requestItems } from './client';
 
@@ -154,13 +153,6 @@ export const ordersApi = {
 export const usersApi = {
   list: () => requestItems<AdminCustomer>('/admin/api/users?perPage=100'),
   update: (id: number, payload: Record<string, unknown>) => request(`/admin/api/users/${id}`, { method: 'PATCH', body: payload }),
-};
-
-export const withdrawalsApi = {
-  list: () => requestItems<Withdrawal>('/admin/api/withdrawals'),
-  create: (payload: { user_id: number; amount: number }) => request('/admin/api/withdrawals', { method: 'POST', body: payload }),
-  setStatus: (id: string, status: 'approved' | 'rejected') =>
-    request(`/admin/api/withdrawals/${id}/status`, { method: 'PATCH', body: { status } }),
 };
 
 export type ResourceResult<T> = ApiItems<T>;

@@ -65,8 +65,5 @@ final readonly class CreateUserCommand
         public string $locale = 'en',
         #[Assert\Length(max: 100)]
         public ?string $referredBy = null,
-        #[Assert\Length(max: 64)]
-        public ?string $teamInvitation = null,
-        public bool $teamConsent = false,
     ) {}
 }

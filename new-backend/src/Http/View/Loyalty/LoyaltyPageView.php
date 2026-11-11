@@ -24,7 +24,6 @@ final readonly class LoyaltyPageView
         public bool $welcomeBonusEnabled,
         public int $welcomeBonusAmount,
         public int $freeDeliveryThreshold,
-        public bool $withdrawalsEnabled,
         public array $faqItems,
         public array $programRules = [],
     ) {}

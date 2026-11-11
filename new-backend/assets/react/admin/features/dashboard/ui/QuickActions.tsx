@@ -1,4 +1,4 @@
-import { FileText, Package, ShoppingCart, Wallet } from 'lucide-react';
+import { FileText, Package, ShoppingCart, Gift } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card } from '../../../shared/ui';
 
@@ -6,7 +6,7 @@ const quickLinks = [
   { href: '/admin/shop/products', label: 'Добавить товар', icon: Package },
   { href: '/admin/orders', label: 'Просмотреть заказы', icon: ShoppingCart },
   { href: '/admin/blog', label: 'Написать статью', icon: FileText },
-  { href: '/admin/program/withdrawals', label: 'Выплаты партнёрам', icon: Wallet },
+  { href: '/admin/program/ledger', label: 'Журнал бонусов', icon: Gift },
 ];
 
 export function QuickActions() {
