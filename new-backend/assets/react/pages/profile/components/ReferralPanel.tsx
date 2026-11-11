@@ -1,6 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { request } from "../../../site/api";
-import { readCart } from "../../../site/cart";
 import {
     Section,
     Field,
@@ -38,7 +37,6 @@ export function ReferralPanel({ withdrawalsEnabled }: { withdrawalsEnabled: bool
     const [teamInviteCode, setTeamInviteCode] = useState("");
     const listKey = `${tab}:${page}:${sort}:${direction}:${revision}`;
     const loadingList = loadedKey !== listKey;
-    const cart = readCart();
     useEffect(() => {
         let live = true;
         void request<Dashboard>("/v1/program")
@@ -63,22 +61,25 @@ export function ReferralPanel({ withdrawalsEnabled }: { withdrawalsEnabled: bool
             live = false;
         };
     }, [tab, page, revision, sort, direction, listKey, data]);
-    async function submit(
-        event: FormEvent<HTMLFormElement>,
-        path: string,
-        body: (f: FormData) => Record<string, unknown>,
-    ) {
+    async function submitWithdrawal(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         const form = event.currentTarget;
+        const fields = new FormData(form);
         setBusy(true);
         setError("");
         try {
-            const result = await request<{ url?: string }>(`/v1/program/${path}`, {
+            await request("/v1/program/withdrawals", {
                 method: "POST",
-                body: body(new FormData(form)),
+                body: {
+                    amount: String(fields.get("amount")),
+                    details: {
+                        bank: fields.get("bank"),
+                        recipient: fields.get("recipient"),
+                        account: fields.get("account"),
+                    },
+                },
             });
-            if (result?.url) setOfferUrl(result.url);
-            setNotice(path === "withdrawals" ? "Заявка отправлена. Её состояние появится в истории выплат." : "Корзина готова. Отправьте покупателю ссылку или QR-код.");
+            setNotice("Заявка отправлена. Её состояние появится в истории выплат.");
             form.reset();
             setRevision((n) => n + 1);
         } catch (e) {
@@ -182,16 +183,7 @@ export function ReferralPanel({ withdrawalsEnabled }: { withdrawalsEnabled: bool
                                 </p>
                                 <form
                                     className="grid gap-3 sm:grid-cols-2"
-                                    onSubmit={(e) =>
-                                        void submit(e, "withdrawals", (f) => ({
-                                            amount: String(f.get("amount")),
-                                            details: {
-                                                bank: f.get("bank"),
-                                                recipient: f.get("recipient"),
-                                                account: f.get("account"),
-                                            },
-                                        }))
-                                    }
+                                    onSubmit={(event) => void submitWithdrawal(event)}
                                 >
                                     <Field name="Сумма, ₽">
                                         <input
@@ -219,52 +211,7 @@ export function ReferralPanel({ withdrawalsEnabled }: { withdrawalsEnabled: bool
                                 </form>
                             </Section>
                         )}
-                        {tab === "offers" && data.identity.isPartner && (
-                            <>
-                                <Section title="Корзина для покупателя">
-                                    <p>
-                                        Добавьте товары в{" "}
-                                        <a className="underline" href="/catalog">
-                                            каталоге
-                                        </a>
-                                        . Будут использованы товары и количества текущей корзины; цены проверяются при открытии
-                                        предложения.
-                                    </p>
-                                    {!cart.length && <p className="rounded-xl bg-secondary/50 p-4 text-sm text-muted-foreground">Корзина пуста. Сначала выберите товары в каталоге.</p>}
-                                    <ul className="space-y-2">
-                                        {cart.map((i) => (
-                                            <li key={i.product.id}>
-                                                {i.product.name} × {i.quantity}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                    <form
-                                        className="grid gap-3 sm:grid-cols-2"
-                                        onSubmit={(e) =>
-                                            void submit(e, "offers", (f) => ({
-                                                title: f.get("title"),
-                                                expiresAt: f.get("expiresAt")
-                                                    ? new Date(String(f.get("expiresAt"))).toISOString()
-                                                    : undefined,
-                                                items: readCart().map((i) => ({ productId: i.product.id, quantity: i.quantity })),
-                                            }))
-                                        }
-                                    >
-                                        <Field name="Название">
-                                            <input className={inputClass} name="title" required />
-                                        </Field>
-                                        <Field name="Действует до">
-                                            <input className={inputClass} type="datetime-local" name="expiresAt" />
-                                        </Field>
-                                        <button disabled={busy || !cart.length} className={buttonClass}>
-                                            Создать ссылку и QR-код
-                                        </button>
-                                    </form>
-                                </Section>
-                            </>
-                        )}
-
-                            <Section title={tab === "offers" ? "Отправленные корзины" : tab === "withdrawals" ? "История выплат" : title}>
+                            <Section title={tab === "offers" ? "История корзин" : tab === "withdrawals" ? "История выплат" : title}>
                                 {(tab === "team" || tab === "referrals") && (
                                     <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
                                         <p className="text-sm text-muted-foreground">{tab === "team" ? "Только пользователи, вступившие по специальному приглашению." : "Покупатели, зарегистрировавшиеся по вашей ссылке. Гостевые покупки учитываются в начислениях."}</p>
