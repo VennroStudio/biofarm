@@ -1,22 +1,45 @@
-<section class="relative isolate overflow-hidden bg-[#76aa9d] pt-20" aria-labelledby="home-hero-title">
-    <img src="/assets/images/design/hero-background.webp" alt="" class="absolute inset-0 -z-10 h-full w-full object-cover opacity-80" loading="eager" fetchpriority="high" decoding="async">
-    <div class="container mx-auto grid items-center gap-3 px-5 md:min-h-[470px] md:grid-cols-[1.08fr_1fr] md:px-8 lg:px-12">
-        <div class="relative z-10 pt-8 md:py-12">
-            <h1 id="home-hero-title" class="mb-4 text-[40px] font-normal leading-[1.07] tracking-[-0.055em] text-white sm:text-5xl lg:text-[58px]">Природа Сибири.<br>Забота каждый день.</h1>
-            <p class="mb-6 max-w-lg text-lg leading-snug text-white lg:text-xl">Растительные экстракты и капсулы БИОФАРМ</p>
-            <a class="inline-flex min-h-12 items-center justify-center gap-5 rounded-lg bg-white px-6 text-sm font-medium text-secondary-foreground shadow-sm transition-shadow hover:shadow-md" href="#catalog">Смотреть каталог <span aria-hidden="true">→</span></a>
-            <p class="mt-7 text-sm text-white md:mt-14">Природа. Наука. Забота.</p>
-        </div>
-        <div class="relative mx-auto h-[320px] w-full max-w-xl md:h-[425px]" aria-label="Продукты БИОФАРМ">
-            <span class="pointer-events-none absolute inset-x-0 inset-y-8 -rotate-[20deg] rounded-[50%] border border-dashed border-white/70" aria-hidden="true"></span>
-            <span class="pointer-events-none absolute inset-x-0 inset-y-12 rotate-[24deg] rounded-[50%] border border-dashed border-white/60" aria-hidden="true"></span>
-            {% for product in products %}
-                {% set position = product.slug == 'ekstrakt-kory-osiny' ? 'left-[25%] top-[115px] z-20 h-[190px] w-[53%] md:top-[145px] md:h-[265px]' : (product.slug == 'rodiola-rozovaya' ? 'right-0 top-5 h-[225px] w-[40%] md:h-[300px]' : 'left-0 top-5 h-[215px] w-[40%] md:h-[290px]') %}
-                <a href="/product/{{ product.slug }}" class="group absolute {{ position }} transition-transform hover:-translate-y-1" aria-label="{{ product.title }} — подробнее">
-                    <img src="{{ product.image }}" alt="{{ product.title }}" width="420" height="420" class="h-full w-full object-contain drop-shadow-xl {{ product.slug == 'ekstrakt-kory-osiny' ? '-rotate-[4deg]' : (product.slug == 'rodiola-rozovaya' ? 'rotate-[9deg]' : '-rotate-[12deg]') }}" loading="eager" decoding="async">
-                    <span class="absolute {{ product.slug == 'ekstrakt-kory-osiny' ? '-bottom-1 left-3' : '-top-2 left-0' }} max-w-full rounded-2xl bg-[#eef8f1]/90 px-2 py-1 text-[10px] leading-tight text-secondary-foreground backdrop-blur-sm md:text-xs">{{ product.title }} <span aria-hidden="true">↗</span></span>
-                </a>
+{% set slides = [
+    { key: 'intro', title: 'Растительные экстракты и капсулы БИОФАРМ', alt: 'Ассортимент капсул БИОФАРМ' },
+    { key: 'care', title: 'Забота о себе начинается с малого.', alt: 'Исландский мох и Ресвератрол' },
+    { key: 'health', title: 'Твоё здоровье в твоих руках.', alt: 'Антистресс и Берберин + хром' },
+    { key: 'nature', title: 'Природа в основе. Забота каждый день.', alt: 'Экстракт чаги и Родиола розовая' },
+    { key: 'daily', title: 'Время для себя. Каждый день.', alt: 'Кардиобит и Гастролайт' }
+] %}
+<section class="home-hero" data-home-hero role="region" aria-roledescription="карусель" aria-label="БИОФАРМ — растительные экстракты и капсулы">
+    <h1 class="sr-only">Растительные экстракты и капсулы БИОФАРМ</h1>
+    <div class="home-hero__stage" data-hero-stage>
+        {% for slide in slides %}
+            <div id="hero-slide-{{ loop.index }}" class="home-hero__slide home-hero__slide--{{ slide.key }}" data-hero-slide role="group" aria-roledescription="слайд" aria-label="{{ loop.index }} из {{ slides|length }}: {{ slide.alt }}" {% if not loop.first %}hidden inert{% endif %}>
+                {# Crop only the surrounding artwork in CSS. Original bottles/labels are never regenerated. #}
+                <div class="home-hero__art" aria-hidden="true">
+                    <img src="/assets/images/home/slider/{{ slide.key }}-original.jpg" width="853" height="1280" alt="" loading="{{ loop.first ? 'eager' : 'lazy' }}" decoding="async" {% if loop.first %}fetchpriority="high"{% endif %}>
+                </div>
+                {% if loop.first %}
+                    <div class="home-hero__video-content">
+                        <video class="home-hero__video" data-hero-video controls playsinline muted preload="metadata" poster="/assets/images/home/slider/rhodiola-poster.jpg" aria-label="Видео о родиоле розовой БИОФАРМ">
+                            <source src="/assets/videos/home/rhodiola.mp4" type="video/mp4">
+                            <a href="/assets/videos/home/rhodiola.mp4">Смотреть видео о родиоле розовой</a>
+                        </video>
+                        <a class="home-hero__cta" href="/catalog">Смотреть каталог <span aria-hidden="true">→</span></a>
+                    </div>
+                {% else %}
+                    <div class="home-hero__copy">
+                        <h2>{{ slide.title }}</h2>
+                        <p>Растительные экстракты и капсулы</p>
+                        <a class="home-hero__cta" href="/catalog">Смотреть каталог <span aria-hidden="true">→</span></a>
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+    <div class="home-hero__navigation" data-hero-navigation hidden>
+        <button class="home-hero__arrow" type="button" data-hero-prev aria-label="Предыдущий слайд">←</button>
+        <div class="home-hero__dots" aria-label="Выбрать слайд">
+            {% for slide in slides %}
+                <button class="home-hero__dot" type="button" data-hero-go="{{ loop.index0 }}" aria-label="Слайд {{ loop.index }}: {{ slide.alt }}" aria-controls="hero-slide-{{ loop.index }}" {% if loop.first %}aria-current="true"{% endif %}><span></span></button>
             {% endfor %}
         </div>
+        <button class="home-hero__arrow" type="button" data-hero-next aria-label="Следующий слайд">→</button>
     </div>
+    <p class="sr-only" data-hero-status aria-live="polite" aria-atomic="true"></p>
 </section>
