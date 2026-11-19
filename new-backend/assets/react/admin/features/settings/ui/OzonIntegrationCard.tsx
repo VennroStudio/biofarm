@@ -12,7 +12,6 @@ type SyncResult = {
   archived: number;
   visible: number;
   available?: number;
-  total: number;
   groups: number;
 };
 
@@ -67,8 +66,8 @@ export function OzonIntegrationCard() {
     }
   }
 
-  async function sync() {
-    if (status?.first && !window.confirm('Заменить текущий ассортимент товарами из Ozon? Старые карточки будут перенесены в архив.')) {
+  async function importCatalog() {
+    if (!status?.first || !window.confirm('Заменить текущий ассортимент товарами из Ozon? Старые карточки будут перенесены в архив.')) {
       return;
     }
     setBusy(true);
@@ -76,7 +75,7 @@ export function OzonIntegrationCard() {
     try {
       setStatus(await request<OzonStatus>(`${endpoint}/sync`, { method: 'POST' }));
     } catch (reason) {
-      setError(messageFromError(reason, 'Не удалось запустить синхронизацию Ozon.'));
+      setError(messageFromError(reason, 'Не удалось запустить импорт каталога Ozon.'));
     } finally {
       setBusy(false);
     }
@@ -85,7 +84,7 @@ export function OzonIntegrationCard() {
   return <Card className="space-y-4 p-6">
     <div>
       <h2 className="flex items-center gap-2 text-xl font-semibold"><Package className="h-5 w-5" aria-hidden="true" />Ozon Seller</h2>
-      <p className="mt-1 text-sm text-[#5f7580]">Товары, группы, цены и остатки FBO.</p>
+      <p className="mt-1 text-sm text-[#5f7580]">Первичный импорт каталога и обновление остатков FBO.</p>
     </div>
     <ErrorAlert>{error || status?.error}</ErrorAlert>
     {status && <>
@@ -94,7 +93,7 @@ export function OzonIntegrationCard() {
           {status.connected ? 'Подключено' : status.configured ? 'Ожидает подключения' : 'Параметры не заданы'}
         </Badge>
         {status.lastSuccessAt && <span className="text-sm text-[#5f7580]">
-          Последняя сверка {new Date(status.lastSuccessAt).toLocaleString('ru-RU')}
+          Импорт завершён {new Date(status.lastSuccessAt).toLocaleString('ru-RU')}
         </span>}
       </div>
       {status.deliveryEnabled && <p className="text-sm text-[#5f7580]">
@@ -102,8 +101,8 @@ export function OzonIntegrationCard() {
       </p>}
       {status.configured ? <p className="text-sm text-[#5f7580]">
         {status.first
-          ? 'Первая синхронизация заменит текущий ассортимент товарами из Ozon. История заказов сохранится.'
-          : 'Каталог сверяется ежедневно. Изменение остатка можно получить сразу по уведомлению Ozon.'}
+          ? 'Импорт заменит текущий ассортимент товарами из Ozon. История заказов сохранится.'
+          : 'Остатки обновляются по уведомлениям Ozon. Цены и карточки редактируются на сайте.'}
       </p> : <p className="text-sm text-[#5f7580]">Укажите параметры приложения Ozon Seller на сервере.</p>}
       {status.configured && !status.connected && <p className="break-all text-sm text-[#5f7580]">
         URL для OAuth в настройках приложения Ozon <code>{status.redirectUri}</code>
@@ -112,14 +111,14 @@ export function OzonIntegrationCard() {
         <Button variant="outline" disabled={busy || pending || !status.configured} onClick={() => void connect()}>
           {status.connected ? 'Переподключить Ozon' : 'Подключить Ozon'}
         </Button>
-        <Button disabled={busy || pending || !status.connected} onClick={() => void sync()}>
+        {status.first && <Button disabled={busy || pending || !status.connected} onClick={() => void importCatalog()}>
           <RefreshCw className="h-4 w-4" aria-hidden="true" />
-          {pending ? 'Синхронизация…' : 'Синхронизировать каталог'}
-        </Button>
+          {pending ? 'Импорт…' : 'Импортировать каталог'}
+        </Button>}
       </div>
       {pending && <p role="status" className="text-sm text-[#5f7580]">Запрос принят. Результат появится после обработки.</p>}
       {status.result && <div role="status" className="rounded-xl bg-[#f4faf8] p-3 text-sm">
-        <p>Всего в Ozon {status.result.total} · на витрине {status.result.visible} · {status.result.available !== undefined ? `в наличии ${status.result.available} · ` : ''}групп {status.result.groups}</p>
+        <p>На момент импорта было {status.result.visible} товаров на витрине · {status.result.available !== undefined ? `в наличии ${status.result.available} · ` : ''}групп {status.result.groups}</p>
         <p className="mt-1">Добавлено {status.result.added} · обновлено {status.result.updated} · перенесено в архив {status.result.archived}</p>
       </div>}
       {status.webhookUrl && <div className="border-t border-[#dfece9] pt-4">

@@ -93,11 +93,10 @@ make frontend-check
 Apply migrations and configure the `OZON_*` variables from `.env.example`.
 Register the exact `OZON_REDIRECT_URI` in the Ozon private app, then open
 **Настройки → Интеграции → Ozon Seller** and connect the store. The first
-**Синхронизировать каталог** request archives the old assortment and starts daily
-sync. Later runs keep local IDs, orders and catalog relationships outside Ozon
-groups. Photos are imported when a card is created in Biofarm. Later catalog
-updates preserve its cover and gallery. The admin «Тестирование» switch does
-not affect catalog sync or stock notifications.
+**Импортировать каталог** request archives the old assortment and imports the
+Ozon catalog once. After a successful import, notifications update FBO stock for
+linked products. Prices and other product content can be edited in Biofarm.
+The admin «Тестирование» switch does not affect import or stock notifications.
 
 In local Docker development start the worker in a separate terminal:
 
@@ -106,9 +105,8 @@ docker compose exec php-fpm php bin/sync-ozon.php --watch
 ```
 
 On shared hosting, schedule `php /path/to/new-backend/bin/sync-ozon.php` once per
-minute. It processes queued requests and FBO notifications on each run. It
-performs one full sync per day from 03:00 in `OZON_SYNC_TIMEZONE` and retries
-failed daily runs after 15 minutes. A single worker lock prevents overlap.
+minute. It processes the initial import request and queued FBO notifications.
+A single worker lock prevents overlap.
 
 To receive stock changes, set a random `OZON_WEBHOOK_SECRET`, use an HTTPS
 frontend URL, and register the address displayed in the Ozon Seller card in the
@@ -139,7 +137,7 @@ and written return instructions.
 After applying database migrations, populate the pickup directory and schedule
 its refresh daily. Run the order worker continuously to reconcile payments,
 dispatch paid orders, check handover and cancellation, and send fiscal operations.
-Run the existing catalog worker separately for prices, stock and catalog updates.
+Run the catalog worker separately for the initial import and stock updates.
 
 ```bash
 php bin/process-ozon-orders.php --refresh-points

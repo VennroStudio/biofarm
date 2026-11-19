@@ -173,6 +173,14 @@ check(count($oauthCalls) === 1, 'An OAuth state must be consumed once.');
 $sync = $container->get(OzonCatalogSync::class);
 $zone = new DateTimeZone('Asia/Krasnoyarsk');
 $clock = new DateTimeImmutable('now', $zone);
+$failDetails = true;
+$call('POST', $base . '/sync', 202, $admin);
+check(!$sync->tick($clock), 'An incomplete initial catalog must fail.');
+check($sync->status()['first'] && !$sync->status()['pending'] && $sync->status()['error'] !== null,
+    'A failed import must report its error and allow another request.');
+check((int) $db->fetchOne("SELECT COUNT(*) FROM products WHERE slug = 'old-product' AND deleted_at IS NULL") === 1,
+    'An incomplete initial catalog must leave the old product intact.');
+$failDetails = false;
 $call('POST', $base . '/sync', 202, $admin);
 check($sync->tick($clock), 'First sync must succeed.');
 check($oauthCalls[1]['refresh_token'] === 'fixture-refresh-1', 'The worker must refresh an expiring token.');
@@ -190,13 +198,13 @@ check(preg_match('~<a href="/product/ozon-902"[^>]*aria-label="[^"]*нет в н
 check((int) $db->fetchOne('SELECT COUNT(*) FROM product_images WHERE product_id = ?', [$localId]) === 2, 'Images must be deduplicated and imported.');
 check(!str_contains($db->fetchOne('SELECT description FROM products WHERE id = ?', [$localId]), '<script>'), 'Description must be sanitized.');
 
-$call('POST', $base . '/sync', 202, $admin);
-check($sync->tick($clock), 'Repeating the sync must succeed.');
-check($sync->status()['result']['added'] === 0 && $sync->status()['result']['updated'] === 0, 'Repeating the same snapshot must be a no-op.');
+$call('POST', $base . '/sync', 422, $admin);
 
 $manualPhoto = '/uploads/products/manual.jpg';
 $db->update('products', [
     'image' => $manualPhoto, 'images' => json_encode([$manualPhoto], JSON_THROW_ON_ERROR), 'image_alt' => 'Фото редактора',
+    'price' => 1200, 'old_price' => 1400, 'name' => 'Название редактора', 'description' => '<p>Описание редактора</p>',
+    'category_id' => '1',
 ], ['id' => $localId]);
 $db->delete('product_images', ['product_id' => $localId]);
 $db->insert('product_images', [
@@ -208,6 +216,12 @@ $readPhotos = static fn () => [
     $db->fetchAllAssociative('SELECT * FROM product_images WHERE product_id = ? ORDER BY id', [$localId]),
 ];
 $manualPhotos = $readPhotos();
+$readCard = static fn () => $db->fetchAssociative(
+    'SELECT price, old_price, name, description, category_id, is_active, published_at, deleted_at FROM products WHERE id = ?',
+    [$localId],
+);
+$manualCard = $readCard();
+$groupId = $db->fetchOne('SELECT group_id FROM product_group_items WHERE product_id = ?', [$localId]);
 $details[901]['primary_image'] = ['https://ir.ozone.ru/s3/new-cover.jpg'];
 $details[901]['images'] = ['https://ir.ozone.ru/s3/new-gallery.jpg'];
 $details[901]['price'] = '1000.00';
@@ -216,17 +230,14 @@ $details[902]['is_archived'] = true;
 $details[903] = detail(903, 88, 5);
 $listing[] = 903;
 $nextDay = $clock->modify('tomorrow')->setTime(3, 5);
-check($sync->tick($nextDay), 'Daily sync must run without a manual request.');
-check($db->fetchOne('SELECT product_id FROM ozon_catalog_products WHERE ozon_id = 901') === $localId, 'Moving a product must preserve its local ID.');
-check((int) $db->fetchOne('SELECT price FROM products WHERE id = ?', [$localId]) === 1000, 'Daily sync must update price.');
-check($readPhotos() === $manualPhotos, 'Daily sync must preserve the manually edited cover, alt text and gallery.');
-check((int) $db->fetchOne(
-    'SELECT COUNT(*) FROM product_images i JOIN ozon_catalog_products l ON l.product_id = i.product_id WHERE l.ozon_id = 903',
-) === 2, 'A new product must receive its initial gallery on a later sync.');
-check((int) $db->fetchOne('SELECT COUNT(*) FROM product_groups WHERE deleted_at IS NULL') === 1, 'Old empty model must be archived.');
-check($sync->status()['result']['archived'] === 1, 'Ozon archive must hide the item.');
 $before = $listCalls;
-check($sync->tick($nextDay->modify('+20 minutes')) && $before === $listCalls, 'The scheduler must run only once per day.');
+$db->update('ozon_catalog_state', ['requested' => 1, 'error' => 'Old daily sync failed'], ['id' => 1]);
+check($sync->tick($nextDay) && $before === $listCalls, 'A completed import must ignore the previous daily schedule and a stale request.');
+check(!$sync->status()['pending'] && $sync->status()['error'] === null && $sync->status()['result'] === $result,
+    'The original import result must remain visible without a stale request or error.');
+check((int) $db->fetchOne('SELECT COUNT(*) FROM ozon_catalog_products WHERE ozon_id = 903') === 0,
+    'A newly listed Ozon item must not be imported automatically.');
+check($readCard() === $manualCard && $readPhotos() === $manualPhotos, 'The worker must preserve local edits after the import.');
 
 $hook = '/webhooks/ozon/' . $secret;
 $call('POST', '/webhooks/ozon/' . str_repeat('z', 32), 404, body: ['message_type' => 'TYPE_PING']);
@@ -238,6 +249,8 @@ $details[901]['stocks']['stocks'][0]['present'] = 2;
 $call('POST', $hook, 200, body: $event);
 $call('POST', $hook, 200, body: $event);
 check((int) $db->fetchOne('SELECT COUNT(*) FROM ozon_stock_queue') === 1, 'Identical webhooks must share a queue row.');
+$details[902] = detail(902, 77, 5);
+$call('POST', $hook, 200, body: array_replace($event, ['sku' => 2902]));
 check($sync->tick($nextDay), 'Stock webhook must process successfully.');
 $depleted = $db->fetchAssociative('SELECT is_active, availability FROM products WHERE id = ?', [$localId]);
 check((int) $depleted['is_active'] === 1 && $depleted['availability'] === 'out_of_stock', 'Zero FBO stock must leave the product published.');
@@ -245,10 +258,10 @@ $call('PATCH', $availabilityPath, 409, $admin, ['availability' => 'in_stock']);
 $unavailable = (string) $call('GET', '/product/ozon-901', 200)->getBody();
 check(str_contains($unavailable, 'Нет в наличии') && !str_contains($unavailable, 'data-product-cart'), 'A direct link must show unavailable stock and hide the purchase button.');
 $catalog = (string) $call('GET', '/catalog?sort=price-desc', 200)->getBody();
-$availablePosition = strpos($catalog, '/product/ozon-903');
+$availablePosition = strpos($catalog, '/product/ozon-902');
 $soldOutPosition = strpos($catalog, '/product/ozon-901');
 check($availablePosition !== false && $soldOutPosition !== false && $soldOutPosition > $availablePosition, 'A depleted card must move behind available stock, even when it has a higher price.');
-check(str_contains($catalog, 'Нет в наличии') && !str_contains($catalog, 'href="/product/ozon-902"'), 'The catalog must label depleted cards and exclude archived cards.');
+check(str_contains($catalog, 'Нет в наличии'), 'The catalog must label depleted cards.');
 try {
     $container->get(CreateOrderHandler::class)->handle(new CreateOrderCommand(
         userId: null,
@@ -267,15 +280,25 @@ $details[901]['stocks']['stocks'][0]['present'] = 5;
 $call('POST', $hook, 200, body: array_replace($event, ['sku' => 1901]));
 check($sync->tick($nextDay), 'Restock webhook must process successfully.');
 check($db->fetchOne('SELECT availability FROM products WHERE id = ?', [$localId]) === 'in_stock', 'A replenished product must become purchasable.');
-check($readPhotos() === $manualPhotos, 'Stock webhooks must preserve the manually edited images.');
+check($readCard() === $manualCard && $readPhotos() === $manualPhotos, 'Stock webhooks must preserve manual prices, content, and images.');
 check(str_contains((string) $call('GET', '/catalog', 200)->getBody(), '/product/ozon-901'), 'A replenished card must return to the catalog.');
 
+$details[901]['is_archived'] = true;
+$call('POST', $hook, 200, body: $event);
+check($sync->tick($nextDay), 'An archive reported during a stock refresh must be handled as zero stock.');
+check($db->fetchOne('SELECT availability FROM products WHERE id = ?', [$localId]) === 'out_of_stock'
+    && $readCard() === $manualCard
+    && $db->fetchOne('SELECT group_id FROM product_group_items WHERE product_id = ?', [$localId]) === $groupId,
+    'An Ozon archive must leave the storefront card and its group intact.');
+$call('GET', '/product/ozon-901', 200);
+
+$details[901]['is_archived'] = false;
 $details[901]['price'] = '1100.00';
 $failDetails = true;
-$call('POST', $base . '/sync', 202, $admin);
-check(!$sync->tick($nextDay), 'An incomplete API response must fail.');
-check((int) $db->fetchOne('SELECT price FROM products WHERE id = ?', [$localId]) === 1000, 'An incomplete API response must keep the last verified price.');
-check($sync->status()['error'] !== null, 'An incomplete API response must surface in admin.');
+$call('POST', $hook, 200, body: $event);
+check(!$sync->tick($nextDay), 'An incomplete stock response must fail.');
+check((int) $db->fetchOne('SELECT attempts FROM ozon_stock_queue') === 1, 'The webhook must be queued for a retry.');
+check($readCard() === $manualCard, 'An incomplete stock response must preserve local product content.');
 
 check($data($call('PATCH', '/admin/api/settings', 200, $admin, ['testing_enabled' => false]))['testing_enabled'] === false,
     'Production admin can turn testing off');
@@ -287,8 +310,11 @@ check($normal->get(OzonPickupCheckout::class)->method() === OzonPickupCheckout::
 $login = (string)$call('GET', '/login', 200)->getBody();
 check(str_contains($login, 'data-sms-available="true"'), 'Disabling testing enables configured SMS verification.');
 $failDetails = false;
-$call('POST', $base . '/sync', 202, $admin);
-check($normal->get(OzonCatalogSync::class)->tick($nextDay), 'Catalog sync also runs with testing off.');
-check((int)$db->fetchOne('SELECT price FROM products WHERE id = ?', [$localId]) === 1100, 'Catalog sync applies the new price when testing is off.');
+$call('POST', $base . '/sync', 422, $admin);
+$call('POST', $hook, 200, body: $event);
+check($normal->get(OzonCatalogSync::class)->tick($nextDay), 'Stock webhooks also run with testing off.');
+check($db->fetchOne('SELECT availability FROM products WHERE id = ?', [$localId]) === 'in_stock'
+    && $readCard() === $manualCard && $before === $listCalls,
+    'Stock can return after an Ozon archive without reimporting the catalog or changing the local price.');
 
-echo "Ozon HTTP access, OAuth, replacement, idempotency, daily schedule, price and group changes, stock transitions and incomplete snapshots passed.\n";
+echo "Ozon HTTP access, OAuth, one-time catalog import, preserved local prices and content, stock transitions and retries passed.\n";

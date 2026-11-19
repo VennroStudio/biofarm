@@ -15,15 +15,15 @@ final readonly class OzonCatalogWriter
      *
      * @param array<int, OzonProduct> $products
      */
-    public function apply(array $products, bool $first, string $now): array
+    public function apply(array $products, string $now): array
     {
         $result = ['added' => 0, 'updated' => 0, 'archived' => 0, 'visible' => 0, 'available' => 0, 'groups' => 0, 'total' => count($products)];
         $links = $this->db->fetchAllAssociativeIndexed('SELECT ozon_id, product_id, sku, fbo_sku, stock, archived FROM ozon_catalog_products');
         $categories = $this->db->fetchAllKeyValue('SELECT slug, id FROM categories WHERE deleted_at IS NULL');
-        $groups = $this->groups($products, $first, $now);
+        $groups = $this->groups($products, $now);
         $result['groups'] = count($groups);
         foreach ($products as $product) {
-            $row = $this->productRow($product, $links[$product->id]['product_id'] ?? null, $first);
+            $row = $this->productRow($product, $links[$product->id]['product_id'] ?? null);
             if ($product->archived && $row === false) {
                 continue;
             }
@@ -89,14 +89,12 @@ final readonly class OzonCatalogWriter
                 $this->saveMembership((int) $link['product_id'], null, $now);
             }
         }
-        if ($first) {
-            $result['archived'] += $this->db->executeStatement(
-                "UPDATE products SET is_active = 0, availability = 'out_of_stock', deleted_at = ?, updated_at = ?
-                 WHERE deleted_at IS NULL AND id NOT IN (SELECT product_id FROM ozon_catalog_products)",
-                [$now, $now],
-            );
-        }
-        $this->archiveEmptyGroups($first, $now);
+        $result['archived'] += $this->db->executeStatement(
+            "UPDATE products SET is_active = 0, availability = 'out_of_stock', deleted_at = ?, updated_at = ?
+             WHERE deleted_at IS NULL AND id NOT IN (SELECT product_id FROM ozon_catalog_products)",
+            [$now, $now],
+        );
+        $this->archiveEmptyGroups($now);
 
         return $result;
     }
@@ -105,7 +103,7 @@ final readonly class OzonCatalogWriter
     public function updateStock(string $id, array $detail, string $now): bool
     {
         $link = $this->db->fetchAssociative(
-            'SELECT l.product_id, l.archived, l.stock, p.* FROM ozon_catalog_products l
+            'SELECT l.archived, l.stock, p.id, p.price, p.deleted_at, p.availability FROM ozon_catalog_products l
              JOIN products p ON p.id = l.product_id WHERE l.ozon_id = ? FOR UPDATE',
             [$id],
         );
@@ -113,28 +111,19 @@ final readonly class OzonCatalogWriter
             return false;
         }
 
-        $archived = OzonProduct::archived($detail);
-        $stock = $archived ? 0 : OzonProduct::stock($detail);
-        if ((int) $link['stock'] !== $stock || $archived) {
-            $this->db->update('ozon_catalog_products', ['stock' => $stock, 'archived' => (int) $archived], ['ozon_id' => $id]);
+        $stock = OzonProduct::archived($detail) ? 0 : OzonProduct::stock($detail);
+        if ((int) $link['stock'] !== $stock) {
+            $this->db->update('ozon_catalog_products', ['stock' => $stock], ['ozon_id' => $id]);
         }
-        if ($archived) {
-            $this->saveMembership((int) $link['id'], null, $now);
-        }
-        // A webhook cannot restore a card that was archived or deleted by a full import.
         if ($link['deleted_at'] !== null) {
             return false;
         }
-        $changed = $this->update(
-            'products', (int) $link['id'], $link, $this->visibility($stock, (int) $link['price'], $archived, $link, $now), $now,
-        );
-        if ($archived) {
-            $this->archiveEmptyGroups(false, $now);
-        }
-        return $changed;
+        $availability = $stock > 0 && (int) $link['price'] > 0 ? 'in_stock' : 'out_of_stock';
+
+        return $this->update('products', (int) $link['id'], $link, ['availability' => $availability], $now);
     }
 
-    private function productRow(OzonProduct $product, mixed $localId, bool $first): array|false
+    private function productRow(OzonProduct $product, mixed $localId): array|false
     {
         if ($localId !== null) {
             $row = $this->db->fetchAssociative('SELECT * FROM products WHERE id = ? FOR UPDATE', [$localId]);
@@ -142,9 +131,6 @@ final readonly class OzonCatalogWriter
                 throw new OzonException('Отсутствует локальная карточка, связанная с Ozon.');
             }
             return $row;
-        }
-        if (!$first) {
-            return false;
         }
         // Reuse existing Ozon cards and their attachments on the first tracked import.
         return $this->db->fetchAssociative(
@@ -181,13 +167,13 @@ final readonly class OzonCatalogWriter
         ];
     }
 
-    private function groups(array $products, bool $first, string $now): array
+    private function groups(array $products, string $now): array
     {
         $existing = $this->db->fetchAllKeyValue('SELECT ozon_model_id, group_id FROM ozon_catalog_groups');
-        $legacy = $first ? $this->db->fetchAllKeyValue(
+        $legacy = $this->db->fetchAllKeyValue(
             "SELECT p.slug, i.group_id FROM product_group_items i JOIN products p ON p.id = i.product_id
              WHERE p.slug LIKE 'ozon-%' AND p.ozon_link LIKE 'https://www.ozon.ru/product/%'",
-        ) : [];
+        );
         $assigned = array_fill_keys(array_values($existing), true);
         $groups = [];
         ksort($products);
@@ -229,11 +215,10 @@ final readonly class OzonCatalogWriter
         );
     }
 
-    private function archiveEmptyGroups(bool $first, string $now): void
+    private function archiveEmptyGroups(string $now): void
     {
-        $managed = $first ? '' : 'AND id IN (SELECT group_id FROM ozon_catalog_groups)';
         $this->db->executeStatement(
-            "UPDATE product_groups SET deleted_at = ?, updated_at = ? WHERE deleted_at IS NULL $managed
+            "UPDATE product_groups SET deleted_at = ?, updated_at = ? WHERE deleted_at IS NULL
              AND id NOT IN (SELECT i.group_id FROM product_group_items i JOIN products p ON p.id = i.product_id WHERE p.deleted_at IS NULL)",
             [$now, $now],
         );

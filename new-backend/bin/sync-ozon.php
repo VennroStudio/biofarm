@@ -6,8 +6,6 @@ declare(strict_types=1);
 use App\Modules\Ozon\OzonCatalogSync;
 use App\Modules\Ozon\OzonConnection;
 
-use function App\Components\env;
-
 if (PHP_SAPI !== 'cli') {
     exit(1);
 }
@@ -16,7 +14,7 @@ if (array_diff(array_slice($argv, 1), ['--watch', '--help'])) {
     exit(2);
 }
 if (in_array('--help', $argv, true)) {
-    echo "php bin/sync-ozon.php [--watch]\nProcess manual requests, daily Ozon catalog sync and stock notifications.\n";
+    echo "php bin/sync-ozon.php [--watch]\nProcess the initial Ozon catalog import and stock notifications.\n";
     exit(0);
 }
 
@@ -26,11 +24,10 @@ $container = require dirname(__DIR__) . '/config/container.php';
 if (!$container->get(OzonConnection::class)->configured()) {
     exit(0);
 }
-$zone = new DateTimeZone(env('OZON_SYNC_TIMEZONE', 'Asia/Krasnoyarsk'));
 $watch = in_array('--watch', $argv, true);
 do {
     try {
-        if (!$container->get(OzonCatalogSync::class)->tick(new DateTimeImmutable('now', $zone)) && !$watch) {
+        if (!$container->get(OzonCatalogSync::class)->tick(new DateTimeImmutable()) && !$watch) {
             exit(1);
         }
     } catch (Throwable $exception) {
