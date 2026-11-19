@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Components\Auth\AccessTokenPayload;
 use App\Components\Auth\JwtTokenService;
 use App\Components\Exception\DomainExceptionModule;
+use App\Components\Integration\Credential\IntegrationCredentialStore;
 use App\Components\Setting\SiteSettings;
 use App\Modules\Order\Command\Order\Create\CreateOrderCommand;
 use App\Modules\Order\Command\Order\Create\CreateOrderHandler;
@@ -86,10 +87,12 @@ $handler = static function (RequestInterface $request) use (&$details, &$listing
     if ($path === '/oauth/token') {
         parse_str($body, $form);
         $oauthCalls[] = $form;
+        $expiresAt = time() + (count($oauthCalls) === 1 ? 60 : 3600);
+        $claims = json_encode(['sub' => '123', 'exp' => $expiresAt], JSON_THROW_ON_ERROR);
         $reply = [
-            'access_token' => 'fixture.' . rtrim(base64_encode('{"sub":"123"}'), '=') . '.fixture',
+            'access_token' => 'fixture.' . rtrim(strtr(base64_encode($claims), '+/', '-_'), '=') . '.fixture',
             'refresh_token' => 'fixture-refresh-' . count($oauthCalls),
-            'expires_in' => count($oauthCalls) === 1 ? 60 : 3600,
+            'expires_in' => $expiresAt,
         ];
     } else {
         check(str_starts_with($request->getHeaderLine('Authorization'), 'Bearer fixture.'), 'Seller API must use the OAuth token.');
@@ -169,6 +172,12 @@ $callback = '/ozon/callback?state=' . $parameters['state'] . '&code=fixture';
 $call('GET', $callback, 303);
 $call('GET', $callback, 400);
 check(count($oauthCalls) === 1, 'An OAuth state must be consumed once.');
+$credentials = $container->get(IntegrationCredentialStore::class);
+$tokens = json_decode($credentials->get('ozon.seller.oauth'), true, flags: JSON_THROW_ON_ERROR);
+check($tokens['expires'] > time() && $tokens['expires'] <= time() + 60,
+    'An absolute expires_in value must not extend the JWT expiration.');
+$tokens['expires'] += time();
+$credentials->save('ozon.seller.oauth', json_encode($tokens, JSON_THROW_ON_ERROR));
 
 $sync = $container->get(OzonCatalogSync::class);
 $zone = new DateTimeZone('Asia/Krasnoyarsk');
@@ -183,7 +192,7 @@ check((int) $db->fetchOne("SELECT COUNT(*) FROM products WHERE slug = 'old-produ
 $failDetails = false;
 $call('POST', $base . '/sync', 202, $admin);
 check($sync->tick($clock), 'First sync must succeed.');
-check($oauthCalls[1]['refresh_token'] === 'fixture-refresh-1', 'The worker must refresh an expiring token.');
+check($oauthCalls[1]['refresh_token'] === 'fixture-refresh-1', 'The worker must refresh an expiring JWT even with stale saved expiry.');
 $result = $data($call('GET', $base, 200, $admin))['result'];
 check($result === ['added' => 2, 'updated' => 0, 'archived' => 1, 'visible' => 2, 'available' => 1, 'groups' => 1, 'total' => 2], 'First replacement result.');
 check(is_string($db->fetchOne("SELECT deleted_at FROM products WHERE slug = 'old-product'")), 'Legacy product must be archived and retained.');

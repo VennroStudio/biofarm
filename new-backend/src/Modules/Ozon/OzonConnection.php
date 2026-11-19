@@ -101,7 +101,8 @@ final readonly class OzonConnection
             if ($saved === null) {
                 throw new OzonException('Сначала подключите Ozon в настройках интеграций.');
             }
-            if ($saved['expires'] > time() + 120) {
+            $expiresAt = self::accessExpiresAt(self::claims($saved['access']), (int) $saved['expires']);
+            if ($expiresAt > time() + 120) {
                 return $saved['access'];
             }
             try {
@@ -143,15 +144,28 @@ final readonly class OzonConnection
         if ((string) ($claims['sub'] ?? '') !== $this->sellerId) {
             throw new OzonException('В Ozon выбран другой магазин.');
         }
+        $now = time();
+        $expiresAt = self::accessExpiresAt($claims, $now + $expires);
+        if ($expiresAt <= $now) {
+            throw new OzonException('Ozon выдал просроченный токен доступа.');
+        }
         $this->credentials->save(self::CREDENTIAL, json_encode([
             'seller' => $this->sellerId,
             'client' => $this->clientId,
             'access' => $access,
             'refresh' => $refresh,
-            'expires' => time() + $expires,
+            'expires' => $expiresAt,
         ], JSON_THROW_ON_ERROR));
 
         return $access;
+    }
+
+    private static function accessExpiresAt(array $claims, int $fallback): int
+    {
+        // Ozon can return an absolute timestamp in expires_in. The JWT limits both new and previously saved tokens.
+        $jwtExpiry = filter_var($claims['exp'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+
+        return $jwtExpiry === false ? $fallback : min($fallback, $jwtExpiry);
     }
 
     private static function claims(string $access): array
