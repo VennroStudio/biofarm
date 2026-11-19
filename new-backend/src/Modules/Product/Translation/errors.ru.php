@@ -25,4 +25,5 @@ return [
     'error.attribute_value_slug_already_exists'    => 'Значение с таким slug уже существует в этом атрибуте.',
     'error.product_group_name_required'            => 'Укажите название группы товаров.',
     'error.product_group_not_found'                => 'Группа товаров не найдена.',
+    'error.main_product_group_required'             => 'Выберите группу, чтобы назначить главный товар.',
 ];

@@ -44,6 +44,7 @@ export type Product = {
   active_components_text: string | null;
   attribute_value_ids: number[] | null;
   product_group_id: number | null;
+  is_main_in_group?: boolean;
   related_blog_post_ids: number[] | null;
   certificate_ids: number[] | null;
   faq_ids?: number[] | null;

@@ -113,6 +113,7 @@ final readonly class CreateProductHandler
                 productId: $product->id,
                 attributeValueIds: $command->attributeValueIds,
                 productGroupId: $command->productGroupId,
+                isMainInGroup: $command->isMainInGroup,
             );
             $this->productContentSyncer->sync(
                 productId: $product->id,

@@ -13,6 +13,7 @@ use App\Http\View\Product\ProductImageView;
 use App\Http\View\Product\ProductPageProductView;
 use App\Http\View\Product\ProductVariantView;
 use App\Modules\Content\Service\MaterialLibrary;
+use App\Modules\Product\Service\CatalogProductVisibility;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
@@ -244,7 +245,7 @@ final readonly class ProductCatalogDataProvider
     public function relatedProducts(string $categoryId, int $excludeProductId, int $limit = 4): array
     {
         /** @var list<array{id: int|string, slug: string, name: string, category_id: string, price: int|string, old_price: int|string|null, image: string, badge: string|null, weight: string, description: string, short_description: string|null, category_name: string|null}> $rows */
-        $rows = $this->connection->createQueryBuilder()
+        $qb = $this->connection->createQueryBuilder()
             ->select(
                 'p.id',
                 'p.slug',
@@ -275,9 +276,9 @@ final readonly class ProductCatalogDataProvider
             ->orderBy("CASE WHEN p.availability = 'out_of_stock' THEN 1 ELSE 0 END", 'ASC')
             ->addOrderBy('p.created_at', 'DESC')
             ->addOrderBy('p.id', 'ASC')
-            ->setMaxResults($limit)
-            ->executeQuery()
-            ->fetchAllAssociative();
+            ->setMaxResults($limit);
+        CatalogProductVisibility::apply($qb);
+        $rows = $qb->executeQuery()->fetchAllAssociative();
 
         return array_map($this->mapProduct(...), $rows);
     }
@@ -721,15 +722,15 @@ final readonly class ProductCatalogDataProvider
     private function categoryCounts(): array
     {
         /** @var list<array{category_id: string, products_count: int|string}> $rows */
-        $rows = $this->connection->createQueryBuilder()
+        $qb = $this->connection->createQueryBuilder()
             ->select('p.category_id', 'COUNT(p.id) AS products_count')
             ->from('products', 'p')
             ->where('p.deleted_at IS NULL')
             ->andWhere('p.is_active = 1')
             ->groupBy('p.category_id')
-            ->orderBy('p.category_id', 'ASC')
-            ->executeQuery()
-            ->fetchAllAssociative();
+            ->orderBy('p.category_id', 'ASC');
+        CatalogProductVisibility::apply($qb);
+        $rows = $qb->executeQuery()->fetchAllAssociative();
 
         $parents = $this->categoryParentMap();
         $counts = [];
@@ -775,6 +776,7 @@ final readonly class ProductCatalogDataProvider
             ->orderBy('av.sort_order', 'ASC')
             ->addOrderBy('av.name', 'ASC')
             ->setParameter('attributeSlug', $attributeSlug);
+        CatalogProductVisibility::apply($qb);
 
         if ($category !== null) {
             $categoryIds = $this->categoryFilterIds($category);
@@ -917,6 +919,8 @@ final readonly class ProductCatalogDataProvider
         ?string $componentSlug,
         ?string $purposeSlug,
     ): void {
+        CatalogProductVisibility::apply($qb);
+
         if ($category !== null) {
             $categoryIds = $this->categoryFilterIds($category);
             if ($categoryIds === []) {

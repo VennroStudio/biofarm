@@ -37,6 +37,7 @@ final readonly class DeleteProductGroupAction implements RequestHandlerInterface
             $affected = $this->connection->createQueryBuilder()
                 ->update('product_groups')
                 ->set('deleted_at', ':deletedAt')
+                ->set('main_product_id', 'NULL')
                 ->set('updated_at', ':updatedAt')
                 ->where('id = :id')
                 ->andWhere('deleted_at IS NULL')

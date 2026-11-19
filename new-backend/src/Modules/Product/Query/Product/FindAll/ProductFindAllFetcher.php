@@ -8,6 +8,7 @@ use App\Components\Cacher\Cacher;
 use App\Components\ReadModel\ModelCountItemsResult;
 use App\Components\ReadModel\ReadModelFields;
 use App\Modules\Product\ReadModel\Product\ProductDetails;
+use App\Modules\Product\Service\CatalogProductVisibility;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 
@@ -25,9 +26,9 @@ final readonly class ProductFindAllFetcher
      * @return ModelCountItemsResult<ProductDetails>
      * @throws Exception
      */
-    public function fetch(ProductFindAllQuery $query): ModelCountItemsResult
+    public function fetch(ProductFindAllQuery $query, bool $publicCatalog = false): ModelCountItemsResult
     {
-        $key = $this->cacheKey($query);
+        $key = $this->cacheKey($query, $publicCatalog);
 
         /** @var ModelCountItemsResult<ProductDetails>|null $cached */
         $cached = $this->cacher->get($key);
@@ -38,6 +39,10 @@ final readonly class ProductFindAllFetcher
         $qb = $this->connection->createQueryBuilder()
             ->from(self::TABLE, 'p')
             ->where('p.deleted_at IS NULL');
+
+        if ($publicCatalog) {
+            CatalogProductVisibility::apply($qb);
+        }
 
         if (!$query->includeInactive) {
             $qb->andWhere('p.is_active = 1');
@@ -78,10 +83,11 @@ final readonly class ProductFindAllFetcher
         return $result;
     }
 
-    private function cacheKey(ProductFindAllQuery $query): string
+    private function cacheKey(ProductFindAllQuery $query, bool $publicCatalog): string
     {
         return \sprintf(
-            'products_availability_find_all_%s_%s_%s_%d_%d',
+            'products_find_all_%s_%s_%s_%s_%d_%d',
+            $publicCatalog ? 'catalog' : 'admin',
             $query->category !== null && $query->category !== '' ? $query->category : 'all',
             $query->includeInactive ? 'with_inactive' : 'active',
             md5((string)$query->search),

@@ -63,6 +63,7 @@ final readonly class ProductDetails implements ProductModelInterface
         public string $legalStatus = 'unknown',
         public ?string $officialPurpose = null,
         public ?string $regulatoryEvidence = null,
+        public bool $isMainInGroup = false,
     ) {}
 
     public static function fields(): array
@@ -110,6 +111,7 @@ final readonly class ProductDetails implements ProductModelInterface
             'active_components_text' => 'active_components_text',
             'attribute_value_ids'    => '(SELECT JSON_ARRAYAGG(pav.attribute_value_id) FROM product_attribute_values pav WHERE pav.product_id = p.id)',
             'product_group_id'       => '(SELECT pgi.group_id FROM product_group_items pgi INNER JOIN product_groups pg ON pg.id = pgi.group_id AND pg.deleted_at IS NULL WHERE pgi.product_id = p.id LIMIT 1)',
+            'is_main_in_group'       => '(EXISTS (SELECT 1 FROM product_group_items pgi INNER JOIN product_groups pg ON pg.id = pgi.group_id AND pg.deleted_at IS NULL WHERE pgi.product_id = p.id AND pg.main_product_id = p.id))',
             'related_blog_post_ids'  => '(SELECT JSON_ARRAYAGG(pbp.blog_post_id) FROM product_blog_posts pbp INNER JOIN blog_posts bp ON bp.id = pbp.blog_post_id AND bp.deleted_at IS NULL WHERE pbp.product_id = p.id)',
             'certificate_ids'        => '(SELECT JSON_ARRAYAGG(JSON_OBJECT(\'id\', mp.material_id, \'sort_order\', mp.sort_order)) FROM material_placements mp WHERE mp.kind = \'certificate\' AND mp.target_type = \'product\' AND mp.target_id = CAST(p.id AS CHAR))',
             'features'               => 'features',
@@ -154,6 +156,7 @@ final readonly class ProductDetails implements ProductModelInterface
      *     active_components_text: string|null,
      *     attribute_value_ids: list<int>|string|null,
      *     product_group_id: int|string|null,
+     *     is_main_in_group: int|string,
      *     related_blog_post_ids: list<int>|string|null,
      *     certificate_ids: list<array{id: int|string, sort_order: int|string}|int>|string|null,
      *     features: list<string>|string|null,
@@ -198,6 +201,7 @@ final readonly class ProductDetails implements ProductModelInterface
             activeComponentsText: $row['active_components_text'],
             attributeValueIds: self::jsonIntList($row['attribute_value_ids']),
             productGroupId: $row['product_group_id'] !== null ? (int)$row['product_group_id'] : null,
+            isMainInGroup: (bool) $row['is_main_in_group'],
             relatedBlogPostIds: self::jsonIntList($row['related_blog_post_ids']),
             certificateIds: self::jsonCertificateIds($row['certificate_ids']),
             features: self::jsonList($row['features']),
@@ -256,6 +260,7 @@ final readonly class ProductDetails implements ProductModelInterface
             'active_components_text' => $this->activeComponentsText,
             'attribute_value_ids'    => $this->attributeValueIds,
             'product_group_id'       => $this->productGroupId,
+            'is_main_in_group'       => $this->isMainInGroup,
             'related_blog_post_ids'  => $this->relatedBlogPostIds,
             'certificate_ids'        => $this->certificateIds,
             'features'               => $this->features,

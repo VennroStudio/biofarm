@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Product\Service;
 
+use App\Components\Exception\DomainExceptionModule;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 
@@ -20,11 +21,12 @@ final readonly class ProductFacetSyncer
         int $productId,
         ?array $attributeValueIds = null,
         ?int $productGroupId = null,
+        ?bool $isMainInGroup = null,
     ): void {
         $attributeValueIds = $this->existingAttributeValueIds($this->ids($attributeValueIds));
 
         $this->syncAttributeValues($productId, $attributeValueIds);
-        $this->syncProductGroup($productId, $productGroupId);
+        $this->syncProductGroup($productId, $productGroupId, $isMainInGroup);
     }
 
     /**
@@ -43,27 +45,53 @@ final readonly class ProductFacetSyncer
         }
     }
 
-    private function syncProductGroup(int $productId, ?int $productGroupId): void
+    private function syncProductGroup(int $productId, ?int $productGroupId, ?bool $isMainInGroup): void
     {
-        $this->connection->delete('product_group_items', ['product_id' => $productId]);
-
-        if ($productGroupId === null || $productGroupId <= 0 || !$this->productGroupExists($productGroupId)) {
-            return;
+        $previous = $this->connection->fetchOne(
+            'SELECT group_id FROM product_group_items WHERE product_id = ? FOR UPDATE',
+            [$productId],
+        );
+        $previousGroupId = $previous === false ? null : (int) $previous;
+        $groupIds = array_values(array_unique(array_filter([$previousGroupId, $productGroupId])));
+        $groups = $groupIds === [] ? [] : $this->connection->fetchFirstColumn(
+            'SELECT id FROM product_groups WHERE id IN (?) AND deleted_at IS NULL ORDER BY id FOR UPDATE',
+            [$groupIds],
+            [ArrayParameterType::INTEGER],
+        );
+        $groupId = in_array($productGroupId, array_map('intval', $groups), true) ? $productGroupId : null;
+        if ($isMainInGroup === true && $groupId === null) {
+            throw new DomainExceptionModule('product', 'error.main_product_group_required', 44, status: 422);
         }
 
-        $this->connection->insert('product_group_items', [
-            'group_id'   => $productGroupId,
-            'product_id' => $productId,
-            'created_at' => gmdate('Y-m-d H:i:s'),
-        ]);
+        if ($previousGroupId !== $groupId) {
+            if ($previousGroupId !== null) {
+                $this->clearMainProduct($previousGroupId, $productId);
+            }
+            $this->connection->delete('product_group_items', ['product_id' => $productId]);
+            if ($groupId !== null) {
+                $this->connection->insert('product_group_items', [
+                    'group_id' => $groupId,
+                    'product_id' => $productId,
+                    'created_at' => gmdate('Y-m-d H:i:s'),
+                ]);
+            }
+        }
+
+        if ($groupId !== null && $isMainInGroup !== null) {
+            if ($isMainInGroup) {
+                $this->connection->update('product_groups', ['main_product_id' => $productId], ['id' => $groupId]);
+            } else {
+                $this->clearMainProduct($groupId, $productId);
+            }
+        }
     }
 
-    private function productGroupExists(int $id): bool
+    private function clearMainProduct(int $groupId, int $productId): void
     {
-        return $this->connection->fetchOne(
-            'SELECT id FROM product_groups WHERE id = :id AND deleted_at IS NULL LIMIT 1',
-            ['id' => $id],
-        ) !== false;
+        $this->connection->update('product_groups', ['main_product_id' => null], [
+            'id' => $groupId,
+            'main_product_id' => $productId,
+        ]);
     }
 
     /**

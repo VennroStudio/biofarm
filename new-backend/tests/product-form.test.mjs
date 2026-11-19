@@ -21,7 +21,7 @@ test('prices match integer ruble API and marketplace links reject unsafe URLs', 
   assert.equal(exports.productFormIssue({ ...valid, ozon_link: 'https://ozon.ru/product/test' }), null);
 });
 test('saving another tab preserves rich HTML, stored GTIN and selected relationships', () => {
-  const form = { ...valid, description: '<p><span style="color: red">Текст</span></p>', gtin: '1234567890123', certificate_ids: [1], related_blog_post_ids: [2], attribute_value_ids: [3], product_group_id: '4' };
+  const form = { ...valid, description: '<p><span style="color: red">Текст</span></p>', gtin: '1234567890123', certificate_ids: [1], related_blog_post_ids: [2], attribute_value_ids: [3], product_group_id: '4', is_main_in_group: true };
   const payload = exports.productPayloadFromForm(form);
   assert.equal(payload.description, form.description);
   assert.equal(payload.gtin, form.gtin);
@@ -29,4 +29,7 @@ test('saving another tab preserves rich HTML, stored GTIN and selected relations
   assert.equal(JSON.stringify(payload.relatedBlogPostIds), '[2]');
   assert.equal(JSON.stringify(payload.attributeValueIds), '[3]');
   assert.equal(payload.productGroupId, 4);
+  assert.equal(payload.isMainInGroup, true);
+  assert.equal(exports.productPayloadFromForm({ ...form, is_main_in_group: false }).isMainInGroup, false);
+  assert.equal(exports.productPayloadFromForm({ ...form, product_group_id: '' }).isMainInGroup, false);
 });

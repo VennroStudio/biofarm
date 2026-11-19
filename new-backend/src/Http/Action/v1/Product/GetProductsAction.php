@@ -46,7 +46,7 @@ final readonly class GetProductsAction implements RequestHandlerInterface
         }
 
         $this->validator->validate($query);
-        $result = $this->fetcher->fetch($query);
+        $result = $this->fetcher->fetch($query, publicCatalog: !$isAdmin);
 
         return new JsonDataItemsResponse(
             count: $result->count,

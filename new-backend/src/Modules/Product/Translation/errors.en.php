@@ -25,4 +25,5 @@ return [
     'error.attribute_value_slug_already_exists'    => 'Attribute value with this slug already exists in this attribute.',
     'error.product_group_name_required'            => 'Product group name is required.',
     'error.product_group_not_found'                => 'Product group not found.',
+    'error.main_product_group_required'             => 'Select a group before choosing its main product.',
 ];

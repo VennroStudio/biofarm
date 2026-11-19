@@ -173,7 +173,24 @@ export function ProductFormModal({ categories, attributes, productGroups, blogPo
               {text('name', 'Название *')}
               <div className="grid gap-4 sm:grid-cols-2">
                 <div data-field="category_id"><Field label="Категория *"><select className={inputClass} value={form.category_id} onChange={event => update('category_id', event.target.value)}><option value="">Выберите категорию</option>{categories.map(category => <option key={category.id} value={category.id}>{category.name}</option>)}</select></Field></div>
-                <Field label="Группа товара"><select className={inputClass} value={form.product_group_id} onChange={event => update('product_group_id', event.target.value)}><option value="">Без группы</option>{productGroups.map(group => <option key={group.id} value={group.id}>{group.name}</option>)}</select></Field>
+                <div className="space-y-3">
+                  <Field label="Группа товара">
+                    <select className={inputClass} value={form.product_group_id} onChange={event => {
+                      const groupId = event.target.value;
+                      setForm(current => ({ ...current, product_group_id: groupId, is_main_in_group: false }));
+                    }}>
+                      <option value="">Без группы</option>
+                      {productGroups.map(group => <option key={group.id} value={group.id}>{group.name}</option>)}
+                    </select>
+                  </Field>
+                  <label className="flex items-center gap-2 text-sm has-[:disabled]:opacity-50">
+                    <input type="checkbox" className="h-4 w-4 accent-primary" checked={form.is_main_in_group} disabled={!form.product_group_id} onChange={event => {
+                      const checked = event.target.checked;
+                      setForm(current => ({ ...current, is_main_in_group: checked }));
+                    }} />
+                    Главный товар в группе
+                  </label>
+                </div>
               </div>
             </Group>
             <Group title="Цена и публикация">

@@ -22,6 +22,9 @@ class ProductGroup
     #[ORM\Column(type: Types::STRING, length: 255)]
     private(set) string $name;
 
+    #[ORM\Column(name: 'main_product_id', type: Types::INTEGER, nullable: true)]
+    private(set) ?int $mainProductId = null;
+
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private(set) DateTimeImmutable $createdAt;
 

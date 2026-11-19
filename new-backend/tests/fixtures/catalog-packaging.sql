@@ -85,6 +85,7 @@ CREATE TABLE `product_groups` (
   `created_at` datetime NOT NULL,
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,
+  `main_product_id` int DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 INSERT INTO `product_groups` (`id`,`name`,`created_at`,`updated_at`,`deleted_at`) VALUES (2,CONVERT(0xd0b3d180d183d0bfd0bfd0b02031 USING utf8mb4),CONVERT(0x323032362d30372d31332031333a33353a3031 USING utf8mb4),CONVERT(0x323032362d30372d31332031333a33353a3031 USING utf8mb4),NULL);

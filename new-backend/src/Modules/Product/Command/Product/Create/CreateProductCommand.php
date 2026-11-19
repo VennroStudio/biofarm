@@ -68,5 +68,6 @@ final readonly class CreateProductCommand
         public ?string $officialPurpose = null,
         public ?string $regulatoryEvidence = null,
         public bool $isActive = true,
+        public ?bool $isMainInGroup = null,
     ) {}
 }
