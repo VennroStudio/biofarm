@@ -69,7 +69,7 @@ final readonly class CreateUserAction implements RequestHandlerInterface
         if (!$this->settings->bool('registration_enabled')) {
             throw new DomainExceptionModule('user', 'error.registration_disabled', 36, status: 403);
         }
-        if ($this->phones->checkoutEnabled() || $this->ozon->method() !== null) {
+        if (!$this->settings->bool('testing_enabled') && ($this->phones->checkoutEnabled() || $this->ozon->method() !== null)) {
             throw new DomainExceptionModule('user', 'Для регистрации подтвердите номер телефона.', 76, status: 422);
         }
 

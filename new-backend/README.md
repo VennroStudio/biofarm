@@ -122,9 +122,10 @@ it on the target environment to use the Seller API checkout. Reconnect the
 Ozon private application with catalog, logistics, FBO posting and returns
 permissions. Enter the live YooKassa and SMS Aero settings and enable YooKassa
 receipts. The admin «Тестирование» switch disables new Ozon pickup orders and
-phone verification. Test payments are confirmed without a debit. With missing
-SMS Aero credentials, buyers see the phone verification availability message
-and can sign in by email.
+phone verification. Catalog sync and production payments continue to operate
+in either position. Development can simulate payment while testing is enabled.
+With missing SMS Aero credentials, buyers see the phone verification
+availability message and can sign in by email.
 
 Shared-hosting releases require `APP_ENV=prod` and `APP_DEBUG=0`.
 Production payment responses must identify a live YooKassa payment.

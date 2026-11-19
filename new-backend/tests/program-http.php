@@ -374,14 +374,15 @@ try {
     putenv('APP_ENV=prod');
     try {
         $productionSettings = $call('GET', '/admin/api/settings', [], $admin);
-        ok(!$productionSettings['testing_available'] && !$productionSettings['testing_enabled'], 'production hides a stored testing setting');
-        $forbiddenSetting = $call('PATCH', '/admin/api/settings', ['testing_enabled' => false], $admin);
-        ok(!isset($forbiddenSetting['testing_enabled']), 'production admin API cannot change testing mode');
+        ok($productionSettings['testing_enabled'], 'production reads the active testing setting');
         $productionOrder = $call('POST', '/v1/orders/create', $testingBody, null, 201);
         ok($db->fetchOne('SELECT payment_status FROM orders WHERE id=?', [$productionOrder['id']]) === 'pending',
             'non-zero production checkout stays unpaid even if testing is enabled in the database');
         ok((int)$db->fetchOne('SELECT COUNT(*) FROM payment_operations WHERE order_id=?', [$productionOrder['id']]) === 0,
             'production does not record a simulated payment');
+        $disabled = $call('PATCH', '/admin/api/settings', ['testing_enabled' => false], $admin);
+        ok($disabled['testing_enabled'] === false, 'production admin API can turn off testing mode');
+        $call('PATCH', '/admin/api/settings', ['testing_enabled' => true], $admin);
     } finally {
         putenv('APP_ENV=dev');
     }

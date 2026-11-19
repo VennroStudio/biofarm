@@ -87,7 +87,7 @@ final readonly class PaymentService
     /** Called only while creating a checkout; the client cannot enable this mode. */
     public function completeCheckoutForTesting(string $orderId): bool
     {
-        if (!new SiteSettings($this->db)->bool('testing_enabled')) {
+        if (!new SiteSettings($this->db)->simulatesCheckoutPayments()) {
             return false;
         }
         return $this->completeInternalCheckout($orderId, ['testing' => true]);

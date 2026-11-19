@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Components\Auth\AccessTokenPayload;
 use App\Components\Auth\JwtTokenService;
 use App\Components\Exception\DomainExceptionModule;
+use App\Components\Setting\SiteSettings;
 use App\Modules\Order\Command\Order\Create\CreateOrderCommand;
 use App\Modules\Order\Command\Order\Create\CreateOrderHandler;
 use App\Modules\Ozon\OzonApi;
@@ -28,6 +29,11 @@ putenv('OZON_SELLER_ID=123');
 putenv('OZON_REDIRECT_URI=http://localhost:8088/ozon/callback');
 putenv('OZON_WEBHOOK_SECRET=' . $secret);
 putenv('OZON_DELIVERY_ENABLED=1');
+putenv('CHECKOUT_PHONE_VERIFICATION_ENABLED=1');
+putenv('SMSAERO_EMAIL=sender@example.test');
+putenv('SMSAERO_API_KEY=fixture');
+putenv('SMSAERO_SIGN=BIOFARM');
+putenv('SMSAERO_CALLBACK_URL=https://example.test/webhooks/smsaero/mobile-id');
 putenv('REDIS=false');
 
 $container = require dirname(__DIR__) . '/config/container.php';
@@ -37,6 +43,7 @@ createOzonTestTables($db, [
     'ozon_catalog_products', 'ozon_catalog_groups', 'ozon_catalog_state', 'ozon_stock_queue',
     'integration_credentials', 'integration_error_logs', 'users',
 ]);
+putenv('APP_ENV=prod');
 $db->insert('ozon_catalog_state', ['id' => 1]);
 
 function check(bool $condition, string $message): void
@@ -101,13 +108,12 @@ $handler = static function (RequestInterface $request) use (&$details, &$listing
     }
     return Create::promiseFor(new Response(200, ['Content-Type' => 'application/json'], json_encode($reply, JSON_THROW_ON_ERROR)));
 };
-$container->set(OzonApi::class, new OzonApi(new Client(['handler' => $handler])));
+$ozonApi = new OzonApi(new Client(['handler' => $handler]));
+$container->set(OzonApi::class, $ozonApi);
 $app = (require dirname(__DIR__) . '/config/app.php')($container);
 
 $now = gmdate('Y-m-d H:i:s');
 $db->executeStatement("INSERT INTO site_settings (`key`, value) VALUES ('cart_enabled', 'true') ON DUPLICATE KEY UPDATE value = 'true'");
-$db->executeStatement("INSERT INTO site_settings (`key`, value) VALUES ('testing_enabled', 'true')");
-check($container->get(App\Components\Setting\SiteSettings::class)->bool('testing_enabled'), 'Run the Ozon catalog scenarios with testing enabled.');
 foreach (['kapsuly', 'ekstrakty-i-kontsentraty', 'produkciya'] as $slug) {
     $db->insert('categories', ['slug' => $slug, 'name' => $slug, 'created_at' => $now]);
 }
@@ -122,7 +128,7 @@ foreach ([UserRole::ADMIN, UserRole::EDITOR] as $role) {
     ]);
 }
 $token = static fn (UserRole $role) => $container->get(JwtTokenService::class)->generateAccessToken(AccessTokenPayload::issue($role->value, 'Ozon', $role, 300));
-$call = static function (string $method, string $path, int $expected, ?string $auth = null, ?array $body = null) use ($app) {
+$call = static function (string $method, string $path, int $expected, ?string $auth = null, ?array $body = null) use (&$app) {
     $request = (new ServerRequestFactory())->createServerRequest($method, 'http://localhost:8088' . $path);
     if ($auth !== null) {
         $request = $request->withHeader('Authorization', 'Bearer ' . $auth);
@@ -135,7 +141,15 @@ $call = static function (string $method, string $path, int $expected, ?string $a
     return $response;
 };
 $data = static fn ($response) => json_decode((string) $response->getBody(), true, flags: JSON_THROW_ON_ERROR)['data'];
+$admin = $token(UserRole::ADMIN);
+$call('PATCH', '/admin/api/settings', 401, body: ['testing_enabled' => true]);
+check($data($call('PATCH', '/admin/api/settings', 200, $admin, ['testing_enabled' => true]))['testing_enabled'] === true,
+    'Production admin can save testing mode');
+check($container->get(SiteSettings::class)->bool('testing_enabled'), 'Run the Ozon catalog scenarios with testing enabled.');
+check(!$container->get(SiteSettings::class)->simulatesCheckoutPayments(), 'Production never simulates payment in testing mode.');
 check($container->get(OzonPickupCheckout::class)->method() === null, 'Testing must disable Ozon checkout even when Ozon delivery is configured.');
+$login = (string)$call('GET', '/login', 200)->getBody();
+check(str_contains($login, 'data-sms-available="false"'), 'The login page disables SMS during testing.');
 $call('GET', '/v1/ozon-delivery/pickup-points?q=Tomsk', 404);
 $call('POST', '/v1/ozon-delivery/quote', 404);
 foreach ($app->getRouteCollector()->getRoutes() as $route) {
@@ -143,7 +157,6 @@ foreach ($app->getRouteCollector()->getRoutes() as $route) {
 }
 $phoneUnavailable = (string) $call('POST', '/v1/phone-login/start', 503)->getBody();
 check(str_contains($phoneUnavailable, 'Подтверждение телефона по СМС временно недоступно.'), 'Testing must show the SMS availability message.');
-$admin = $token(UserRole::ADMIN);
 $base = '/admin/api/integrations/ozon';
 $call('POST', $base . '/sync', 401);
 $call('POST', $base . '/sync', 403, $token(UserRole::EDITOR));
@@ -263,5 +276,19 @@ $call('POST', $base . '/sync', 202, $admin);
 check(!$sync->tick($nextDay), 'An incomplete API response must fail.');
 check((int) $db->fetchOne('SELECT price FROM products WHERE id = ?', [$localId]) === 1000, 'An incomplete API response must keep the last verified price.');
 check($sync->status()['error'] !== null, 'An incomplete API response must surface in admin.');
+
+check($data($call('PATCH', '/admin/api/settings', 200, $admin, ['testing_enabled' => false]))['testing_enabled'] === false,
+    'Production admin can turn testing off');
+$normal = require dirname(__DIR__) . '/config/container.php';
+$normal->set(Connection::class, $db);
+$normal->set(OzonApi::class, $ozonApi);
+$app = (require dirname(__DIR__) . '/config/app.php')($normal);
+check($normal->get(OzonPickupCheckout::class)->method() === OzonPickupCheckout::LIVE_PICKUP, 'Disabling testing enables the live pickup flow.');
+$login = (string)$call('GET', '/login', 200)->getBody();
+check(str_contains($login, 'data-sms-available="true"'), 'Disabling testing enables configured SMS verification.');
+$failDetails = false;
+$call('POST', $base . '/sync', 202, $admin);
+check($normal->get(OzonCatalogSync::class)->tick($nextDay), 'Catalog sync also runs with testing off.');
+check((int)$db->fetchOne('SELECT price FROM products WHERE id = ?', [$localId]) === 1100, 'Catalog sync applies the new price when testing is off.');
 
 echo "Ozon HTTP access, OAuth, replacement, idempotency, daily schedule, price and group changes, stock transitions and incomplete snapshots passed.\n";

@@ -74,13 +74,13 @@ export function FeatureSettingsCard({ settings, onChange }: Props) {
           icon={Heart}
           onToggle={() => onChange({ ...settings, favorites_enabled: !settings.favorites_enabled })}
         />
-        {settings.testing_available && <FeatureToggle
+        <FeatureToggle
           checked={settings.testing_enabled}
           label="Тестирование"
-          description="Оформление через Ozon и подтверждение по СМС отключены. Оплата проходит без списания."
+          description="Приостанавливает новые заказы в ПВЗ Ozon и подтверждение по СМС. Каталог и остатки продолжают обновляться."
           icon={FlaskConical}
           onToggle={() => onChange({ ...settings, testing_enabled: !settings.testing_enabled })}
-        />}
+        />
       </div>
     </Card>
   );

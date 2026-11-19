@@ -123,6 +123,7 @@ final readonly class CreateOrderAction implements RequestHandlerInterface
         $deliveryMethod = trim($command->deliveryMethod);
         $live = $deliveryMethod === OzonPickupCheckout::LIVE_PICKUP;
         $testing = $this->settings->bool('testing_enabled');
+        $simulatePayment = $this->settings->simulatesCheckoutPayments();
         $activeMethod = $this->ozonCheckout->method();
         if (($activeMethod !== null || str_starts_with($deliveryMethod, 'ozon-')) && $deliveryMethod !== $activeMethod) {
             throw new DomainExceptionModule('order', 'Выберите доступный способ доставки.', 43, status: 422);
@@ -150,7 +151,7 @@ final readonly class CreateOrderAction implements RequestHandlerInterface
             }
         }
         $created = false;
-        $result = $this->program->atomic(function () use ($command, $offerId, $requestKey, $requestId, $requestHash, $consents, $request, $payload, $ozonQuote, $live, $testing, $requiresPhone, $identity, $phoneInput, &$created): array {
+        $result = $this->program->atomic(function () use ($command, $offerId, $requestKey, $requestId, $requestHash, $consents, $request, $payload, $ozonQuote, $live, $simulatePayment, $requiresPhone, $identity, $phoneInput, &$created): array {
             if ($requestKey !== '') {
                 $saved = $this->connection->fetchAssociative('SELECT * FROM checkout_requests WHERE id=?', [$requestId]);
                 if ($saved) {
@@ -189,7 +190,7 @@ final readonly class CreateOrderAction implements RequestHandlerInterface
             if ($live && (float)$result['total'] <= 0) {
                 throw new DomainExceptionModule('order', 'Для доставки Ozon нужна оплата. Уменьшите сумму списываемых бонусов.', 44, status: 422);
             }
-            if ($testing) {
+            if ($simulatePayment) {
                 if (!$this->payments->completeCheckoutForTesting($result['id'])) {
                     throw new DomainExceptionModule('order', 'Режим оформления изменился. Обновите страницу.', 44, status: 409);
                 }
@@ -212,7 +213,7 @@ final readonly class CreateOrderAction implements RequestHandlerInterface
             $created = true;
             return $result;
         });
-        if ($created && !$testing) {
+        if ($created && !$simulatePayment) {
             $this->handler->notifyCreated($result['id']);
         }
         return new JsonDataResponse($result, 201);

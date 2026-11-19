@@ -32,7 +32,6 @@ const defaults: Settings = {
   referral_enabled: false,
   favorites_enabled: true,
   testing_enabled: false,
-  testing_available: false,
   order_bonus_enabled: true,
   order_bonus_percent: 3,
   order_bonus_spend_limit_percent: 100,
@@ -75,7 +74,7 @@ const emptyPassword: PasswordForm = {
 
 type SaveableSettingsSectionId = Exclude<SettingsSectionId, 'integrations' | 'security'>;
 
-type WritableSettingsKey = Exclude<keyof Settings, 'bitrix_crm_enabled' | 'testing_available'>;
+type WritableSettingsKey = Exclude<keyof Settings, 'bitrix_crm_enabled'>;
 
 const sectionSettingsKeys: Record<SaveableSettingsSectionId, readonly WritableSettingsKey[]> = {
   features: [
@@ -116,8 +115,7 @@ const sectionSettingsKeys: Record<SaveableSettingsSectionId, readonly WritableSe
 };
 
 function pickSectionSettings(settings: Settings, section: SaveableSettingsSectionId): Partial<Settings> {
-  const keys = sectionSettingsKeys[section].filter(key => key !== 'testing_enabled' || settings.testing_available);
-  return keys.reduce<Partial<Settings>>((payload, key) => ({
+  return sectionSettingsKeys[section].reduce<Partial<Settings>>((payload, key) => ({
     ...payload,
     [key]: settings[key],
   }), {});

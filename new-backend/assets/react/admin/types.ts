@@ -273,7 +273,6 @@ export type Settings = {
   referral_enabled: boolean;
   favorites_enabled: boolean;
   testing_enabled: boolean;
-  testing_available: boolean;
   order_bonus_enabled: boolean;
   order_bonus_percent: number;
   order_bonus_spend_limit_percent: number;

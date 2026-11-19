@@ -54,8 +54,9 @@ $db->insert('site_settings',['key'=>'testing_enabled','value'=>'{"value":true}']
 putenv('APP_ENV=prod');
 try {
     $fixture('production');
-    check(!SiteSettings::testingAvailable() && !in_array('testing_enabled', SiteSettings::adminWritableKeys(), true), 'Production hides and rejects the testing setting');
-    check(!$payments->completeCheckoutForTesting('production'), 'A stale testing flag must not simulate a production payment');
+    check(in_array('testing_enabled', SiteSettings::adminWritableKeys(), true) && new SiteSettings($db)->bool('testing_enabled'),
+        'Production admin can enable testing for delivery and SMS');
+    check(!$payments->completeCheckoutForTesting('production'), 'Testing mode must not simulate a production payment');
     check($db->fetchOne("SELECT payment_status FROM orders WHERE id='production'") === 'pending', 'Production order stays unpaid');
 } finally {
     putenv('APP_ENV=dev');

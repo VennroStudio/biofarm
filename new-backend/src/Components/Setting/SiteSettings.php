@@ -90,20 +90,18 @@ final class SiteSettings
     {
         return array_values(array_filter(
             self::keys(),
-            static fn (string $key): bool => !\in_array($key, ['bitrix_crm_enabled', 'welcome_bonus_enabled', 'welcome_bonus_amount', 'order_bonus_percent', 'referral_percent'], true)
-                && ($key !== 'testing_enabled' || self::testingAvailable()),
+            static fn (string $key): bool => !\in_array($key, ['bitrix_crm_enabled', 'welcome_bonus_enabled', 'welcome_bonus_amount', 'order_bonus_percent', 'referral_percent'], true),
         ));
     }
 
-    public static function testingAvailable(): bool
+    public function simulatesCheckoutPayments(): bool
     {
-        return env('APP_ENV', 'prod') === 'dev';
+        return env('APP_ENV', 'prod') === 'dev' && $this->bool('testing_enabled');
     }
 
     public function bool(string $key, bool $default = false): bool
     {
         return match ($key) {
-            'testing_enabled' => self::testingAvailable() && $this->rawBool($key),
             'referral_enabled' => $this->rawBool('referral_enabled', $default)
                 && $this->rawBool('cart_enabled'),
             'order_bonus_enabled',
