@@ -7,14 +7,7 @@
 {% block content %}
     {% include 'sections/home/hero.html.twig' with { products: page.heroProducts } only %}
     {% include 'sections/home/categories.html.twig' with { purposes: page.purposes, purposeUrls: page.purposeUrls } only %}
-    {% include 'sections/home/catalog.html.twig' with {
-        products: page.products,
-        categories: page.categories,
-        categoriesTotal: page.categoriesTotal,
-        selectedCategory: page.selectedCategory,
-        basePath: '/',
-        showAllLink: true,
-    } only %}
+    {% include 'sections/home/catalog.html.twig' with { catalog: page.catalog } only %}
     {% include 'sections/home/video.html.twig' only %}
     {% include 'sections/home/certificates.html.twig' with {
         certificates: page.certificates,

@@ -10,6 +10,7 @@ use App\Http\Unifier\Product\ProductCatalogDataProvider;
 use App\Http\Unifier\Certificate\CertificateDataProvider;
 use App\Http\View\Blog\BlogPostView;
 use App\Http\View\Certificate\CertificateView;
+use App\Http\View\Home\HomeCatalogView;
 use App\Http\View\Home\HomeHeroProductView;
 use App\Http\View\Home\HomePageView;
 use App\Http\View\Home\HomeReviewView;
@@ -45,10 +46,8 @@ final readonly class HomePageUnifier
         private PageSeoProvider $pages,
     ) {}
 
-    public function unify(?string $selectedCategory = null): HomePageView
+    public function unify(HomeCatalogView $catalog): HomePageView
     {
-        $products = $this->catalogData->products($selectedCategory, 4);
-        $categories = $this->catalogData->categories();
         $purposes = $this->catalogData->purposeFilters(null);
         $purposeUrls = [];
         foreach ($purposes as $purpose) {
@@ -69,17 +68,30 @@ final readonly class HomePageUnifier
                     $this->jsonLd->website(),
                 ],
             )),
-            products: $products,
+            catalog: $catalog,
             heroProducts: $this->heroProducts(),
-            selectedCategory: $selectedCategory,
-            featuredProduct: $products[0] ?? null,
-            categories: $categories,
-            categoriesTotal: $this->catalogData->countProducts(),
             purposes: $purposes,
             purposeUrls: $purposeUrls,
             blogPosts: $this->blogPosts(),
             certificates: $this->certificates(),
             reviews: $this->reviews(),
+        );
+    }
+
+    public function catalog(?string $category, int $requestedPage, bool $compact): HomeCatalogView
+    {
+        $pageSize = $compact ? 6 : 12;
+        $category = $this->catalogData->categoryId($category);
+        $totalPages = max(1, (int) ceil($this->catalogData->countProducts($category) / $pageSize));
+        $page = min(max(1, $requestedPage), $totalPages);
+
+        return new HomeCatalogView(
+            products: $this->catalogData->products($category, $pageSize, offset: ($page - 1) * $pageSize),
+            categories: $this->catalogData->categories(),
+            selectedCategory: $category,
+            currentPage: $page,
+            totalPages: $totalPages,
+            pageSize: $pageSize,
         );
     }
 

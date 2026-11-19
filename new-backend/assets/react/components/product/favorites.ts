@@ -32,31 +32,40 @@ async function refreshButtons(buttons: HTMLElement[]) {
   });
 }
 
-export function mountProductFavorites() {
-  const buttons = Array.from(document.querySelectorAll<HTMLElement>('[data-favorite-button]'))
-    .filter((button) => button.dataset.mounted !== 'true');
+const buttonSelector = '[data-favorite-button]';
+let noticeTimer: number | undefined;
+let listenersBound = false;
 
-  if (buttons.length === 0) {
-    return;
-  }
-
+function dismissNotice() {
   const notice = document.querySelector<HTMLElement>('[data-favorite-notice-panel]');
-  const noticeText = notice?.querySelector<HTMLElement>('[data-favorite-notice-text]');
-  let noticeTimer: number | undefined;
-  const dismissNotice = () => {
-    if (notice) notice.hidden = true;
-    window.clearTimeout(noticeTimer);
-  };
-  const showNotice = (message: string) => {
-    if (!notice || !noticeText) return;
-    window.clearTimeout(noticeTimer);
-    noticeText.textContent = message;
-    notice.hidden = false;
-    noticeTimer = window.setTimeout(() => {
-      if (!notice.contains(document.activeElement)) dismissNotice();
-    }, 6000);
-  };
-  notice?.querySelector('[data-favorite-notice-close]')?.addEventListener('click', dismissNotice);
+  if (notice) notice.hidden = true;
+  window.clearTimeout(noticeTimer);
+}
+
+function showNotice(message: string) {
+  const notice = document.querySelector<HTMLElement>('[data-favorite-notice-panel]');
+  const text = notice?.querySelector<HTMLElement>('[data-favorite-notice-text]');
+  if (!notice || !text) return;
+  window.clearTimeout(noticeTimer);
+  text.textContent = message;
+  notice.hidden = false;
+  noticeTimer = window.setTimeout(() => {
+    if (!notice.contains(document.activeElement)) dismissNotice();
+  }, 6000);
+}
+
+export function mountProductFavorites(root: ParentNode = document) {
+  const buttons = Array.from(root.querySelectorAll<HTMLElement>(buttonSelector))
+    .filter((button) => button.dataset.mounted !== 'true');
+  if (buttons.length === 0) return;
+
+  if (!listenersBound) {
+    listenersBound = true;
+    document.querySelector('[data-favorite-notice-close]')?.addEventListener('click', dismissNotice);
+    window.addEventListener('biofarm-favorites-updated', () => {
+      void refreshButtons(Array.from(document.querySelectorAll<HTMLElement>(buttonSelector)));
+    });
+  }
 
   buttons.forEach((button) => {
     button.dataset.mounted = 'true';
@@ -73,7 +82,9 @@ export function mountProductFavorites() {
       button.setAttribute('disabled', 'disabled');
       void toggleFavorite(id, button.dataset.favoriteActive === 'true')
         .then((active) => {
-          buttons.filter((item) => productId(item) === id).forEach((item) => setButtonState(item, active));
+          document.querySelectorAll<HTMLElement>(buttonSelector).forEach((item) => {
+            if (productId(item) === id) setButtonState(item, active);
+          });
           showNotice(active ? 'Добавлено в избранное' : 'Удалено из избранного');
         })
         .catch((error: unknown) => {
@@ -82,10 +93,6 @@ export function mountProductFavorites() {
         })
         .finally(() => button.removeAttribute('disabled'));
     });
-  });
-
-  window.addEventListener('biofarm-favorites-updated', () => {
-    void refreshButtons(buttons);
   });
 
   void refreshButtons(buttons).finally(() => {

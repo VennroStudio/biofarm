@@ -21,20 +21,21 @@ final readonly class HomePageController implements RequestHandlerInterface
     #[Override]
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        return $this->html->render('pages/home/index.html.twig', [
-            'page' => $this->homePage->unify($this->selectedCategory($request)),
-        ]);
-    }
+        $query = $request->getQueryParams();
+        $category = $query['category'] ?? null;
+        $page = $query['page'] ?? null;
+        $catalog = $this->homePage->catalog(
+            category: is_string($category) ? $category : null,
+            requestedPage: is_string($page) && ctype_digit($page) ? (int) $page : 1,
+            compact: ($query['per_page'] ?? null) === '6',
+        );
 
-    private function selectedCategory(ServerRequestInterface $request): ?string
-    {
-        $value = $request->getQueryParams()['category'] ?? null;
-        if (!\is_string($value)) {
-            return null;
+        if ($request->getHeaderLine('X-Home-Catalog') === '1') {
+            $response = $this->html->render('sections/home/catalog-content.html.twig', ['catalog' => $catalog]);
+        } else {
+            $response = $this->html->render('pages/home/index.html.twig', ['page' => $this->homePage->unify($catalog)]);
         }
 
-        $category = trim($value);
-
-        return $category === '' ? null : $category;
+        return $response->withAddedHeader('Vary', 'X-Home-Catalog');
     }
 }

@@ -103,7 +103,7 @@ function mountCatalogButton(button: HTMLButtonElement) {
   });
 }
 
-export function mountProductCart() {
-  document.querySelectorAll<HTMLElement>('[data-product-cart]').forEach(mountProductDetail);
-  document.querySelectorAll<HTMLButtonElement>('[data-catalog-cart-add]').forEach(mountCatalogButton);
+export function mountProductCart(root: ParentNode = document) {
+  root.querySelectorAll<HTMLElement>('[data-product-cart]').forEach(mountProductDetail);
+  root.querySelectorAll<HTMLButtonElement>('[data-catalog-cart-add]').forEach(mountCatalogButton);
 }

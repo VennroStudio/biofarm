@@ -8,28 +8,21 @@ use App\Http\View\Blog\BlogPostView;
 use App\Http\View\Catalog\CatalogFacetView;
 use App\Http\View\Certificate\CertificateView;
 use App\Http\View\PageMetaView;
-use App\Http\View\Product\ProductCardView;
 
 final readonly class HomePageView
 {
     /**
      * @param list<HomeHeroProductView> $heroProducts
-     * @param list<ProductCardView> $products
      * @param list<CatalogFacetView> $purposes
      * @param array<string, string> $purposeUrls
-     * @param list<HomeCategoryView> $categories
      * @param list<BlogPostView> $blogPosts
      * @param list<CertificateView> $certificates
      * @param list<HomeReviewView> $reviews
      */
     public function __construct(
         public PageMetaView $meta,
-        public array $products,
+        public HomeCatalogView $catalog,
         public array $heroProducts,
-        public ?string $selectedCategory,
-        public ?ProductCardView $featuredProduct,
-        public array $categories,
-        public int $categoriesTotal,
         public array $purposes,
         public array $purposeUrls,
         public array $blogPosts,

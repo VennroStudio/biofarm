@@ -1,0 +1,40 @@
+<div data-home-catalog-content data-page="{{ catalog.currentPage }}" data-page-size="{{ catalog.pageSize }}" data-category="{{ catalog.selectedCategory }}">
+    <nav class="mb-5 flex flex-wrap gap-2" aria-label="Категории товаров">
+        <a href="{{ catalog.url() }}" data-home-catalog-link class="rounded-full border border-border px-4 py-2 text-xs text-secondary-foreground {{ catalog.selectedCategory is null ? 'bg-secondary' : 'bg-white' }}" {% if catalog.selectedCategory is null %}aria-current="true"{% endif %}>Все продукты</a>
+        {% for category in catalog.categories %}
+            <a href="{{ catalog.url(1, category.id) }}" data-home-catalog-link class="rounded-full border border-border px-4 py-2 text-xs text-secondary-foreground {{ catalog.selectedCategory == category.id ? 'bg-secondary' : 'bg-white' }}" {% if catalog.selectedCategory == category.id %}aria-current="true"{% endif %}>{{ category.name }}</a>
+        {% endfor %}
+    </nav>
+    <div class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4" data-home-catalog-grid>
+        {% for product in catalog.products %}
+            {% include 'components/product/card.html.twig' with { product: product } only %}
+        {% else %}
+            {% include 'components/ui/empty-state.html.twig' with { title: 'Товары пока не добавлены', message: 'В выбранной категории пока нет товаров.' } only %}
+        {% endfor %}
+    </div>
+
+    {% if catalog.totalPages > 1 %}
+        {% set current = catalog.currentPage %}
+        {% set category = catalog.selectedCategory %}
+        {% set pages = [1, current - 1, current, current + 1, catalog.totalPages]|filter(page => page >= 1 and page <= catalog.totalPages)|reduce((result, page) => page in result ? result : result|merge([page]), []) %}
+        {% set linkClass = 'inline-grid size-10 place-items-center rounded-full border border-border text-sm transition-colors hover:border-primary hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring' %}
+        <nav class="mt-6 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2" aria-label="Страницы товаров на главной">
+            {% if current > 1 %}
+                <a class="{{ linkClass }}" href="{{ catalog.url(current - 1, category) }}" data-home-catalog-link rel="prev" aria-label="Предыдущая страница">‹</a>
+            {% endif %}
+            {% for page in pages %}
+                {% if not loop.first and page > pages[loop.index0 - 1] + 1 %}
+                    <span class="px-1 text-muted-foreground" aria-hidden="true">…</span>
+                {% endif %}
+                {% if page == current %}
+                    <span class="inline-grid size-10 place-items-center rounded-full border border-primary bg-secondary text-sm font-semibold text-foreground" aria-current="page" aria-label="Страница {{ page }}">{{ page }}</span>
+                {% else %}
+                    <a class="{{ linkClass }}" href="{{ catalog.url(page, category) }}" data-home-catalog-link aria-label="Страница {{ page }}">{{ page }}</a>
+                {% endif %}
+            {% endfor %}
+            {% if current < catalog.totalPages %}
+                <a class="{{ linkClass }}" href="{{ catalog.url(current + 1, category) }}" data-home-catalog-link rel="next" aria-label="Следующая страница">›</a>
+            {% endif %}
+        </nav>
+    {% endif %}
+</div>
