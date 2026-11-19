@@ -6,7 +6,12 @@ namespace App\Http\Action\v1\User;
 
 use App\Components\Http\Middleware\Identity\RequestIdentity;
 use App\Components\Http\Response\JsonDataResponse;
+use App\Components\Privacy\ConsentRecorder;
 use App\Modules\Program\Service\ProgramService;
+use App\Modules\User\Entity\User\Fields\Enums\UserRole;
+use App\Modules\User\Entity\User\Fields\Enums\UserStatus;
+use App\Modules\User\Service\Phone\PhoneLoginReceipt;
+use App\Modules\User\Service\Phone\PhoneNumber;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 use Override;
@@ -19,6 +24,8 @@ final readonly class GetMeAction implements RequestHandlerInterface
     public function __construct(
         private Connection $connection,
         private ProgramService $program,
+        private ConsentRecorder $consents,
+        private PhoneLoginReceipt $phoneLoginReceipt,
     ) {}
 
     /**
@@ -30,7 +37,18 @@ final readonly class GetMeAction implements RequestHandlerInterface
         $identity = RequestIdentity::get($request);
         $this->program->dashboard($identity->id);
 
-        return new JsonDataResponse($this->user($identity->id));
+        $user = $this->user($identity->id);
+        $response = (new JsonDataResponse($user))->withHeader('Cache-Control', 'private, no-store');
+        if ($identity->role !== UserRole::USER) {
+            return $response;
+        }
+
+        $phone = PhoneNumber::normalize($user['phone'] ?? null);
+        if ($phone !== null && ($user['phone_verified_at'] ?? null) && $user['personal_data_consent_valid']) {
+            return $this->phoneLoginReceipt->remember($response, $identity->id, $phone);
+        }
+
+        return $this->phoneLoginReceipt->forget($response);
     }
 
     /**
@@ -47,9 +65,15 @@ final readonly class GetMeAction implements RequestHandlerInterface
                 'u.first_name',
                 'u.last_name',
                 'u.email',
+                'u.email_confirmation_required',
                 'u.avatar',
                 'u.created_at',
                 'up.phone',
+                'up.verified_phone',
+                'up.phone_verified_at',
+                'up.phone_verification_sandbox',
+                'up.ozon_phone_checked_at',
+                'up.ozon_phone_available',
                 'COALESCE(up.bonus_balance, 0) AS bonus_balance',
                 'COALESCE(up.is_partner, 0) AS is_partner',
                 'up.referral_code',
@@ -68,6 +92,10 @@ final readonly class GetMeAction implements RequestHandlerInterface
             return [];
         }
 
+        $verified = $row['phone_verified_at'] !== null
+            && PhoneNumber::normalize($row['phone']) === $row['verified_phone']
+            && !(bool)$row['phone_verification_sandbox'];
+
         return [
             'id'                     => (int)$row['id'],
             'role'                   => (int)$row['role'],
@@ -76,8 +104,14 @@ final readonly class GetMeAction implements RequestHandlerInterface
             'last_name'              => (string)$row['last_name'],
             'name'                   => trim((string)$row['first_name'] . ' ' . (string)$row['last_name']),
             'email'                  => (string)$row['email'],
+            'email_verified'         => (int)$row['status'] === UserStatus::ACTIVE->value && !(bool)$row['email_confirmation_required'],
+            'marketing_email_subscribed' => $this->consents->marketingEmailSubscribed($userId, (string)$row['email']),
+            'personal_data_consent_valid' => $this->consents->personalDataIsCurrent($userId),
             'avatar'                 => $row['avatar'],
             'phone'                  => $row['phone'],
+            'phone_verified_at'      => $verified ? $row['phone_verified_at'] : null,
+            'ozon_phone_checked_at' => $verified ? $row['ozon_phone_checked_at'] : null,
+            'ozon_phone_available'  => $verified && $row['ozon_phone_available'] !== null ? (bool)$row['ozon_phone_available'] : null,
             'bonus_balance'          => (int)$row['bonus_balance'],
             'is_partner'             => (bool)(int)$row['is_partner'],
             'referral_code'          => $row['referral_code'],

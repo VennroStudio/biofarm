@@ -12,6 +12,7 @@ use App\Components\Exception\DomainExceptionModule;
 use App\Modules\User\Command\Auth\TokenPairResult;
 use App\Modules\User\Command\UserToken\Create\CreateUserTokenCommand;
 use App\Modules\User\Command\UserToken\Create\CreateUserTokenHandler;
+use App\Modules\User\Entity\User\Fields\Enums\UserRole;
 use App\Modules\User\Entity\User\Fields\Enums\UserStatus;
 use App\Modules\User\Entity\UserToken\Fields\Enums\UserTokenType;
 use App\Modules\User\Query\User\FindByEmail\UserFindByEmailFetcher;
@@ -42,7 +43,7 @@ final readonly class LoginHandler
 
         $this->validateStatus($user);
 
-        return $this->issueTokens($user);
+        return $this->issueSession($user->id, $user->firstName, $user->role);
     }
 
     /**
@@ -66,7 +67,7 @@ final readonly class LoginHandler
 
     private function validateStatus(UserByEmail $user): void
     {
-        if ($user->status === UserStatus::PENDING_VERIFICATION) {
+        if ($user->status === UserStatus::PENDING_VERIFICATION || $user->emailConfirmationRequired) {
             throw new DomainExceptionModule(
                 module: 'user',
                 message: 'error.email_not_verified',
@@ -86,16 +87,16 @@ final readonly class LoginHandler
     /**
      * @throws DateMalformedStringException
      */
-    private function issueTokens(UserByEmail $user): TokenPairResult
+    public function issueSession(int $userId, string $firstName, UserRole $role): TokenPairResult
     {
         $accessPayload = AccessTokenPayload::issue(
-            userId: $user->id,
-            firstName: $user->firstName,
-            role: $user->role,
+            userId: $userId,
+            firstName: $firstName,
+            role: $role,
             ttl: $this->jwtService->getAccessTtl(),
         );
         $refreshPayload = RefreshTokenPayload::issue(
-            userId: $user->id,
+            userId: $userId,
             ttl: $this->jwtService->getRefreshTtl(),
         );
 
@@ -103,7 +104,7 @@ final readonly class LoginHandler
         $refreshToken = $this->jwtService->generateRefreshToken($refreshPayload);
 
         $this->createUserTokenHandler->handle(new CreateUserTokenCommand(
-            userId: $user->id,
+            userId: $userId,
             type: UserTokenType::REFRESH,
             tokenHash: $this->tokenHasher->hash($refreshToken),
             expiresAt: UtcClock::fromTimestamp($refreshPayload->expiresAt),

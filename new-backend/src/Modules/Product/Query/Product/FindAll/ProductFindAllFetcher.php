@@ -56,9 +56,14 @@ final readonly class ProductFindAllFetcher
         $countQb = clone $qb;
         $total = (int)$countQb->select('COUNT(p.id)')->executeQuery()->fetchOne();
 
+        if (!$query->includeInactive) {
+            $qb->orderBy("CASE WHEN p.availability = 'out_of_stock' THEN 1 ELSE 0 END", 'ASC');
+        }
+
         $rows = $qb
             ->select(...ReadModelFields::select(ProductDetails::fields(), 'p'))
-            ->orderBy('p.created_at', 'DESC')
+            ->addOrderBy('p.created_at', 'DESC')
+            ->addOrderBy('p.id', 'ASC')
             ->setFirstResult($query->getOffset())
             ->setMaxResults($query->perPage)
             ->executeQuery()
@@ -76,7 +81,7 @@ final readonly class ProductFindAllFetcher
     private function cacheKey(ProductFindAllQuery $query): string
     {
         return \sprintf(
-            'products_regulatory_v2_find_all_%s_%s_%s_%d_%d',
+            'products_availability_find_all_%s_%s_%s_%d_%d',
             $query->category !== null && $query->category !== '' ? $query->category : 'all',
             $query->includeInactive ? 'with_inactive' : 'active',
             md5((string)$query->search),

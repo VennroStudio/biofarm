@@ -45,7 +45,7 @@ final readonly class EmailConfirmHandler
         $userToken = $this->findValidToken($command->token);
         $user = $this->userRepository->getById($userToken->userId);
 
-        $user->activate();
+        $user->confirmEmail();
 
         $this->cacher->delete('user_identity_' . $user->id);
 

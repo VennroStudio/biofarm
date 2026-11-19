@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\User\Entity\UserProfile;
 
 use App\Components\Clock\UtcClock;
+use App\Modules\User\Service\Phone\PhoneNumber;
 use DateMalformedStringException;
 use DateTimeImmutable;
 use Doctrine\DBAL\Types\Types;
@@ -13,6 +14,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity]
 #[ORM\Table(name: 'user_profiles')]
 #[ORM\UniqueConstraint(name: 'uniq_user_profiles_referral_code', columns: ['referral_code'])]
+#[ORM\UniqueConstraint(name: 'uniq_user_profiles_verified_phone', columns: ['verified_phone'])]
 #[ORM\Index(name: 'idx_user_profiles_referred_by_user_id', columns: ['referred_by_user_id'])]
 class UserProfile
 {
@@ -22,6 +24,21 @@ class UserProfile
 
     #[ORM\Column(type: Types::STRING, length: 30, nullable: true)]
     private(set) ?string $phone;
+
+    #[ORM\Column(length: 11, nullable: true)]
+    private ?string $verifiedPhone = null;
+
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    private ?DateTimeImmutable $phoneVerifiedAt = null;
+
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    private bool $phoneVerificationSandbox = false;
+
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    private ?DateTimeImmutable $ozonPhoneCheckedAt = null;
+
+    #[ORM\Column(type: Types::BOOLEAN, nullable: true)]
+    private ?bool $ozonPhoneAvailable = null;
 
     #[ORM\Column(name: 'card_number', type: Types::STRING, length: 32, nullable: true)]
     private(set) ?string $cardNumber;
@@ -99,6 +116,13 @@ class UserProfile
         ?string $referralCode,
         ?int $referredByUserId,
     ): void {
+        if (PhoneNumber::normalize($phone) !== $this->verifiedPhone) {
+            $this->verifiedPhone = null;
+            $this->phoneVerifiedAt = null;
+            $this->phoneVerificationSandbox = false;
+            $this->ozonPhoneCheckedAt = null;
+            $this->ozonPhoneAvailable = null;
+        }
         $this->phone = $phone;
         $this->cardNumber = $cardNumber;
         $this->isPartner = $isPartner;

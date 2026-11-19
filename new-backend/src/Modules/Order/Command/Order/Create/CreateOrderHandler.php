@@ -20,9 +20,11 @@ use App\Modules\Order\Service\OrderEmailNotifier;
 use App\Modules\Order\Service\OrderPermissionService;
 use App\Modules\PartnerOffer\Service\PartnerPromoService;
 use App\Modules\Program\Service\ProgramService;
+use App\Modules\Ozon\OzonPickupCheckout;
 use App\Modules\User\Entity\User\Fields\Enums\UserRole;
 use App\Modules\User\Entity\UserProfile\UserProfile;
 use App\Modules\User\Entity\UserProfile\UserProfileRepository;
+use App\Modules\User\Service\CheckoutAddressBook;
 use DateMalformedStringException;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
@@ -43,19 +45,26 @@ final readonly class CreateOrderHandler
         private SiteSettings $settings,
         private OrderEmailNotifier $emailNotifier,
         private Bitrix24OrderSyncer $bitrix24OrderSyncer,
+        private OzonPickupCheckout $ozonCheckout,
+        private CheckoutAddressBook $addressBook,
         private Connection $connection,
         private Cacher $cacher,
         private FlusherInterface $flusher,
     ) {}
 
     /**
-     * @return array{id: string, user_id: int|null, subtotal: int, delivery_method: string, delivery_cost: int, discount_amount: int, bonus_used: int, total: int}
+     * @return array{id: string, user_id: int|null, subtotal: int, delivery_method: string, delivery_cost: int|float, discount_amount: int, bonus_used: int, total: int|float}
      * @throws DateMalformedStringException
      * @throws Exception
      * @throws RandomException
      */
-    public function handle(CreateOrderCommand $command, bool $notify = true): array
-    {
+    public function handle(
+        CreateOrderCommand $command,
+        bool $notify = true,
+        ?array $shippingDestination = null,
+        ?int $quotedDeliveryMinor = null,
+        bool $rememberAddress = false,
+    ): array {
         $this->permissionService->checkRole(
             currentUserRole: UserRole::from($command->currentUserRole),
             action: OrderPermission::CREATE,
@@ -72,8 +81,8 @@ final readonly class CreateOrderHandler
         $orderId = $command->orderId !== null && trim($command->orderId) !== ''
             ? trim($command->orderId)
             : $this->idGenerator->generate('ORD');
-        $calculation = $this->calculate($command);
-        $shippingAddress = $this->normalizeShippingAddress($command->shippingAddress);
+        $calculation = $this->calculate($command, $quotedDeliveryMinor);
+        $shippingAddress = $this->normalizeShippingAddress($command->shippingAddress, $shippingDestination);
 
         $order = Order::create(
             id: $orderId,
@@ -92,7 +101,7 @@ final readonly class CreateOrderHandler
             referredBy: $this->resolveReferredBy($command),
         );
 
-        $this->program->atomic(function () use ($order, $orderId, $command, $calculation): void {
+        $this->program->atomic(function () use ($order, $orderId, $command, $calculation, $rememberAddress, $shippingAddress, $shippingDestination): void {
             $this->partnerPromo->validateCheckout($calculation['promo_code']);
             $this->orderRepository->add($order);
 
@@ -122,6 +131,14 @@ final readonly class CreateOrderHandler
             $this->program->captureOrder($orderId);
             if ($order->paymentStatus === 'completed') {
                 $this->program->settleOrder($orderId);
+            }
+            if ($rememberAddress && $command->userId !== null) {
+                $this->addressBook->remember(
+                    $command->userId,
+                    $shippingAddress,
+                    $shippingDestination === null ? null : $calculation['delivery_method'],
+                    $shippingDestination['id'] ?? null,
+                );
             }
         });
 
@@ -169,18 +186,18 @@ final readonly class CreateOrderHandler
      * @return array{
      *     subtotal: int,
      *     delivery_method: string,
-     *     delivery_cost: int,
+     *     delivery_cost: int|float,
      *     discount_amount: int,
      *     promo_code: string|null,
      *     promo_code_id: int|null,
      *     bonus_used: int,
-     *     total: int,
+     *     total: int|float,
      *     buyer_profile: UserProfile|null,
      *     items: list<array{product_id: int, product_name: string, price: int, quantity: int}>
      * }
      * @throws Exception
      */
-    private function calculate(CreateOrderCommand $command): array
+    private function calculate(CreateOrderCommand $command, ?int $quotedDeliveryMinor): array
     {
         $items = $this->normalizeItems($command->items);
         $products = $this->productsById(array_keys($items));
@@ -208,9 +225,11 @@ final readonly class CreateOrderHandler
         }
 
         $deliveryMethod = $this->normalizeDeliveryMethod($command->deliveryMethod);
-        $deliveryCost = $this->deliveryCost($subtotal, $deliveryMethod);
+        if ($deliveryMethod === OzonPickupCheckout::LIVE_PICKUP && $quotedDeliveryMinor === null) {
+            throw new DomainExceptionModule('order', 'Уточните стоимость доставки.', 43, status: 422);
+        }
+        $deliveryMinor = $quotedDeliveryMinor ?? $this->deliveryCost($subtotal, $deliveryMethod) * 100;
         $promo = $this->promoDiscount($command->promoCode, $subtotal);
-        $baseTotal = max(0, $subtotal + $deliveryCost - $promo['discount_amount']);
         $buyerProfile = $command->userId !== null
             ? $this->profileRepository->findByUserId($command->userId)
             : null;
@@ -219,12 +238,12 @@ final readonly class CreateOrderHandler
         return [
             'subtotal'        => $subtotal,
             'delivery_method' => $deliveryMethod,
-            'delivery_cost'   => $deliveryCost,
+            'delivery_cost'   => $deliveryMinor / 100,
             'discount_amount' => $promo['discount_amount'],
             'promo_code'      => $promo['code'],
             'promo_code_id'   => $promo['id'],
             'bonus_used'      => $bonusUsed,
-            'total'           => max(0, $baseTotal - $bonusUsed),
+            'total'           => (max(0, $subtotal - $promo['discount_amount'] - $bonusUsed) * 100 + $deliveryMinor) / 100,
             'buyer_profile'   => $buyerProfile,
             'items'           => $calculatedItems,
         ];
@@ -273,6 +292,7 @@ final readonly class CreateOrderHandler
             ->where('p.id IN (:ids)')
             ->andWhere('p.deleted_at IS NULL')
             ->andWhere('p.is_active = 1')
+            ->andWhere("p.availability <> 'out_of_stock'")
             ->setParameter('ids', $productIds, ArrayParameterType::INTEGER)
             ->executeQuery()
             ->fetchAllAssociative();
@@ -291,6 +311,12 @@ final readonly class CreateOrderHandler
     private function normalizeDeliveryMethod(string $deliveryMethod): string
     {
         $method = trim($deliveryMethod);
+        if (str_starts_with($method, 'ozon-') && $method !== $this->ozonCheckout->method()) {
+            throw new DomainExceptionModule('order', 'Выберите доступный способ доставки.', 43, status: 422);
+        }
+        if ($method === $this->ozonCheckout->method()) {
+            return $method;
+        }
 
         return \in_array($method, ['cdek', 'post'], true) ? $method : 'cdek';
     }
@@ -319,21 +345,21 @@ final readonly class CreateOrderHandler
      * @param array<string, mixed> $shippingAddress
      * @return array{name: string, phone: string, email: string, city: string, address: string, postalCode: string, postal_code: string, comment: string|null}
      */
-    private function normalizeShippingAddress(array $shippingAddress): array
+    private function normalizeShippingAddress(array $shippingAddress, ?array $shippingDestination): array
     {
         $email = $this->requiredShippingValue($shippingAddress, ['email']);
         if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
             throw $this->invalidShippingAddress();
         }
 
-        $postalCode = $this->requiredShippingValue($shippingAddress, ['postalCode', 'postal_code']);
+        $postalCode = $shippingDestination === null ? $this->requiredShippingValue($shippingAddress, ['postalCode', 'postal_code']) : '';
 
         return [
             'name'        => $this->requiredShippingValue($shippingAddress, ['name']),
             'phone'       => $this->requiredShippingValue($shippingAddress, ['phone']),
             'email'       => $email,
-            'city'        => $this->requiredShippingValue($shippingAddress, ['city']),
-            'address'     => $this->requiredShippingValue($shippingAddress, ['address']),
+            'city'        => $shippingDestination['city'] ?? $this->requiredShippingValue($shippingAddress, ['city']),
+            'address'     => $shippingDestination['address'] ?? $this->requiredShippingValue($shippingAddress, ['address']),
             'postalCode'  => $postalCode,
             'postal_code' => $postalCode,
             'comment'     => $this->optionalShippingValue($shippingAddress, ['comment']),

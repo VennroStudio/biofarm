@@ -38,39 +38,42 @@ final readonly class UpdateMeAction implements RequestHandlerInterface
         $identity = RequestIdentity::get($request);
         $payload = (array)$request->getParsedBody();
         $consents = new ConsentRecorder($this->connection);
-        $consents->assertForm($payload);
-        return $this->connection->transactional(function () use ($request, $payload, $identity, $consents): ResponseInterface {
-        $user = $this->userRepository->getById($identity->id);
+        $this->connection->transactional(function () use ($request, $payload, $identity, $consents): void {
+            $newConsent = $consents->requirePersonalData($payload, $identity->id, lock: true);
+            $this->connection->fetchOne('SELECT user_id FROM user_profiles WHERE user_id = ? FOR UPDATE', [$identity->id]);
+            $user = $this->userRepository->getById($identity->id);
 
-        $name = $this->stringValue($payload, 'name');
-        if ($name !== null) {
-            [$firstName, $lastName] = $this->splitName($name, $user->firstName, $user->lastName);
-            $user->edit($lastName, $firstName);
-        }
+            $name = $this->stringValue($payload, 'name');
+            if ($name !== null) {
+                [$firstName, $lastName] = $this->splitName($name, $user->firstName, $user->lastName);
+                $user->edit($lastName, $firstName);
+            }
 
-        $profile = $this->profileRepository->findByUserId($identity->id);
-        if ($profile === null) {
-            $profile = UserProfile::create(
-                userId: $identity->id,
-                referralCode: 'bf-' . $identity->id,
+            $profile = $this->profileRepository->findByUserId($identity->id);
+            if ($profile === null) {
+                $profile = UserProfile::create(
+                    userId: $identity->id,
+                    referralCode: 'bf-' . $identity->id,
+                );
+                $this->profileRepository->add($profile);
+            }
+
+            $profile->edit(
+                phone: $this->stringValue($payload, 'phone') ?? $profile->phone,
+                cardNumber: $profile->cardNumber,
+                isPartner: $profile->isPartner,
+                referralCode: $profile->referralCode ?? 'bf-' . $identity->id,
+                referredByUserId: $profile->referredByUserId,
             );
-            $this->profileRepository->add($profile);
-        }
 
-        $profile->edit(
-            phone: $this->stringValue($payload, 'phone') ?? $profile->phone,
-            cardNumber: $profile->cardNumber,
-            isPartner: $profile->isPartner,
-            referralCode: $profile->referralCode ?? 'bf-' . $identity->id,
-            referredByUserId: $profile->referredByUserId,
-        );
-
-        $consents->recordForm($request, $payload, 'user', (string)$identity->id);
-        $this->flusher->flush();
-        $this->cacher->delete('user_identity_' . $identity->id);
+            if ($newConsent) {
+                $consents->record($request, 'user', (string)$identity->id, 'personal_data', true);
+            }
+            $this->flusher->flush();
+            $this->cacher->delete('user_identity_' . $identity->id);
+        });
 
         return $this->getMeAction->handle($request);
-        });
     }
 
     /**

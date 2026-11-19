@@ -15,7 +15,7 @@ final readonly class CookieChoiceAction implements RequestHandlerInterface
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
         $body=(array)$request->getParsedBody();
-        if (($body['version']??null)!==ConsentRecorder::VERSION || !\is_bool($body['analytics']??null) || !\is_bool($body['marketing']??null)) {
+        if (($body['version']??null)!==ConsentRecorder::COOKIE_VERSION || !\is_bool($body['analytics']??null) || !\is_bool($body['marketing']??null)) {
             throw new DomainExceptionModule('consent','Некорректные настройки cookies.',4,status:422);
         }
         $id=(string)($request->getCookieParams()['biofarm_cookie_id']??'');

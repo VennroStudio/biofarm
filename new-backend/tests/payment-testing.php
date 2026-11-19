@@ -44,12 +44,22 @@ $fixture = static function (string $id, ?int $buyer = null) use ($db, $program):
     $db->insert('order_items',['order_id'=>$id,'product_id'=>1,'product_name'=>'Fixture','quantity'=>1,'price'=>10000]);
     $item=(int)$db->lastInsertId();$program->captureOrder($id);return $item;
 };
+putenv('APP_ENV=dev');
 check(SiteSettings::defaults()['testing_enabled'] === false, 'Testing must default to disabled');
 check(in_array('testing_enabled', SiteSettings::adminWritableKeys(), true), 'Admin can save testing setting');
 $fixture('disabled');
 check(!$payments->completeCheckoutForTesting('disabled'), 'Disabled mode does not settle');
 check($db->fetchOne("SELECT payment_status FROM orders WHERE id='disabled'") === 'pending', 'Normal order stays pending');
 $db->insert('site_settings',['key'=>'testing_enabled','value'=>'{"value":true}']);
+putenv('APP_ENV=prod');
+try {
+    $fixture('production');
+    check(!SiteSettings::testingAvailable() && !in_array('testing_enabled', SiteSettings::adminWritableKeys(), true), 'Production hides and rejects the testing setting');
+    check(!$payments->completeCheckoutForTesting('production'), 'A stale testing flag must not simulate a production payment');
+    check($db->fetchOne("SELECT payment_status FROM orders WHERE id='production'") === 'pending', 'Production order stays unpaid');
+} finally {
+    putenv('APP_ENV=dev');
+}
 foreach ([null,2] as $buyer) {
     $id=$buyer===null?'guest':'registered';$fixture($id,$buyer);
     check($payments->completeCheckoutForTesting($id), 'Testing completes checkout');

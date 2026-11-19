@@ -6,6 +6,7 @@ namespace App\Http\Web\Legal;
 
 use App\Components\Twig\HtmlResponder;
 use App\Http\View\StaticPageView;
+use App\Modules\Page\Service\LegalDocuments;
 use App\Modules\Page\Service\PageSeoProvider;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -23,7 +24,7 @@ final readonly class LegalPageController implements RequestHandlerInterface
         'vozvrat' => 'ВОЗВРАТ И ОБМЕН ТОВАРОВ',
         'bonus-rules' => 'ПРАВИЛА БОНУСНОЙ ПРОГРАММЫ BIOFARM',
     ];
-    public function __construct(private HtmlResponder $html, private PageSeoProvider $seo) {}
+    public function __construct(private HtmlResponder $html, private PageSeoProvider $seo, private LegalDocuments $documents) {}
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
         $slug = trim($request->getUri()->getPath(), '/');
@@ -32,6 +33,7 @@ final readonly class LegalPageController implements RequestHandlerInterface
         return $this->html->render('pages/legal/document.html.twig', [
             'documentSlug' => $slug,
             'documentTitle' => $title,
+            'documentContent' => isset(LegalDocuments::TITLES[$slug]) ? $this->documents->content($slug) : null,
             'page' => new StaticPageView($this->seo->systemMeta($slug, '/' . $slug, $title . ' — БИОФАРМ', $title . '. Редакция от ' . $edition . '.')),
         ]);
     }

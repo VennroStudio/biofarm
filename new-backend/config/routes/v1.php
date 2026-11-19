@@ -54,6 +54,7 @@ use App\Http\Action\v1\User\GetUserRolesAction;
 use App\Http\Action\v1\User\GetUsersAction;
 use App\Http\Action\v1\User\SaveUserAddressAction;
 use App\Http\Action\v1\User\UpdateMeAction;
+use App\Http\Action\v1\User\UpdatePrivacyPreferencesAction;
 use App\Http\Action\v1\User\UploadAvatarAction;
 use App\Http\Action\v1\User\UserUpdateAction;
 use Psr\Container\ContainerInterface;
@@ -71,6 +72,7 @@ return static function (App $app): void {
             $group->post('/create', CreateUserAction::class);
             $group->get('/me', GetMeAction::class)->add(Authenticate::class);
             $group->patch('/me', UpdateMeAction::class)->add(Authenticate::class);
+            $group->patch('/me/privacy', UpdatePrivacyPreferencesAction::class)->add(Authenticate::class);
             $group->get('/me/addresses', GetUserAddressesAction::class)->add(Authenticate::class);
             $group->post('/me/addresses', SaveUserAddressAction::class)->add(Authenticate::class);
             $group->patch('/me/addresses/{id}', SaveUserAddressAction::class)->add(Authenticate::class);

@@ -153,7 +153,7 @@ final class ProgramService
                 $this->entry('spend:' . $orderId, $buyer, 'shopping', -$spent, 'order_spending', $orderId, 'reserved');
                 $this->syncProfile($buyer);
             }
-            $snapshot = ['modelVersion' => 3, 'provisionalReferral' => $provisional, 'referralParentId' => $parent, 'items' => $items, 'rules' => $rules, 'totalMinor' => (int)$o['total'] * 100, 'deliveryMinor' => (int)$o['delivery_cost'] * 100, 'deliveryRefunded' => false, 'bonusMinor' => $spent, 'recipients' => $recipients];
+            $snapshot = ['modelVersion' => 3, 'provisionalReferral' => $provisional, 'referralParentId' => $parent, 'items' => $items, 'rules' => $rules, 'totalMinor' => ProgramMath::minor($o['total']), 'deliveryMinor' => ProgramMath::minor($o['delivery_cost']), 'deliveryRefunded' => false, 'bonusMinor' => $spent, 'recipients' => $recipients];
             $this->db->insert('program_orders', ['id' => $orderId, 'buyer_id' => $buyer, 'status' => 'pending', 'snapshot' => $this->json($snapshot), 'delivered_at' => null]);
         });
     }
@@ -263,6 +263,11 @@ final class ProgramService
     public function deliverOrder(string $orderId): void
     {
         $this->atomic(function () use ($orderId): void {
+            $checkout = $this->db->fetchAssociative('SELECT * FROM orders WHERE id=?', [$orderId]);
+            if (($checkout['delivery_method'] ?? null) === 'ozon-pickup'
+                && $this->db->fetchOne("SELECT status FROM ozon_delivery_orders WHERE order_id=? AND mode='live'", [$orderId]) !== 'delivered') {
+                throw new DomainException('Выдачу заказа должен подтвердить Ozon.');
+            }
             $o = $this->order($orderId);
             if (!$o || $o['delivered_at'] !== null) {
                 return;
@@ -286,9 +291,9 @@ final class ProgramService
         });
     }
 
-    public function reserveRefund(string $orderId, string $refundId, array $items, bool $refundDelivery = false): array
+    public function reserveRefund(string $orderId, string $refundId, array $items, bool $refundDelivery = false, array $fiscalUnits = []): array
     {
-        return $this->atomic(function () use ($orderId, $refundId, $items, $refundDelivery) {
+        return $this->atomic(function () use ($orderId, $refundId, $items, $refundDelivery, $fiscalUnits) {
             $existing = $this->db->fetchAssociative('SELECT * FROM program_refunds WHERE id=?', [$refundId]);
             if ($existing) {
                 $p = $this->decode($existing['payload']);
@@ -324,6 +329,14 @@ final class ProgramService
                 $prev = $item['refundedQuantity'];
                 $total = $item['quantity'];
                 $paid = ProgramMath::portion($item['paidMinor'], $prev, $q, $total);
+                if (isset($fiscalUnits[$id])) {
+                    $units = $fiscalUnits[$id];
+                    if (count($units) !== $q) {
+                        throw new DomainException('Invalid fiscal refund allocation');
+                    }
+                    $paid = array_sum(array_column($units, 'amountMinor'));
+                    $payload['fiscalUnits'][$id] = array_column($units, 'key');
+                }
                 $payload['amountMinor'] += $paid;
                 $payload['restoreMinor'] += ProgramMath::portion($item['spentMinor'], $prev, $q, $total);
                 $payload['items'][] = ['itemId' => $id, 'quantity' => $q, 'description' => $item['description'], 'amountMinor' => $paid];
@@ -503,10 +516,13 @@ final class ProgramService
             }
             $rows = $this->db->fetchAllAssociative($sql . ' ORDER BY ' . $orderBy . ' LIMIT ' . $limit . ' OFFSET ' . $offset, $params);
             foreach ($rows as &$row) {
-                foreach (['amount_minor', 'total', 'user_id', 'buyer_id'] as $number) {
+                foreach (['amount_minor', 'user_id', 'buyer_id'] as $number) {
                     if (isset($row[$number])) {
                         $row[$number] = (int)$row[$number];
                     }
+                }
+                if (isset($row['total'])) {
+                    $row['total'] = (float)$row['total'];
                 }
                 foreach (['details', 'payload'] as $key) {
                     if (isset($row[$key])) {

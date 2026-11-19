@@ -88,7 +88,7 @@ export function AddressesPanel({ addresses, onDelete, onSave, user }: Props) {
                     {address.isDefault && <Badge variant="secondary">По умолчанию</Badge>}
                   </div>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    {address.city}, {address.address}
+                    {address.ozonDeliveryMethod ? address.address : `${address.city}, ${address.address}`}
                   </p>
                 </div>
                 <MapPin className="h-5 w-5 flex-shrink-0 text-primary" />
@@ -98,7 +98,7 @@ export function AddressesPanel({ addresses, onDelete, onSave, user }: Props) {
               </p>
               {address.comment && <p className="mt-2 text-sm text-muted-foreground">{address.comment}</p>}
               <div className="mt-4 flex flex-wrap gap-2">
-                <Button
+                {!address.ozonDeliveryMethod && <Button
                   size="sm"
                   variant="outline"
                   onClick={() => {
@@ -108,7 +108,7 @@ export function AddressesPanel({ addresses, onDelete, onSave, user }: Props) {
                 >
                   <Edit className="h-4 w-4" />
                   Изменить
-                </Button>
+                </Button>}
                 <Button size="sm" variant="destructive" onClick={() => void onDelete(address.id)}>
                   <Trash2 className="h-4 w-4" />
                   Удалить
@@ -170,7 +170,7 @@ export function AddressesPanel({ addresses, onDelete, onSave, user }: Props) {
               />
               Адрес по умолчанию
             </label>
-            <ConsentFields key={editingId ?? 'new-address'} />
+            {!user.personalDataConsentValid && <ConsentFields key={editingId ?? 'new-address'} />}
             <div className="flex gap-2">
               <Button className="flex-1" disabled={saving} type="submit">
                 {editingId ? <Save className="h-4 w-4" /> : <Plus className="h-4 w-4" />}

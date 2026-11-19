@@ -39,6 +39,7 @@ const deliveryOptions = [
   { value: 'cdek', label: 'СДЭК' },
   { value: 'post', label: 'Почта России' },
   { value: 'pickup', label: 'Самовывоз' },
+  { value: 'ozon-pickup', label: 'Пункт выдачи Ozon' },
 ];
 
 function addressValue(order: Order | null, key: string): string {
@@ -86,8 +87,13 @@ function orderSubtotal(order: Order | null): number {
 export function OrderDetailsModal({ order, error, saving, onClose, onSave, onPaymentRefresh }: Props) {
   const [tab, setTab] = useState<'details' | 'payment'>('details');
   const [form, setForm] = useState<OrderForm>(() => toForm(order));
+  const liveOzon = order?.delivery_method === 'ozon-pickup';
   const subtotal = orderSubtotal(order);
-  const total = Math.max(0, subtotal + intValue(form.deliveryCost) - intValue(form.discountAmount) - intValue(form.bonusUsed));
+  const enteredDeliveryCost = Number(form.deliveryCost.trim().replace(',', '.'));
+  const deliveryCost = Number.isFinite(enteredDeliveryCost) && enteredDeliveryCost > 0
+    ? Math.round(enteredDeliveryCost * 100) / 100
+    : 0;
+  const total = Math.max(0, subtotal + deliveryCost - intValue(form.discountAmount) - intValue(form.bonusUsed));
 
   async function submit() {
     if (!order) {
@@ -99,7 +105,7 @@ export function OrderDetailsModal({ order, error, saving, onClose, onSave, onPay
       paymentStatus: form.paymentStatus,
       paymentMethod: form.paymentMethod,
       deliveryMethod: form.deliveryMethod || null,
-      deliveryCost: intValue(form.deliveryCost),
+      deliveryCost,
       discountAmount: intValue(form.discountAmount),
       promoCode: form.promoCode || null,
       bonusUsed: intValue(form.bonusUsed),
@@ -126,7 +132,7 @@ export function OrderDetailsModal({ order, error, saving, onClose, onSave, onPay
       footer={(
         <>
           <Button type="button" variant="outline" onClick={onClose}>Закрыть</Button>
-          {tab === 'details' && <Button type="button" disabled={saving || !order} onClick={() => void submit()}>
+          {tab === 'details' && !liveOzon && <Button type="button" disabled={saving || !order} onClick={() => void submit()}>
             {saving ? 'Сохранение...' : 'Сохранить'}
           </Button>}
         </>
@@ -197,7 +203,7 @@ export function OrderDetailsModal({ order, error, saving, onClose, onSave, onPay
             <h4 className="mb-3 font-semibold">Скидки и бонусы</h4>
             <div className="grid gap-4 md:grid-cols-4">
               <Field label="Доставка, ₽">
-                <input className={inputClass} inputMode="numeric" value={form.deliveryCost} onChange={(event) => setForm({ ...form, deliveryCost: event.target.value })} />
+                <input className={inputClass} inputMode="decimal" value={form.deliveryCost} onChange={(event) => setForm({ ...form, deliveryCost: event.target.value })} />
               </Field>
               <Field label="Скидка, ₽">
                 <input className={inputClass} inputMode="numeric" value={form.discountAmount} onChange={(event) => setForm({ ...form, discountAmount: event.target.value })} />
@@ -233,7 +239,7 @@ export function OrderDetailsModal({ order, error, saving, onClose, onSave, onPay
             </div>
             <div>
               <p className="text-sm text-[#5f7580]">Доставка</p>
-              <p className="font-semibold">{formatMoney(intValue(form.deliveryCost))}</p>
+              <p className="font-semibold">{formatMoney(deliveryCost)}</p>
             </div>
             <div>
               <p className="text-sm text-[#5f7580]">Скидки и бонусы</p>

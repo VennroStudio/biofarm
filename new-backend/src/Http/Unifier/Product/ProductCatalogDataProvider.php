@@ -68,6 +68,7 @@ final readonly class ProductCatalogDataProvider
                 'p.category_id',
                 'p.price',
                 'p.old_price',
+                'p.availability',
                 'COALESCE(pi.path, p.image) AS image',
                 'COALESCE(pi.alt, p.image_alt, p.name) AS image_alt',
                 'p.badge',
@@ -144,6 +145,7 @@ final readonly class ProductCatalogDataProvider
                 'p.category_id',
                 'p.price',
                 'p.old_price',
+                'p.availability',
                 'COALESCE(pi.path, p.image) AS image',
                 'COALESCE(pi.alt, p.image_alt, p.name) AS image_alt',
                 'p.badge',
@@ -250,6 +252,7 @@ final readonly class ProductCatalogDataProvider
                 'p.category_id',
                 'p.price',
                 'p.old_price',
+                'p.availability',
                 'COALESCE(pi.path, p.image) AS image',
                 'COALESCE(pi.alt, p.image_alt, p.name) AS image_alt',
                 'p.badge',
@@ -269,7 +272,8 @@ final readonly class ProductCatalogDataProvider
             ->andWhere('p.id != :excludeProductId')
             ->setParameter('category', $categoryId)
             ->setParameter('excludeProductId', $excludeProductId)
-            ->orderBy('p.created_at', 'DESC')
+            ->orderBy("CASE WHEN p.availability = 'out_of_stock' THEN 1 ELSE 0 END", 'ASC')
+            ->addOrderBy('p.created_at', 'DESC')
             ->addOrderBy('p.id', 'ASC')
             ->setMaxResults($limit)
             ->executeQuery()
@@ -616,6 +620,7 @@ final readonly class ProductCatalogDataProvider
             imageAlt: $row['image_alt'] !== null && trim((string)$row['image_alt']) !== '' ? (string)$row['image_alt'] : (string)$row['name'],
             categorySlug: $row['category_slug'] !== null && trim((string)$row['category_slug']) !== '' ? (string)$row['category_slug'] : null,
             legalStatus: (string)($row['legal_status'] ?? 'unknown'),
+            outOfStock: $row['availability'] === 'out_of_stock',
         );
     }
 
@@ -960,12 +965,14 @@ final readonly class ProductCatalogDataProvider
 
     private function applySort(QueryBuilder $qb, string $sort): void
     {
+        $qb->orderBy("CASE WHEN p.availability = 'out_of_stock' THEN 1 ELSE 0 END", 'ASC');
         match ($sort) {
-            'price-asc'  => $qb->orderBy('p.price', 'ASC')->addOrderBy('p.id', 'ASC'),
-            'price-desc' => $qb->orderBy('p.price', 'DESC')->addOrderBy('p.id', 'ASC'),
-            'name'       => $qb->orderBy('p.name', 'ASC')->addOrderBy('p.id', 'ASC'),
-            default      => $qb->orderBy('p.created_at', 'DESC')->addOrderBy('p.id', 'ASC'),
+            'price-asc'  => $qb->addOrderBy('p.price', 'ASC'),
+            'price-desc' => $qb->addOrderBy('p.price', 'DESC'),
+            'name'       => $qb->addOrderBy('p.name', 'ASC'),
+            default      => $qb->addOrderBy('p.created_at', 'DESC'),
         };
+        $qb->addOrderBy('p.id', 'ASC');
     }
 
     private function escapeLike(string $value): string
@@ -1198,7 +1205,7 @@ final readonly class ProductCatalogDataProvider
             return [];
         }
 
-        /** @var list<array{id: int|string, slug: string, name: string, image: string, image_alt: string|null, weight: string}> $rows */
+        /** @var list<array{id: int|string, slug: string, name: string, image: string, image_alt: string|null, weight: string, availability: string}> $rows */
         $rows = $this->connection->createQueryBuilder()
             ->select(
                 'p.id',
@@ -1207,6 +1214,7 @@ final readonly class ProductCatalogDataProvider
                 'COALESCE(pi.path, p.image) AS image',
                 'COALESCE(pi.alt, p.image_alt, p.name) AS image_alt',
                 'p.weight',
+                'p.availability',
             )
             ->from('product_group_items', 'pgi')
             ->innerJoin('pgi', 'products', 'p', 'p.id = pgi.product_id AND p.deleted_at IS NULL AND p.is_active = 1')
@@ -1236,6 +1244,7 @@ final readonly class ProductCatalogDataProvider
                 label: $weight !== '' ? $weight : (string)$row['name'],
                 weight: $weight,
                 isCurrent: (int)$row['id'] === $productId,
+                outOfStock: $row['availability'] === 'out_of_stock',
             );
         }, $rows);
     }

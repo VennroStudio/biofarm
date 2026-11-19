@@ -7,7 +7,7 @@ export type AdminUser = {
   id: number;
   first_name: string;
   email?: string;
-  role: number;
+  role: { id: number; label: string } | number;
 };
 
 export type Product = {
@@ -146,6 +146,7 @@ export type FaqItem = {
 export type CmsPage = {
   id: number;
   page_type: 'system' | 'custom';
+  legal_document?: boolean;
   system_key: string | null;
   slug_path: string | null;
   template: string | null;
@@ -272,6 +273,7 @@ export type Settings = {
   referral_enabled: boolean;
   favorites_enabled: boolean;
   testing_enabled: boolean;
+  testing_available: boolean;
   order_bonus_enabled: boolean;
   order_bonus_percent: number;
   order_bonus_spend_limit_percent: number;

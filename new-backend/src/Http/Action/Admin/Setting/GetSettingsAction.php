@@ -20,6 +20,9 @@ final readonly class GetSettingsAction implements RequestHandlerInterface
     #[Override]
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        return new JsonDataResponse($this->siteSettings->all());
+        return new JsonDataResponse(array_replace($this->siteSettings->all(), [
+            'testing_available' => SiteSettings::testingAvailable(),
+            'testing_enabled' => $this->siteSettings->bool('testing_enabled'),
+        ]));
     }
 }

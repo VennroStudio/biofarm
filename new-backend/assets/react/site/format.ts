@@ -1,5 +1,5 @@
 export function formatMoney(value: number) {
-  return `${Math.round(value).toLocaleString('ru-RU')} ₽`;
+  return `${value.toLocaleString('ru-RU', { maximumFractionDigits: 2 })} ₽`;
 }
 
 export function formatDate(value?: string | null) {

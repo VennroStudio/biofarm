@@ -15,6 +15,7 @@ use App\Modules\User\Entity\User\UserRepository;
 use App\Modules\User\Entity\UserProfile\UserProfile;
 use App\Modules\User\Entity\UserProfile\UserProfileRepository;
 use DateMalformedStringException;
+use Doctrine\DBAL\Connection;
 use Override;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -28,6 +29,7 @@ final readonly class UpdateUserProfileAction implements RequestHandlerInterface
         private UserProfileRepository $profileRepository,
         private BonusTransactionRepository $bonusTransactionRepository,
         private FlusherInterface $flusher,
+        private Connection $connection,
     ) {}
 
     /**
@@ -48,44 +50,45 @@ final readonly class UpdateUserProfileAction implements RequestHandlerInterface
                 throw new DomainExceptionModule('user', 'Статус партнёра должен быть логическим значением', 1, status: 422);
             }
         }
-        $user = $this->userRepository->getById($userId);
+        $this->program->atomic(function () use ($userId, $payload, $request): void {
+            $this->connection->fetchOne('SELECT user_id FROM user_profiles WHERE user_id = ? FOR UPDATE', [$userId]);
+            $user = $this->userRepository->getById($userId);
 
-        if (isset($payload['firstName']) || isset($payload['first_name']) || isset($payload['lastName']) || isset($payload['last_name'])) {
-            $user->edit(
-                (string)$this->payloadValue($payload, 'lastName', 'last_name', $user->lastName),
-                (string)$this->payloadValue($payload, 'firstName', 'first_name', $user->firstName),
-            );
-        }
-
-        $profile = $this->profileRepository->findByUserId($userId);
-        if ($profile === null) {
-            $profile = UserProfile::create($userId);
-            $this->profileRepository->add($profile);
-        }
-
-        $referralCode = $this->nullableString($this->payloadValue($payload, 'referralCode', 'referral_code', $profile->referralCode));
-        if ($referralCode !== null) {
-            $profileByCode = $this->profileRepository->findByReferralCode($referralCode);
-            if ($profileByCode !== null && $profileByCode->userId !== $userId) {
-                throw new DomainExceptionModule('user', 'error.referral_code_already_used', 38, status: 422);
+            if (isset($payload['firstName']) || isset($payload['first_name']) || isset($payload['lastName']) || isset($payload['last_name'])) {
+                $user->edit(
+                    (string)$this->payloadValue($payload, 'lastName', 'last_name', $user->lastName),
+                    (string)$this->payloadValue($payload, 'firstName', 'first_name', $user->firstName),
+                );
             }
-        }
 
-        $partner = (bool)$this->payloadValue($payload, 'isPartner', 'is_partner', $profile->isPartner);
-        $partnerChanged = $partner !== $profile->isPartner;
-        $profile->edit(
-            phone: $this->nullableString($this->payloadValue($payload, 'phone', 'phone', $profile->phone)),
-            cardNumber: $profile->cardNumber,
-            isPartner: $profile->isPartner,
-            referralCode: $referralCode,
-            referredByUserId: $profile->referredByUserId,
-        );
+            $profile = $this->profileRepository->findByUserId($userId);
+            if ($profile === null) {
+                $profile = UserProfile::create($userId);
+                $this->profileRepository->add($profile);
+            }
 
-        if (\array_key_exists('bonusBalance', $payload) || \array_key_exists('bonus_balance', $payload) || !empty($payload['bonusAdjustment']) || !empty($payload['bonus_adjustment'])) {
-            throw new DomainExceptionModule('program', 'Use audited program adjustments', 1, status: 409);
-        }
+            $referralCode = $this->nullableString($this->payloadValue($payload, 'referralCode', 'referral_code', $profile->referralCode));
+            if ($referralCode !== null) {
+                $profileByCode = $this->profileRepository->findByReferralCode($referralCode);
+                if ($profileByCode !== null && $profileByCode->userId !== $userId) {
+                    throw new DomainExceptionModule('user', 'error.referral_code_already_used', 38, status: 422);
+                }
+            }
 
-        $this->program->atomic(function () use ($partnerChanged, $userId, $partner, $request): void {
+            $partner = (bool)$this->payloadValue($payload, 'isPartner', 'is_partner', $profile->isPartner);
+            $partnerChanged = $partner !== $profile->isPartner;
+            $profile->edit(
+                phone: $this->nullableString($this->payloadValue($payload, 'phone', 'phone', $profile->phone)),
+                cardNumber: $profile->cardNumber,
+                isPartner: $profile->isPartner,
+                referralCode: $referralCode,
+                referredByUserId: $profile->referredByUserId,
+            );
+
+            if (\array_key_exists('bonusBalance', $payload) || \array_key_exists('bonus_balance', $payload) || !empty($payload['bonusAdjustment']) || !empty($payload['bonus_adjustment'])) {
+                throw new DomainExceptionModule('program', 'Use audited program adjustments', 1, status: 409);
+            }
+
             $this->flusher->flush();
             if ($partnerChanged) {
                 $this->program->setPartnerStatus($userId, $partner, RequestIdentity::get($request)->id, $partner ? 'Назначение партнёром в разделе пользователей' : 'Снятие статуса партнёра в разделе пользователей');

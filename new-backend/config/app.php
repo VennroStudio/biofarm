@@ -13,7 +13,7 @@ return static function (ContainerInterface $container): App {
     $middleware = require __DIR__ . '/../config/middleware.php';
     $middleware($app);
 
-    foreach (['program', 'payments', 'offers'] as $routes) {
+    foreach (['program', 'payments', 'offers', 'ozon', 'phone'] as $routes) {
         (require __DIR__ . '/routes/' . $routes . '.php')($app);
     }
 

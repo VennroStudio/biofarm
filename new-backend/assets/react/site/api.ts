@@ -20,6 +20,7 @@ type ApiEnvelope<T> = {
 
 type ApiErrorEnvelope = {
   error?: string | {
+    code?: number;
     description?: string;
     message?: string;
   };
@@ -29,11 +30,23 @@ type ApiErrorEnvelope = {
   }>;
 };
 
+export class SiteRequestError extends Error {
+  constructor(message: string, public readonly code?: number) {
+    super(message);
+  }
+}
+
 export type SiteUser = {
   id: string;
   email: string;
+  emailVerified?: boolean;
+  marketingEmailSubscribed?: boolean;
+  personalDataConsentValid?: boolean;
   name: string;
   phone?: string;
+  phoneVerifiedAt?: string;
+  ozonPhoneCheckedAt?: string;
+  ozonPhoneAvailable?: boolean;
   avatar?: string;
   createdAt: string;
   referredBy?: string;
@@ -58,6 +71,8 @@ export type UserAddress = ShippingAddress & {
   isDefault: boolean;
   createdAt: string;
   updatedAt?: null | string;
+  ozonDeliveryMethod?: string;
+  ozonDestinationId?: number;
 };
 
 export type OrderItem = {
@@ -220,7 +235,8 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   }
 
   if (!response.ok) {
-    throw new Error(errorMessage(payload, `HTTP ${response.status}`));
+    const error = payload && 'error' in payload ? payload.error : null;
+    throw new SiteRequestError(errorMessage(payload, `HTTP ${response.status}`), typeof error === 'object' && error ? error.code : undefined);
   }
 
   if (payload && 'data' in payload) {
@@ -276,8 +292,16 @@ function mapUser(value: unknown): SiteUser | null {
   return {
     id: String(value.id || ''),
     email: stringValue(value.email),
+    emailVerified: boolValue(value.email_verified ?? value.emailVerified),
+    marketingEmailSubscribed: boolValue(value.marketing_email_subscribed ?? value.marketingEmailSubscribed),
+    personalDataConsentValid: boolValue(value.personal_data_consent_valid ?? value.personalDataConsentValid),
     name,
     phone: stringValue(value.phone) || undefined,
+    phoneVerifiedAt: stringValue(value.phone_verified_at ?? value.phoneVerifiedAt) || undefined,
+    ozonPhoneCheckedAt: stringValue(value.ozon_phone_checked_at ?? value.ozonPhoneCheckedAt) || undefined,
+    ozonPhoneAvailable: typeof (value.ozon_phone_available ?? value.ozonPhoneAvailable) === 'boolean'
+      ? boolValue(value.ozon_phone_available ?? value.ozonPhoneAvailable)
+      : undefined,
     avatar: stringValue(value.avatar) || undefined,
     createdAt: stringValue(value.created_at, stringValue(value.createdAt, new Date().toISOString())),
     referredBy: value.referred_by_user_id !== null && value.referred_by_user_id !== undefined
@@ -322,6 +346,8 @@ function mapUserAddress(value: unknown): UserAddress | null {
     isDefault: boolValue(value.is_default ?? value.isDefault),
     createdAt: stringValue(value.created_at ?? value.createdAt),
     updatedAt: stringValue(value.updated_at ?? value.updatedAt) || null,
+    ozonDeliveryMethod: stringValue(value.ozon_delivery_method) || undefined,
+    ozonDestinationId: numberValue(value.ozon_destination_id) || undefined,
   };
 }
 
@@ -410,15 +436,6 @@ function mapItemsResponse<T>(value: unknown, mapper: (item: unknown) => T | null
   return items.map(mapper).filter((item): item is T => item !== null);
 }
 
-function splitName(name: string) {
-  const parts = name.trim().split(/\s+/u).filter(Boolean);
-
-  return {
-    firstName: parts[0] || 'Пользователь',
-    lastName: parts.slice(1).join(' ') || 'БИОФАРМ',
-  };
-}
-
 export async function login(email: string, password: string) {
   const data = await request<{ access_token: string }>('/v1/auth/login', {
     method: 'POST',
@@ -430,19 +447,37 @@ export async function login(email: string, password: string) {
   return refreshUser();
 }
 
-export async function register(email: string, password: string, name: string, referredBy?: string, consents?: FormConsents) {
-  const { firstName, lastName } = splitName(name);
-  await request('/v1/users/create', {
+export async function completeCheckoutPhone(
+  challenge: string,
+  details?: { name: string; email: string; consents: FormConsents },
+) {
+  const data = await request<{ access_token: string | null }>(details ? '/v1/checkout/phone/complete' : '/v1/phone-login/complete', {
     method: 'POST',
     body: {
-      email,
-      firstName,
-      lastName,
-      password,
-      referredBy,
-      ...consents,
+      challenge,
+      ...(details && {
+        name: details.name, email: details.email, ...details.consents,
+        referredBy: getReferralCode(),
+        offerId: window.sessionStorage.getItem('biofarm_offer_id') || undefined,
+      }),
     },
   });
+
+  if (data.access_token) {
+    window.localStorage.setItem(tokenKey, data.access_token);
+  }
+
+  return refreshUser();
+}
+
+export async function completePhoneRegistration(challenge: string, name: string, email: string, referredBy?: string) {
+  const result = await request<{ access_token: string | null }>('/v1/phone-registration/complete', {
+    method: 'POST',
+    body: { challenge, name, email, referredBy, offerId: window.sessionStorage.getItem('biofarm_offer_id') || undefined },
+  });
+  if (!result.access_token) throw new Error('Не удалось выполнить вход.');
+  window.localStorage.setItem(tokenKey, result.access_token);
+  return refreshUser();
 }
 
 export async function refreshUser() {
@@ -454,12 +489,20 @@ export async function refreshUser() {
   return user;
 }
 
+export async function requestPasswordSetup(email: string) {
+  await request('/v1/auth/password-reset', { method: 'POST', body: { email } });
+}
+
+export async function savePasswordFromLink(token: string, password: string) {
+  await request('/v1/auth/password-reset/confirm', { method: 'POST', body: { token, password } });
+  clearAuth();
+}
+
 export async function updateProfile(payload: { name?: string; phone?: string } & FormConsents) {
   const user = mapUser(await request('/v1/users/me', {
     method: 'PATCH',
     body: {
       personalDataConsent: payload.personalDataConsent,
-      marketingEmailConsent: payload.marketingEmailConsent,
       consentVersion: payload.consentVersion,
       name: payload.name,
       phone: payload.phone,
@@ -469,6 +512,18 @@ export async function updateProfile(payload: { name?: string; phone?: string } &
   if (user) {
     window.localStorage.setItem(userKey, JSON.stringify(user));
   }
+
+  return user;
+}
+
+export async function updatePrivacyPreferences(payload: {
+  marketingEmailSubscribed: boolean;
+  marketingVersion?: string;
+  email?: string;
+} | { revokePersonalDataConsent: true }) {
+  const user = mapUser(await request('/v1/users/me/privacy', { method: 'PATCH', body: payload }));
+  if (!user) throw new Error('Не удалось загрузить настройки.');
+  window.localStorage.setItem(userKey, JSON.stringify(user));
 
   return user;
 }
@@ -484,7 +539,6 @@ export async function saveUserAddress(payload: Partial<UserAddress> & ShippingAd
     method: id ? 'PATCH' : 'POST',
     body: {
       personalDataConsent: payload.personalDataConsent,
-      marketingEmailConsent: payload.marketingEmailConsent,
       consentVersion: payload.consentVersion,
       label: payload.label,
       name: payload.name,
@@ -539,7 +593,12 @@ export async function createOrder(
   deliveryMethod: string,
   useBonuses: boolean,
   promoCode?: string,
-  consents?: FormConsents,
+  consents?: FormConsents & { offerAccepted: true; offerVersion: string },
+  delivery?: {
+    ozonQuote?: string;
+    ozonPickupPointId?: number;
+    rememberAddress?: boolean;
+  },
 ) {
   const referralCode = getReferralCode();
   const storedUser = getStoredUser();
@@ -553,6 +612,7 @@ export async function createOrder(
       shippingAddress,
       paymentMethod,
       deliveryMethod,
+      ...delivery,
       useBonuses,
       promoCode: promoCode?.trim() || undefined,
       referredBy: referralCode,

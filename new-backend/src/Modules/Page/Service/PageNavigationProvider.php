@@ -91,7 +91,8 @@ final readonly class PageNavigationProvider
     private function href(array $row): ?string
     {
         if ((string)$row['page_type'] === 'system') {
-            return self::SYSTEM_PAGE_PATHS[(string)($row['system_key'] ?? '')] ?? null;
+            $key = (string)($row['system_key'] ?? '');
+            return self::SYSTEM_PAGE_PATHS[$key] ?? (isset(LegalDocuments::TITLES[$key]) ? '/' . $key : null);
         }
 
         $slugPath = trim((string)($row['slug_path'] ?? ''), '/');

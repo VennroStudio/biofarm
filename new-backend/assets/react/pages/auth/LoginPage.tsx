@@ -1,32 +1,35 @@
 import { ConsentFields, formConsents } from '../../shared/ConsentFields';
-import { registrationReferralCode } from '../../site/referral';
-import { ArrowRight, Eye, EyeOff, Lock, Mail, User } from 'lucide-react';
+import { ArrowRight, Eye, EyeOff, Lock, Mail } from 'lucide-react';
 import { createRoot } from 'react-dom/client';
-import { type FormEvent, useMemo, useState } from 'react';
-import { login, register } from '../../site/api';
+import { type FormEvent, useMemo, useRef, useState } from 'react';
+import { completeCheckoutPhone, login } from '../../site/api';
+import { normalizePhone, PhoneVerification, smsUnavailableMessage } from '../../shared/PhoneVerification';
 import { Button, Card, CardContent, CardDescription, CardHeader, Input, Label, cn } from '../../site/ui';
+import { PhoneRegistration } from './PhoneRegistration';
+import { PasswordSetupPage } from './PasswordSetupPage';
 
 function redirectAfterLogin() {
   const params = new URLSearchParams(window.location.search);
   const redirect = params.get('redirect');
 
-  window.location.href = redirect && redirect.startsWith('/') ? redirect : '/profile';
+  const destination = redirect?.startsWith('/') ? new URL(redirect, window.location.origin) : null;
+  window.location.href = destination?.origin === window.location.origin ? destination.href : '/profile';
 }
 
-function LoginPage({ registrationEnabled }: { registrationEnabled: boolean }) {
+function LoginPage({ registrationEnabled, phoneLoginEnabled, smsAvailable }: { registrationEnabled: boolean; phoneLoginEnabled: boolean; smsAvailable: boolean }) {
   const [mode, setMode] = useState<'login' | 'register'>(() =>
     registrationEnabled && new URLSearchParams(window.location.search).get('tab') === 'register' ? 'register' : 'login',
   );
   const [showPassword, setShowPassword] = useState(false);
+  const [loginByPhone, setLoginByPhone] = useState(false);
+  const [loginPhone, setLoginPhone] = useState('');
+  const [phoneConsentRequired, setPhoneConsentRequired] = useState(false);
+  const phoneForm = useRef<HTMLFormElement>(null);
+  const normalizedPhone = normalizePhone(loginPhone);
   const [isLoading, setIsLoading] = useState(false);
-  const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
-  const [registerName, setRegisterName] = useState('');
-  const [registerEmail, setRegisterEmail] = useState('');
-  const [registerPassword, setRegisterPassword] = useState('');
-  const [registerConfirm, setRegisterConfirm] = useState('');
 
   const cardDescription = useMemo(
     () => (registrationEnabled ? 'Войдите или создайте аккаунт' : 'Войдите в свой аккаунт'),
@@ -37,37 +40,12 @@ function LoginPage({ registrationEnabled }: { registrationEnabled: boolean }) {
     event.preventDefault();
     setIsLoading(true);
     setError('');
-    setMessage('');
 
     try {
       await login(loginEmail, loginPassword);
       redirectAfterLogin();
     } catch (loginError) {
       setError(loginError instanceof Error ? loginError.message : 'Проверьте email и пароль');
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  async function handleRegister(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError('');
-    setMessage('');
-
-    if (registerPassword !== registerConfirm) {
-      setError('Пароли не совпадают');
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const consents = formConsents(event.currentTarget);
-      const referralCode = await registrationReferralCode();
-      await register(registerEmail, registerPassword, registerName, referralCode, consents);
-      setMode('login');
-      setMessage('Регистрация успешна. Проверьте почту и подтвердите аккаунт перед входом.');
-    } catch (registerError) {
-      setError(registerError instanceof Error ? registerError.message : 'Попробуйте другой email');
     } finally {
       setIsLoading(false);
     }
@@ -83,26 +61,52 @@ function LoginPage({ registrationEnabled }: { registrationEnabled: boolean }) {
           </CardHeader>
 
           <CardContent className="mx-auto w-full max-w-xl">
-            {registrationEnabled && (
-              <div className="mb-6 grid w-full grid-cols-2 rounded-xl border border-border bg-secondary p-1">
+            {mode === 'login' && phoneLoginEnabled && (
+              <div role="group" aria-label="Способ входа" className="mb-6 grid w-full grid-cols-2 rounded-xl border border-border bg-secondary p-1">
                 <button
-                  className={cn('rounded-sm px-3 py-1.5 text-sm font-medium transition-colors', mode === 'login' && 'bg-background shadow-sm')}
+                  aria-pressed={!loginByPhone}
+                  className={cn('rounded-sm px-3 py-1.5 text-sm font-medium transition-colors', !loginByPhone && 'bg-background shadow-sm')}
                   type="button"
-                  onClick={() => setMode('login')}
+                  onClick={() => setLoginByPhone(false)}
                 >
-                  Вход
+                  Email
                 </button>
                 <button
-                  className={cn('rounded-sm px-3 py-1.5 text-sm font-medium transition-colors', mode === 'register' && 'bg-background shadow-sm')}
+                  aria-pressed={loginByPhone}
+                  className={cn('rounded-sm px-3 py-1.5 text-sm font-medium transition-colors', loginByPhone && 'bg-background shadow-sm')}
                   type="button"
-                  onClick={() => setMode('register')}
+                  onClick={() => setLoginByPhone(true)}
                 >
-                  Регистрация
+                  Номер
                 </button>
               </div>
             )}
 
-            {mode === 'login' && (
+            {mode === 'login' && loginByPhone && !smsAvailable && (
+              <p role="status" className="text-sm text-muted-foreground">{smsUnavailableMessage} Вы можете войти по email.</p>
+            )}
+            {mode === 'login' && loginByPhone && smsAvailable && (
+              <form className="space-y-4" ref={phoneForm} onSubmit={event => event.preventDefault()}>
+                <div className="space-y-2">
+                  <Label htmlFor="login-phone">Телефон</Label>
+                  <Input id="login-phone" type="tel" autoComplete="tel" placeholder="+7 (999) 123-45-67" value={loginPhone} onChange={event => {
+                    setLoginPhone(event.target.value);
+                    if (normalizePhone(event.target.value) !== normalizedPhone) setPhoneConsentRequired(false);
+                  }} />
+                </div>
+                {phoneConsentRequired && <ConsentFields />}
+                <PhoneVerification key={normalizedPhone ?? 'empty'} phone={normalizedPhone} verified={false}
+                  showAccountNotice={false} endpoint="/v1/phone-login" disabled={false}
+                  getConsents={() => formConsents(phoneForm.current!)}
+                  onConsentRequired={() => setPhoneConsentRequired(true)}
+                  onConfirm={async challenge => {
+                    const user = await completeCheckoutPhone(challenge);
+                    if (!user) throw new Error('Не удалось загрузить аккаунт. Попробуйте ещё раз.');
+                    redirectAfterLogin();
+                  }} />
+              </form>
+            )}
+            {mode === 'login' && !loginByPhone && (
               <form className="space-y-4" onSubmit={handleLogin}>
                 <div className="space-y-2">
                   <Label htmlFor="login-email">Email</Label>
@@ -144,7 +148,6 @@ function LoginPage({ registrationEnabled }: { registrationEnabled: boolean }) {
                   </div>
                 </div>
 
-                {message && <p className="rounded bg-green-50 p-2 text-sm text-green-700">{message}</p>}
                 {error && <p className="rounded bg-destructive/10 p-2 text-sm text-destructive">{error}</p>}
 
                 <Button className="w-full" disabled={isLoading} type="submit">
@@ -155,89 +158,20 @@ function LoginPage({ registrationEnabled }: { registrationEnabled: boolean }) {
             )}
 
             {registrationEnabled && mode === 'register' && (
-              <form className="space-y-4" onSubmit={handleRegister}>
-                <div className="space-y-2">
-                  <Label htmlFor="register-name">Имя</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      className="pl-10"
-                      id="register-name"
-                      placeholder="Иван Иванов"
-                      required
-                      type="text"
-                      value={registerName}
-                      onChange={(event) => setRegisterName(event.target.value)}
-                    />
-                  </div>
-                </div>
+              phoneLoginEnabled && smsAvailable
+                ? <PhoneRegistration onRegistered={redirectAfterLogin} />
+                : <p role="status" className="text-sm text-muted-foreground">{
+                  phoneLoginEnabled ? smsUnavailableMessage : 'Регистрация по номеру телефона временно недоступна.'
+                }</p>
+            )}
 
-                <div className="space-y-2">
-                  <Label htmlFor="register-email">Email</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      className="pl-10"
-                      id="register-email"
-                      placeholder="your@email.com"
-                      required
-                      type="email"
-                      value={registerEmail}
-                      onChange={(event) => setRegisterEmail(event.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="register-password">Пароль</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      className="pl-10 pr-10"
-                      id="register-password"
-                      minLength={8}
-                      placeholder="••••••••"
-                      required
-                      type={showPassword ? 'text' : 'password'}
-                      value={registerPassword}
-                      onChange={(event) => setRegisterPassword(event.target.value)}
-                    />
-                    <button
-                      aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="register-confirm">Подтвердите пароль</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      className="pl-10"
-                      id="register-confirm"
-                      placeholder="••••••••"
-                      required
-                      type="password"
-                      value={registerConfirm}
-                      onChange={(event) => setRegisterConfirm(event.target.value)}
-                    />
-                  </div>
-                </div>
-
-                {error && <p className="rounded bg-destructive/10 p-2 text-sm text-destructive">{error}</p>}
-
-                <ConsentFields />
-
-                <Button className="w-full" disabled={isLoading} type="submit">
-                  {isLoading ? 'Регистрация...' : 'Зарегистрироваться'}
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </form>
+            {registrationEnabled && (
+              <Button className="mt-4 w-full" variant="outline" type="button" onClick={() => {
+                setError('');
+                setMode(mode === 'login' ? 'register' : 'login');
+              }}>
+                {mode === 'login' ? 'Регистрация' : 'Вернуться ко входу'}
+              </Button>
             )}
 
           </CardContent>
@@ -253,6 +187,9 @@ export function mountLoginPage() {
       return;
     }
     root.dataset.mounted = 'true';
-    createRoot(root).render(<LoginPage registrationEnabled={root.dataset.registrationEnabled === 'true'} />);
+    createRoot(root).render(root.dataset.passwordSetup === 'true'
+      ? <PasswordSetupPage />
+      : <LoginPage registrationEnabled={root.dataset.registrationEnabled === 'true'}
+        phoneLoginEnabled={root.dataset.phoneLoginEnabled === 'true'} smsAvailable={root.dataset.smsAvailable === 'true'} />);
   });
 }

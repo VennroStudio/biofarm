@@ -64,7 +64,7 @@ final readonly class PageSlugPathNormalizer
             throw new DomainExceptionModule('page', 'error.page_slug_required', 6);
         }
 
-        if (\in_array($segments[0], self::RESERVED_FIRST_SEGMENTS, true)) {
+        if (\in_array($segments[0], self::RESERVED_FIRST_SEGMENTS, true) || isset(LegalDocuments::TITLES[$segments[0]])) {
             throw new DomainExceptionModule('page', 'error.page_slug_reserved', 7);
         }
 

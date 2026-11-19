@@ -39,7 +39,7 @@ final readonly class Bitrix24OrderSyncer
 
         $fields = [
             'title'               => 'Заказ ' . $order->id . ' с сайта',
-            'opportunity'         => $order->total,
+            'opportunity'         => (float)$order->total,
             'currencyId'          => 'RUB',
             'isManualOpportunity' => 'Y',
             'comments'            => $this->comments($order, $items),
@@ -146,7 +146,7 @@ final readonly class Bitrix24OrderSyncer
             'Адрес: ' . trim((string)($address['address'] ?? '')),
             'Доставка: ' . (string)$order->deliveryMethod,
             'Оплата: ' . $order->paymentMethod,
-            'Итого: ' . $order->total . ' ₽',
+            'Итого: ' . (float)$order->total . ' ₽',
             '',
             'Товары:',
         ];

@@ -17,6 +17,7 @@ export function AdminPages() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [originalContent, setOriginalContent] = useState<string | null>(null);
 
   const filteredPages = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -43,12 +44,14 @@ export function AdminPages() {
   function openCreate() {
     setError(null);
     setForm(emptyPageForm);
+    setOriginalContent(null);
     setDialogOpen(true);
   }
 
   function openEdit(page: CmsPage) {
     setError(null);
     setForm(pageFormFromPage(page));
+    setOriginalContent(page.content);
     setDialogOpen(true);
   }
 
@@ -57,10 +60,12 @@ export function AdminPages() {
     setError(null);
     setSaving(true);
     try {
+      const payload = pagePayloadFromForm(form);
       if (form.id) {
-        await pagesApi.update(form.id, pagePayloadFromForm(form));
+        if (form.legal_document && form.content === originalContent) payload.content = null;
+        await pagesApi.update(form.id, payload);
       } else {
-        await pagesApi.create(pagePayloadFromForm(form));
+        await pagesApi.create(payload);
       }
 
       setDialogOpen(false);
@@ -91,11 +96,13 @@ export function AdminPages() {
     }
   }
 
+  const documents = filteredPages.filter(page => page.legal_document).sort((a, b) => Number(b.system_key === 'oferta') - Number(a.system_key === 'oferta'));
+  const otherPages = filteredPages.filter(page => !page.legal_document);
+
   return (
     <>
       <PageHeader
         title="Страницы"
-        subtitle="SEO системных страниц и простые CMS-страницы"
         actions={<Button onClick={openCreate}><Plus className="h-4 w-4" />Добавить страницу</Button>}
       />
 
@@ -107,7 +114,11 @@ export function AdminPages() {
           <Badge tone="gray">{filteredPages.length} страниц</Badge>
         </div>
 
-        <PagesTable pages={filteredPages} onEdit={openEdit} onRemove={(page) => void remove(page)} />
+        {documents.length > 0 && <section className="mb-8" aria-labelledby="legal-documents">
+          <h2 id="legal-documents" className="mb-4 text-xl font-semibold">Юридические документы</h2>
+          <PagesTable pages={documents} onEdit={openEdit} onRemove={(page) => void remove(page)} />
+        </section>}
+        {(otherPages.length > 0 || documents.length === 0) && <PagesTable pages={otherPages} onEdit={openEdit} onRemove={(page) => void remove(page)} />}
       </Card>
 
       {dialogOpen && <PageFormModal

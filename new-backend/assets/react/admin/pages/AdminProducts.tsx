@@ -7,7 +7,6 @@ import {
   imageItem,
   productFormFromProduct,
   productPayloadFromForm,
-  productPayloadFromProduct,
   type ProductForm,
 } from '../features/products/model/productForm';
 import { ProductFormModal } from '../features/products/ui/ProductFormModal';
@@ -29,6 +28,7 @@ export function AdminProducts() {
   const [loadingSelection, setLoadingSelection] = useState(false);
   const editRequest = useRef(0);
   const [saving, setSaving] = useState(false);
+  const [changingAvailability, setChangingAvailability] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const categoryById = useMemo(() => new Map(categories.map((category) => [String(category.id), category.name])), [categories]);
@@ -120,13 +120,17 @@ export function AdminProducts() {
     }
   }
 
-  async function toggleActive(product: Product) {
+  async function toggleAvailability(product: Product) {
     setError(null);
+    setChangingAvailability(product.id);
     try {
-      await productsApi.update(product.id, productPayloadFromProduct(product, { is_active: !product.is_active }));
-      await load();
+      const next = product.availability === 'out_of_stock' ? 'in_stock' : 'out_of_stock';
+      const { availability } = await productsApi.setAvailability(product.id, next);
+      setProducts((current) => current.map((item) => item.id === product.id ? { ...item, availability } : item));
     } catch (toggleError) {
-      setError(messageFromError(toggleError, 'Не удалось изменить активность товара'));
+      setError(messageFromError(toggleError, 'Не удалось изменить наличие товара'));
+    } finally {
+      setChangingAvailability(null);
     }
   }
 
@@ -156,7 +160,8 @@ export function AdminProducts() {
           products={filteredProducts}
           onEdit={openEdit}
           onRemove={(product) => void remove(product)}
-          onToggleActive={(product) => void toggleActive(product)}
+          availabilityBusy={changingAvailability !== null}
+          onToggleAvailability={(product) => void toggleAvailability(product)}
         />
       </Card>
 

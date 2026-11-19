@@ -17,10 +17,11 @@ type Props = {
   products: Product[];
   onEdit: (product: Product) => void;
   onRemove: (product: Product) => void;
-  onToggleActive: (product: Product) => void;
+  availabilityBusy: boolean;
+  onToggleAvailability: (product: Product) => void;
 };
 
-export function ProductTable({ categoryById, products, onEdit, onRemove, onToggleActive }: Props) {
+export function ProductTable({ categoryById, products, onEdit, onRemove, availabilityBusy, onToggleAvailability }: Props) {
   if (products.length === 0) {
     return <EmptyState>Товары не найдены</EmptyState>;
   }
@@ -34,6 +35,7 @@ export function ProductTable({ categoryById, products, onEdit, onRemove, onToggl
             <TableHeaderCell>Название</TableHeaderCell>
             <TableHeaderCell>Категория</TableHeaderCell>
             <TableHeaderCell>Цена</TableHeaderCell>
+            <TableHeaderCell>Наличие</TableHeaderCell>
             <TableHeaderCell>Маркетплейсы</TableHeaderCell>
             <TableHeaderCell className="text-right">Действия</TableHeaderCell>
           </tr>
@@ -47,6 +49,7 @@ export function ProductTable({ categoryById, products, onEdit, onRemove, onToggl
               <TableCell>
                 <p className="font-semibold text-[#294555]">{product.name}</p>
                 <p className="text-sm text-[#5f7580]">{product.weight}</p>
+                {!product.is_active && <p className="text-xs text-[#5f7580]">Скрыт с витрины</p>}
               </TableCell>
               <TableCell>
                 <Badge tone="gray">{categoryById.get(product.category_id) || product.category_id}</Badge>
@@ -54,6 +57,11 @@ export function ProductTable({ categoryById, products, onEdit, onRemove, onToggl
               <TableCell>
                 <p className="font-semibold">{formatMoney(product.price)}</p>
                 {product.old_price && <p className="text-sm text-[#5f7580] line-through">{formatMoney(product.old_price)}</p>}
+              </TableCell>
+              <TableCell>
+                <Badge tone={product.availability === 'out_of_stock' ? 'gray' : 'green'}>
+                  {product.availability === 'out_of_stock' ? 'Нет в наличии' : product.availability === 'preorder' ? 'Предзаказ' : 'В наличии'}
+                </Badge>
               </TableCell>
               <TableCell>
                 <div className="flex gap-1">
@@ -66,10 +74,12 @@ export function ProductTable({ categoryById, products, onEdit, onRemove, onToggl
                   <Button
                     variant="ghost"
                     size="icon"
-                    title={product.is_active ? 'Скрыть товар' : 'Показать товар'}
-                    onClick={() => onToggleActive(product)}
+                    title={product.availability === 'out_of_stock' ? 'Отметить в наличии' : 'Отметить нет в наличии'}
+                    aria-label={product.availability === 'out_of_stock' ? 'Отметить в наличии' : 'Отметить нет в наличии'}
+                    disabled={availabilityBusy}
+                    onClick={() => onToggleAvailability(product)}
                   >
-                    {product.is_active ? <Eye className="h-4 w-4 text-[#34a853]" /> : <EyeOff className="h-4 w-4" />}
+                    {product.availability === 'out_of_stock' ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4 text-[#34a853]" />}
                   </Button>
                   <Button variant="ghost" size="icon" title="Изменить" onClick={() => onEdit(product)}>
                     <Edit className="h-4 w-4" />

@@ -33,57 +33,59 @@ final readonly class SaveUserAddressAction implements RequestHandlerInterface
         $identity = RequestIdentity::get($request);
         $payload = (array)$request->getParsedBody();
         $consents = new ConsentRecorder($this->connection);
-        $consents->assertForm($payload);
         return $this->connection->transactional(function () use ($request, $payload, $identity, $consents): ResponseInterface {
-        $addressId = $this->routeId($request);
-        $data = $this->payload($payload);
+            $newConsent = $consents->requirePersonalData($payload, $identity->id, lock: true);
+            $addressId = $this->routeId($request);
+            $data = $this->payload($payload);
 
-        if ($addressId !== null && !$this->addressExists($identity->id, $addressId)) {
-            throw new DomainExceptionModule('user', 'error.address_not_found', 44, status: 404);
-        }
+            if ($addressId !== null && !$this->addressExists($identity->id, $addressId)) {
+                throw new DomainExceptionModule('user', 'error.address_not_found', 44, status: 404);
+            }
 
-        if ($data['is_default'] || !$this->hasAddresses($identity->id, $addressId)) {
-            $data['is_default'] = true;
-            $this->connection->executeStatement(
-                'UPDATE user_addresses SET is_default = 0, updated_at = UTC_TIMESTAMP() WHERE user_id = :userId AND deleted_at IS NULL',
-                ['userId' => $identity->id],
-            );
-        }
+            if ($data['is_default'] || !$this->hasAddresses($identity->id, $addressId)) {
+                $data['is_default'] = true;
+                $this->connection->executeStatement(
+                    'UPDATE user_addresses SET is_default = 0, updated_at = UTC_TIMESTAMP() WHERE user_id = :userId AND deleted_at IS NULL',
+                    ['userId' => $identity->id],
+                );
+            }
 
-        if ($addressId === null) {
-            $this->connection->insert('user_addresses', [
-                'user_id'     => $identity->id,
-                'label'       => $data['label'],
-                'name'        => $data['name'],
-                'phone'       => $data['phone'],
-                'email'       => $data['email'],
-                'city'        => $data['city'],
-                'address'     => $data['address'],
-                'postal_code' => $data['postal_code'],
-                'comment'     => $data['comment'],
-                'is_default'  => $data['is_default'] ? 1 : 0,
-                'created_at'  => gmdate('Y-m-d H:i:s'),
-            ]);
-            $addressId = (int)$this->connection->lastInsertId();
-            $status = 201;
-        } else {
-            $this->connection->update('user_addresses', [
-                'label'       => $data['label'],
-                'name'        => $data['name'],
-                'phone'       => $data['phone'],
-                'email'       => $data['email'],
-                'city'        => $data['city'],
-                'address'     => $data['address'],
-                'postal_code' => $data['postal_code'],
-                'comment'     => $data['comment'],
-                'is_default'  => $data['is_default'] ? 1 : 0,
-                'updated_at'  => gmdate('Y-m-d H:i:s'),
-            ], ['id' => $addressId, 'user_id' => $identity->id]);
-            $status = 200;
-        }
+            if ($addressId === null) {
+                $this->connection->insert('user_addresses', [
+                    'user_id'     => $identity->id,
+                    'label'       => $data['label'],
+                    'name'        => $data['name'],
+                    'phone'       => $data['phone'],
+                    'email'       => $data['email'],
+                    'city'        => $data['city'],
+                    'address'     => $data['address'],
+                    'postal_code' => $data['postal_code'],
+                    'comment'     => $data['comment'],
+                    'is_default'  => $data['is_default'] ? 1 : 0,
+                    'created_at'  => gmdate('Y-m-d H:i:s'),
+                ]);
+                $addressId = (int)$this->connection->lastInsertId();
+                $status = 201;
+            } else {
+                $this->connection->update('user_addresses', [
+                    'label'       => $data['label'],
+                    'name'        => $data['name'],
+                    'phone'       => $data['phone'],
+                    'email'       => $data['email'],
+                    'city'        => $data['city'],
+                    'address'     => $data['address'],
+                    'postal_code' => $data['postal_code'],
+                    'comment'     => $data['comment'],
+                    'is_default'  => $data['is_default'] ? 1 : 0,
+                    'updated_at'  => gmdate('Y-m-d H:i:s'),
+                ], ['id' => $addressId, 'user_id' => $identity->id]);
+                $status = 200;
+            }
 
-        $consents->recordForm($request, $payload, 'user', (string)$identity->id);
-        return new JsonDataResponse($this->address($identity->id, $addressId), $status);
+            if ($newConsent) {
+                $consents->record($request, 'user', (string)$identity->id, 'personal_data', true);
+            }
+            return new JsonDataResponse($this->address($identity->id, $addressId), $status);
         });
     }
 
@@ -154,7 +156,7 @@ final readonly class SaveUserAddressAction implements RequestHandlerInterface
      */
     private function hasAddresses(int $userId, ?int $excludeId): bool
     {
-        $sql = 'SELECT COUNT(*) FROM user_addresses WHERE user_id = :userId AND deleted_at IS NULL';
+        $sql = 'SELECT COUNT(*) FROM user_addresses WHERE user_id = :userId AND deleted_at IS NULL AND ozon_delivery_method IS NULL';
         $params = ['userId' => $userId];
 
         if ($excludeId !== null) {
@@ -171,7 +173,7 @@ final readonly class SaveUserAddressAction implements RequestHandlerInterface
     private function addressExists(int $userId, int $addressId): bool
     {
         return (int)$this->connection->fetchOne(
-            'SELECT COUNT(*) FROM user_addresses WHERE id = :id AND user_id = :userId AND deleted_at IS NULL',
+            'SELECT COUNT(*) FROM user_addresses WHERE id = :id AND user_id = :userId AND deleted_at IS NULL AND ozon_delivery_method IS NULL',
             ['id' => $addressId, 'userId' => $userId],
         ) > 0;
     }

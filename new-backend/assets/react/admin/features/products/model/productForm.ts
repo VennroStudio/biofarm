@@ -193,14 +193,6 @@ export function productPayloadFromForm(form: ProductForm) {
   };
 }
 
-export function productPayloadFromProduct(product: Product, overrides: Partial<ProductForm> = {}) {
-  return {
-    ...productPayloadFromForm({ ...productFormFromProduct(product), ...overrides }),
-    certificateIds: overrides.certificate_ids,
-    faqIds: overrides.faq_ids,
-  };
-}
-
 export function imageItem(path: string, index: number, isMain = false): ProductImageForm {
   return {
     path,

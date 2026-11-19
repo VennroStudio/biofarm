@@ -15,5 +15,6 @@ final readonly class ProductVariantView
         public string $label,
         public string $weight,
         public bool $isCurrent,
+        public bool $outOfStock = false,
     ) {}
 }

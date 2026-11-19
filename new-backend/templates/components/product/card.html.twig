@@ -1,14 +1,19 @@
 {% set isList = viewMode|default('grid') == 'list' %}
-<article class="group min-w-0 rounded-3xl border border-border bg-white p-2 transition-colors duration-300 hover:border-primary/40 sm:p-3 {{ isList ? 'grid grid-cols-[96px_minmax(0,1fr)] gap-3 sm:grid-cols-[160px_minmax(0,1fr)] sm:gap-5' : 'flex h-full flex-col' }}">
+<article class="group min-w-0 rounded-3xl border border-border {{ product.outOfStock ? 'bg-[#f6f8f7]' : 'bg-white' }} p-2 transition-colors duration-300 hover:border-primary/40 sm:p-3 {{ isList ? 'grid grid-cols-[96px_minmax(0,1fr)] gap-3 sm:grid-cols-[160px_minmax(0,1fr)] sm:gap-5' : 'flex h-full flex-col' }}">
     <div class="relative {{ isList ? 'h-full min-h-36' : 'aspect-[4/5] sm:aspect-square' }} overflow-hidden rounded-2xl bg-secondary/70">
-        <a class="block h-full w-full p-3 outline-offset-[-4px] sm:p-5" href="/product/{{ product.slug }}" aria-label="{{ product.title }}">
+        <a class="block h-full w-full p-3 outline-offset-[-4px] sm:p-5" href="/product/{{ product.slug }}" aria-label="{{ product.title }}{{ product.outOfStock ? ' — нет в наличии' : '' }}">
             {{ optimized_image(product.image, product.imageAlt ?: product.title, {
-                class: 'h-full w-full object-contain mix-blend-multiply transition-transform duration-500 motion-safe:group-hover:scale-105',
+                class: 'h-full w-full object-contain mix-blend-multiply transition-transform duration-500 ' ~ (product.outOfStock ? 'opacity-50 grayscale' : 'motion-safe:group-hover:scale-105'),
                 loading: 'lazy',
                 decoding: 'async'
             }) }}
         </a>
-        {% if product.badge %}<span class="pointer-events-none absolute left-2 top-2 max-w-[calc(100%-4rem)] rounded-full bg-white px-2 py-1 text-[10px] font-medium text-primary sm:left-3 sm:top-3 sm:px-3 sm:text-xs">{{ product.badge }}</span>{% endif %}
+        {% if product.outOfStock %}
+            <div class="pointer-events-none absolute inset-0 flex items-center justify-center bg-slate-900/15 p-1" aria-hidden="true">
+                <span class="max-w-full rounded-full bg-white px-2 py-1 text-center text-[11px] font-semibold leading-tight text-foreground shadow-sm sm:px-3 sm:py-2 sm:text-sm">Нет в наличии</span>
+            </div>
+        {% endif %}
+        {% if product.badge and not product.outOfStock %}<span class="pointer-events-none absolute left-2 top-2 max-w-[calc(100%-4rem)] rounded-full bg-white px-2 py-1 text-[10px] font-medium text-primary sm:left-3 sm:top-3 sm:px-3 sm:text-xs">{{ product.badge }}</span>{% endif %}
         {% if site_feature('favorites_enabled') %}
             <div class="absolute right-1 top-1 sm:right-2 sm:top-2">{% include 'components/product/favorite-button.html.twig' with { productId: product.id, compact: true } only %}</div>
         {% endif %}
@@ -29,7 +34,7 @@
                 <span class="text-lg font-semibold text-foreground sm:text-2xl">{{ product.price|money }}</span>
                 {% if product.oldPrice %}<span class="text-xs text-muted-foreground line-through sm:text-sm">{{ product.oldPrice|money }}</span>{% endif %}
             </div>
-            {% if site_feature('cart_enabled') %}
+            {% if site_feature('cart_enabled') and not product.outOfStock %}
                 <button class="inline-flex min-h-11 w-full items-center justify-between gap-2 rounded-xl bg-primary px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-secondary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:px-4 sm:text-sm" type="button" data-catalog-cart-add data-product="{{ { id: product.id, slug: product.slug, name: product.title, title: product.title, image: product.image, price: product.price, weight: product.weight }|json_encode|e('html_attr') }}">
                     <span data-cart-add-label>В корзину</span>
                     <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3h2l3 13h11l2-9H6M10 7V4m5 3V4"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg>

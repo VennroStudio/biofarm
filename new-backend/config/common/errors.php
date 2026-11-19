@@ -9,6 +9,7 @@ use Psr\Log\LoggerInterface;
 use Slim\Interfaces\CallableResolverInterface;
 use Slim\Middleware\ErrorMiddleware;
 
+use function App\Components\env;
 use function App\Components\env_bool;
 
 return [
@@ -43,7 +44,7 @@ return [
 
     'config' => [
         'errors' => [
-            'display_details' => env_bool('APP_DEBUG', false),
+            'display_details' => env('APP_ENV', 'prod') === 'dev' && env_bool('APP_DEBUG', false),
         ],
     ],
 ];

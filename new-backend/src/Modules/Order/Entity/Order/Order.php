@@ -31,8 +31,8 @@ class Order
     #[ORM\Column(type: Types::STRING, length: 20)]
     private(set) string $paymentStatus;
 
-    #[ORM\Column(type: Types::INTEGER)]
-    private(set) int $total;
+    #[ORM\Column(type: Types::DECIMAL, precision: 12, scale: 2)]
+    private(set) string $total;
 
     #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
     private(set) int $subtotal;
@@ -40,8 +40,8 @@ class Order
     #[ORM\Column(name: 'delivery_method', type: Types::STRING, length: 30, nullable: true)]
     private(set) ?string $deliveryMethod;
 
-    #[ORM\Column(name: 'delivery_cost', type: Types::INTEGER, options: ['default' => 0])]
-    private(set) int $deliveryCost;
+    #[ORM\Column(name: 'delivery_cost', type: Types::DECIMAL, precision: 12, scale: 2, options: ['default' => 0])]
+    private(set) string $deliveryCost;
 
     #[ORM\Column(name: 'discount_amount', type: Types::INTEGER, options: ['default' => 0])]
     private(set) int $discountAmount;
@@ -105,10 +105,10 @@ class Order
     private function __construct(
         string $id,
         ?int $userId,
-        int $total,
+        int|float|string $total,
         int $subtotal,
         ?string $deliveryMethod,
-        int $deliveryCost,
+        int|float|string $deliveryCost,
         int $discountAmount,
         ?string $promoCode,
         array $shippingAddress,
@@ -120,10 +120,10 @@ class Order
     ) {
         $this->id = $id;
         $this->userId = $userId;
-        $this->total = $total;
+        $this->total = number_format((float)$total, 2, '.', '');
         $this->subtotal = $subtotal;
         $this->deliveryMethod = $deliveryMethod;
-        $this->deliveryCost = $deliveryCost;
+        $this->deliveryCost = number_format((float)$deliveryCost, 2, '.', '');
         $this->discountAmount = $discountAmount;
         $this->promoCode = $promoCode;
         $this->shippingAddress = $shippingAddress;
@@ -150,12 +150,12 @@ class Order
     public static function create(
         string $id,
         ?int $userId,
-        int $total,
+        int|float|string $total,
         array $shippingAddress,
         string $paymentMethod,
         int $subtotal = 0,
         ?string $deliveryMethod = null,
-        int $deliveryCost = 0,
+        int|float|string $deliveryCost = 0,
         int $discountAmount = 0,
         ?string $promoCode = null,
         int $bonusUsed = 0,
@@ -167,7 +167,7 @@ class Order
             $id,
             $userId,
             $total,
-            $subtotal > 0 ? $subtotal : $total,
+            $subtotal > 0 ? $subtotal : (int)$total,
             $deliveryMethod,
             $deliveryCost,
             $discountAmount,
@@ -218,10 +218,10 @@ class Order
         ?int $userId,
         string $status,
         string $paymentStatus,
-        int $total,
+        int|float|string $total,
         int $subtotal,
         ?string $deliveryMethod,
-        int $deliveryCost,
+        int|float|string $deliveryCost,
         int $discountAmount,
         ?string $promoCode,
         int $bonusUsed,
@@ -234,10 +234,10 @@ class Order
         $this->userId = $userId;
         $this->status = $status;
         $this->paymentStatus = $paymentStatus;
-        $this->total = $total;
+        $this->total = number_format((float)$total, 2, '.', '');
         $this->subtotal = $subtotal;
         $this->deliveryMethod = $deliveryMethod;
-        $this->deliveryCost = $deliveryCost;
+        $this->deliveryCost = number_format((float)$deliveryCost, 2, '.', '');
         $this->discountAmount = $discountAmount;
         $this->promoCode = $promoCode;
         $this->bonusUsed = $bonusUsed;

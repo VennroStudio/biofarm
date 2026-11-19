@@ -11,11 +11,15 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Response;
 
+putenv('APP_ENV=prod');
 $history = [];
 $stack = HandlerStack::create(new MockHandler([
-    new Response(200, [], '{"id":"payment-1","status":"pending"}'),
-    new Response(200, [], '{"id":"payment-1","status":"succeeded"}'),
+    new Response(200, [], '{"id":"payment-1","status":"pending","test":false}'),
+    new Response(200, [], '{"id":"payment-1","status":"succeeded","test":false}'),
     new Response(200, [], '{"id":"refund-1","status":"pending"}'),
+    new Response(200, [], '{"id":"payment-2","status":"pending","test":true}'),
+    new Response(200, [], '{"id":"payment-2","status":"succeeded","test":true}'),
+    new Response(200, [], '{"id":"payment-2","status":"succeeded"}'),
 ]));
 $stack->push(Middleware::history($history));
 $gateway = new YooKassaGateway(new Client(['handler' => $stack]), ['shopId' => 'test-shop', 'secret' => 'test-secret', 'returnBase' => 'https://example.test']);
@@ -27,6 +31,20 @@ $assert($history[0]['request']->getHeaderLine('Idempotence-Key') === 'stable-key
 $assert($history[1]['request']->getMethod() === 'GET', 'Verification fetches authoritative payment');
 $assert($verified['status'] === 'succeeded', 'Verified provider status');
 $assert((string)$history[2]['request']->getUri() === 'https://api.yookassa.ru/v3/refunds', 'Refund endpoint');
+foreach ([
+    static fn () => $gateway->createPayment([], 'test-key'),
+    static fn () => $gateway->payment('payment-2'),
+    static fn () => $gateway->payment('payment-2'),
+] as $call) {
+    try {
+        $call();
+        throw new RuntimeException('Production accepted a payment without live confirmation');
+    } catch (DomainExceptionModule $e) {
+        $assert($e->getCode() === 6 && $e->getStatus() === 503, 'Production rejects test or unclassified payments');
+    }
+}
+$assert(!new YooKassaGateway(null, ['shopId' => 'fixture', 'secret' => 'fixture', 'returnBase' => 'http://localhost'])->configured(),
+    'Production rejects callback bases without HTTPS');
 $assert(YooKassaGateway::money(3050) === '30.50', 'Minor units formatted exactly');
 $assert(YooKassaGateway::minor('30.50') === 3050, 'Provider decimal parsed without floats');
 try {
@@ -41,6 +59,9 @@ try {
     $assert($e->getStatus() === 503, 'Missing configuration visible');
 }
 // Site domain and the YooKassa return path are configured separately.
+foreach (['YOOKASSA_SHOP_ID', 'YOOKASSA_SECRET_KEY', 'YOOKASSA_RETURN_BASE_URL', 'FRONTEND_URL', 'APP_URL'] as $variable) {
+    putenv($variable);
+}
 $_ENV['YOOKASSA_SHOP_ID'] = 'fixture-shop';
 $_ENV['YOOKASSA_SECRET_KEY'] = 'fixture-secret';
 $_ENV['FRONTEND_URL'] = 'https://shop.example.test/';

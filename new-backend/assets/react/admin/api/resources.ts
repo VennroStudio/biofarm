@@ -80,7 +80,17 @@ export const integrationErrorsApi = {
 };
 
 export const productsApi = {
-  list: (search = '') => requestItems<Product>(`/admin/api/products?includeInactive=true&perPage=100${search ? `&search=${encodeURIComponent(search)}` : ''}`),
+  async list(search = '') {
+    const path = `/admin/api/products?includeInactive=true&perPage=100${search ? `&search=${encodeURIComponent(search)}` : ''}`;
+    const first = await requestItems<Product>(path);
+    const pages = Math.ceil(first.count / 100);
+    const remaining = await Promise.all(Array.from({ length: Math.max(0, pages - 1) }, (_, index) =>
+      requestItems<Product>(`${path}&page=${index + 2}`),
+    ));
+    return { count: first.count, items: [first, ...remaining].flatMap(({ items }) => items) };
+  },
+  setAvailability: (id: number, availability: 'in_stock' | 'out_of_stock') =>
+    request<{ availability: string }>(`/admin/api/products/${id}/availability`, { method: 'PATCH', body: { availability } }),
   create: (payload: Record<string, unknown>) => request('/v1/products/create', { method: 'POST', body: payload }),
   update: (id: number, payload: Record<string, unknown>) => request(`/v1/products/update/${id}`, { method: 'PATCH', body: payload }),
   delete: (id: number) => request(`/v1/products/delete/${id}`, { method: 'DELETE' }),

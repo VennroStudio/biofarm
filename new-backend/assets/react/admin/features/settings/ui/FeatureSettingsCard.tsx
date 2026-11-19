@@ -56,7 +56,7 @@ export function FeatureSettingsCard({ settings, onChange }: Props) {
         <FeatureToggle
           checked={settings.registration_enabled}
           label="Регистрация"
-          description="Показывает вкладку регистрации в личном кабинете."
+          description="Позволяет создавать аккаунт в личном кабинете."
           icon={UserPlus}
           onToggle={() => onChange({ ...settings, registration_enabled: !settings.registration_enabled })}
         />
@@ -74,13 +74,13 @@ export function FeatureSettingsCard({ settings, onChange }: Props) {
           icon={Heart}
           onToggle={() => onChange({ ...settings, favorites_enabled: !settings.favorites_enabled })}
         />
-        <FeatureToggle
+        {settings.testing_available && <FeatureToggle
           checked={settings.testing_enabled}
           label="Тестирование"
-          description="Не включать. Только для тестирования процессов."
+          description="Оформление через Ozon и подтверждение по СМС отключены. Оплата проходит без списания."
           icon={FlaskConical}
           onToggle={() => onChange({ ...settings, testing_enabled: !settings.testing_enabled })}
-        />
+        />}
       </div>
     </Card>
   );

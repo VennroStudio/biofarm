@@ -9,6 +9,7 @@ use App\Components\Exception\DomainExceptionModule;
 use App\Components\Flusher\FlusherInterface;
 use App\Modules\Page\Entity\Page\Page;
 use App\Modules\Page\Entity\Page\PageRepository;
+use App\Modules\Page\Service\LegalDocuments;
 use App\Modules\Page\Service\PageSlugPathNormalizer;
 use App\Modules\Page\Service\PageTemplateCatalog;
 use DateMalformedStringException;
@@ -22,6 +23,7 @@ final readonly class UpdatePageHandler
         private PageSlugPathNormalizer $slugPathNormalizer,
         private Cacher $cacher,
         private FlusherInterface $flusher,
+        private LegalDocuments $documents,
     ) {}
 
     /**
@@ -32,6 +34,18 @@ final readonly class UpdatePageHandler
         $page = $this->pages->getById($command->pageId);
 
         if ($page->pageType === Page::TYPE_SYSTEM) {
+            $content = null;
+            if (isset(LegalDocuments::TITLES[$page->systemKey]) && $command->content !== null) {
+                $content = trim($command->content);
+                if (trim(html_entity_decode(strip_tags($content))) === '') {
+                    throw new DomainExceptionModule('page', 'Текст юридического документа обязателен.', 9, status: 422);
+                }
+                $previous = $this->documents->content($page->systemKey);
+                if ($content !== $previous) {
+                    $this->documents->remember($page->systemKey, $previous);
+                    $this->documents->remember($page->systemKey, $content);
+                }
+            }
             $page->editSystemSeo(
                 title: trim($command->title),
                 h1: $this->nullable($command->h1),
@@ -47,6 +61,7 @@ final readonly class UpdatePageHandler
                 showInHeader: $command->showInHeader,
                 showInFooter: $command->showInFooter,
                 sortOrder: $command->sortOrder,
+                content: $content,
             );
         } else {
             $slugPath = $this->slugPathNormalizer->normalize((string)$command->slugPath);

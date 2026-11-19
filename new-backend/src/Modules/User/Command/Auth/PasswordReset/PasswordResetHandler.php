@@ -61,7 +61,7 @@ final readonly class PasswordResetHandler
         $email = mb_strtolower($email);
         $user = $this->userByEmailFetcher->fetchNotDeleted(new UserFindByEmailQuery($email));
 
-        if ($user === null || $user->status !== UserStatus::ACTIVE) {
+        if ($user === null || $user->status !== UserStatus::ACTIVE || $user->emailConfirmationRequired) {
             throw new DomainExceptionModule(
                 module: 'user',
                 message: 'error.user_not_found',

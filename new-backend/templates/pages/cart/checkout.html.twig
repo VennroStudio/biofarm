@@ -3,6 +3,9 @@
 {% block content %}
     <div
         data-react-island="checkout-page"
+        data-ozon-method="{{ ozonMethod }}"
+        data-phone-verification-enabled="{{ phoneVerificationEnabled ? 'true' : 'false' }}"
+        data-sms-available="{{ smsAvailable ? 'true' : 'false' }}"
         data-cdek-delivery-price="{{ site_setting('cdek_delivery_price', 350) }}"
         data-free-delivery-threshold="{{ site_setting('free_delivery_threshold', 3000) }}"
         data-order-bonus-enabled="{{ site_feature('order_bonus_enabled') ? 'true' : 'false' }}"

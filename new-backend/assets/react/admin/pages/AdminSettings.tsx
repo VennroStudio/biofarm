@@ -1,8 +1,10 @@
 import { PlugZap, Save, Search, ShieldCheck, SlidersHorizontal, Truck } from 'lucide-react';
+import { OzonIntegrationCard } from '../features/settings/ui/OzonIntegrationCard';
 import { PaymentIntegrationCard } from '../features/settings/ui/PaymentIntegrationCard';
 import { AdminIntegrationErrors } from './AdminIntegrationErrors';
 import { FormEvent, useState } from 'react';
 import { Navigate, NavLink, useParams } from 'react-router-dom';
+import { getStoredAdmin } from '../api/client';
 import { settingsApi } from '../api/resources';
 import {
   defaultSettingsSection,
@@ -30,6 +32,7 @@ const defaults: Settings = {
   referral_enabled: false,
   favorites_enabled: true,
   testing_enabled: false,
+  testing_available: false,
   order_bonus_enabled: true,
   order_bonus_percent: 3,
   order_bonus_spend_limit_percent: 100,
@@ -72,7 +75,7 @@ const emptyPassword: PasswordForm = {
 
 type SaveableSettingsSectionId = Exclude<SettingsSectionId, 'integrations' | 'security'>;
 
-type WritableSettingsKey = Exclude<keyof Settings, 'bitrix_crm_enabled'>;
+type WritableSettingsKey = Exclude<keyof Settings, 'bitrix_crm_enabled' | 'testing_available'>;
 
 const sectionSettingsKeys: Record<SaveableSettingsSectionId, readonly WritableSettingsKey[]> = {
   features: [
@@ -113,7 +116,8 @@ const sectionSettingsKeys: Record<SaveableSettingsSectionId, readonly WritableSe
 };
 
 function pickSectionSettings(settings: Settings, section: SaveableSettingsSectionId): Partial<Settings> {
-  return sectionSettingsKeys[section].reduce<Partial<Settings>>((payload, key) => ({
+  const keys = sectionSettingsKeys[section].filter(key => key !== 'testing_enabled' || settings.testing_available);
+  return keys.reduce<Partial<Settings>>((payload, key) => ({
     ...payload,
     [key]: settings[key],
   }), {});
@@ -136,6 +140,8 @@ function renderSettingsSection(section: SettingsSectionId, settings: Settings, s
 
 export function AdminSettings() {
   const { section } = useParams();
+  const role = getStoredAdmin()?.role;
+  const roleId = typeof role === 'number' ? role : role?.id;
   const activeSection = isSettingsSectionId(section) ? section : defaultSettingsSection;
   const sectionMeta = settingsSections.find((item) => item.id === activeSection);
   const [settings, setSettings] = useState<Settings>(defaults);
@@ -228,6 +234,7 @@ export function AdminSettings() {
         <div className="space-y-8">
           <PaymentIntegrationCard />
           <BitrixSettingsCard settings={settings} onChange={setSettings} />
+          {(roleId === 1 || roleId === 2) && <OzonIntegrationCard />}
           <AdminIntegrationErrors />
         </div>
       ) : (

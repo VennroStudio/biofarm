@@ -27,7 +27,8 @@ final class FormattingExtension extends AbstractExtension
 
     public function money(float|int|string $amount, string $currency = '₽'): string
     {
-        return number_format((float)$amount, 0, '.', ' ') . ' ' . $currency;
+        $amount = (float)$amount;
+        return number_format($amount, $amount === floor($amount) ? 0 : 2, ',', ' ') . ' ' . $currency;
     }
 
     public function rating(float|int|string $rating, int $precision = 1): string

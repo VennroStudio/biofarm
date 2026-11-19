@@ -28,7 +28,7 @@ return [
 
     'config' => [
         'security' => [
-            'app_env'    => env('APP_ENV', 'dev'),
+            'app_env'    => env('APP_ENV', 'prod'),
             'app_secret' => env('APP_SECRET', $defaultAppSecret),
         ],
     ],

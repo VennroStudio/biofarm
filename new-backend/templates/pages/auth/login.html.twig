@@ -3,6 +3,9 @@
 {% block content %}
     <div
         data-react-island="login-page"
+        data-password-setup="{{ passwordSetup ? 'true' : 'false' }}"
+        data-phone-login-enabled="{{ phoneLoginEnabled ? 'true' : 'false' }}"
+        data-sms-available="{{ smsAvailable ? 'true' : 'false' }}"
         data-registration-enabled="{{ site_feature('registration_enabled') ? 'true' : 'false' }}"
     >
         <section class="container mx-auto px-4 pb-12 pt-[128px] sm:px-6">

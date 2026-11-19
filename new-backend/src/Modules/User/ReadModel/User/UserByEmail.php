@@ -22,6 +22,7 @@ final readonly class UserByEmail implements UserModelInterface
         public UserRole $role,
         public UserStatus $status,
         public ?string $deletedAt,
+        public bool $emailConfirmationRequired = false,
     ) {}
 
     /**
@@ -45,6 +46,7 @@ final readonly class UserByEmail implements UserModelInterface
             role: UserRole::from($row['role']),
             status: UserStatus::from($row['status']),
             deletedAt: $row['deleted_at'],
+            emailConfirmationRequired: (bool)($row['email_confirmation_required'] ?? false),
         );
     }
 

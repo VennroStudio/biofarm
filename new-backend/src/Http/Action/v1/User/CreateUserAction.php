@@ -6,11 +6,14 @@ namespace App\Http\Action\v1\User;
 
 use App\Components\Exception\DomainExceptionModule;
 use App\Components\Http\Response\JsonDataSuccessResponse;
+use App\Components\Privacy\ConsentRecorder;
 use App\Components\Serializer\Denormalizer;
 use App\Components\Setting\SiteSettings;
 use App\Components\Validator\Validator;
+use App\Modules\Ozon\OzonPickupCheckout;
 use App\Modules\User\Command\User\Create\CreateUserCommand;
 use App\Modules\User\Command\User\Create\CreateUserHandler;
+use App\Modules\User\Service\Phone\PhoneAccounts;
 use DomainException;
 use OpenApi\Attributes as OA;
 use Override;
@@ -52,7 +55,9 @@ final readonly class CreateUserAction implements RequestHandlerInterface
         private CreateUserHandler $handler,
         private Translator $translator,
         private SiteSettings $settings,
-        private \App\Components\Privacy\ConsentRecorder $consents,
+        private PhoneAccounts $phones,
+        private OzonPickupCheckout $ozon,
+        private ConsentRecorder $consents,
     ) {}
 
     /**
@@ -63,6 +68,9 @@ final readonly class CreateUserAction implements RequestHandlerInterface
     {
         if (!$this->settings->bool('registration_enabled')) {
             throw new DomainExceptionModule('user', 'error.registration_disabled', 36, status: 403);
+        }
+        if ($this->phones->checkoutEnabled() || $this->ozon->method() !== null) {
+            throw new DomainExceptionModule('user', 'Для регистрации подтвердите номер телефона.', 76, status: 422);
         }
 
         $payload = (array)$request->getParsedBody();

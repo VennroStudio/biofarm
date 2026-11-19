@@ -47,6 +47,7 @@ final readonly class CookieManager
         string $value,
         int $ttl,
         bool $httpOnly = true,
+        bool $hostOnly = false,
     ): ResponseInterface {
         $expires = time() + $ttl;
         $date = gmdate('D, d M Y H:i:s \G\M\T', $expires);
@@ -63,7 +64,9 @@ final readonly class CookieManager
             $cookie .= '; HttpOnly';
         }
 
-        $cookie .= '; Domain=' . $this->domain;
+        if (!$hostOnly) {
+            $cookie .= '; Domain=' . $this->domain;
+        }
 
         if ($this->secure) {
             $cookie .= '; Secure';
@@ -72,8 +75,12 @@ final readonly class CookieManager
         return $response->withAddedHeader('Set-Cookie', $cookie);
     }
 
-    public function delete(ResponseInterface $response, string $name, bool $httpOnly = true): ResponseInterface
-    {
+    public function delete(
+        ResponseInterface $response,
+        string $name,
+        bool $httpOnly = true,
+        bool $hostOnly = false,
+    ): ResponseInterface {
         $cookie = \sprintf(
             '%s=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; Path=/; SameSite=Lax',
             $name
@@ -83,7 +90,9 @@ final readonly class CookieManager
             $cookie .= '; HttpOnly';
         }
 
-        $cookie .= '; Domain=' . $this->domain;
+        if (!$hostOnly) {
+            $cookie .= '; Domain=' . $this->domain;
+        }
 
         if ($this->secure) {
             $cookie .= '; Secure';

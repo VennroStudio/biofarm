@@ -37,6 +37,13 @@ printf '%s\n' "$revision" > "$candidate/RELEASE_COMMIT"
 
 cd "$candidate"
 "$php" "$tools/composer.phar" install --no-dev --prefer-dist --no-interaction --no-scripts --optimize-autoloader
+"$php" -r '
+    require "vendor/autoload.php";
+    if (\App\Components\env("APP_ENV", "") !== "prod" || \App\Components\env_bool("APP_DEBUG", false)) {
+        fwrite(STDERR, "Hosting releases require APP_ENV=prod and APP_DEBUG=0.\n");
+        exit(1);
+    }
+'
 "$php" "$tools/composer.phar" check-platform-reqs --no-dev
 npm ci --no-audit --no-fund
 npm test

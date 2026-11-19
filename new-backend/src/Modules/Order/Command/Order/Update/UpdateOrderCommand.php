@@ -32,7 +32,7 @@ final readonly class UpdateOrderCommand
         public string $paymentStatus,
         #[Assert\NotBlank]
         #[Assert\PositiveOrZero]
-        public int $total,
+        public int|float $total,
         #[Assert\NotBlank]
         public array $shippingAddress,
         #[Assert\NotBlank]
@@ -45,7 +45,7 @@ final readonly class UpdateOrderCommand
         public ?array $items = null,
         public ?int $subtotal = null,
         public ?string $deliveryMethod = null,
-        public int $deliveryCost = 0,
+        public int|float $deliveryCost = 0,
         public int $discountAmount = 0,
         public ?string $promoCode = null,
         public int $bonusUsed = 0,

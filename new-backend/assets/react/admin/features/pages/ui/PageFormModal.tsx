@@ -33,8 +33,9 @@ type Props = {
 
 export function PageFormModal({ form, templates, open, error, saving, setForm, onClose, onSubmit }: Props) {
   const isSystem = form.page_type === 'system';
-  const visibleTabs = tabs.filter(tab => !isSystem || tab.id !== 'content');
-  const [activeTab, setActiveTab] = useState<Tab>('main');
+  const hasContent = !isSystem || form.legal_document;
+  const visibleTabs = tabs.filter(tab => hasContent || tab.id !== 'content');
+  const [activeTab, setActiveTab] = useState<Tab>(form.legal_document ? 'content' : 'main');
   const [issue, setIssue] = useState<PageFormIssue | null>(null);
   const [confirmClose, setConfirmClose] = useState(false);
   const [initialForm] = useState(() => JSON.stringify(form));
@@ -101,7 +102,9 @@ export function PageFormModal({ form, templates, open, error, saving, setForm, o
           {activeTab === 'main' && <>
             <Group title="Основная информация">
               {text('title', 'Название *')}
-              {isSystem ? <p className="rounded-xl bg-[#f5faf8] p-3 text-sm text-[#5f7580]">Системная страница. Адрес, шаблон и содержимое заданы в коде сайта; здесь доступны настройки публикации, меню и SEO.</p> : <>
+              {isSystem ? <p className="rounded-xl bg-[#f5faf8] p-3 text-sm text-[#5f7580]">
+                {form.legal_document ? `Адрес документа — /${form.system_key}.` : 'Здесь доступны настройки публикации, меню и SEO системной страницы.'}
+              </p> : <>
                 {text('slug_path', 'Адрес страницы *', 'Например, dostavka или info/sertifikaty')}
                 <Field label="Шаблон"><select className={inputClass} value={form.template} onChange={event => update('template', event.target.value)}>{templates.map(template => <option key={template.key} value={template.key}>{template.label}</option>)}</select></Field>
                 <p className="text-xs text-[#5f7580]">{templates.find(template => template.key === form.template)?.description}</p>
@@ -120,8 +123,8 @@ export function PageFormModal({ form, templates, open, error, saving, setForm, o
               <p className="text-xs text-[#5f7580]">Страницы с меньшим числом показываются в меню первыми.</p>
             </Group>
           </>}
-          {activeTab === 'content' && !isSystem && <>
-            <Group title="Вступление">{area('excerpt', 'Краткое описание', 'Короткий вводный текст страницы')}</Group>
+          {activeTab === 'content' && hasContent && <>
+            {!form.legal_document && <Group title="Вступление">{area('excerpt', 'Краткое описание', 'Короткий вводный текст страницы')}</Group>}
             <Group title="Текст страницы">
               <Suspense fallback={<p className="p-4 text-sm text-[#5f7580]">Загрузка редактора…</p>}><RichTextEditor label="Содержание страницы" value={form.content} disabled={saving} onChange={html => update('content', html)} /></Suspense>
             </Group>

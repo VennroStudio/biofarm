@@ -74,6 +74,7 @@ export function OrderDetailsDialog({ order, onClose }: { order: SiteOrder | null
       >
         <div className="mb-6 flex items-center justify-between gap-4">
           {order.paymentStatus === 'pending' && <a className="rounded-lg bg-primary p-3 text-white" href={`/order-success?order=${encodeURIComponent(order.id)}`}>Оплатить заказ</a>}
+          {order.deliveryMethod === 'ozon-pickup' && order.paymentStatus === 'completed' && <a className="rounded-lg bg-primary p-3 text-white" href={`/order-success?order=${encodeURIComponent(order.id)}`}>Отследить заказ</a>}
         <h2 className="text-2xl font-normal tracking-tight text-primary" id="order-details-title">Заказ {order.id}</h2>
           <Button data-dialog-close size="sm" variant="outline" onClick={onClose}>Закрыть</Button>
         </div>
@@ -87,10 +88,10 @@ export function OrderDetailsDialog({ order, onClose }: { order: SiteOrder | null
               <p className="text-muted-foreground">{order.shippingAddress.email || 'Не указано'}</p>
             </div>
             <div>
-              <h4 className="mb-2 font-medium">Адрес доставки</h4>
-              <p>{order.shippingAddress.city || 'Не указано'}</p>
+              <h4 className="mb-2 font-medium">{order.deliveryMethod === 'ozon-pickup' ? 'Пункт выдачи Ozon' : 'Адрес доставки'}</h4>
+              {order.deliveryMethod !== 'ozon-pickup' && <p>{order.shippingAddress.city || 'Не указано'}</p>}
               <p className="text-muted-foreground">{order.shippingAddress.address || 'Не указано'}</p>
-              <p className="text-muted-foreground">{order.shippingAddress.postalCode || 'Не указано'}</p>
+              {order.deliveryMethod !== 'ozon-pickup' && <p className="text-muted-foreground">{order.shippingAddress.postalCode || 'Не указано'}</p>}
             </div>
           </div>
 

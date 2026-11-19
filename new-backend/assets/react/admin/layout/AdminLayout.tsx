@@ -95,8 +95,7 @@ export function AdminLayout() {
     return <Navigate to="/admin/login" replace />;
   }
 
-  const adminName = admin?.first_name || 'Администратор';
-  const adminEmail = admin?.email || 'admin@biofarm.local';
+  const adminName = admin.first_name || 'Администратор';
 
   const signOut = () => {
     void logout().finally(() => navigate('/admin/login'));
@@ -140,7 +139,7 @@ export function AdminLayout() {
           </span>
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-[#294555]">{adminName}</p>
-            <p className="truncate text-xs text-[#526d78]">{adminEmail}</p>
+            {admin.email && <p className="truncate text-xs text-[#526d78]">{admin.email}</p>}
           </div>
         </div>
         <button

@@ -26,5 +26,6 @@ final readonly class ProductCardView
         public ?string $imageAlt = null,
         public ?string $categorySlug = null,
         public string $legalStatus = 'unknown',
+        public bool $outOfStock = false,
     ) {}
 }

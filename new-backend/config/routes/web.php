@@ -56,6 +56,7 @@ return static function (App $app): void {
         $group->get('/checkout', CheckoutPageController::class);
         $group->get('/order-success', OrderSuccessPageController::class);
         $group->get('/login', LoginPageController::class);
+        $group->get('/password-reset-confirm', LoginPageController::class);
         $group->get('/profile', ProfilePageController::class);
         $group->get('/partner', PartnerPageController::class);
         foreach (array_keys(\App\Http\Web\Legal\LegalPageController::PAGES) as $legalSlug) {

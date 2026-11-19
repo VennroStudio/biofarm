@@ -6,6 +6,7 @@ namespace App\Modules\Order\Service;
 
 use App\Components\Exception\DomainExceptionModule;
 use App\Modules\Order\Entity\Order\Order;
+use App\Modules\Program\Service\ProgramMath;
 use Doctrine\DBAL\Connection;
 
 final readonly class OrderStatusGuard
@@ -71,6 +72,9 @@ final readonly class OrderStatusGuard
         if ($stored['status'] !== $order->status || $stored['payment_status'] !== $order->paymentStatus) {
             throw $this->conflict('Статус заказа изменился. Обновите страницу.');
         }
+        if ($order->deliveryMethod === 'ozon-pickup' && ($status !== $stored['status'] || $paymentStatus !== $stored['payment_status'])) {
+            throw $this->conflict('Статусы заказа Ozon обновляются по данным доставки и оплаты.');
+        }
         if (\in_array($stored['payment_status'], ['completed', 'refunded'], true) && $paymentStatus !== $stored['payment_status']) {
             throw $this->conflict('Подтверждённую оплату нельзя сбросить. Используйте возврат по позициям.');
         }
@@ -96,10 +100,27 @@ final readonly class OrderStatusGuard
     /** Repeated unchanged financial fields from the full form are accepted. */
     public function adminFinancialTerms(Order $order, array $proposed, array $payload): void
     {
+        if ($order->deliveryMethod === 'ozon-pickup') {
+            foreach (['shippingAddress','shipping_address'] as $key) {
+                if (isset($payload[$key]) && $payload[$key] != $order->shippingAddress) {
+                    throw $this->conflict('Получатель и ПВЗ зафиксированы при оформлении заказа Ozon.');
+                }
+            }
+            foreach (['trackingNumber' => 'trackingNumber', 'tracking_number' => 'trackingNumber', 'deliveryMethod' => 'deliveryMethod', 'delivery_method' => 'deliveryMethod'] as $key => $property) {
+                if (array_key_exists($key, $payload) && $payload[$key] !== $order->{$property}) {
+                    throw $this->conflict('Способ доставки и номер заказа Ozon устанавливаются автоматически.');
+                }
+            }
+        }
         $hasSnapshot = $this->db->fetchOne('SELECT id FROM program_orders WHERE id=?', [$order->id]) !== false;
         if ($hasSnapshot) {
             foreach ($proposed as $field => $value) {
-                if ($order->{$field} !== $value) {
+                $stored = $order->{$field};
+                $changed = match ($field) {
+                    'total', 'deliveryCost' => ProgramMath::minor($stored) !== ProgramMath::minor($value),
+                    default => $stored !== $value,
+                };
+                if ($changed) {
                     throw $this->conflict('Финансовые условия заказа зафиксированы. Отмените заказ и создайте новый.');
                 }
             }

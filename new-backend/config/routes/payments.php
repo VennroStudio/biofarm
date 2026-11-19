@@ -21,6 +21,7 @@ return static function (App $app): void {
         $group->get('/orders/{orderId}', PaymentAdminAction::class);
         $group->post('/orders/{orderId}/receipt', PaymentAdminAction::class);
         $group->post('/orders/{orderId}/refund', PaymentAdminAction::class);
+        $group->post('/orders/{orderId}/ozon-resolution', PaymentAdminAction::class);
     }));
     $group->add(RequireAdmin::class)->add(Authenticate::class);
 };

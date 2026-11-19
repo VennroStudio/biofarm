@@ -51,7 +51,7 @@ final readonly class UserFindByEmailFetcher
     public function fetchNotDeleted(UserFindByEmailQuery $query): ?UserByEmail
     {
         $row = $this->connection->createQueryBuilder()
-            ->select('id', 'email', 'password', 'first_name', 'role', 'status', 'deleted_at')
+            ->select('*')
             ->from(self::TABLE)
             ->where('email = :email')
             ->andWhere('deleted_at IS NULL')

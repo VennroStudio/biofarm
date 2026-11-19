@@ -4,6 +4,7 @@ export type PageForm = {
   id?: number;
   page_type: 'system' | 'custom';
   system_key: string;
+  legal_document: boolean;
   slug_path: string;
   template: string;
   title: string;
@@ -28,6 +29,7 @@ export type PageForm = {
 export const emptyPageForm: PageForm = {
   page_type: 'custom',
   system_key: '',
+  legal_document: false,
   slug_path: '',
   template: 'basic',
   title: '',
@@ -54,6 +56,7 @@ export function pageFormFromPage(page: CmsPage): PageForm {
     id: page.id,
     page_type: page.page_type,
     system_key: page.system_key ?? '',
+    legal_document: page.legal_document ?? false,
     slug_path: page.slug_path ?? '',
     template: page.template ?? 'basic',
     title: page.title,
@@ -84,7 +87,7 @@ export function pagePayloadFromForm(form: PageForm) {
     slugPath: form.page_type === 'custom' ? form.slug_path : null,
     template: form.page_type === 'custom' ? form.template : null,
     h1: form.h1 || null,
-    content: form.page_type === 'custom' ? form.content || null : null,
+    content: form.legal_document ? form.content : form.page_type === 'custom' ? form.content || null : null,
     excerpt: form.page_type === 'custom' ? form.excerpt || null : null,
     seoTitle: form.seo_title || null,
     seoDescription: form.seo_description || null,

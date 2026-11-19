@@ -3,6 +3,7 @@
 declare(strict_types=1);
 // Local integration: real routes/database + in-process fake payment provider. All fixtures roll back.
 require dirname(__DIR__) . '/vendor/autoload.php';
+use App\Components\Privacy\ConsentRecorder;
 use App\Modules\Payment\Service\YooKassaGateway;
 use App\Modules\Program\Service\ProgramService;
 use App\Modules\User\Service\PasswordHasherService;
@@ -22,6 +23,8 @@ use Symfony\Component\Mime\RawMessage;
 if (getenv('APP_ENV') !== 'dev') {
     throw new RuntimeException('Local development only');
 }
+putenv('CHECKOUT_PHONE_VERIFICATION_ENABLED=false');
+putenv('OZON_DELIVERY_ENABLED=false');
 $c = require dirname(__DIR__) . '/config/container.php';
 $db = $c->get(Connection::class);
 $db->beginTransaction();
@@ -83,6 +86,7 @@ try {
         ok($response->getStatusCode() === $expected, $method . ' ' . $url . ' expected ' . $expected . ' got ' . $response->getStatusCode() . ' ' . substr($raw, 0, 500));
         return $json['data'] ?? $json;
     };
+    $call('POST', '/webhooks/smsaero/mobile-id', ['id' => 42, 'status' => 1, 'number' => '79000000000']);
     $password = 'Fixture' . bin2hex(random_bytes(10)) . '!';
     $hash = $c->get(PasswordHasherService::class)->hash($password);
     $ids = [];
@@ -148,19 +152,27 @@ try {
     ok($offers['items'][0]['url'] === '/checkout?offer=' . $offer['id'], 'saved partner basket links open checkout directly');
     $public = $call('GET', '/v1/offers/' . $offer['id']);
     ok(count($public['items']) === 1, 'public shared basket');
-    $privacy = ['personalDataConsent' => true, 'consentVersion' => '2026-10-04', 'marketingEmailConsent' => false];
-    $body = $privacy + ['offerAccepted' => true, 'items' => [['productId' => $product, 'quantity' => 2]], 'paymentMethod' => 'card', 'deliveryMethod' => 'post', 'shippingAddress' => ['name' => 'Тестовый покупатель', 'email' => 'buyer@example.test', 'phone' => '+79990000000', 'city' => 'Томск', 'address' => 'Тестовая 1', 'postalCode' => '634000'], 'offerId' => $offer['id']];
+    $privacy = ['personalDataConsent' => true, 'consentVersion' => ConsentRecorder::VERSION];
+    $body = $privacy + ['offerAccepted' => true, 'offerVersion' => ConsentRecorder::OFFER_VERSION, 'items' => [['productId' => $product, 'quantity' => 2]], 'paymentMethod' => 'card', 'deliveryMethod' => 'post', 'shippingAddress' => ['name' => 'Тестовый покупатель', 'email' => 'buyer@example.test', 'phone' => '+79990000000', 'city' => 'Томск', 'address' => 'Тестовая 1', 'postalCode' => '634000'], 'offerId' => $offer['id']];
     $requestHeaders = ['Idempotency-Key' => bin2hex(random_bytes(24))];
     $ordersBefore = (int)$db->fetchOne('SELECT COUNT(*) FROM orders');
-    foreach (['personalDataConsent' => false, 'consentVersion' => 'old', 'offerAccepted' => false] as $field => $invalid) {
+    foreach (['personalDataConsent' => false, 'consentVersion' => 'old', 'offerAccepted' => false, 'offerVersion' => 'old'] as $field => $invalid) {
         $call('POST', '/v1/orders/create', array_replace($body, [$field => $invalid]), $buyer, 422);
     }
-    ok((int)$db->fetchOne('SELECT COUNT(*) FROM orders') === $ordersBefore, 'invalid consent creates no order');
+    $call('POST', '/v1/orders/create', array_replace($body, ['deliveryMethod' => 'ozon-sandbox-courier']), $buyer, 422);
+    ok((int)$db->fetchOne('SELECT COUNT(*) FROM orders') === $ordersBefore, 'rejected checkout creates no order');
+    $body['rememberAddress'] = true;
     $order = $call('POST', '/v1/orders/create', $body, $buyer, 201, $requestHeaders);
     $orderId = $order['id'];
-    ok((int)$db->fetchOne("SELECT COUNT(*) FROM privacy_consents WHERE subject_type='order' AND subject_id=?", [$orderId]) === 3, 'order records privacy, optional marketing and offer separately');
-    ok((int)$db->fetchOne("SELECT accepted FROM privacy_consents WHERE subject_id=? AND kind='marketing_email'", [$orderId]) === 0, 'declining marketing does not prevent checkout');
+    $proof = $db->fetchAssociative("SELECT kind, version, evidence FROM privacy_consents WHERE subject_type='order' AND subject_id=?", [$orderId]);
+    ok($proof['kind'] === 'offer' && $proof['version'] === ConsentRecorder::OFFER_VERSION && json_decode($proof['evidence'], true)['action'] === 'checkout_submit', 'checkout button records its offer revision');
+    ok((int)$db->fetchOne("SELECT COUNT(*) FROM privacy_consents WHERE subject_type='order' AND subject_id=? AND kind='marketing_email'", [$orderId]) === 0, 'checkout does not record marketing');
+    ok($call('GET', '/v1/users/me', [], $buyer)['personal_data_consent_valid'] === true, 'first signed-in checkout saves account consent');
     $sameOrder = $call('POST', '/v1/orders/create', $body, $buyer, 201, $requestHeaders);
+    $savedAddresses = $call('GET', '/v1/users/me/addresses', [], $buyer);
+    ok(count($savedAddresses['items']) === 1, 'checkout retry saves the address only once');
+    ok($savedAddresses['items'][0]['address'] === 'Тестовая 1' && $savedAddresses['items'][0]['is_default']
+        && $savedAddresses['items'][0]['ozon_delivery_method'] === null, 'ordinary checkout saves a reusable default address');
     ok($sameOrder['id'] === $orderId && $sameOrder['paymentAccessToken'] === $order['paymentAccessToken'], 'lost create response reuses exact order and capability');
     $changed = $body;
     $changed['items'][0]['quantity'] = 3;
@@ -277,10 +289,15 @@ try {
     $db->update('products', ['price' => $originalPrice], ['id' => $product]);
     echo "PASS guest basket: 2000 RUB goods, 60 partner bonuses (3%), held for delivery + 14 days; duplicate webhook safe; no user created\n";
     $registrationEmail = 'registered-' . $suffix . '@example.test';
-    $call('POST', '/v1/users/create', ['firstName' => 'Тестовый', 'lastName' => 'Реферал', 'email' => $registrationEmail, 'password' => $password], null, 422);
+    $registration = ['firstName' => 'Тестовый', 'lastName' => 'Реферал', 'email' => $registrationEmail, 'password' => $password];
+    $call('POST', '/v1/users/create', $registration, null, 422);
     ok($db->fetchOne('SELECT id FROM users WHERE email=?', [$registrationEmail]) === false, 'registration requires explicit privacy consent');
-    $call('POST', '/v1/users/create', $privacy + ['firstName' => 'Тестовый', 'lastName' => 'Реферал', 'email' => $registrationEmail, 'password' => $password, 'referredBy' => 'test-' . $suffix . '-5'], null, 201);
-    $call('POST', '/v1/users/create', $privacy + ['firstName' => 'Тестовый', 'lastName' => 'Реферал', 'email' => $registrationEmail, 'password' => $password], null, 409);
+    putenv('OZON_DELIVERY_ENABLED=true');
+    $call('POST', '/v1/users/create', $privacy + $registration, null, 422);
+    ok($db->fetchOne('SELECT id FROM users WHERE email=?', [$registrationEmail]) === false, 'active Ozon checkout requires phone registration');
+    putenv('OZON_DELIVERY_ENABLED=false');
+    $call('POST', '/v1/users/create', $privacy + $registration + ['referredBy' => 'test-' . $suffix . '-5'], null, 201);
+    $call('POST', '/v1/users/create', $privacy + $registration, null, 409);
     $registered = (int)$db->fetchOne('SELECT id FROM users WHERE email=?', [$registrationEmail]);
     ok((int)$db->fetchOne('SELECT referred_by_user_id FROM user_profiles WHERE user_id=?', [$registered]) === $ids[5], 'registration attaches referral');
     ok((int)$db->fetchOne('SELECT bonus_balance FROM user_profiles WHERE user_id=?', [$registered]) === 0, 'no welcome balance');
@@ -293,10 +310,12 @@ try {
     $promoBody = $body;
     unset($promoBody['offerId']);
     $promoBody['promoCode'] = $promoCode;
+    $db->update('products', ['price' => 1000], ['id' => $product]);
     $promoOrder = $call('POST', '/v1/orders/create', $promoBody, $tokens[2], 201);
-    ok((int)$db->fetchOne('SELECT discount_amount FROM orders WHERE id=?', [$promoOrder['id']]) > 0, 'ordinary shop promo discount still works');
+    ok((int)$db->fetchOne('SELECT discount_amount FROM orders WHERE id=?', [$promoOrder['id']]) === 60, 'ordinary shop promo applies 3% to 2000 RUB in goods');
     $exhausted = $call('POST', '/v1/orders/create', $promoBody, $tokens[2], 201);
     ok((int)$db->fetchOne('SELECT discount_amount FROM orders WHERE id=?', [$exhausted['id']]) === 0, 'exhausted ordinary code gives no discount');
+    $db->update('products', ['price' => $originalPrice], ['id' => $product]);
     $program->cancelOrder($promoOrder['id']);
     $db->update('orders', ['status' => 'cancelled'], ['id' => $promoOrder['id']]);
     ok((int)$db->fetchOne('SELECT used_count FROM promo_codes WHERE code=?', [$promoCode]) === 0, 'cancel releases ordinary promo usage');
@@ -344,7 +363,7 @@ try {
     $selfOrder = $call('POST', '/v1/orders/create', $selfBody, null, 201);
     ok(!in_array($ids[1], array_column($getSnapshot($selfOrder['id'])['recipients'], 'userId'), true), 'guest self purchase excludes own referral bonus');
 
-    // Testing is controlled only by the admin setting, never by the checkout payload.
+    // Test payments require both the development environment and the admin setting.
     $call('PATCH', '/admin/api/settings', ['testing_enabled' => true], null, 401);
     $call('PATCH', '/admin/api/settings', ['testing_enabled' => true], $buyer, 403);
     $enabled = $call('PATCH', '/admin/api/settings', ['testing_enabled' => true], $admin);
@@ -352,6 +371,20 @@ try {
     $testingBody = $body;
     unset($testingBody['offerId']);
     $testingBody['referredBy'] = 'test-' . $suffix . '-1';
+    putenv('APP_ENV=prod');
+    try {
+        $productionSettings = $call('GET', '/admin/api/settings', [], $admin);
+        ok(!$productionSettings['testing_available'] && !$productionSettings['testing_enabled'], 'production hides a stored testing setting');
+        $forbiddenSetting = $call('PATCH', '/admin/api/settings', ['testing_enabled' => false], $admin);
+        ok(!isset($forbiddenSetting['testing_enabled']), 'production admin API cannot change testing mode');
+        $productionOrder = $call('POST', '/v1/orders/create', $testingBody, null, 201);
+        ok($db->fetchOne('SELECT payment_status FROM orders WHERE id=?', [$productionOrder['id']]) === 'pending',
+            'non-zero production checkout stays unpaid even if testing is enabled in the database');
+        ok((int)$db->fetchOne('SELECT COUNT(*) FROM payment_operations WHERE order_id=?', [$productionOrder['id']]) === 0,
+            'production does not record a simulated payment');
+    } finally {
+        putenv('APP_ENV=dev');
+    }
     $testingHeaders = ['Idempotency-Key' => bin2hex(random_bytes(24))];
     $requestsBeforeTesting = $providerRequests;
     $testingOrder = $call('POST', '/v1/orders/create', $testingBody, null, 201, $testingHeaders);
@@ -372,6 +405,24 @@ try {
     $testingBody['testing_enabled'] = true;
     $ordinaryOrder = $call('POST', '/v1/orders/create', $testingBody, null, 201);
     ok($db->fetchOne('SELECT payment_status FROM orders WHERE id=?', [$ordinaryOrder['id']]) === 'pending', 'disabled testing restores normal checkout and ignores client override');
+
+    $orderWithoutNewConsent = array_diff_key($body, $privacy);
+    $orderWithoutNewConsent['offerId'] = null;
+    $recordCount = "SELECT COUNT(*) FROM privacy_consents WHERE subject_type='user' AND subject_id=? AND kind='personal_data'";
+    $before = (int)$db->fetchOne($recordCount, [$ids[6]]);
+    $priorOrder = $call('POST', '/v1/orders/create', $orderWithoutNewConsent, $buyer, 201);
+    ok(count($call('GET', '/v1/users/me/addresses', [], $buyer)['items']) === 1, 'repeated checkout does not duplicate saved addresses');
+    ok(!empty($priorOrder['id']) && (int)$db->fetchOne($recordCount, [$ids[6]]) === $before, 'repeat checkout reuses active consent without recording a new grant');
+    $account = $call('GET', '/v1/users/me', [], $buyer);
+    $subscription = ['marketingEmailSubscribed' => true, 'marketingVersion' => ConsentRecorder::MARKETING_VERSION, 'email' => $account['email']];
+    $call('PATCH', '/v1/users/me/privacy', $subscription, null, 401);
+    $call('PATCH', '/v1/users/me/privacy', array_replace($subscription, ['email' => 'other@example.test']), $buyer, 422);
+    ok($call('PATCH', '/v1/users/me/privacy', $subscription, $buyer)['marketing_email_subscribed'] === true, 'subscribe in profile');
+    ok($call('PATCH', '/v1/users/me/privacy', ['marketingEmailSubscribed' => false], $buyer)['marketing_email_subscribed'] === false, 'unsubscribe in profile');
+    ok(!$call('PATCH', '/v1/users/me/privacy', ['revokePersonalDataConsent' => true], $buyer)['personal_data_consent_valid'], 'personal data consent can be withdrawn');
+    $call('POST', '/v1/orders/create', $orderWithoutNewConsent, $buyer, 422);
+    $call('POST', '/v1/orders/create', $orderWithoutNewConsent + $privacy, $buyer, 201);
+    ok($call('GET', '/v1/users/me', [], $buyer)['personal_data_consent_valid'] === true, 'regrant records new valid consent');
 
     echo "PASS program HTTP: {$checks} assertions, isolated test users, real routes and database; provider mocked; fixtures rolled back\n";
 } finally {

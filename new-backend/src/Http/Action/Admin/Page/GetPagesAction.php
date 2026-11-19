@@ -7,6 +7,8 @@ namespace App\Http\Action\Admin\Page;
 use App\Components\Http\Response\JsonDataItemsResponse;
 use App\Modules\Page\Query\Page\FindAll\PageFindAllFetcher;
 use App\Modules\Page\Query\Page\FindAll\PageFindAllQuery;
+use App\Modules\Page\ReadModel\Page\PageDetails;
+use App\Modules\Page\Service\LegalDocuments;
 use Doctrine\DBAL\Exception;
 use Override;
 use Psr\Http\Message\ResponseInterface;
@@ -30,7 +32,14 @@ final readonly class GetPagesAction implements RequestHandlerInterface
 
         return new JsonDataItemsResponse(
             $result->count,
-            array_map(static fn ($page): array => $page->toArray(), $result->items),
+            array_map(static function (PageDetails $page): array {
+                $data = $page->toArray();
+                if (isset(LegalDocuments::TITLES[$page->systemKey])) {
+                    $data['legal_document'] = true;
+                    $data['content'] = $page->content ?? LegalDocuments::defaultContent($page->systemKey);
+                }
+                return $data;
+            }, $result->items),
         );
     }
 }

@@ -36,8 +36,8 @@
             {% endfor %}
         </nav>
 
-        <div class="hidden items-center gap-3 lg:flex">
-            <a href="/profile" class="inline-flex min-h-11 items-center px-2 text-sm text-secondary-foreground hover:text-primary">Кабинет</a>
+        <div class="flex shrink-0 items-center gap-1 lg:gap-3">
+            <a href="/profile" class="hidden min-h-11 items-center px-2 text-sm text-secondary-foreground hover:text-primary lg:inline-flex">Кабинет</a>
             {% if site_feature('cart_enabled') %}
                 <a
                     href="/cart"
@@ -56,8 +56,7 @@
                     ></span>
                 </a>
             {% endif %}
-            <a href="/catalog" class="inline-flex h-11 w-11 items-center justify-center text-secondary-foreground" aria-label="Поиск в каталоге"><svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg></a>
-        </div>
+            <a href="/catalog" class="hidden h-11 w-11 items-center justify-center text-secondary-foreground lg:inline-flex" aria-label="Поиск в каталоге"><svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg></a>
 
         <details class="group lg:hidden [&>nav]:block [&>summary::-webkit-details-marker]:hidden">
             <summary
@@ -86,26 +85,10 @@
                         } only %}
                     {% endfor %}
                     <a href="/profile" class="py-2 text-lg text-secondary-foreground">Личный кабинет</a>
-                    {% if site_feature('cart_enabled') %}
-                        <div class="border-t border-border pt-4">
-                            <a
-                                href="/cart"
-                                class="gradient-primary inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg px-5 text-sm font-bold text-primary-foreground"
-                                data-cart-link
-                            >
-                                <svg class="h-4 w-4" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <circle cx="8" cy="21" r="1"></circle>
-                                    <circle cx="19" cy="21" r="1"></circle>
-                                    <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
-                                </svg>
-                                <span>Корзина</span>
-                                <span data-cart-count></span>
-                            </a>
-                        </div>
-                    {% endif %}
                 </div>
             </nav>
         </details>
+        </div>
         </div>
     </div>
 

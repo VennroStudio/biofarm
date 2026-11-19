@@ -6,7 +6,15 @@ export type PaymentState = {
     orderStatus?: string;
     amountMinor: number;
     confirmationUrl?: string;
+    ozonDelivery?: {
+        status: 'awaiting_payment' | 'queued' | 'submitting' | 'submitted' | 'review' | 'submit_review' | 'delivered'
+            | 'cancel_requested' | 'cancel_sending' | 'cancel_pending' | 'cancel_confirmed' | 'cancelled' | 'partial_refund';
+        postings?: OzonPosting[];
+        orderNumber?: string | null;
+    };
 };
+export type OzonPosting = { number: string; status: string; substatus: string };
+
 export function payment(orderId: string, start = false) {
     const token = window.sessionStorage.getItem(`biofarm_payment_${orderId}`);
     return request<PaymentState>(

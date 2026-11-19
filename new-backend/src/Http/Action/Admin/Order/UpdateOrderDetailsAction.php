@@ -12,6 +12,7 @@ use App\Modules\Order\Entity\Order\OrderRepository;
 use App\Modules\Order\Service\OrderBonusApplier;
 use App\Modules\Order\Service\OrderEmailNotifier;
 use App\Modules\Order\Service\OrderStatusGuard;
+use App\Modules\Program\Service\ProgramMath;
 use App\Modules\Program\Service\ProgramService;
 use DateMalformedStringException;
 use Doctrine\DBAL\Exception;
@@ -44,11 +45,13 @@ final readonly class UpdateOrderDetailsAction implements RequestHandlerInterface
             $payload = (array)$request->getParsedBody();
 
             $subtotal = $this->intPayload($payload, ['subtotal'], $order->subtotal);
-            $deliveryCost = $this->intPayload($payload, ['deliveryCost', 'delivery_cost'], $order->deliveryCost);
+            $deliveryCost = $this->moneyPayload($payload, ['deliveryCost', 'delivery_cost'], $order->deliveryCost);
             $discountAmount = $this->intPayload($payload, ['discountAmount', 'discount_amount'], $order->discountAmount);
             $bonusUsed = $this->intPayload($payload, ['bonusUsed', 'bonus_used'], $order->bonusUsed);
-            $amountChanged = $subtotal !== $order->subtotal || $deliveryCost !== $order->deliveryCost || $discountAmount !== $order->discountAmount || $bonusUsed !== $order->bonusUsed;
-            $total = $this->intPayload($payload, ['total'], $amountChanged ? max(0, $subtotal + $deliveryCost - $discountAmount - $bonusUsed) : $order->total);
+            $deliveryMinor = ProgramMath::minor($deliveryCost);
+            $amountChanged = $subtotal !== $order->subtotal || $deliveryMinor !== ProgramMath::minor($order->deliveryCost) || $discountAmount !== $order->discountAmount || $bonusUsed !== $order->bonusUsed;
+            $totalMinor = max(0, ($subtotal - $discountAmount - $bonusUsed) * 100 + $deliveryMinor);
+            $total = $this->moneyPayload($payload, ['total'], $amountChanged ? number_format($totalMinor / 100, 2, '.', '') : $order->total);
             $userId = $this->nullableIntPayload($payload, ['userId', 'user_id'], $order->userId);
             $promoCode = $this->nullableStringPayload($payload, ['promoCode', 'promo_code'], $order->promoCode);
             $referredBy = $this->nullableStringPayload($payload, ['referredBy', 'referred_by'], $order->referredBy);
@@ -102,6 +105,21 @@ final readonly class UpdateOrderDetailsAction implements RequestHandlerInterface
         }
 
         return max(0, $fallback);
+    }
+
+    /**
+     * @param array<array-key, mixed> $payload
+     * @param list<string> $keys
+     */
+    private function moneyPayload(array $payload, array $keys, string $fallback): string
+    {
+        foreach ($keys as $key) {
+            if (\array_key_exists($key, $payload)) {
+                return number_format(max(0, (float)$payload[$key]), 2, '.', '');
+            }
+        }
+
+        return $fallback;
     }
 
     /**

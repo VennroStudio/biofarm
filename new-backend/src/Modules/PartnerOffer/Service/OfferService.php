@@ -100,7 +100,7 @@ final readonly class OfferService
         // Select only the fields needed by the partner; never expose payment tokens or delivery contacts.
         $orders = $this->db->fetchAllAssociative('SELECT o.id,o.status,o.payment_status,o.total,o.created_at,JSON_UNQUOTE(JSON_EXTRACT(o.shipping_address, "$.name")) AS customer_name FROM partner_offer_orders po JOIN orders o ON BINARY o.id=BINARY po.order_id WHERE po.offer_id=? ORDER BY o.created_at DESC,o.id DESC LIMIT 25 OFFSET ' . (($page - 1) * 25), [$id]);
         foreach ($orders as &$order) {
-            $order['total'] = (int)$order['total'];
+            $order['total'] = (float)$order['total'];
             $order['offerId'] = $id;
         }
         unset($order);

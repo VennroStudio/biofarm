@@ -43,7 +43,7 @@ final readonly class UpdateOrderHandler
             status: $command->status,
             paymentStatus: $command->paymentStatus,
             total: $command->total,
-            subtotal: $command->subtotal ?? $command->total,
+            subtotal: $command->subtotal ?? (int)$command->total,
             deliveryMethod: $command->deliveryMethod,
             deliveryCost: $command->deliveryCost,
             discountAmount: $command->discountAmount,

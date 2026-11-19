@@ -43,6 +43,9 @@ class User
     #[ORM\Column(type: Types::INTEGER, enumType: UserStatus::class)]
     private(set) UserStatus $status;
 
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    private(set) bool $emailConfirmationRequired = false;
+
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private(set) DateTimeImmutable $createdAt;
 
@@ -141,6 +144,20 @@ class User
     /**
      * @throws DateMalformedStringException
      */
+    public function activateByPhone(): void
+    {
+        $this->emailConfirmationRequired = true;
+        $this->activate();
+    }
+
+    public function confirmEmail(): void
+    {
+        $this->emailConfirmationRequired = false;
+        if ($this->status === UserStatus::PENDING_VERIFICATION) {
+            $this->activate();
+        }
+    }
+
     public function activate(): void
     {
         $this->changeStatus(UserStatus::ACTIVE);

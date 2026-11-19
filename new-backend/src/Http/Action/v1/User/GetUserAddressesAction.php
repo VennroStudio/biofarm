@@ -32,7 +32,8 @@ final readonly class GetUserAddressesAction implements RequestHandlerInterface
         }
 
         $rows = $this->connection->fetchAllAssociative(
-            'SELECT id, label, name, phone, email, city, address, postal_code, comment, is_default, created_at, updated_at
+            'SELECT id, label, name, phone, email, city, address, postal_code, comment, is_default, created_at, updated_at,
+                    ozon_delivery_method, ozon_destination_id
              FROM user_addresses
              WHERE user_id = :userId AND deleted_at IS NULL
              ORDER BY is_default DESC, id DESC',
@@ -61,6 +62,8 @@ final readonly class GetUserAddressesAction implements RequestHandlerInterface
             'is_default'  => (bool)(int)$row['is_default'],
             'created_at'  => (string)$row['created_at'],
             'updated_at'  => $row['updated_at'] !== null ? (string)$row['updated_at'] : null,
+            'ozon_delivery_method' => $row['ozon_delivery_method'],
+            'ozon_destination_id' => $row['ozon_destination_id'] !== null ? (int)$row['ozon_destination_id'] : null,
         ];
     }
 

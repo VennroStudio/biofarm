@@ -11,6 +11,7 @@ import {
   getToken,
   getUserAddresses,
   refreshUser,
+  requestPasswordSetup,
   saveUserAddress,
   updateProfile,
   type FavoriteProduct,
@@ -20,7 +21,7 @@ import {
   type UserAddress,
 } from '../../site/api';
 import { loadFavoriteIds, toggleFavorite } from '../../site/favorites';
-import { Button } from '../../site/ui';
+import { Button, Card, CardContent } from '../../site/ui';
 import { BonusPanel } from './components/BonusPanel';
 import { AddressesPanel } from './components/AddressesPanel';
 import { FavoritesPanel } from './components/FavoritesPanel';
@@ -29,6 +30,7 @@ import { OrderDetailsDialog } from './components/OrderDetailsDialog';
 import { OrdersPanel } from './components/OrdersPanel';
 import { PartnerHistoryPanel } from './components/PartnerHistoryPanel';
 import { ProfileDetailsCard } from './components/ProfileDetailsCard';
+import { PrivacyPreferencesCard } from './components/PrivacyPreferencesCard';
 import { TabButton, TabList, TabPanel } from './components/ProfileTabs';
 import type { ProfileTab } from './types';
 
@@ -65,6 +67,8 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, referralB
   const [editPhone, setEditPhone] = useState(user?.phone || '');
   const [selectedOrder, setSelectedOrder] = useState<SiteOrder | null>(null);
   const [notice, setNotice] = useState('');
+  const [passwordRequest, setPasswordRequest] = useState<'idle' | 'sending' | 'sent'>('idle');
+  const [passwordError, setPasswordError] = useState('');
 
   const closeOrderDetails = useCallback(() => setSelectedOrder(null), []);
 
@@ -125,6 +129,19 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, referralB
     }
   }
 
+  async function sendPasswordLink() {
+    if (!user?.emailVerified) return;
+    setPasswordError('');
+    setPasswordRequest('sending');
+    try {
+      await requestPasswordSetup(user.email);
+      setPasswordRequest('sent');
+    } catch (error) {
+      setPasswordError(messageFromError(error, 'Не удалось отправить ссылку.'));
+      setPasswordRequest('idle');
+    }
+  }
+
   async function handleRemoveFavorite(product: FavoriteProduct) {
     try {
       await toggleFavorite(product.id, true);
@@ -139,6 +156,7 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, referralB
     try {
       await saveUserAddress(address, id);
       setAddresses(await getUserAddresses());
+      if (!user?.personalDataConsentValid) setUser(await refreshUser());
       setNotice(id ? 'Адрес обновлен' : 'Адрес добавлен');
     } catch (error) {
       setNotice(messageFromError(error, 'Не удалось сохранить адрес'));
@@ -189,6 +207,12 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, referralB
         </div>
 
         {notice && <p className="mb-4 rounded bg-green-50 p-3 text-sm text-green-700">{notice}</p>}
+        {user.emailVerified === false && (
+          <aside className="mb-5 rounded-xl border border-border bg-card px-4 py-3" aria-label="Подтверждение email">
+            <p className="font-medium text-primary">Подтвердите email</p>
+            <p className="text-sm text-muted-foreground">Откройте письмо на {user.email} и перейдите по ссылке.</p>
+          </aside>
+        )}
 
         <div className="grid items-start gap-6 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-10">
           <div className="min-w-0 space-y-3 lg:sticky lg:top-28">
@@ -260,6 +284,21 @@ function ProfilePage({ cartEnabled, favoritesEnabled, referralEnabled, referralB
                   onSave={(consents) => void handleSaveProfile(consents)}
                   onStartEdit={() => setIsEditing(true)}
                 />
+                <PrivacyPreferencesCard user={user} onChange={setUser} />
+                {user.emailVerified && (
+                  <Card className="mt-6">
+                    <CardContent className="space-y-2 pt-6">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <p className="font-medium">Вход по email и паролю</p>
+                        <Button variant="outline" type="button" disabled={passwordRequest !== 'idle'} onClick={() => void sendPasswordLink()}>
+                          {passwordRequest === 'sending' ? 'Отправляем…' : 'Задать пароль'}
+                        </Button>
+                      </div>
+                      {passwordRequest === 'sent' && <p className="text-sm text-muted-foreground" role="status">Ссылка для установки пароля отправлена на {user.email}.</p>}
+                      {passwordError && <p className="text-sm text-destructive" role="alert">{passwordError}</p>}
+                    </CardContent>
+                  </Card>
+                )}
             </TabPanel>
 
             {cartEnabled && (

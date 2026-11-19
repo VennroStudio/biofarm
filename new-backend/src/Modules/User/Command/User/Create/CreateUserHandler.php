@@ -68,8 +68,24 @@ final readonly class CreateUserHandler
             return $user;
         });
 
+        $this->requestEmailConfirmation($user, $command->locale);
+    }
+
+    public function createWithVerifiedPhone(CreateUserCommand $command): User
+    {
+        $email = mb_strtolower($command->email);
+        $this->assertEmailNotRegistered($email);
+        $user = $this->createUser($command, $email);
+        $user->activateByPhone();
+        $this->createUserProfile((int)$user->id, $command->referredBy);
+
+        return $user;
+    }
+
+    public function requestEmailConfirmation(User $user, string $locale): void
+    {
         $plainToken = $this->createEmailVerificationToken((int)$user->id);
-        $this->sendVerificationEmail($user, $plainToken, $command->locale);
+        $this->sendVerificationEmail($user, $plainToken, $locale);
     }
 
     /**

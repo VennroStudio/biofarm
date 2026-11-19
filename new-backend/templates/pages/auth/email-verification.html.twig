@@ -9,8 +9,8 @@
             {% if page.status == 'success' %}
                 <p class="mb-2 text-xs font-medium uppercase tracking-[0.14em] text-primary">Готово</p>
                 <h1 class="mb-4 text-3xl font-normal tracking-tight text-primary">Email подтвержден</h1>
-                <p class="mb-6 text-muted-foreground">Теперь можно войти в личный кабинет и продолжить оформление заказа.</p>
-                <a class="inline-flex h-11 items-center justify-center rounded-md bg-primary px-6 text-sm font-semibold text-primary-foreground" href="/login">Войти</a>
+                <p class="mb-6 text-muted-foreground">Можно продолжить оформление заказа или задать пароль в профиле.</p>
+                <a class="inline-flex h-11 items-center justify-center rounded-md bg-primary px-6 text-sm font-semibold text-primary-foreground" href="/profile">В личный кабинет</a>
             {% elseif page.status == 'error' %}
                 <p class="mb-2 text-xs font-medium uppercase tracking-[0.14em] text-primary">Ссылка недействительна</p>
                 <h1 class="mb-4 text-3xl font-normal tracking-tight text-primary">Не удалось подтвердить email</h1>

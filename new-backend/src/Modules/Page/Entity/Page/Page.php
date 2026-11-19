@@ -268,6 +268,7 @@ class Page
         bool $showInHeader,
         bool $showInFooter,
         int $sortOrder,
+        ?string $content = null,
     ): void {
         $this->assertNotDeleted();
 
@@ -278,7 +279,7 @@ class Page
         $this->changeCommon(
             title: $title,
             h1: $h1,
-            content: $this->content,
+            content: $content ?? $this->content,
             excerpt: $this->excerpt,
             seoTitle: $seoTitle,
             seoDescription: $seoDescription,

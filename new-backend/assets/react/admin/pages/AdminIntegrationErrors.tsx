@@ -10,6 +10,7 @@ const scenarioLabels: Record<string, string> = {
   admin_test: 'Проверка Bitrix24',
   feedback_form: 'Форма обратной связи',
   order_created: 'Создание заказа',
+  catalog: 'Каталог Ozon',
 };
 
 export function AdminIntegrationErrors() {
@@ -69,7 +70,7 @@ export function AdminIntegrationErrors() {
             <h2 id="integration-errors-heading" className="flex items-center gap-2 text-2xl font-bold">
               <CircleAlert className="h-5 w-5" aria-hidden="true" />Ошибки интеграций
             </h2>
-            <p className="mt-1 text-sm text-[#5f7580]">Сбои сценариев почты, Bitrix24, форм и заказов</p>
+            <p className="mt-1 text-sm text-[#5f7580]">Сбои сценариев почты, Bitrix24, Ozon, форм и заказов</p>
           </div>
           <Button disabled={saving || unreadCount === 0} onClick={() => void markAllRead()}>
             <CheckCheck className="h-4 w-4" />Прочитать все

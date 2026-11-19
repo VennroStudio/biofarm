@@ -1,4 +1,5 @@
 import { ArrowRight, CheckCircle } from 'lucide-react';
+import { ozonTermsUrl } from '../../../shared/ConsentFields';
 import type { CartItem } from '../../../site/cart';
 import type { SiteUser } from '../../../site/api';
 import { formatMoney } from '../../../site/format';
@@ -6,13 +7,15 @@ import { Button, Card, CardContent, CardHeader, CardTitle, Separator } from '../
 
 type Props = {
   bonusDiscount: number;
+  canSubmit: boolean;
   cart: CartItem[];
-  deliveryCost: number;
+  deliveryCost: number | null;
   error: string;
-  finalTotal: number;
+  finalTotal: number | null;
   isLoading: boolean;
   orderBonus: number;
   orderBonusEnabled: boolean;
+  ozonDelivery: boolean;
   setUseBonuses: (value: boolean) => void;
   total: number;
   useBonuses: boolean;
@@ -21,6 +24,7 @@ type Props = {
 
 export function CheckoutSummary({
   bonusDiscount,
+  canSubmit,
   cart,
   deliveryCost,
   error,
@@ -28,6 +32,7 @@ export function CheckoutSummary({
   isLoading,
   orderBonus,
   orderBonusEnabled,
+  ozonDelivery,
   setUseBonuses,
   total,
   useBonuses,
@@ -62,7 +67,7 @@ export function CheckoutSummary({
           <div className="flex justify-between">
             <span className="text-muted-foreground">Доставка</span>
             <span className={deliveryCost === 0 ? 'text-green-600' : ''}>
-              {deliveryCost === 0 ? 'Бесплатно' : formatMoney(deliveryCost)}
+              {deliveryCost === null ? 'Уточняется' : deliveryCost === 0 ? 'Бесплатно' : formatMoney(deliveryCost)}
             </span>
           </div>
 
@@ -90,19 +95,23 @@ export function CheckoutSummary({
 
         <div className="flex justify-between text-lg font-bold">
           <span>Итого</span>
-          <span>{formatMoney(finalTotal)}</span>
+          <span>{finalTotal === null ? '—' : formatMoney(finalTotal)}</span>
         </div>
 
         {orderBonus > 0 && (
           <div className="flex items-center gap-2 rounded bg-green-50 p-2 text-sm text-green-600">
             <CheckCircle className="h-4 w-4" />
-            До {orderBonus.toFixed(2)} бонусов; итог определяет сервер
+            До {orderBonus.toFixed(2)} бонусов за заказ
           </div>
         )}
 
         {error && <p className="rounded bg-destructive/10 p-2 text-sm text-destructive">{error}</p>}
 
-        <Button className="w-full" disabled={isLoading} size="lg" type="submit">
+        <p id="checkout-offer-note" className="text-sm text-muted-foreground">
+          Нажимая «Подтвердить заказ», вы принимаете <a className="underline" href="/oferta" target="_blank" rel="noreferrer">публичную оферту БИОФАРМ</a>
+          {ozonDelivery && <> и <a className="underline" href={ozonTermsUrl} target="_blank" rel="noreferrer">условия получения заказа через Ozon</a></>}.
+        </p>
+        <Button aria-describedby="checkout-offer-note" className="w-full" disabled={isLoading || !canSubmit} size="lg" type="submit">
           {isLoading ? 'Оформление...' : 'Подтвердить заказ'}
           <ArrowRight className="h-4 w-4" />
         </Button>

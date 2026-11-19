@@ -10,7 +10,7 @@ Only `botanical-background.webp` was generated using the built-in imagegen tool.
 
 > Use case ads-marketing. Generate a background-only panoramic 2.5:1 hero website image (2000x800). Warm luminous ivory cream and pale peach beige plaster, delicate soft botanical sunlight shadows from offscreen leaves, a few realistic fresh green leaves at upper LEFT and lower LEFT corners, mostly empty and subtle. Inspired by premium natural supplement photography. Entire center and right very pale cream beige softly lit, large empty space for overlaid original product photography and text in HTML. No products, no jars, no text, no logo, no buttons, no platform, no laboratory objects. Single continuous background. Palette #fcebd9 #f5e4d1 with foliage green.
 
-The supplied `Родиола-1.mp4` is encoded as H.264/AAC at 1280×720 with faststart at `public/assets/videos/home/rhodiola.mp4`; the poster is its first-second frame. Audio is retained and initially muted, with native player controls.
+The BIOFARM company video from `public/uploads/videos/biofarm.mp4` is encoded as H.264/AAC at 1280×720 with faststart at `public/assets/videos/home/biofarm.mp4`. Audio is retained and initially muted, with native player controls. The “О компании” section displays the forest still from the video as a static photograph.
 
 ## Behavior
 

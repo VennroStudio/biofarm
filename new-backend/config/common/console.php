@@ -8,6 +8,8 @@ use App\Console\HelloCommand;
 use App\Console\LocalizeBlogImagesCommand;
 use App\Console\LocalizeProductImagesCommand;
 use App\Console\LocalizeReviewImagesCommand;
+use Doctrine\Migrations\Tools\Console\Command\MigrateCommand;
+use Doctrine\Migrations\Tools\Console\Command\StatusCommand;
 use Psr\Container\ContainerInterface;
 
 return [
@@ -29,6 +31,8 @@ return [
                 LocalizeBlogImagesCommand::class,
                 LocalizeProductImagesCommand::class,
                 LocalizeReviewImagesCommand::class,
+                MigrateCommand::class,
+                StatusCommand::class,
             ],
         ],
     ],

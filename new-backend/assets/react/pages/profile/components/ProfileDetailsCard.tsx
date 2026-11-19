@@ -69,6 +69,12 @@ export function ProfileDetailsCard({
                 {user.phone || 'Не указан'}
               </div>
             )}
+            {!isEditing && user.phoneVerifiedAt && <p className="text-sm text-primary">Телефон подтверждён</p>}
+            {!isEditing && user.ozonPhoneCheckedAt && (
+              <p className="text-sm text-muted-foreground">
+                {user.ozonPhoneAvailable ? 'Доставка Ozon доступна' : 'Доставка Ozon недоступна'} · {formatDate(user.ozonPhoneCheckedAt)}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -78,7 +84,7 @@ export function ProfileDetailsCard({
 
 
         </div>
-        {isEditing && <ConsentFields />}
+        {isEditing && !user.personalDataConsentValid && <ConsentFields />}
       </CardContent>
     </Card></form>
   );

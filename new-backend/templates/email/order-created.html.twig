@@ -13,7 +13,12 @@
                     <td>
                         <p style="margin:0 0 8px;color:#789083;">{{ siteName }}</p>
                         <h1 style="margin:0 0 16px;font-size:28px;line-height:1.2;">Заказ {{ order.id }} принят</h1>
-                        <p style="margin:0 0 24px;color:#52665b;">Мы получили ваш заказ и свяжемся с вами для подтверждения.</p>
+                        {% if order.deliveryMethod == 'ozon-pickup' %}
+                            <p style="margin:0 0 16px;color:#52665b;">После подтверждения оплаты передадим заказ в Ozon. Пункт выдачи {{ order.shippingAddress.address }}.</p>
+                            <p style="margin:0 0 24px;color:#52665b;">Для отказа или возврата напишите БИОФАРМ на <a href="mailto:bio.active@bk.ru">bio.active@bk.ru</a> и укажите номер заказа. От товара надлежащего качества можно отказаться до получения и в течение семи дней после получения, если законом не предусмотрен более длительный срок. Товар можно отправить продавцу перевозчиком или почтой. После обращения сообщим адрес приёма. Сохраните товарный вид и потребительские свойства товара.</p>
+                        {% else %}
+                            <p style="margin:0 0 24px;color:#52665b;">Мы получили ваш заказ и свяжемся с вами для подтверждения.</p>
+                        {% endif %}
 
                         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
                             {% for item in items %}

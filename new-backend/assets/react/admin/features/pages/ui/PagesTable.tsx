@@ -118,6 +118,7 @@ export function PagesTable({ pages, onEdit, onRemove }: Props) {
 }
 
 export function pagePath(page: CmsPage) {
+  if (page.legal_document && page.system_key) return `/${page.system_key}`;
   if (page.page_type === 'system') {
     return page.system_key ? systemPagePaths[page.system_key] ?? null : null;
   }
