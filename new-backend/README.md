@@ -127,14 +127,23 @@ in either position. Development can simulate payment while testing is enabled.
 With missing SMS Aero credentials, buyers see the phone verification
 availability message and can sign in by email.
 
+For SMS Aero mobile authorization, set `SMSAERO_API_KEY` to the live key. When
+migrating an existing `.env`, move the value from `SMSAERO_TEST_API_KEY` only if
+it matches the live key in SMS Aero. Remove `SMSAERO_TEST_API_KEY` and
+`SMSAERO_SANDBOX`. Control phone verification during testing with the admin
+«Тестирование» switch. Use `.env.example` to track variable names in Git and
+keep credential values in each environment's `.env`.
+
 Shared-hosting releases require `APP_ENV=prod` and `APP_DEBUG=0`.
 Production payment responses must identify a live YooKassa payment.
 
 For marked products use a registered FFD 1.2 cash register,
 `YOOKASSA_FFD12_ENABLED=1` and the cash register's
-`YOOKASSA_RECEIPT_TIMEZONE`. Check the VAT and taxation settings with the
-configured cash register. Enable order emails and verify SMTP to send orders
-and written return instructions.
+`YOOKASSA_RECEIPT_TIMEZONE`. Biofarm uses YooKassa Receipts with
+`YOOKASSA_RECEIPT_TIMEZONE=6` for Tomsk (UTC+7) in production and local
+development. Check the VAT and taxation settings with the configured cash
+register. Enable order emails and verify SMTP to send orders and written
+return instructions.
 
 After applying database migrations, populate the pickup directory and schedule
 its refresh daily. Run the order worker continuously to reconcile payments,
