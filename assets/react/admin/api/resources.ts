@@ -16,6 +16,8 @@ import type {
   Product,
   ProductAttribute,
   ProductGroup,
+  ProductGroupDetails,
+  ProductGroupMember,
   PromoCode,
   Review,
   Settings,
@@ -117,6 +119,8 @@ export const attributesApi = {
 
 export const productGroupsApi = {
   list: () => requestItems<ProductGroup>('/admin/api/product-groups'),
+  details: (id: number) => request<ProductGroupDetails>(`/admin/api/product-groups/${id}`),
+  searchProducts: (search: string) => requestItems<ProductGroupMember>(`/admin/api/product-groups/products?search=${encodeURIComponent(search)}`),
   create: (payload: Record<string, unknown>) => request('/admin/api/product-groups', { method: 'POST', body: payload }),
   update: (id: number, payload: Record<string, unknown>) => request(`/admin/api/product-groups/${id}`, { method: 'PATCH', body: payload }),
   delete: (id: number) => request(`/admin/api/product-groups/${id}`, { method: 'DELETE' }),

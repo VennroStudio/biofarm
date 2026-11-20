@@ -3,7 +3,7 @@ import { lazy, Suspense, useEffect, useRef, useState, type Dispatch, type FormEv
 import { ArrowDown, ArrowUp, FileText, Images, Info, Link2, Search, Settings2, ShoppingBag, X } from 'lucide-react';
 import { ImageUploader } from '../../media/ui/ImageUploader';
 import { Button, ErrorAlert, Field, inputClass, Modal, textareaClass } from '../../../shared/ui';
-import type { BlogPost, Category, ProductAttribute, ProductGroup } from '../../../types';
+import type { BlogPost, Category, ProductAttribute } from '../../../types';
 import { productFormIssue, setMainImage, type ProductForm, type ProductFormIssue, type ProductImageForm } from '../model/productForm';
 
 const RichTextEditor = lazy(() => import('../../../shared/ui/RichTextEditor'));
@@ -27,7 +27,6 @@ function Group({ title, children }: { title: string; children: ReactNode }) {
 type Props = {
   categories: Category[];
   attributes: ProductAttribute[];
-  productGroups: ProductGroup[];
   blogPosts: BlogPost[];
   form: ProductForm;
   open: boolean;
@@ -40,7 +39,7 @@ type Props = {
 };
 
 
-export function ProductFormModal({ categories, attributes, productGroups, blogPosts, form, open, error, saving, setForm, onAddImage, onClose, onSubmit }: Props) {
+export function ProductFormModal({ categories, attributes, blogPosts, form, open, error, saving, setForm, onAddImage, onClose, onSubmit }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>('main');
   const [issue, setIssue] = useState<ProductFormIssue | null>(null);
   const [confirmClose, setConfirmClose] = useState(false);
@@ -173,24 +172,6 @@ export function ProductFormModal({ categories, attributes, productGroups, blogPo
               {text('name', 'Название *')}
               <div className="grid gap-4 sm:grid-cols-2">
                 <div data-field="category_id"><Field label="Категория *"><select className={inputClass} value={form.category_id} onChange={event => update('category_id', event.target.value)}><option value="">Выберите категорию</option>{categories.map(category => <option key={category.id} value={category.id}>{category.name}</option>)}</select></Field></div>
-                <div className="space-y-3">
-                  <Field label="Группа товара">
-                    <select className={inputClass} value={form.product_group_id} onChange={event => {
-                      const groupId = event.target.value;
-                      setForm(current => ({ ...current, product_group_id: groupId, is_main_in_group: false }));
-                    }}>
-                      <option value="">Без группы</option>
-                      {productGroups.map(group => <option key={group.id} value={group.id}>{group.name}</option>)}
-                    </select>
-                  </Field>
-                  <label className="flex items-center gap-2 text-sm has-[:disabled]:opacity-50">
-                    <input type="checkbox" className="h-4 w-4 accent-primary" checked={form.is_main_in_group} disabled={!form.product_group_id} onChange={event => {
-                      const checked = event.target.checked;
-                      setForm(current => ({ ...current, is_main_in_group: checked }));
-                    }} />
-                    Главный товар в группе
-                  </label>
-                </div>
               </div>
             </Group>
             <Group title="Цена и публикация">

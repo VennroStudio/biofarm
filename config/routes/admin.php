@@ -38,10 +38,12 @@ use App\Http\Action\Admin\ProductTaxonomy\DeleteAttributeAction;
 use App\Http\Action\Admin\ProductTaxonomy\DeleteAttributeValueAction;
 use App\Http\Action\Admin\ProductTaxonomy\DeleteProductGroupAction;
 use App\Http\Action\Admin\ProductTaxonomy\GetAttributesAction;
+use App\Http\Action\Admin\ProductTaxonomy\GetProductGroupAction;
 use App\Http\Action\Admin\ProductTaxonomy\GetProductGroupsAction;
 use App\Http\Action\Admin\ProductTaxonomy\SaveAttributeAction;
 use App\Http\Action\Admin\ProductTaxonomy\SaveAttributeValueAction;
 use App\Http\Action\Admin\ProductTaxonomy\SaveProductGroupAction;
+use App\Http\Action\Admin\ProductTaxonomy\SearchProductGroupProductsAction;
 use App\Http\Action\Admin\PromoCode\DeletePromoCodeAction;
 use App\Http\Action\Admin\PromoCode\GetPromoCodesAction;
 use App\Http\Action\Admin\PromoCode\SavePromoCodeAction;
@@ -134,9 +136,11 @@ return static function (App $app): void {
                 $group->delete('/blog-categories/{id:[0-9]+}', DeleteBlogCategoryAction::class);
 
                 $group->get('/product-groups', GetProductGroupsAction::class);
+                $group->get('/product-groups/products', SearchProductGroupProductsAction::class);
+                $group->get('/product-groups/{id:[0-9]+}', GetProductGroupAction::class);
                 $group->post('/product-groups', SaveProductGroupAction::class);
-                $group->patch('/product-groups/{id}', SaveProductGroupAction::class);
-                $group->delete('/product-groups/{id}', DeleteProductGroupAction::class);
+                $group->patch('/product-groups/{id:[0-9]+}', SaveProductGroupAction::class);
+                $group->delete('/product-groups/{id:[0-9]+}', DeleteProductGroupAction::class);
 
                 $group->get('/users', AdminGetUsersAction::class);
                 $group->get('/users/{id:[0-9]+}/details', GetUserDetailsAction::class);

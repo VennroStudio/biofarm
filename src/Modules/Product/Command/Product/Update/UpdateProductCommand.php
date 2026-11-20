@@ -72,5 +72,6 @@ final readonly class UpdateProductCommand
         public ?string $regulatoryEvidence = null,
         public bool $isActive = true,
         public ?bool $isMainInGroup = null,
+        public bool $updateProductGroup = true,
     ) {}
 }

@@ -44,6 +44,7 @@ final readonly class UpdateProductAction implements RequestHandlerInterface
             $payload['categoryId'] = $payload['category'];
         }
 
+        $payload['updateProductGroup'] = array_key_exists('productGroupId', $payload);
         $payload['currentUserId'] = $identity->id;
         $payload['currentUserRole'] = $identity->role->value;
 

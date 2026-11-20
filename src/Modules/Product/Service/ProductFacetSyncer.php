@@ -22,11 +22,14 @@ final readonly class ProductFacetSyncer
         ?array $attributeValueIds = null,
         ?int $productGroupId = null,
         ?bool $isMainInGroup = null,
+        bool $updateProductGroup = true,
     ): void {
         $attributeValueIds = $this->existingAttributeValueIds($this->ids($attributeValueIds));
 
         $this->syncAttributeValues($productId, $attributeValueIds);
-        $this->syncProductGroup($productId, $productGroupId, $isMainInGroup);
+        if ($updateProductGroup) {
+            $this->syncProductGroup($productId, $productGroupId, $isMainInGroup);
+        }
     }
 
     /**

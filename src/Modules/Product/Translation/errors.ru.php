@@ -24,6 +24,10 @@ return [
     'error.attribute_not_found'                    => 'Атрибут не найден.',
     'error.attribute_value_slug_already_exists'    => 'Значение с таким slug уже существует в этом атрибуте.',
     'error.product_group_name_required'            => 'Укажите название группы товаров.',
+    'error.product_group_name_too_long'             => 'Название группы должно содержать не более 255 символов.',
+    'error.product_group_main_not_member'           => 'Выберите главный товар из состава этой группы.',
     'error.product_group_not_found'                => 'Группа товаров не найдена.',
     'error.main_product_group_required'             => 'Выберите группу, чтобы назначить главный товар.',
+    'error.product_group_products_unavailable'      => 'Некоторые товары недоступны. Откройте группу заново и проверьте список.',
+    'error.product_group_edit_conflict'             => 'Группа уже изменилась. Закройте и откройте редактор, чтобы загрузить актуальный список.',
 ];

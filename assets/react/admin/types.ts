@@ -103,6 +103,25 @@ export type ProductGroup = {
   products_count: number;
 };
 
+export type ProductGroupMember = {
+  id: number;
+  name: string;
+  image: string | null;
+  weight: string;
+  sku: string | null;
+  is_active: boolean;
+  group_id: number | null;
+  group_name: string | null;
+};
+
+export type ProductGroupDetails = {
+  id: number;
+  name: string;
+  products: ProductGroupMember[];
+  main_product_id: number | null;
+  revision: string;
+};
+
 export type PromoCode = {
   id: number;
   code: string;

@@ -7,6 +7,9 @@ use App\Components\Cacher\NullCacher;
 use App\Components\Exception\DomainExceptionModule;
 use App\Components\Serializer\Denormalizer;
 use App\Components\Validator\Validator;
+use App\Http\Action\Admin\ProductTaxonomy\GetProductGroupAction;
+use App\Http\Action\Admin\ProductTaxonomy\SaveProductGroupAction;
+use App\Http\Action\Admin\ProductTaxonomy\SearchProductGroupProductsAction;
 use App\Http\Action\v1\Product\GetProductsAction;
 use App\Http\Action\v1\Product\GetProductByIdAction;
 use App\Http\Unifier\Product\ProductCatalogDataProvider;
@@ -15,6 +18,7 @@ use App\Modules\Content\Service\MaterialLibrary;
 use App\Modules\Product\Query\Product\FindAll\ProductFindAllFetcher;
 use App\Modules\Product\Query\Product\GetById\ProductGetByIdFetcher;
 use App\Modules\Product\Service\ProductFacetSyncer;
+use App\Modules\Product\Service\ProductGroupMembers;
 use Doctrine\DBAL\DriverManager;
 use Slim\Factory\AppFactory;
 use Slim\Psr7\Factory\ServerRequestFactory;
@@ -25,6 +29,17 @@ $c=require dirname(__DIR__).'/config/container.php';
 $list=new GetProductsAction(new ProductFindAllFetcher($db,new NullCacher()),new ProductUnifier(),$c->get(Denormalizer::class),$c->get(Validator::class));
 $detail=new GetProductByIdAction(new ProductGetByIdFetcher($db,new NullCacher()),new ProductUnifier());
 $app=AppFactory::create();$app->get('/v1/products',$list);$app->get('/admin/api/products',$list)->setArgument('adminProducts','1');$app->get('/v1/products/{id}',$detail);$app->addRoutingMiddleware();
+$groups = new ProductGroupMembers($db);
+$saveGroup = new SaveProductGroupAction($db, new NullCacher(), $groups);
+$app->get('/admin/api/product-groups/products', new SearchProductGroupProductsAction($groups));
+$app->get('/admin/api/product-groups/{id:[0-9]+}', new GetProductGroupAction($groups, $db));
+$app->post('/admin/api/product-groups', $saveGroup);
+$app->patch('/admin/api/product-groups/{id:[0-9]+}', $saveGroup);
+$groupRequest = static function (string $method, string $path = '', array $data = []) use ($app): array {
+    $request = (new ServerRequestFactory())->createServerRequest($method, 'https://example.test/admin/api/product-groups' . $path);
+    $response = $app->handle($method === 'GET' ? $request->withQueryParams($data) : $request->withParsedBody($data));
+    return json_decode((string) $response->getBody(), true, flags: JSON_THROW_ON_ERROR)['data'];
+};
 $errors=[];
 foreach(['/v1/products'=>74,'/admin/api/products'=>95] as $path=>$expected){
  $r=(new ServerRequestFactory())->createServerRequest('GET','https://example.test'.$path)->withQueryParams(['includeInactive'=>true]);
@@ -87,9 +102,29 @@ try {
     $sync->sync($main, [], $group, true);
     $sync->sync($main, [], null, false);
     if ($db->fetchOne('SELECT main_product_id FROM product_groups WHERE id = ?', [$group]) !== null || $provider->countProducts() !== $total) $errors[] = 'Removing the main product from the group must clear its selection';
+
+    $source = $groupRequest('GET', "/$group");
+    $sourceIds = array_column($source['products'], 'id');
+    $matches = $groupRequest('GET', '/products', ['search' => 'abc123'])['items'];
+    $photo = $db->fetchOne('SELECT path FROM product_images WHERE product_id = ? AND is_main = 1 ORDER BY id LIMIT 1', [$variant]);
+    if (!$photo || array_column($matches, 'image') !== [$photo] || array_column($matches, 'id') !== [$variant]) $errors[] = 'Product search must include the primary photo';
+    if ($groupRequest('GET', '/products')['items'] !== []) $errors[] = 'Empty group product search must return no products';
+    $groupRequest('PATCH', "/$group", ['name' => $source['name'], 'product_ids' => $sourceIds, 'main_product_id' => $variant, 'revision' => $source['revision']]);
+    $sync->sync($variant, [$value], updateProductGroup: false);
+    if ($groupRequest('GET', "/$group")['main_product_id'] !== $variant) $errors[] = 'Editing a product without group fields must preserve its membership and main selection';
+    $destination = $groupRequest('POST', '', ['name' => 'Fixture group', 'product_ids' => [$variant], 'main_product_id' => $variant])['id'];
+    $after = $groupRequest('GET', "/$group");
+    if ($after['main_product_id'] !== null || in_array($variant, array_column($after['products'], 'id'), true)) $errors[] = 'Transferring a main product must remove it and clear the source selection';
+    if ($groupRequest('GET', "/$destination")['main_product_id'] !== $variant) $errors[] = 'The transferred product must be the main product in its new group';
+    try {
+        $groupRequest('PATCH', "/$group", ['name' => $source['name'], 'product_ids' => $sourceIds, 'main_product_id' => $variant, 'revision' => $source['revision']]);
+        $errors[] = 'A stale group edit must not overwrite the transfer';
+    } catch (DomainExceptionModule $error) {
+        if ($error->getStatus() !== 409) $errors[] = 'A stale group edit must return 409';
+    }
 } finally {
     $db->rollBack();
 }
 
 if($errors){echo implode("\n",$errors)."\n";exit(1);}
-echo "Catalogue publication: public list ignores includeInactive, admin retains drafts, draft detail 404, active detail 200, pack ordering and main-in-group visibility, search, filters and switching passed.\n";
+echo "Catalogue publication and admin groups: pack visibility, search, filters, switching, search thumbnails, group editing and transfers passed.\n";

@@ -107,6 +107,7 @@ final readonly class UpdateProductHandler
                 attributeValueIds: $command->attributeValueIds,
                 productGroupId: $command->productGroupId,
                 isMainInGroup: $command->isMainInGroup,
+                updateProductGroup: $command->updateProductGroup,
             );
             $this->productContentSyncer->sync(
                 productId: $command->productId,

@@ -37,8 +37,6 @@ export type ProductForm = {
   regulatory_evidence: string;
   active_components_text: string;
   attribute_value_ids: number[];
-  product_group_id: string;
-  is_main_in_group: boolean;
   related_blog_post_ids: number[];
   certificate_ids: number[];
   faq_ids: number[];
@@ -79,8 +77,6 @@ export const emptyProductForm: ProductForm = {
   regulatory_evidence: '',
   active_components_text: '',
   attribute_value_ids: [],
-  product_group_id: '',
-  is_main_in_group: false,
   related_blog_post_ids: [],
   certificate_ids: [],
   faq_ids: [],
@@ -126,8 +122,6 @@ export function productFormFromProduct(product: Product): ProductForm {
     regulatory_evidence: product.regulatory_evidence ?? '',
     active_components_text: product.active_components_text ?? '',
     attribute_value_ids: product.attribute_value_ids ?? [],
-    product_group_id: product.product_group_id ? String(product.product_group_id) : '',
-    is_main_in_group: product.is_main_in_group ?? false,
     related_blog_post_ids: product.related_blog_post_ids ?? [],
     certificate_ids: product.certificate_ids ?? [],
     faq_ids: product.faq_ids ?? [],
@@ -185,8 +179,6 @@ export function productPayloadFromForm(form: ProductForm) {
     regulatoryEvidence: form.regulatory_evidence || null,
     activeComponentsText: form.active_components_text || null,
     attributeValueIds: form.attribute_value_ids,
-    productGroupId: form.product_group_id ? Number(form.product_group_id) : null,
-    isMainInGroup: Boolean(form.product_group_id) && form.is_main_in_group,
     relatedBlogPostIds: form.related_blog_post_ids,
     certificateIds: form.certificate_ids,
     faqIds: form.faq_ids,

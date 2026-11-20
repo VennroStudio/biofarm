@@ -24,6 +24,10 @@ return [
     'error.attribute_not_found'                    => 'Attribute not found.',
     'error.attribute_value_slug_already_exists'    => 'Attribute value with this slug already exists in this attribute.',
     'error.product_group_name_required'            => 'Product group name is required.',
+    'error.product_group_name_too_long'             => 'Product group name must be 255 characters or fewer.',
+    'error.product_group_main_not_member'           => 'Select a main product from this group.',
     'error.product_group_not_found'                => 'Product group not found.',
     'error.main_product_group_required'             => 'Select a group before choosing its main product.',
+    'error.product_group_products_unavailable'      => 'Some products are unavailable. Reopen the group and check the list.',
+    'error.product_group_edit_conflict'             => 'The group has changed. Reopen the editor to load the latest list.',
 ];

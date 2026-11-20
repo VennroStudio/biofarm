@@ -1,7 +1,7 @@
 import { materialsApi } from '../features/materials/api';
 import { Plus } from 'lucide-react';
 import { FormEvent, useMemo, useRef, useState } from 'react';
-import { attributesApi, blogApi, categoriesApi, productGroupsApi, productsApi } from '../api/resources';
+import { attributesApi, blogApi, categoriesApi, productsApi } from '../api/resources';
 import {
   emptyProductForm,
   imageItem,
@@ -14,13 +14,12 @@ import { ProductTable } from '../features/products/ui/ProductTable';
 import { useLoadOnMount } from '../hooks/useLoadOnMount';
 import { messageFromError } from '../shared/lib';
 import { Badge, Button, Card, ErrorAlert, PageHeader, SearchField } from '../shared/ui';
-import type { BlogPost, Category, Product, ProductAttribute, ProductGroup } from '../types';
+import type { BlogPost, Category, Product, ProductAttribute } from '../types';
 
 export function AdminProducts() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [attributes, setAttributes] = useState<ProductAttribute[]>([]);
-  const [productGroups, setProductGroups] = useState<ProductGroup[]>([]);
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
   const [search, setSearch] = useState('');
   const [form, setForm] = useState<ProductForm>(emptyProductForm);
@@ -38,17 +37,15 @@ export function AdminProducts() {
   );
 
   async function load() {
-    const [productResult, categoryResult, attributeResult, productGroupResult, blogResult] = await Promise.all([
+    const [productResult, categoryResult, attributeResult, blogResult] = await Promise.all([
       productsApi.list(),
       categoriesApi.list(),
       attributesApi.list(),
-      productGroupsApi.list(),
       blogApi.list(),
     ]);
     setProducts(productResult.items);
     setCategories(categoryResult.items);
     setAttributes(attributeResult.items);
-    setProductGroups(productGroupResult.items);
     setBlogPosts(blogResult.items);
   }
 
@@ -168,7 +165,6 @@ export function AdminProducts() {
       {dialogOpen && <ProductFormModal
         categories={categories}
         attributes={attributes}
-        productGroups={productGroups}
         blogPosts={blogPosts}
         form={form}
         open={dialogOpen}
