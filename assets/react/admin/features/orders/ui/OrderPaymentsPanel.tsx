@@ -126,7 +126,7 @@ export function OrderPaymentsPanel({ orderId, onPaymentChange }: {
           <p className="text-sm">{ozonLabels[ozon.status] ?? ozon.status}{ozon.orderNumber ? ` · Ozon № ${ozon.orderNumber}` : ''}</p>
           {ozon.postings?.map(posting => <p className="text-sm" key={posting.number}>{posting.number} · {posting.schema} · {posting.status || 'Ожидает обработки'}</p>)}
           {ozon.error && <p className="text-sm text-[#9c3b25]">{ozon.error}</p>}
-          {ozon.status === 'submitted' && ozon.error?.includes('сверка невыкупленных экземпляров FBS') && <form className="space-y-3" onSubmit={event => {
+          {['submitted', 'cancel_pending', 'cancel_sending'].includes(ozon.status) && ozon.error?.includes('сверка невыкупленных экземпляров FBS') && <form className="space-y-3" onSubmit={event => {
             event.preventDefault();
             const form = new FormData(event.currentTarget);
             void run(async () => {

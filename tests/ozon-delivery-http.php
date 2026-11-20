@@ -83,11 +83,11 @@ $nativeMarks = ["010460123456789021EXAMPLE1\x1d93AAAA", "010460123456789021EXAMP
 $providerPayments = $providerRefunds = $providerReceipts = $created = $postingStatuses = $cancelled = [];
 $refundCalls = $createCalls = 0;
 $pickedStatus = 'awaiting_deliver';
-$fbsTrackingOffline = $fbsRefusal = $fbsRefusalIdentified = false;
+$unknownQuote = $fbsTrackingOffline = $fbsRefusal = $fbsRefusalIdentified = false;
 $partial = $pendingCancellation = $lostCreate = $splitCheckout = false;
 
 $reply = static fn (array $body, int $http = 200) => Create::promiseFor(new Response($http, ['Content-Type' => 'application/json'], json_encode($body, JSON_THROW_ON_ERROR)));
-$ozon = static function (RequestInterface $request) use ($reply, $point, $sku, $date, $email, $nativeMarks, &$created, &$pickedStatus, &$partial, &$pendingCancellation, &$lostCreate, &$createCalls, &$splitCheckout, &$postingStatuses, &$cancelled, &$fbsTrackingOffline, &$fbsRefusal, &$fbsRefusalIdentified) {
+$ozon = static function (RequestInterface $request) use ($reply, $point, $sku, $date, $email, $nativeMarks, &$created, &$pickedStatus, &$partial, &$pendingCancellation, &$lostCreate, &$createCalls, &$splitCheckout, &$postingStatuses, &$cancelled, &$unknownQuote, &$fbsTrackingOffline, &$fbsRefusal, &$fbsRefusalIdentified) {
     check($request->getUri()->getHost() === 'api-seller.ozon.ru', 'production path must use Seller API');
     check(str_starts_with($request->getHeaderLine('Authorization'), 'Bearer '), 'authenticated Seller API request');
     $in = json_decode((string)$request->getBody(), true, flags: JSON_THROW_ON_ERROR);
@@ -107,6 +107,9 @@ $ozon = static function (RequestInterface $request) use ($reply, $point, $sku, $
             return $reply(['is_possible' => true]);
         case '/v2/delivery/checkout':
             check($in['delivery_type'] === ['pick_up' => ['map_point_id' => $point]], 'pickup only');
+            if ($unknownQuote) {
+                return $reply(['splits' => [['unavailable_reason' => 'UNKNOWN']]]);
+            }
             if ($splitCheckout && $in['delivery_schema'] !== 'MIX') {
                 return $reply(['splits' => []]);
             }
@@ -496,6 +499,20 @@ try {
     $splitCheckout = false;
 
     $db->update('ozon_catalog_products', ['fbs_sku' => null, 'fbs_stock' => 0], ['product_id' => 1]);
+    $uncertain = $newOrder();
+    $call('POST', "/v1/payments/$uncertain", 200, [], $buyer);
+    $number = array_key_last($providerPayments);
+    $providerPayments[$number]['paid'] = true;
+    $providerPayments[$number]['status'] = 'succeeded';
+    $call('POST', '/webhooks/yookassa', 200, ['event' => 'payment.succeeded', 'object' => ['id' => $number]]);
+    $before = $createCalls;
+    $unknownQuote = true;
+    $fulfillment->process($uncertain);
+    check($createCalls === $before && $db->fetchOne('SELECT status FROM ozon_delivery_orders WHERE order_id=?', [$uncertain]) === 'queued',
+        'unknown availability after payment must be retried without dispatch or refund');
+    $unknownQuote = false;
+    $fulfillment->process($uncertain);
+    check($createCalls === $before + 1, 'dispatch after the paid quote is confirmed');
     $late = $newOrder();
     $call('POST', "/v1/payments/$late", 200, [], $buyer);
     $latePayment = array_key_last($providerPayments);

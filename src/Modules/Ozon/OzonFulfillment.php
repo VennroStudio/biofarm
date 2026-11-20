@@ -131,7 +131,7 @@ final readonly class OzonFulfillment
                 throw new DomainExceptionModule('order', 'Укажите ID невыкупленных экземпляров и основание сверки.', 45, status: 422);
             }
             $known = array_column(json_decode($row['postings'] ?? '[]', true, flags: JSON_THROW_ON_ERROR), null, 'number');
-            if (($row['status'] ?? '') !== 'submitted' || ($known[$number]['schema'] ?? '') !== 'FBS'
+            if (!in_array($row['status'] ?? '', ['submitted', 'cancel_pending', 'cancel_sending'], true) || ($known[$number]['schema'] ?? '') !== 'FBS'
                 || !self::received($known[$number]) || isset($this->issuedUnits($id)[$number])) {
                 throw new DomainExceptionModule('order', 'Сверка недоступна для этого отправления.', 45, status: 409);
             }
@@ -147,7 +147,7 @@ final readonly class OzonFulfillment
                 throw new DomainExceptionModule('order', $e->getMessage(), 45, status: 422, previous: $e);
             }
             $this->update($id, ['payload' => json_encode($payload, JSON_THROW_ON_ERROR), 'next_check_at' => null]);
-            return ['status' => 'submitted'];
+            return ['status' => $row['status']];
         }, failOnContention: true);
     }
 

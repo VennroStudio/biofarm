@@ -98,6 +98,9 @@ final readonly class OzonDelivery
         }
         foreach ($splits as $split) {
             $method = $split['delivery_method'] ?? [];
+            if (in_array('UNKNOWN', [$split['unavailable_reason'] ?? null, $method['unavailable_reason'] ?? null], true)) {
+                throw new OzonException('Ozon пока не подтвердил доступность доставки.');
+            }
             if (($split['unavailable_reason'] ?? 'UNSPECIFIED') !== 'UNSPECIFIED'
                 || ($method['unavailable_reason'] ?? 'UNSPECIFIED') !== 'UNSPECIFIED') {
                 throw new OzonException('Ozon не может доставить всю корзину по этой схеме.', quoteUnavailable: true);
