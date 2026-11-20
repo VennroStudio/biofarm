@@ -22,7 +22,7 @@ revision=$(git --git-dir="$repo" rev-parse --verify 'refs/heads/main^{commit}')
 name="$(date -u +%Y%m%d-%H%M%S)-${revision:0:8}"
 candidate="$root/biofarm-releases/$name"
 mkdir -m 755 "$candidate"
-git --git-dir="$repo" archive "$revision:new-backend" | tar -xf - -C "$candidate"
+git --git-dir="$repo" archive "$revision" | tar -xf - -C "$candidate"
 
 # Files generated through the admin stay outside Git releases.
 if [ -e "$candidate/.env" ]; then echo 'Refusing tracked production .env' >&2; exit 1; fi

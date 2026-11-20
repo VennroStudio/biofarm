@@ -1,3 +1,25 @@
-.idea
+# Environment files
+.env
+.env.deploy
+.env.prod
+
+# Composer
+/vendor/
+auth.json
+
+# Node / Vite
+node_modules/
+public/build/
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
 .DS_Store
-backend/vendor
+Thumbs.db
+
+/var/
+/primer/

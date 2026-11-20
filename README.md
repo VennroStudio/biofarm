@@ -104,7 +104,7 @@ In local Docker development start the worker in a separate terminal:
 docker compose exec php-fpm php bin/sync-ozon.php --watch
 ```
 
-On shared hosting, schedule `php /path/to/new-backend/bin/sync-ozon.php` once per
+On shared hosting, schedule `php /path/to/biofarm/bin/sync-ozon.php` once per
 minute. It processes the initial import request and queued FBO notifications.
 A single worker lock prevents overlap.
 
