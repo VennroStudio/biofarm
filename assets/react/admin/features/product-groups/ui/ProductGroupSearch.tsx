@@ -41,6 +41,7 @@ export function ProductGroupSearch({ selected, onAdd }: Props) {
   function pick(product: ProductGroupMember) {
     onAdd(product);
     setSearch('');
+    setOpen(false);
     setHighlighted(-1);
     setResult(undefined);
   }
