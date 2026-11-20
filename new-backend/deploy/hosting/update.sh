@@ -9,11 +9,12 @@ flock -n 9 || { echo 'Another deployment is running.' >&2; exit 1; }
 export PATH="$tools/node/bin:$PATH"
 php=/opt/php/8.4/bin/php
 mode="${1:-update}"
-case "$mode" in update|prepare|rollback) ;; *) echo 'Usage: biofarm-update [prepare|rollback]' >&2; exit 1;; esac
-
-if [ "$mode" = rollback ]; then
-    exec python3 "$tools/release.py" rollback "$root"
-fi
+case "$mode" in
+    update|prepare) ;;
+    rollback) exec python3 "$tools/release.py" rollback "$root" ;;
+    backup) exec bash "$tools/backup.sh" ;;
+    *) echo 'Usage: biofarm-update [prepare|rollback|backup]' >&2; exit 1 ;;
+esac
 
 repo="$root/biofarm-repository.git"
 git --git-dir="$repo" fetch --prune origin '+refs/heads/main:refs/heads/main'
