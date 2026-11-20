@@ -59,7 +59,7 @@ Original hosting root: $root
 2. Restore database.sql.gz to a separate, empty MySQL database. Configure its
    connection in biofarm-shared/.env for the recovered installation.
 3. The site root is $release/public. The archive includes the
-   PHP dependencies, built assets and uploads. If the hosting path changes, repoint
+   PHP handler settings, dependencies, built assets and uploads. If the hosting path changes, repoint
    biofarm-current, the release's .env and public/uploads, www/biofarm.store and
    bin/biofarm-update from the old root to the recovered installation.
 4. Verify the site with biofarm-tools/health.py, then enable the saved crontab
@@ -69,13 +69,13 @@ EOF
 tar --exclude="$release/node_modules" --exclude="$release/repository-upload-seeds" \
     --exclude="$release/var/cache/*" --exclude="$release/var/log/*" \
     --exclude='biofarm-shared/ozon-catalog-cron.log' --exclude='biofarm-shared/.env.lock' \
-    -czpf "$archive" -C "$root" "$release" biofarm-shared biofarm-current www/biofarm.store \
+    -czpf "$archive" -C "$root" "$release" biofarm-shared biofarm-current www/biofarm.store php-bin/biofarm.store \
     bin/biofarm-update biofarm-tools/{backup.sh,health.py,release.py,update.sh,composer.phar,node} \
     "biofarm-tools/$(basename "$node")" -C "$work" database.sql.gz crontab.txt RESTORE.txt
 gzip -t "$archive"
 tar -tzf "$archive" > "$work/archive-files.txt"
 for path in database.sql.gz crontab.txt RESTORE.txt biofarm-current www/biofarm.store \
-    biofarm-shared/.env biofarm-shared/uploads/ "$release/RELEASE_COMMIT" \
+    biofarm-shared/.env biofarm-shared/uploads/ php-bin/biofarm.store/php.ini "$release/RELEASE_COMMIT" \
     "$release/public/index.php" "$release/public/build/.vite/manifest.json" "$release/vendor/autoload.php"; do
     grep -Fxq -- "$path" "$work/archive-files.txt"
 done
