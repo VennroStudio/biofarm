@@ -28,13 +28,16 @@ final readonly class OzonPickupDirectory
         return $rows;
     }
 
-    public function refresh(): int
+    public function refresh(bool $onlyIfDue = false): int
     {
         $lock = 'ozon-pickup-' . sha1((string)$this->db->getDatabase());
         if ((int)$this->db->fetchOne('SELECT GET_LOCK(?, 0)', [$lock]) !== 1) {
             return 0;
         }
         try {
+            if ($onlyIfDue && $this->db->fetchOne('SELECT 1 FROM ozon_catalog_state WHERE id=1 AND points_refreshed_at > UTC_TIMESTAMP() - INTERVAL 1 DAY')) {
+                return 0;
+            }
             $published = gmdate('Y-m-d H:i:s');
             $delivery = $this->delivery;
             $count = 0;
@@ -55,6 +58,7 @@ final readonly class OzonPickupDirectory
                 throw new OzonException('Справочник Ozon выглядит неполным. Ранее загруженные пункты выдачи сохранены.');
             }
             $this->db->executeStatement('DELETE FROM ozon_pickup_points WHERE refreshed_at < ?', [$published]);
+            $this->db->update('ozon_catalog_state', ['points_refreshed_at' => $published], ['id' => 1]);
             return $count;
         } finally {
             $this->db->fetchOne('SELECT RELEASE_LOCK(?)', [$lock]);

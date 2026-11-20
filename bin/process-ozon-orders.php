@@ -6,6 +6,7 @@ declare(strict_types=1);
 use App\Modules\Ozon\OzonConnection;
 use App\Modules\Ozon\OzonFulfillment;
 use App\Modules\Ozon\OzonPickupDirectory;
+use App\Modules\Ozon\OzonPickupCheckout;
 use App\Modules\Payment\Service\PaymentService;
 
 if (PHP_SAPI !== 'cli') {
@@ -13,10 +14,10 @@ if (PHP_SAPI !== 'cli') {
 }
 $options = array_slice($argv, 1);
 if ($options === ['--help']) {
-    echo "php bin/process-ozon-orders.php [--watch | --refresh-points]\n";
+    echo "php bin/process-ozon-orders.php [--watch | --refresh-points | --refresh-points-if-due]\n";
     exit;
 }
-if (count($options) > 1 || array_diff($options, ['--watch', '--refresh-points']) !== []) {
+if (count($options) > 1 || array_diff($options, ['--watch', '--refresh-points', '--refresh-points-if-due']) !== []) {
     exit(2);
 }
 require dirname(__DIR__) . '/vendor/autoload.php';
@@ -24,6 +25,12 @@ $container = require dirname(__DIR__) . '/config/container.php';
 $watch = $options === ['--watch'];
 do {
     try {
+        if ($options === ['--refresh-points-if-due']) {
+            if ($container->get(OzonPickupCheckout::class)->ready()) {
+                $container->get(OzonPickupDirectory::class)->refresh(onlyIfDue: true);
+            }
+            exit;
+        }
         if ($options === ['--refresh-points']) {
             if (!$container->get(OzonConnection::class)->deliveryConnected()) {
                 throw new RuntimeException('Доступ к доставке Ozon не настроен.');

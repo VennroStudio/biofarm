@@ -43,6 +43,7 @@ $tables = [
     'program_locks', 'program_orders', 'program_refunds', 'program_ledger', 'program_audit',
 ];
 createOzonTestTables($db, $tables);
+createStockTestSchema($db);
 $tablesOnServer = $db->createSchemaManager()->listTableNames();
 createOzonTestTables($db, array_intersect(['ozon_pickup_points', 'ozon_delivered_postings', 'phone_verification_challenges'], $tablesOnServer));
 
@@ -82,10 +83,11 @@ $nativeMarks = ["010460123456789021EXAMPLE1\x1d93AAAA", "010460123456789021EXAMP
 $providerPayments = $providerRefunds = $providerReceipts = $created = $postingStatuses = $cancelled = [];
 $refundCalls = $createCalls = 0;
 $pickedStatus = 'awaiting_deliver';
+$fbsTrackingOffline = $fbsRefusal = $fbsRefusalIdentified = false;
 $partial = $pendingCancellation = $lostCreate = $splitCheckout = false;
 
 $reply = static fn (array $body, int $http = 200) => Create::promiseFor(new Response($http, ['Content-Type' => 'application/json'], json_encode($body, JSON_THROW_ON_ERROR)));
-$ozon = static function (RequestInterface $request) use ($reply, $point, $sku, $date, $email, $nativeMarks, &$created, &$pickedStatus, &$partial, &$pendingCancellation, &$lostCreate, &$createCalls, &$splitCheckout, &$postingStatuses, &$cancelled) {
+$ozon = static function (RequestInterface $request) use ($reply, $point, $sku, $date, $email, $nativeMarks, &$created, &$pickedStatus, &$partial, &$pendingCancellation, &$lostCreate, &$createCalls, &$splitCheckout, &$postingStatuses, &$cancelled, &$fbsTrackingOffline, &$fbsRefusal, &$fbsRefusalIdentified) {
     check($request->getUri()->getHost() === 'api-seller.ozon.ru', 'production path must use Seller API');
     check(str_starts_with($request->getHeaderLine('Authorization'), 'Bearer '), 'authenticated Seller API request');
     $in = json_decode((string)$request->getBody(), true, flags: JSON_THROW_ON_ERROR);
@@ -105,13 +107,26 @@ $ozon = static function (RequestInterface $request) use ($reply, $point, $sku, $
             return $reply(['is_possible' => true]);
         case '/v2/delivery/checkout':
             check($in['delivery_type'] === ['pick_up' => ['map_point_id' => $point]], 'pickup only');
+            if ($splitCheckout && $in['delivery_schema'] !== 'MIX') {
+                return $reply(['splits' => []]);
+            }
             $split = [
-                'delivery_schema' => 'FBO', 'warehouse_id' => 17, 'items' => $in['items'],
+                'delivery_schema' => $in['delivery_schema'] === 'FBS' ? 'FBS' : 'FBO', 'warehouse_id' => 17, 'items' => $in['items'],
                 'commissions' => ['total' => ['currency' => 'RUB', 'amount' => '30']],
                 'delivery_method' => ['id' => 12, 'delivery_type' => 'PVZ', 'timeslots' => [
                     ['timeslot_id' => 13, 'logistic_date_range' => ['from' => $date, 'to' => $date]],
                 ]],
             ];
+            if (count($in['items']) === 2) {
+                check($in['delivery_schema'] === 'MIX', 'different products require both schemes');
+                $second = $split;
+                $split['delivery_schema'] = 'FBO';
+                $split['items'] = [$in['items'][0]];
+                $second['delivery_schema'] = 'FBS';
+                $second['warehouse_id'] = 18;
+                $second['items'] = [['sku' => $sku + 101, 'quantity' => 1]];
+                return $reply(['splits' => [$split, $second]]);
+            }
             if (!$splitCheckout) {
                 return $reply(['splits' => [$split]]);
             }
@@ -121,6 +136,7 @@ $ozon = static function (RequestInterface $request) use ($reply, $point, $sku, $
             $split['commissions']['total']['amount'] = '12';
             $second['items'][0]['quantity'] = 2;
             $second['warehouse_id'] = 18;
+            $second['delivery_schema'] = 'FBS';
             $second['commissions']['total']['amount'] = '18';
             $second['delivery_method']['timeslots'][0]['logistic_date_range'] = ['from' => '2026-12-02T10:00:00Z', 'to' => '2026-12-02T10:00:00Z'];
             return $reply(['splits' => [$second, $split]]);
@@ -134,10 +150,16 @@ $ozon = static function (RequestInterface $request) use ($reply, $point, $sku, $
             $num = '3123456700-' . str_pad((string)$createCalls, 4, '0', STR_PAD_LEFT);
             $created[$num] = $in;
             return $reply(['order_number' => $num, 'postings' => [$num . '-1']]);
+        case '/v4/posting/fbs/list':
         case '/v3/posting/fbo/list':
+            if ($path === '/v4/posting/fbs/list' && $fbsTrackingOffline) {
+                return $reply(['message' => 'unavailable'], 503);
+            }
             check(isset($created[$num]), 'must track the correct Ozon order');
             $postings = [];
             foreach ($created[$num]['splits'] as $split) {
+                $isFbs = $created[$num]['delivery_schema'] === 'FBS' || ($created[$num]['delivery_schema'] === 'MIX' && $split['warehouse_id'] === 18);
+                if ($isFbs !== ($path === '/v4/posting/fbs/list')) continue;
                 $posting = $num . '-' . ($split['warehouse_id'] === 17 ? '1' : '2');
                 $status = isset($cancelled[$num]) ? 'cancelled' : ($postingStatuses[$posting] ?? $pickedStatus);
                 if ($status === 'unlisted') {
@@ -159,6 +181,12 @@ $ozon = static function (RequestInterface $request) use ($reply, $point, $sku, $
                 ];
             }
             return $reply(['postings' => $postings]);
+        case '/v3/posting/fbs/get':
+            $posting = $in['posting_number'];
+            $codes = str_ends_with($posting, '-2') ? array_slice($nativeMarks, 1) : array_slice($nativeMarks, 0, 2);
+            return $reply(['result' => ['posting_number' => $posting, 'product_exemplars' => ['products' => [[
+                'sku' => $sku, 'exemplars' => array_map(static fn ($i, $mark) => ['exemplar_id' => $i + 1, 'mandatory_mark' => $mark], array_keys($codes), $codes),
+            ]]]]]);
         case '/v1/posting/marks':
             $posting = $in['posting_numbers'][0];
             $first = ['exemplar_id' => 1, 'sku' => $sku, 'posting_number' => $posting, 'mandatory_marks' => [$nativeMarks[0]]];
@@ -171,7 +199,12 @@ $ozon = static function (RequestInterface $request) use ($reply, $point, $sku, $
             return $reply(['issued_exemplars' => $partial ? [$first] : [$first, $second],
                 'non_issued_exemplars' => $partial ? [array_diff_key($second, ['mandatory_marks' => true])] : []]);
         case '/v1/returns/list':
-            return $reply(['returns' => [], 'has_next' => false]);
+            $posting = $in['filter']['posting_numbers'][0];
+            return $reply(['returns' => !$fbsRefusal ? [] : [[
+                'id' => 22, 'type' => 'PartialReturn', 'order_number' => substr($posting, 0, -2),
+                'posting_number' => $posting, 'product' => ['sku' => $sku, 'quantity' => 1],
+                'exemplars' => $fbsRefusalIdentified ? [['id' => 1]] : [],
+            ]], 'has_next' => false]);
         case '/v1/order/cancel/check':
             return $reply(['cancellable' => true]);
         case '/v1/cancel-reason/list-by-order':
@@ -243,9 +276,9 @@ try {
         'weight' => '', 'image' => '', 'description' => '', 'created_at' => $now,
     ]);
     $db->insert('ozon_catalog_products', ['ozon_id' => '1000123457', 'product_id' => 1,
-        'sku' => (string)$sku, 'fbo_sku' => (string)$sku, 'stock' => 10, 'archived' => 0]);
+        'sku' => (string)$sku, 'fbo_sku' => (string)$sku, 'stock' => 1000, 'archived' => 0]);
     $db->insert('ozon_catalog_state', ['id' => 1]);
-    $scopes = ['seller-api.product-read-only', 'seller-api.ozon-logistics', 'seller-api.posting-fbo', 'seller-api.returns'];
+    $scopes = ['seller-api.product-read-only', 'seller-api.ozon-logistics', 'seller-api.posting-fbo', 'seller-api.returns', 'seller-api.posting-fbs'];
     $token = 'fixture.' . rtrim(strtr(base64_encode(json_encode(['sub' => '123', 'scope' => $scopes])), '+/', '-_'), '=') . '.unused';
     $container->get(IntegrationCredentialStore::class)->save('ozon.seller.oauth', json_encode([
         'seller' => '123', 'client' => 'fixture', 'access' => $token, 'refresh' => 'fixture', 'expires' => time() + 3600,
@@ -281,6 +314,7 @@ try {
     parse_str(parse_url($prospective, PHP_URL_QUERY), $query);
     check(explode(' ', $query['scope']) === $scopes, 'request correct Seller scopes');
     check($container->get(OzonPickupDirectory::class)->refresh() === 1, 'refreshes Ozon directory');
+    check($container->get(OzonPickupDirectory::class)->refresh(onlyIfDue: true) === 0, 'a completed pickup directory is reused');
     $points = $call('GET', '/v1/ozon-delivery/pickup-points?q=' . rawurlencode('Томск Ленина'), 200);
     check(($points[0]['id'] ?? null) === $point, 'local address search returns matching point');
     $fulfillment = $container->get(OzonFulfillment::class);
@@ -380,6 +414,32 @@ try {
     check(count(end($providerReceipts)['items']) === 2 && end($providerRefunds)['amount']['value'] === '10.00', 'only the issued item is fiscalized and one item is refunded');
     $partial = false;
 
+    $db->update('ozon_catalog_products', ['stock' => 0, 'fbs_sku' => (string)$sku, 'fbs_stock' => 2], ['product_id' => 1]);
+    $fbsQuote = $call('POST', '/v1/ozon-delivery/quote', 200, $quoteInput, $buyer);
+    check(array_column($fbsQuote['shipments'], 'schema') === ['FBS'], 'FBS-only delivery');
+    $fbsId = $newOrder(['ozonQuote' => $fbsQuote['fingerprint']]);
+    $call('POST', '/v1/ozon-delivery/quote', 422, $quoteInput, $buyer);
+    $pay($fbsId);
+    $fulfillment->process($fbsId);
+    check($payments->settlementReceipt($fbsId)['status'] === 'succeeded', 'FBS-only handover issues a marked receipt');
+
+    $fbsRefusal = true;
+    $fbsPartial = $newOrder(['ozonQuote' => $fbsQuote['fingerprint']]);
+    $pay($fbsPartial);
+    $beforeReceipts = count($providerReceipts);
+    $fulfillment->process($fbsPartial);
+    check($db->fetchOne('SELECT status FROM ozon_delivery_orders WHERE order_id=?', [$fbsPartial]) === 'submitted'
+        && count($providerReceipts) === $beforeReceipts, 'ambiguous FBS refusal waits for exact exemplar IDs');
+    $resolution = ['posting' => array_key_last($created) . '-1', 'reason' => 'Сверено с экземплярами возврата у продавца.'];
+    $call('POST', "/admin/api/payments/orders/$fbsPartial/fbs-refusal", 422, ['ids' => ['9999']] + $resolution, $admin);
+    $call('POST', "/admin/api/payments/orders/$fbsPartial/fbs-refusal", 200, ['ids' => ['1']] + $resolution, $admin);
+    $fbsRefusalIdentified = true;
+    $fulfillment->process($fbsPartial);
+    $fulfillment->process($fbsPartial);
+    check($payments->settlementReceipt($fbsPartial)['status'] === 'succeeded'
+        && end($providerReceipts)['items'][0]['mark_code_info']['gs_1m'] === base64_encode($nativeMarks[1]), 'partial FBS receipt uses only the issued mark');
+    $fbsRefusal = false;
+    $db->update('ozon_catalog_products', ['stock' => 1000], ['product_id' => 1]);
     $splitCheckout = true;
     $splitItems = [['productId' => 1, 'quantity' => 3]];
     $quote = $call('POST', '/v1/ozon-delivery/quote', 200, [
@@ -403,12 +463,14 @@ try {
         check($payments->settlementReceipt($id)['status'] === 'not_required', 'no receipt before the first handover');
         $postingStatuses[$num . '-1'] = 'delivered';
         $postingStatuses[$num . '-2'] = 'unlisted';
+        $fbsTrackingOffline = true;
         $fulfillment->process($id);
         $fulfillment->process($id);
         check($payments->settlementReceipt($id)['status'] === 'succeeded', 'first handover can be fiscalized before Ozon lists the second posting');
         check(count($providerReceipts) === $receiptsBefore + 1 && $refundCalls === $refundsBefore, 'incomplete list neither duplicates a receipt nor refunds missing goods');
         check(end($providerReceipts)['settlements'][0]['amount']['value'] === '39.67', 'first receipt includes the issued unit and the delivery fee once');
         check($db->fetchOne('SELECT status FROM orders WHERE id=?', [$id]) === 'processing', 'order is still processing after the first handover');
+        $fbsTrackingOffline = false;
         $postingStatuses[$num . '-2'] = $secondStatus;
         $fulfillment->process($id);
         $fulfillment->process($id);
@@ -433,6 +495,29 @@ try {
     }
     $splitCheckout = false;
 
+    $db->update('ozon_catalog_products', ['fbs_sku' => null, 'fbs_stock' => 0], ['product_id' => 1]);
+    $late = $newOrder();
+    $call('POST', "/v1/payments/$late", 200, [], $buyer);
+    $latePayment = array_key_last($providerPayments);
+    $db->update('ozon_stock_reservations', ['expires_at' => '2000-01-01'], ['order_id' => $late]);
+    $call('POST', "/v1/payments/$late", 409, [], $buyer);
+    $providerPayments[$latePayment]['paid'] = true;
+    $providerPayments[$latePayment]['status'] = 'succeeded';
+    $call('POST', '/webhooks/yookassa', 200, ['event' => 'payment.succeeded', 'object' => ['id' => $latePayment]]);
+    $before = $createCalls;
+    $fulfillment->process($late);
+    $fulfillment->process($late);
+    check($db->fetchOne('SELECT payment_status FROM orders WHERE id=?', [$late]) === 'refunded' && $createCalls === $before,
+        'late payment is refunded without dispatch');
+    $fixture = $db->fetchAssociative('SELECT * FROM products WHERE id=1');
+    $db->insert('products', array_replace($fixture, ['id' => 2, 'slug' => 'ozon-fbs-item', 'sku' => 'second-fbs']));
+    $db->insert('ozon_catalog_products', ['ozon_id' => '1000123458', 'product_id' => 2, 'sku' => $sku + 100,
+        'fbs_sku' => $sku + 101, 'stock' => 0, 'fbs_stock' => 4, 'archived' => 0]);
+    $basket = [['productId' => 1, 'quantity' => 1], ['productId' => 2, 'quantity' => 1]];
+    $quote2 = $call('POST', '/v1/ozon-delivery/quote', 200, ['items' => $basket] + $quoteInput, $buyer);
+    $two = $newOrder(['items' => $basket, 'ozonQuote' => $quote2['fingerprint']]);
+    check((int)$db->fetchOne('SELECT COUNT(*) FROM ozon_stock_reservations WHERE order_id=?', [$two]) === 2,
+        'mixed cart reserves both products using their scheme-specific SKUs');
     $lostCreate = true;
     $reviewId = $newOrder();
     $pay($reviewId);

@@ -42,6 +42,9 @@ final readonly class OzonAdminAction implements RequestHandlerInterface
                 $this->catalog->request();
                 return new JsonDataResponse($this->status(), 202);
             }
+            if (($request->getQueryParams()['view'] ?? null) === 'stocks') {
+                return (new JsonDataResponse($this->catalog->stocks()))->withHeader('Cache-Control', 'no-store');
+            }
             return (new JsonDataResponse($this->status()))->withHeader('Cache-Control', 'no-store');
         } catch (OzonException $exception) {
             return new JsonResponse(['error' => $exception->getMessage()], 422);
@@ -56,6 +59,7 @@ final readonly class OzonAdminAction implements RequestHandlerInterface
             'redirectUri' => $this->connection->redirectUri,
             'webhookUrl' => $this->webhook->url(),
             'deliveryEnabled' => $this->checkout->method() === OzonPickupCheckout::LIVE_PICKUP,
+            'fbsConnected' => $this->connection->fbsConnected(),
             'deliveryReady' => $this->checkout->ready(),
         ];
     }

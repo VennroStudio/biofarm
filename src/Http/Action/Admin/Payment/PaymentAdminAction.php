@@ -66,6 +66,10 @@ final readonly class PaymentAdminAction implements RequestHandlerInterface
             }
             return new JsonDataResponse($this->payments->settlementReceipt($orderId));
         }
+        if (str_ends_with($path, '/fbs-refusal')) {
+            return new JsonDataResponse($this->ozon->resolveFbsRefusal($orderId, (string)($payload['posting'] ?? ''),
+                (array)($payload['ids'] ?? []), (string)($payload['reason'] ?? ''), RequestIdentity::get($request)->id));
+        }
         if (str_ends_with($path, '/ozon-resolution')) {
             return new JsonDataResponse($this->ozon->resolveSubmission($orderId,
                 trim((string)($payload['externalNumber'] ?? '')), ($payload['confirmedMissing'] ?? false) === true,

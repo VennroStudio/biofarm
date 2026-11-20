@@ -33,7 +33,7 @@ final readonly class SetProductAvailabilityAction implements RequestHandlerInter
             }
 
             if ($availability === 'in_stock') {
-                $stock = $this->db->fetchOne('SELECT stock FROM ozon_catalog_products WHERE product_id = ?', [$id]);
+                $stock = $this->db->fetchOne('SELECT stock + fbs_stock FROM ozon_catalog_products WHERE product_id = ?', [$id]);
                 if ($stock !== false && ((int) $stock === 0 || (int) $row['price'] <= 0)) {
                     return 409;
                 }

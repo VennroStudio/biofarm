@@ -6,6 +6,8 @@ import { Badge, Button, Card, ErrorAlert } from '../../../shared/ui';
 
 const endpoint = '/admin/api/integrations/ozon';
 
+type Stock = { name: string; ozon_id: string; stock: number; fbs_stock: number; stock_checked_at: string | null; warehouses: { id: string; name: string; free: number }[] };
+
 type SyncResult = {
   added: number;
   updated: number;
@@ -27,6 +29,9 @@ type OzonStatus = {
   error: string | null;
   deliveryEnabled: boolean;
   deliveryReady: boolean;
+  fbsConnected: boolean;
+  queuedStocks: number;
+  stockReconciledAt: string | null;
 };
 
 export function OzonIntegrationCard() {
@@ -34,6 +39,7 @@ export function OzonIntegrationCard() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [showWebhook, setShowWebhook] = useState(false);
+  const [stocks, setStocks] = useState<Stock[] | null>(null);
   const pending = status?.pending ?? false;
 
   useEffect(() => {
@@ -84,7 +90,7 @@ export function OzonIntegrationCard() {
   return <Card className="space-y-4 p-6">
     <div>
       <h2 className="flex items-center gap-2 text-xl font-semibold"><Package className="h-5 w-5" aria-hidden="true" />Ozon Seller</h2>
-      <p className="mt-1 text-sm text-[#5f7580]">Первичный импорт каталога и обновление остатков FBO.</p>
+      <p className="mt-1 text-sm text-[#5f7580]">Первичный импорт каталога и обновление остатков FBO и FBS.</p>
     </div>
     <ErrorAlert>{error || status?.error}</ErrorAlert>
     {status && <>
@@ -96,6 +102,10 @@ export function OzonIntegrationCard() {
           Импорт завершён {new Date(status.lastSuccessAt).toLocaleString('ru-RU')}
         </span>}
       </div>
+      {status.connected && !status.first && <p className="text-sm">
+        Последняя сверка остатков — {status.stockReconciledAt ? new Date(status.stockReconciledAt).toLocaleString('ru-RU') : 'ожидается'} · В очереди {status.queuedStocks}
+      </p>}
+      {status.connected && !status.fbsConnected && <p className="text-sm">Для отслеживания FBS нажмите «Переподключить Ozon» и подтвердите доступ к отправлениям.</p>}
       {status.deliveryEnabled && <p className="text-sm text-[#5f7580]">
         {status.deliveryReady ? 'Доставка в ПВЗ Ozon подключена.' : 'Для доставки в ПВЗ проверьте права Ozon, оплату, кассу и подтверждение телефона.'}
       </p>}
@@ -121,12 +131,22 @@ export function OzonIntegrationCard() {
         <p>На момент импорта было {status.result.visible} товаров на витрине · {status.result.available !== undefined ? `в наличии ${status.result.available} · ` : ''}групп {status.result.groups}</p>
         <p className="mt-1">Добавлено {status.result.added} · обновлено {status.result.updated} · перенесено в архив {status.result.archived}</p>
       </div>}
+      {status.connected && !status.first && <details onToggle={event => {
+        if (event.currentTarget.open) void request<Stock[]>(`${endpoint}?view=stocks`).then(setStocks).catch(reason => setError(messageFromError(reason, 'Не удалось загрузить остатки.')));
+      }}>
+        <summary className="cursor-pointer font-medium">Остатки по складам</summary>
+        <div className="max-h-96 overflow-auto">{stocks?.map(item => <div key={item.ozon_id} className="border-b py-2 text-sm">
+          <strong>{item.name}</strong> · FBO {item.stock} · FBS {item.fbs_stock}
+          {item.warehouses.map(w => <span key={w.id}> · {w.name || w.id} ({w.free})</span>)}
+          {item.stock_checked_at && <span> · {new Date(item.stock_checked_at.replace(' ', 'T') + 'Z').toLocaleString('ru-RU')}</span>}
+        </div>)}</div>
+      </details>}
       {status.webhookUrl && <div className="border-t border-[#dfece9] pt-4">
         <button type="button" className="text-sm font-semibold text-[#2e8175] underline" aria-expanded={showWebhook} onClick={() => setShowWebhook(!showWebhook)}>
           {showWebhook ? 'Скрыть адрес уведомлений' : 'Показать адрес уведомлений'}
         </button>
         {showWebhook && <label className="mt-2 block text-sm">
-          Адрес для уведомлений об остатках FBO
+          Адрес для уведомлений об остатках FBO и FBS
           <input className="mt-1 w-full rounded-xl border border-[#dfece9] px-3 py-2" readOnly value={status.webhookUrl} onFocus={(event) => event.target.select()} />
         </label>}
       </div>}

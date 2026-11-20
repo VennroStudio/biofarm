@@ -23,9 +23,10 @@ final readonly class OzonProduct
         public ?string $gtin,
         public string $weight,
         public string $category,
+        public array $warehouses,
     ) {}
 
-    public static function fromOzon(array $detail, string $description, bool $listedArchived): self
+    public static function fromOzon(array $detail, string $description, bool $listedArchived, array $warehouses = []): self
     {
         $id = self::positiveId($detail['id'] ?? null);
         $name = $detail['name'] ?? null;
@@ -83,11 +84,11 @@ final readonly class OzonProduct
             $price, $oldPrice > $price ? $oldPrice : null, $stock, $archived, $images, $html,
             mb_substr(implode(' ', $paragraphs), 0, 500),
             is_string($barcode) && preg_match('/^\d{8,14}$/D', $barcode) ? $barcode : null,
-            $size[0] ?? '', $category,
+            $size[0] ?? '', $category, $archived ? [] : array_values($warehouses),
         );
     }
 
-    public static function stock(array $detail): int
+    public static function stock(array $detail, string $scheme = 'fbo'): int
     {
         $rows = $detail['stocks']['stocks'] ?? null;
         if (!is_array($rows) || !array_is_list($rows)) {
@@ -100,13 +101,13 @@ final readonly class OzonProduct
             if (!is_string($source) || $source === '') {
                 throw new OzonException('Ozon вернул остаток без указания схемы склада.');
             }
-            if ($source !== 'fbo') {
+            if ($source !== $scheme) {
                 continue;
             }
             $present = filter_var($row['present'] ?? null, FILTER_VALIDATE_INT);
             $reserved = filter_var($row['reserved'] ?? null, FILTER_VALIDATE_INT);
             if ($present === false || $reserved === false || $present < 0 || $reserved < 0) {
-                throw new OzonException('Ozon вернул некорректный остаток FBO.');
+                throw new OzonException('Ozon вернул некорректный остаток товара.');
             }
             $available += max(0, $present - $reserved);
         }

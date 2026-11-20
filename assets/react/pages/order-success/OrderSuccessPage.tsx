@@ -134,7 +134,7 @@ function OrderSuccessPage() {
                     <p className="font-semibold">Отправления Ozon</p>
                     <ul className="space-y-1">
                         {visiblePostings.map(posting => <li key={posting.number} className="flex flex-wrap justify-between gap-x-3">
-                            <span>{posting.number}</span>
+                            <span>{posting.number}{posting.schema && ` · ${posting.schema}`}</span>
                             <span>{postingLabels[posting.substatus] ?? postingLabels[posting.status] ?? 'Статус уточняется'}</span>
                         </li>)}
                     </ul>

@@ -9,7 +9,7 @@ type PaymentDetails = {
   payment: { configured: boolean; status: string; orderPaymentStatus: string; amountMinor: number };
   items: { id: number; product_name: string; quantity: number; has_marking?: boolean }[];
   operations: Operation[];
-  ozonDelivery?: { orderNumber?: string; error?: string; status: string } | null;
+  ozonDelivery?: { postings?: { number: string; schema?: string; status: string }[]; orderNumber?: string; error?: string; status: string } | null;
 };
 type RefundAttempt = { id: string; body: { items: { itemId: number; quantity: number; markCodes?: string[] }[]; refundDelivery: boolean } };
 const labels: Record<string, string> = {
@@ -124,7 +124,25 @@ export function OrderPaymentsPanel({ orderId, onPaymentChange }: {
         </>}
         {ozon && <>
           <p className="text-sm">{ozonLabels[ozon.status] ?? ozon.status}{ozon.orderNumber ? ` · Ozon № ${ozon.orderNumber}` : ''}</p>
+          {ozon.postings?.map(posting => <p className="text-sm" key={posting.number}>{posting.number} · {posting.schema} · {posting.status || 'Ожидает обработки'}</p>)}
           {ozon.error && <p className="text-sm text-[#9c3b25]">{ozon.error}</p>}
+          {ozon.status === 'submitted' && ozon.error?.includes('сверка невыкупленных экземпляров FBS') && <form className="space-y-3" onSubmit={event => {
+            event.preventDefault();
+            const form = new FormData(event.currentTarget);
+            void run(async () => {
+              await request(`${url}/fbs-refusal`, { method: 'POST', body: {
+                posting: form.get('posting'), ids: String(form.get('ids')).trim().split(/[\s,]+/), reason: form.get('reason'),
+              } });
+              await refresh();
+            });
+          }}>
+            <Field label="Отправление FBS"><select className={inputClass} name="posting" required>
+              {ozon.postings?.filter(p => p.schema === 'FBS').map(p => <option key={p.number}>{p.number}</option>)}
+            </select></Field>
+            <Field label="ID невыкупленных экземпляров из Ozon Seller"><input className={inputClass} name="ids" required /></Field>
+            <Field label="Основание сверки"><input className={inputClass} name="reason" minLength={8} maxLength={500} required /></Field>
+            <Button disabled={busy} type="submit" variant="outline">Подтвердить экземпляры</Button>
+          </form>}
           {ozon.status === 'submit_review' && <form className="space-y-3" onSubmit={event => {
             event.preventDefault();
             const form = new FormData(event.currentTarget);

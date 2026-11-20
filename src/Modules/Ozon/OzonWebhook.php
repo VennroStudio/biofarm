@@ -68,7 +68,7 @@ final readonly class OzonWebhook
             foreach (array_keys($selectors) as $selector) {
                 $this->db->executeStatement(
                     'INSERT INTO ozon_stock_queue (selector, ready_at) VALUES (?, UTC_TIMESTAMP())
-                     ON DUPLICATE KEY UPDATE revision = revision + 1, attempts = 0, ready_at = UTC_TIMESTAMP()',
+                     ON DUPLICATE KEY UPDATE revision = revision + 1, ready_at = IF(attempts = 0, UTC_TIMESTAMP(), ready_at)',
                     [$selector],
                 );
             }

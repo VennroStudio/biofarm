@@ -50,6 +50,13 @@ final readonly class OzonConnection
         return is_array($claims['scope'] ?? null) && array_diff(self::DELIVERY_SCOPES, $claims['scope']) === [];
     }
 
+    public function fbsConnected(): bool
+    {
+        $tokens = $this->savedTokens();
+        $scopes = $tokens === null ? [] : (self::claims($tokens['access'])['scope'] ?? []);
+        return is_array($scopes) && in_array('seller-api.posting-fbs', $scopes, true);
+    }
+
     public function authorizeUrl(): string
     {
         $this->requireConfig();
@@ -66,7 +73,7 @@ final readonly class OzonConnection
             'client_id' => $this->clientId,
             'redirect_uri' => $this->redirectUri,
             'scope' => implode(' ', env_bool('OZON_DELIVERY_ENABLED', false)
-                ? ['seller-api.product-read-only', ...self::DELIVERY_SCOPES] : ['seller-api.product-read-only']),
+                ? ['seller-api.product-read-only', ...self::DELIVERY_SCOPES, 'seller-api.posting-fbs'] : ['seller-api.product-read-only']),
             'prompt' => 'select_company',
         ], '', '&', PHP_QUERY_RFC3986);
     }
@@ -92,17 +99,17 @@ final readonly class OzonConnection
         ]));
     }
 
-    public function token(): string
+    public function token(?string $rejected = null): string
     {
         $this->requireConfig();
 
-        return $this->withTokenLock(function (): string {
+        return $this->withTokenLock(function () use ($rejected): string {
             $saved = $this->savedTokens();
             if ($saved === null) {
                 throw new OzonException('Сначала подключите Ozon в настройках интеграций.');
             }
             $expiresAt = self::accessExpiresAt(self::claims($saved['access']), (int) $saved['expires']);
-            if ($expiresAt > time() + 120) {
+            if ($saved['access'] !== $rejected && $expiresAt > time() + 120) {
                 return $saved['access'];
             }
             try {

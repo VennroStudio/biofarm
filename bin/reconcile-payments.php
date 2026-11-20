@@ -3,6 +3,7 @@
 
 declare(strict_types=1);
 
+use App\Modules\Ozon\OzonFulfillment;
 use App\Modules\Payment\Service\PaymentService;
 
 if (PHP_SAPI !== 'cli') {
@@ -30,6 +31,7 @@ require dirname(__DIR__) . '/vendor/autoload.php';
 try {
     $container = require dirname(__DIR__) . '/config/container.php';
     $results = $container->get(PaymentService::class)->reconcile($limit);
+    $container->get(OzonFulfillment::class)->tick($limit);
     $checked = count(array_filter($results, static fn (array $result): bool => ($result['checked'] ?? false) === true));
     $statuses = [];
     foreach ($results as $result) {

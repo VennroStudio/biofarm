@@ -27,7 +27,9 @@ final readonly class OzonCatalogSource
         }
 
         $products = [];
-        foreach ($this->details($token, array_keys($list)) as $id => $detail) {
+        $details = $this->details($token, array_keys($list));
+        $warehouses = $this->warehouses($token, $details);
+        foreach ($details as $id => $detail) {
             $archived = $list[$id];
             $description = '';
             if (!$archived && !OzonProduct::archived($detail)) {
@@ -39,7 +41,7 @@ final readonly class OzonCatalogSource
                 }
                 $description = $result['description'];
             }
-            $products[$id] = OzonProduct::fromOzon($detail, $description, $archived);
+            $products[$id] = OzonProduct::fromOzon($detail, $description, $archived, $warehouses[$id] ?? []);
         }
         return $products;
     }
@@ -70,6 +72,73 @@ final readonly class OzonCatalogSource
             }
         }
         return $rows;
+    }
+
+    public function stockSnapshot(string $token, array $ids): array
+    {
+        $details = $this->details($token, $ids);
+        return [$details, $this->warehouses($token, $details)];
+    }
+
+    /** Complete, paginated FBS snapshots for existing product IDs. */
+    public function warehouses(string $token, array $details): array
+    {
+        $warehouses = [];
+        foreach (array_chunk($details, 100, true) as $chunk) {
+            $offers = [];
+            foreach ($chunk as $id => $detail) {
+                if (OzonProduct::archived($detail)) {
+                    continue;
+                }
+                $offer = $detail['offer_id'] ?? null;
+                if (!is_string($offer) || $offer === '') {
+                    throw new OzonException('Ozon не вернул артикул для сверки складов.');
+                }
+                $offers[$id] = $offer;
+            }
+            if (!$offers) {
+                continue;
+            }
+            $cursor = '';
+            $seen = [];
+            do {
+                $reply = $this->api->seller('/v2/product/info/stocks-by-warehouse/fbs', $token, [
+                    'offer_id' => array_values($offers), 'limit' => 100, 'cursor' => $cursor,
+                ]);
+                $rows = $reply['products'] ?? null;
+                if (!is_array($rows) || !array_is_list($rows) || !is_bool($reply['has_next'] ?? null)) {
+                    throw new OzonException('Ozon вернул неполные данные складов FBS.');
+                }
+                foreach ($rows as $row) {
+                    $id = OzonProduct::positiveId($row['product_id'] ?? null);
+                    $warehouse = OzonProduct::positiveId($row['warehouse_id'] ?? null);
+                    $sku = OzonProduct::positiveId($row['sku'] ?? null);
+                    $free = filter_var($row['free_stock'] ?? null, FILTER_VALIDATE_INT);
+                    if (!isset($offers[$id]) || $offers[$id] !== ($row['offer_id'] ?? null)
+                        || !$warehouse || !$sku || $free === false || $free < 0 || isset($warehouses[$id][$warehouse])) {
+                        throw new OzonException('Ozon вернул некорректную строку остатков FBS.');
+                    }
+                    $warehouses[$id][$warehouse] = ['id' => $warehouse, 'name' => (string)($row['warehouse_name'] ?? ''),
+                        'sku' => $sku, 'free' => $free];
+                }
+                if (!$reply['has_next']) {
+                    break;
+                }
+                $cursor = $reply['cursor'] ?? '';
+                if (!is_string($cursor) || $cursor === '' || isset($seen[$cursor]) || !$rows) {
+                    throw new OzonException('Не удалось прочитать все склады FBS.');
+                }
+                $seen[$cursor] = true;
+            } while (true);
+            foreach ($offers as $id => $offer) {
+                $stock = $warehouses[$id] ?? [];
+                if (count(array_unique(array_column($stock, 'sku'))) > 1
+                    || array_sum(array_column($stock, 'free')) !== OzonProduct::stock($chunk[$id], 'fbs')) {
+                    throw new OzonException('Ozon не подтвердил склады для товара ' . $id . '.');
+                }
+            }
+        }
+        return $warehouses;
     }
 
     private function listing(string $token): array

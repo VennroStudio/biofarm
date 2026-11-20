@@ -13,7 +13,7 @@ export type PaymentState = {
         orderNumber?: string | null;
     };
 };
-export type OzonPosting = { number: string; status: string; substatus: string };
+export type OzonPosting = { schema?: string; number: string; status: string; substatus: string };
 
 export function payment(orderId: string, start = false) {
     const token = window.sessionStorage.getItem(`biofarm_payment_${orderId}`);

@@ -44,6 +44,7 @@ createOzonTestTables($db, [
     'ozon_catalog_products', 'ozon_catalog_groups', 'ozon_catalog_state', 'ozon_stock_queue',
     'integration_credentials', 'integration_error_logs', 'users',
 ]);
+createStockTestSchema($db);
 putenv('APP_ENV=prod');
 $db->insert('ozon_catalog_state', ['id' => 1]);
 
@@ -68,7 +69,7 @@ function detail(int $id, int $model, int $stock): array
         'sources' => [['source' => 'fbo', 'sku' => $id + 2000]],
         'stocks' => ['stocks' => [
             ['source' => 'fbo', 'sku' => $id + 1000, 'present' => $stock + 2, 'reserved' => 2],
-            ['source' => 'fbs', 'sku' => $id + 1000, 'present' => 100, 'reserved' => 0],
+            ['source' => 'fbs', 'sku' => $id + 1000, 'present' => 0, 'reserved' => 0],
         ]],
         'primary_image' => ['https://ir.ozone.ru/s3/example.jpg'],
         'images' => ['https://ir.ozone.ru/s3/example.jpg', 'https://ir.ozone.ru/s3/second.jpg'],
@@ -77,11 +78,12 @@ function detail(int $id, int $model, int $stock): array
 }
 
 $details = [901 => detail(901, 77, 3), 902 => detail(902, 77, 0)];
+$details[901]['stocks']['stocks'][1]['present'] = 12;
 $listing = [901, 902];
-$failDetails = false;
+$failDetails = $rejectOnce = $missingWarehouse = false;
 $oauthCalls = [];
 $listCalls = 0;
-$handler = static function (RequestInterface $request) use (&$details, &$listing, &$failDetails, &$oauthCalls, &$listCalls) {
+$handler = static function (RequestInterface $request) use (&$details, &$listing, &$failDetails, &$oauthCalls, &$listCalls, &$rejectOnce, &$missingWarehouse) {
     $path = $request->getUri()->getPath();
     $body = (string) $request->getBody();
     if ($path === '/oauth/token') {
@@ -97,6 +99,10 @@ $handler = static function (RequestInterface $request) use (&$details, &$listing
     } else {
         check(str_starts_with($request->getHeaderLine('Authorization'), 'Bearer fixture.'), 'Seller API must use the OAuth token.');
         $input = json_decode($body, true, flags: JSON_THROW_ON_ERROR);
+        if ($rejectOnce && $path === '/v3/product/info/list') {
+            $rejectOnce = false;
+            return Create::promiseFor(new Response(401, [], '{}'));
+        }
         $reply = match ($path) {
             '/v3/product/list' => (static function () use ($input, $listing, $details, &$listCalls): array {
                 ++$listCalls;
@@ -105,6 +111,11 @@ $handler = static function (RequestInterface $request) use (&$details, &$listing
                 return ['result' => ['items' => $rows, 'total' => count($listing), 'last_id' => (string) ($offset + 1)]];
             })(),
             '/v3/product/info/list' => ['items' => $failDetails ? [] : array_values(array_intersect_key($details, array_fill_keys($input['product_id'], true)))],
+            '/v2/product/info/stocks-by-warehouse/fbs' => ['has_next' => false, 'products' => $missingWarehouse ? [] : array_values(array_map(
+                static fn (array $row): array => ['product_id' => $row['id'], 'offer_id' => $row['offer_id'], 'sku' => $row['sku'],
+                    'warehouse_id' => 123, 'warehouse_name' => 'Склад', 'free_stock' => $row['stocks']['stocks'][1]['present']],
+                array_filter($details, static fn ($row) => in_array($row['offer_id'], $input['offer_id'], true))
+            ))],
             '/v1/product/info/description' => ['result' => ['id' => $input['product_id'], 'description' => '<p>Ozon &amp; Biofarm</p><p>&lt;script&gt;alert(1)&lt;/script&gt;</p>']],
             default => throw new RuntimeException('Unexpected API operation.'),
         };
@@ -197,6 +208,8 @@ $result = $data($call('GET', $base, 200, $admin))['result'];
 check($result === ['added' => 2, 'updated' => 0, 'archived' => 1, 'visible' => 2, 'available' => 1, 'groups' => 1, 'total' => 2], 'First replacement result.');
 check(is_string($db->fetchOne("SELECT deleted_at FROM products WHERE slug = 'old-product'")), 'Legacy product must be archived and retained.');
 $localId = $db->fetchOne('SELECT product_id FROM ozon_catalog_products WHERE ozon_id = 901');
+check((int)$db->fetchOne('SELECT fbs_stock FROM ozon_catalog_products WHERE ozon_id=901') === 12, 'initial import saves warehouse stock');
+$details[901]['stocks']['stocks'][1]['present'] = 0;
 $availabilityPath = '/admin/api/products/' . $localId . '/availability';
 $call('PATCH', $availabilityPath, 401, body: ['availability' => 'out_of_stock']);
 $call('PATCH', $availabilityPath, 200, $admin, ['availability' => 'out_of_stock']);
@@ -326,4 +339,22 @@ check($db->fetchOne('SELECT availability FROM products WHERE id = ?', [$localId]
     && $readCard() === $manualCard && $before === $listCalls,
     'Stock can return after an Ozon archive without reimporting the catalog or changing the local price.');
 
+$details[901]['stocks']['stocks'][0]['present'] = 2;
+$details[901]['stocks']['stocks'][1]['present'] = 1000;
+$call('POST', $hook, 200, body: ['message_type' => 'TYPE_STOCKS_CHANGED', 'stocks' => [['product_id' => 901]]]);
+check($normal->get(OzonCatalogSync::class)->tick($nextDay), 'FBS webhook processed');
+$stock = $db->fetchAssociative('SELECT stock,fbs_stock,fbs_sku,fbs_warehouses FROM ozon_catalog_products WHERE ozon_id=901');
+check((int)$stock['stock'] === 0 && (int)$stock['fbs_stock'] === 1000 && (int)$stock['fbs_sku'] === 1901
+    && json_decode($stock['fbs_warehouses'], true)[0]['id'] === '123', 'separate FBS warehouses and FBO');
+check($db->fetchOne('SELECT availability FROM products WHERE id=?', [$localId]) === 'in_stock' && $readCard() === $manualCard, 'FBS alone enables sale');
+
+$missingWarehouse = true;
+$call('POST', $hook, 200, body: $event);
+check(!$normal->get(OzonCatalogSync::class)->tick($nextDay), 'missing FBS warehouse must fail the snapshot');
+check((int)$db->fetchOne('SELECT fbs_stock FROM ozon_catalog_products WHERE ozon_id=901') === 1000, 'missing response cannot erase confirmed stock');
+$missingWarehouse = false;
+$rejectOnce = true;
+$beforeRefresh = count($oauthCalls);
+check($normal->get(OzonCatalogSync::class)->tick($nextDay->modify('+2 hours')) && count($oauthCalls) === $beforeRefresh + 1,
+    'rejecting a live access token refreshes OAuth and retries the stock snapshot once');
 echo "Ozon HTTP access, OAuth, one-time catalog import, preserved local prices and content, stock transitions and retries passed.\n";

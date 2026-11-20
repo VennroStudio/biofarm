@@ -90,22 +90,63 @@ final readonly class OzonFulfillment
                 $this->update($orderId, $changes);
                 return ['status' => $changes['status']];
             }
-            $postings = $this->delivery->postings($number);
+            $postings = $this->delivery->postings($number, $payload['schema'] ?? 'FBO', $payload['placedAt'] ?? null);
             $products = [];
+            $observed = [];
             foreach ($postings as $posting) {
                 if (($posting['order_number'] ?? '') !== $number || ($posting['external_order']['is_external'] ?? false) !== true) {
                     throw new DomainExceptionModule('order', 'Номер не относится к заказам с внешней витрины.', 45, status: 422);
+                }
+                foreach ($this->quantities($posting['products'] ?? [], 'sku') as $sku => $quantity) {
+                    $observed[$posting['schema']][$sku] = ($observed[$posting['schema']][$sku] ?? 0) + $quantity;
                 }
                 array_push($products, ...($posting['products'] ?? []));
             }
             if ($this->quantities($products, 'sku') !== $this->quantities($payload['items'], 'sku')) {
                 throw new DomainExceptionModule('order', 'Состав заказа Ozon не совпадает.', 45, status: 422);
             }
+            foreach ($payload['shipments'] ?? [] as $part) {
+                foreach ($part['items'] as $sku => $qty) {
+                    $observed[$part['schema']][$sku] = ($observed[$part['schema']][$sku] ?? 0) - $qty;
+                    if ($observed[$part['schema']][$sku] < 0) {
+                        throw new DomainExceptionModule('order', 'Схема и состав отправлений Ozon не совпадают.', 45, status: 422);
+                    }
+                }
+            }
             $this->db->transactional(function () use ($orderId, $number, $changes): void {
                 $this->update($orderId, $changes + ['status' => 'submitted', 'external_number' => $number]);
                 $this->db->update('orders', ['tracking_number' => $number, 'status' => 'processing'], ['id' => $orderId]);
             });
             $this->invalidate($orderId);
+            return ['status' => 'submitted'];
+        }, failOnContention: true);
+    }
+
+    public function resolveFbsRefusal(string $id, string $number, array $ids, string $reason, int $actor): array
+    {
+        return $this->locked($id, function (?array $row) use ($id, $number, $ids, $reason, $actor): array {
+            $ids = array_map(OzonProduct::positiveId(...), $ids);
+            if (!$ids || count($ids) > 100 || in_array(null, $ids, true) || count(array_unique($ids)) !== count($ids)
+                || mb_strlen(trim($reason)) < 8 || mb_strlen($reason) > 500) {
+                throw new DomainExceptionModule('order', 'Укажите ID невыкупленных экземпляров и основание сверки.', 45, status: 422);
+            }
+            $known = array_column(json_decode($row['postings'] ?? '[]', true, flags: JSON_THROW_ON_ERROR), null, 'number');
+            if (($row['status'] ?? '') !== 'submitted' || ($known[$number]['schema'] ?? '') !== 'FBS'
+                || !self::received($known[$number]) || isset($this->issuedUnits($id)[$number])) {
+                throw new DomainExceptionModule('order', 'Сверка недоступна для этого отправления.', 45, status: 409);
+            }
+            $payload = json_decode($row['payload'], true, flags: JSON_THROW_ON_ERROR);
+            $entry = ['ids' => $ids, 'reason' => trim($reason), 'actor' => $actor, 'at' => gmdate(DATE_ATOM)];
+            $payload['fbsRefusals'][$number] = $entry;
+            $payload['fbsRefusalHistory'][] = ['posting' => $number] + $entry;
+            $fromOzon = [];
+            $returns = $this->delivery->partialReturns($row['external_number'], [$number], $fromOzon);
+            try {
+                $this->delivery->fbsExemplars($number, $returns[$number] ?? [], $fromOzon[$number] ?? [], $ids);
+            } catch (OzonException $e) {
+                throw new DomainExceptionModule('order', $e->getMessage(), 45, status: 422, previous: $e);
+            }
+            $this->update($id, ['payload' => json_encode($payload, JSON_THROW_ON_ERROR), 'next_check_at' => null]);
             return ['status' => 'submitted'];
         }, failOnContention: true);
     }
@@ -150,12 +191,16 @@ final readonly class OzonFulfillment
         $payload = json_decode($row['payload'], true, flags: JSON_THROW_ON_ERROR);
         $shipping = json_decode($order['shipping_address'], true, flags: JSON_THROW_ON_ERROR);
         $phone = preg_replace('/\D/', '', $shipping['phone']);
+        if (isset($payload['allocation']) && !$this->db->fetchOne('SELECT COUNT(*) FROM ozon_stock_reservations WHERE order_id=? AND expires_at > UTC_TIMESTAMP()', [$id])) {
+            $this->update($id, ['status' => 'cancel_confirmed', 'next_check_at' => null, 'error' => 'Истёк срок резерва до передачи заказа в Ozon.']);
+            return;
+        }
         if (!$delivery->buyerAllowed($phone)) {
             $this->update($id, ['status' => 'cancel_confirmed', 'next_check_at' => null, 'error' => 'Ozon отклонил доставку для покупателя.']);
             return;
         }
         try {
-            $splits = $delivery->quote($phone, $payload['destination'], $payload['items']);
+            $splits = $delivery->quote($phone, $payload['destination'], $payload['quoteItems'] ?? $payload['items'], $payload['schema'] ?? 'FBO', $payload['aliases'] ?? []);
         } catch (OzonException $exception) {
             if (!$exception->quoteUnavailable) {
                 throw $exception;
@@ -164,7 +209,8 @@ final readonly class OzonFulfillment
             return;
         }
         $dates = OzonDelivery::dates($splits);
-        if (array_values(array_unique($dates)) !== array_values(array_unique($payload['dates']))
+        if ((isset($payload['shipments']) && $delivery->shipmentPlan($splits) !== $payload['shipments'])
+            || array_values(array_unique($dates)) !== array_values(array_unique($payload['dates']))
             || $delivery->quotedCostMinor($splits) !== $payload['deliveryCostMinor']) {
             $this->update($id, ['status' => 'cancel_confirmed', 'next_check_at' => null, 'error' => 'Стоимость или срок доставки изменились после оплаты.']);
             return;
@@ -175,7 +221,7 @@ final readonly class OzonFulfillment
         $payload['dates'] = $dates;
         $this->update($id, ['status' => 'submitting', 'payload' => json_encode($payload, JSON_THROW_ON_ERROR),
             'next_check_at' => gmdate('Y-m-d H:i:s', time() + 120)]);
-        $result = $delivery->create($buyer, $recipient, $payload['destination'], $splits, $payload['prices']);
+        $result = $delivery->create($buyer, $recipient, $payload['destination'], $splits, $payload['prices'], $payload['schema'] ?? 'FBO');
         $postings = [];
         foreach ($result['postings'] ?? [] as $posting) {
             $number = is_array($posting) ? ($posting['posting_number'] ?? null) : $posting;
@@ -191,10 +237,26 @@ final readonly class OzonFulfillment
         $this->invalidate($id);
     }
 
+    private static function received(array $posting): bool
+    {
+        return in_array($posting['substatus'] ?? '', ['posting_received', 'posting_delivered'], true)
+            || (($posting['status'] ?? '') === 'delivered' && empty($posting['substatus']));
+    }
+
     private function track(OzonDelivery $delivery, array $row, bool $cancellationConfirmed = false): void
     {
         $id = $row['order_id'];
-        $raw = $delivery->postings($row['external_number']);
+        $payload = json_decode($row['payload'], true, flags: JSON_THROW_ON_ERROR);
+        $schema = $payload['schema'] ?? 'FBO';
+        $raw = [];
+        $trackingError = null;
+        foreach ($schema === 'MIX' ? ['FBO', 'FBS'] : [$schema] as $source) {
+            try {
+                array_push($raw, ...$delivery->postings($row['external_number'], $source, $payload['placedAt'] ?? null));
+            } catch (OzonException $exception) {
+                $trackingError ??= $exception;
+            }
+        }
         $postings = [];
         $received = [];
         $reported = [];
@@ -209,15 +271,18 @@ final readonly class OzonFulfillment
             }
             $status = $posting['status'] ?? '';
             $substatus = $posting['substatus'] ?? '';
-            $postings[$number] = compact('number','status','substatus');
+            $postings[$number] = compact('number','status','substatus') + ['schema' => $posting['schema']];
             array_push($reported, ...($posting['products'] ?? []));
-            if (in_array($substatus, ['posting_received', 'posting_delivered'], true) || ($status === 'delivered' && $substatus === '')) {
+            if (self::received($posting)) {
                 $received[$number] = $posting;
             } elseif (!in_array($status, ['cancelled','canceled'], true) && $substatus !== 'posting_canceled') {
                 $open = true;
             }
         }
         if ($postings === []) {
+            if ($trackingError !== null) {
+                throw $trackingError;
+            }
             $this->update($id, []);
             return;
         }
@@ -225,6 +290,23 @@ final readonly class OzonFulfillment
         $known = array_column($previous, null, 'number');
         $this->update($id, ['postings' => json_encode(array_values($postings + $known), JSON_THROW_ON_ERROR), 'error' => null]);
 
+        if (isset($payload['shipments'])) {
+            $expected = [];
+            foreach ($payload['shipments'] as $part) {
+                foreach ($part['items'] as $sku => $qty) {
+                    $expected[$part['schema']][$sku] = ($expected[$part['schema']][$sku] ?? 0) + $qty;
+                }
+            }
+            foreach ($received as $posting) {
+                foreach ($this->quantities($posting['products'] ?? [], 'sku') as $sku => $qty) {
+                    $scheme = $posting['schema'];
+                    $expected[$scheme][$sku] = ($expected[$scheme][$sku] ?? 0) - $qty;
+                    if ($expected[$scheme][$sku] < 0) {
+                        throw new OzonException('Состав выданных отправлений расходится с согласованной схемой.');
+                    }
+                }
+            }
+        }
         $progress = $this->issuedUnits($id);
         $pendingHandover = null;
         foreach (array_diff_key($received, $progress) as $number => $posting) {
@@ -234,8 +316,8 @@ final readonly class OzonFulfillment
                 $pendingHandover ??= $exception;
             }
         }
-        if ($pendingHandover !== null) {
-            throw $pendingHandover;
+        if ($pendingHandover !== null || $trackingError !== null) {
+            throw $pendingHandover ?? $trackingError;
         }
         if (array_diff_key($known, $postings) !== []) {
             throw new OzonException('Ozon вернул неполный список отправлений.');
@@ -244,7 +326,22 @@ final readonly class OzonFulfillment
             return;
         }
 
-        $payload = json_decode($row['payload'], true, flags: JSON_THROW_ON_ERROR);
+        if (isset($payload['shipments'])) {
+            $bySchema = [];
+            foreach ($raw as $posting) {
+                foreach ($this->quantities($posting['products'] ?? [], 'sku') as $sku => $quantity) {
+                    $bySchema[$posting['schema']][$sku] = ($bySchema[$posting['schema']][$sku] ?? 0) + $quantity;
+                }
+            }
+            foreach ($payload['shipments'] as $part) {
+                foreach ($part['items'] as $sku => $quantity) {
+                    $bySchema[$part['schema']][$sku] = ($bySchema[$part['schema']][$sku] ?? 0) - $quantity;
+                    if ($bySchema[$part['schema']][$sku] < 0) {
+                        throw new OzonException('Ozon пока не вернул все отправления по согласованным схемам.');
+                    }
+                }
+            }
+        }
         $planned = $this->quantities($payload['items'], 'sku');
         $seen = $this->quantities($reported, 'sku');
         if ($seen !== $planned) {
@@ -354,8 +451,10 @@ final readonly class OzonFulfillment
     private function fiscalItems(OzonDelivery $delivery, array $row, array $received): array
     {
         $orderId = $row['order_id'];
-        $catalog = json_decode($row['payload'], true, flags: JSON_THROW_ON_ERROR)['catalogItems'];
-        $returns = $delivery->partialReturns($row['external_number'], array_keys($received));
+        $payload = json_decode($row['payload'], true, flags: JSON_THROW_ON_ERROR);
+        $catalog = $payload['catalogItems'];
+        $refusedIds = [];
+        $returns = $delivery->partialReturns($row['external_number'], array_keys($received), $refusedIds);
         $delivered = [];
         $marks = [];
         foreach ($received as $number => $posting) {
@@ -363,13 +462,23 @@ final readonly class OzonFulfillment
             if ($products === []) {
                 throw new OzonException('Ozon не вернул товары выданного отправления.');
             }
-            $expectedMarked = array_intersect_key($products, array_flip(array_column(array_filter($catalog, static fn (array $item): bool => $item['marked']), 'sku')));
+            $marked = [];
+            foreach ($catalog as $product) {
+                if ($product['marked']) {
+                    foreach ([$product['sku'], ...array_values($product['skus'] ?? [])] as $sku) {
+                        $marked[$sku] = true;
+                    }
+                }
+            }
+            $expectedMarked = array_intersect_key($products, $marked);
             if ($expectedMarked !== []) {
-                [$issued, $unissued] = $delivery->receivedExemplars($number);
+                [$issued, $unissued] = $posting['schema'] === 'FBS'
+                    ? $delivery->fbsExemplars($number, $returns[$number] ?? [], $refusedIds[$number] ?? [], $payload['fbsRefusals'][$number]['ids'] ?? [])
+                    : $delivery->receivedExemplars($number);
                 foreach ($expectedMarked as $sku => $qty) {
                     $codes = $issued[$sku] ?? [];
                     if (in_array(null, $codes, true) || count($codes) > $qty
-                        || count($codes) + ($unissued[$sku] ?? 0) < $qty) {
+                        || count($codes) + ($unissued[$sku] ?? 0) !== $qty) {
                         throw new OzonException('Ozon пока не подтвердил маркировку всех экземпляров.');
                     }
                     // Marks are per instance and reflect partial handover, unlike the posting quantity.
@@ -393,14 +502,17 @@ final readonly class OzonFulfillment
         $items = [];
         foreach ($this->db->fetchAllAssociative('SELECT id,product_id,quantity FROM order_items WHERE order_id=?', [$orderId]) as $item) {
             $product = $catalog[$item['product_id']];
-            $sku = $product['sku'];
-            $qty = $delivered[$sku] ?? 0;
-            $codes = $marks[$sku] ?? [];
+            $qty = 0;
+            $codes = [];
+            foreach (array_unique([$product['sku'], ...array_values($product['skus'] ?? [])]) as $sku) {
+                $qty += $delivered[$sku] ?? 0;
+                array_push($codes, ...($marks[$sku] ?? []));
+                unset($delivered[$sku]);
+            }
             if ($qty > (int)$item['quantity'] || ($product['marked'] && count(array_unique($codes)) !== $qty)) {
                 throw new OzonException('Не удалось сверить состав выданного заказа Ozon.');
             }
             $items[(int)$item['id']] = ['quantity' => $qty, 'remaining' => (int)$item['quantity'] - $qty, 'marks' => $codes];
-            unset($delivered[$sku]);
         }
         if ($delivered !== []) {
             throw new OzonException('Ozon не подтвердил состав выданного заказа.');
@@ -494,6 +606,9 @@ final readonly class OzonFulfillment
         $this->db->update('ozon_delivery_orders', $fields + [
             'updated_at' => gmdate('Y-m-d H:i:s'), 'next_check_at' => gmdate('Y-m-d H:i:s', time() + 60),
         ], ['order_id' => $id]);
+        if (in_array($fields['status'] ?? '', ['cancel_confirmed', 'cancelled', 'partial_refund', 'delivered'], true)) {
+            $this->db->delete('ozon_stock_reservations', ['order_id' => $id]);
+        }
     }
 
     private function invalidate(string $id): void

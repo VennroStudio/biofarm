@@ -18,7 +18,7 @@ final readonly class OzonCatalogWriter
     public function apply(array $products, string $now): array
     {
         $result = ['added' => 0, 'updated' => 0, 'archived' => 0, 'visible' => 0, 'available' => 0, 'groups' => 0, 'total' => count($products)];
-        $links = $this->db->fetchAllAssociativeIndexed('SELECT ozon_id, product_id, sku, fbo_sku, stock, archived FROM ozon_catalog_products');
+        $links = $this->db->fetchAllAssociativeIndexed('SELECT ozon_id, product_id, sku, fbo_sku, stock, fbs_sku, fbs_stock, fbs_warehouses, stock_checked_at, archived FROM ozon_catalog_products');
         $categories = $this->db->fetchAllKeyValue('SELECT slug, id FROM categories WHERE deleted_at IS NULL');
         $groups = $this->groups($products, $now);
         $result['groups'] = count($groups);
@@ -28,7 +28,8 @@ final readonly class OzonCatalogWriter
                 continue;
             }
 
-            $fields = $this->visibility($product->stock, $product->price, $product->archived, $row, $now);
+            $fbs = array_sum(array_column($product->warehouses, 'free'));
+            $fields = $this->visibility($product->stock + $fbs, $product->price, $product->archived, $row, $now);
             if (!$product->archived) {
                 $fields += $this->cardFields($product);
             }
@@ -60,7 +61,8 @@ final readonly class OzonCatalogWriter
             $mapping = [
                 'sku' => $product->sku,
                 'fbo_sku' => $product->fboSku,
-                'stock' => $product->stock,
+                'stock' => $product->stock, 'fbs_stock' => $fbs, 'fbs_sku' => $product->warehouses[0]['sku'] ?? null,
+                'fbs_warehouses' => json_encode($product->warehouses, JSON_THROW_ON_ERROR), 'stock_checked_at' => $now,
                 'archived' => (int) $product->archived,
             ];
             if (!isset($links[$product->id])) {
@@ -84,7 +86,7 @@ final readonly class OzonCatalogWriter
 
         foreach (array_diff_key($links, $products) as $id => $link) {
             if ((int) $link['archived'] === 0) {
-                $this->db->update('ozon_catalog_products', ['archived' => 1, 'stock' => 0], ['ozon_id' => $id]);
+                $this->db->update('ozon_catalog_products', ['archived' => 1, 'stock' => 0, 'fbs_stock' => 0, 'fbs_warehouses' => '[]'], ['ozon_id' => $id]);
                 $result['archived'] += $this->archiveProduct((int) $link['product_id'], $now);
                 $this->saveMembership((int) $link['product_id'], null, $now);
             }
@@ -100,7 +102,7 @@ final readonly class OzonCatalogWriter
     }
 
     /** Apply a fresh stock reading to an already imported, non-archived product. */
-    public function updateStock(string $id, array $detail, string $now): bool
+    public function updateStock(string $id, array $detail, string $now, array $warehouses): bool
     {
         $link = $this->db->fetchAssociative(
             'SELECT l.archived, l.stock, p.id, p.price, p.deleted_at, p.availability FROM ozon_catalog_products l
@@ -112,13 +114,19 @@ final readonly class OzonCatalogWriter
         }
 
         $stock = OzonProduct::archived($detail) ? 0 : OzonProduct::stock($detail);
-        if ((int) $link['stock'] !== $stock) {
-            $this->db->update('ozon_catalog_products', ['stock' => $stock], ['ozon_id' => $id]);
+        $fbs = array_sum(array_column($warehouses, 'free'));
+        $fields = ['stock' => $stock, 'fbs_stock' => $fbs, 'fbs_sku' => array_values($warehouses)[0]['sku'] ?? null,
+            'fbs_warehouses' => json_encode(array_values($warehouses), JSON_THROW_ON_ERROR), 'stock_checked_at' => $now];
+        foreach ([...($detail['stocks']['stocks'] ?? []), ...($detail['sources'] ?? [])] as $source) {
+            if (($source['source'] ?? null) === 'fbo' && ($sku = OzonProduct::positiveId($source['sku'] ?? null)) !== null) {
+                $fields['fbo_sku'] = $sku;
+            }
         }
+        $this->db->update('ozon_catalog_products', $fields, ['ozon_id' => $id]);
         if ($link['deleted_at'] !== null) {
             return false;
         }
-        $availability = $stock > 0 && (int) $link['price'] > 0 ? 'in_stock' : 'out_of_stock';
+        $availability = $stock + $fbs > 0 && (int) $link['price'] > 0 ? 'in_stock' : 'out_of_stock';
 
         return $this->update('products', (int) $link['id'], $link, ['availability' => $availability], $now);
     }

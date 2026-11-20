@@ -29,7 +29,7 @@ import { normalizePhone, PhoneVerification } from '../../shared/PhoneVerificatio
 const livePickup = 'ozon-pickup';
 const ozonApi = '/v1/ozon-delivery';
 type OzonMethod = typeof livePickup;
-type OzonQuote = { fingerprint: string; dates: string[]; deliveryCost: number };
+type OzonQuote = { fingerprint: string; dates: string[]; shipments: { schema: string; from: string; to: string; costMinor: number }[]; deliveryCost: number };
 type OzonQuoteInput = {
   method: OzonMethod;
   pickupPointId: number;
@@ -120,9 +120,7 @@ function CheckoutPage({
   } : null, [canUsePersonalData, cart, ozonMethod, phone, pickupId, verified]);
   const matchingQuote = quote?.input === quoteInput && quote.attempt === quoteAttempt ? quote : null;
   const currentQuote = matchingQuote?.result;
-  const deliveryDates = Array.from(new Set(currentQuote?.dates.map(
-    (date) => new Date(date).toLocaleDateString('ru-RU', { timeZone: 'Europe/Moscow' }),
-  )));
+  const formatDeliveryDate = (date: string) => new Date(date).toLocaleDateString('ru-RU', { timeZone: 'Europe/Moscow' });
   const deliveryCost = ozonEnabled ? currentQuote?.deliveryCost ?? null : deliveryMethod === 'post' ? postDeliveryCost : cdekDeliveryCost;
   const maxBonusSpend = Math.floor(total * (orderBonusSpendLimitPercent / 100));
   const bonusDiscount = useBonuses && user && orderBonusEnabled ? Math.min(user.bonusBalance, maxBonusSpend) : 0;
@@ -404,8 +402,11 @@ function CheckoutPage({
                     </div>}
                     {currentQuote && (
                       <div role="status" className="space-y-1 text-sm text-primary">
-                        <p>{deliveryDates.length === 1 ? 'Ожидаемая дата доставки' : 'Ожидаемые даты доставки'}: {deliveryDates.join(', ')}</p>
-                        {currentQuote.dates.length > 1 && <p>Ozon доставит заказ в ПВЗ несколькими отправлениями.</p>}
+                        {currentQuote.shipments.map((shipment, index) => {
+                          const from = formatDeliveryDate(shipment.from);
+                          const to = formatDeliveryDate(shipment.to);
+                          return <p key={index}>Отправление {index + 1} · {shipment.schema === 'FBO' ? 'со склада Ozon' : 'со склада продавца'} · {from}{from !== to && ` – ${to}`} · {shipment.costMinor / 100} ₽</p>;
+                        })}
                       </div>
                     )}
                   </> : <>

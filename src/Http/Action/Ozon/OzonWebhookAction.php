@@ -28,7 +28,7 @@ final readonly class OzonWebhookAction implements RequestHandlerInterface
         if ($event['message_type'] === 'TYPE_PING') {
             return new JsonResponse(['version' => '1.0', 'name' => 'Biofarm', 'time' => gmdate('c')]);
         }
-        if ($event['message_type'] === 'TYPE_FBO_STOCKS_CHANGED') {
+        if (in_array($event['message_type'], ['TYPE_FBO_STOCKS_CHANGED', 'TYPE_STOCKS_CHANGED'], true)) {
             $this->webhook->record($event);
         }
         return new JsonResponse(['result' => true]);

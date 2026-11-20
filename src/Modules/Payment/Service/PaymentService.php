@@ -57,6 +57,12 @@ final readonly class PaymentService
             if (($order['delivery_method'] ?? null) === 'ozon-pickup' && !$this->gateway->publicConfig()['receiptsEnabled']) {
                 throw new DomainExceptionModule('payment', 'Оплата заказов Ozon временно недоступна.', 12, status: 503);
             }
+            if (($order['delivery_method'] ?? null) === 'ozon-pickup') {
+                $payload = json_decode($this->db->fetchOne('SELECT payload FROM ozon_delivery_orders WHERE order_id=?', [$orderId]) ?: '{}', true, flags: JSON_THROW_ON_ERROR);
+                if (isset($payload['allocation']) && !$this->db->fetchOne('SELECT 1 FROM ozon_stock_reservations WHERE order_id=? AND expires_at > UTC_TIMESTAMP() LIMIT 1', [$orderId])) {
+                    throw new DomainExceptionModule('payment', 'Срок резерва истёк. Оформите заказ заново.', 13, status: 409);
+                }
+            }
             $current = $this->db->fetchAssociative("SELECT * FROM payment_operations WHERE order_id=? AND kind='payment' AND status<>'canceled' ORDER BY created_at DESC LIMIT 1", [$orderId]);
             if ($current) {
                 return $current;
@@ -586,6 +592,8 @@ final readonly class PaymentService
                 $this->db->executeStatement("UPDATE orders SET payment_status='completed', paid_at=COALESCE(paid_at,UTC_TIMESTAMP()),updated_at=UTC_TIMESTAMP() WHERE id=?", [$operation['order_id']]);
                 $this->program->settleOrder($operation['order_id']);
                 if (($order['delivery_method'] ?? null) === 'ozon-pickup') {
+                    $this->db->executeStatement('UPDATE ozon_stock_reservations SET expires_at=UTC_TIMESTAMP() + INTERVAL 1 HOUR
+                        WHERE order_id=? AND expires_at > UTC_TIMESTAMP()', [$operation['order_id']]);
                     $this->db->executeStatement("UPDATE ozon_delivery_orders SET status='queued', updated_at=UTC_TIMESTAMP()
                         WHERE order_id=? AND mode='live' AND status='awaiting_payment'", [$operation['order_id']]);
                 }

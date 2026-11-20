@@ -55,6 +55,7 @@ final readonly class OzonPickupQuoteAction implements RequestHandlerInterface
             return new JsonDataResponse([
                 'fingerprint' => $this->checkout->fingerprint($quote),
                 'dates' => $quote['dates'],
+                'shipments' => $quote['shipments'],
                 'deliveryCost' => $quote['deliveryCostMinor'] / 100,
             ]);
         } catch (OzonException $exception) {
